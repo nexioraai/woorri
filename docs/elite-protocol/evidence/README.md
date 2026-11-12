@@ -41,6 +41,7 @@ sources `.ts` du dépôt, sans build).
 | `zd3-coverage.mjs` | RN-01 audit 3 | couverture, indépendance au volume des données, limite `superRefine` |
 | `rn01-A-uval.mjs` | RN-01 arbitrage A | **épreuve de falsifiabilité** de l'énoncé U-VAL reformulé + contre-épreuve par mutation |
 | `rn01-BC.mjs` | RN-01 arbitrages B/C | stabilité de `(racine, chemin)` sous factorisation · critère de rattachement inter-espaces |
+| `generateur-2026-11-12/` | mesures du générateur, option 1 | **instantané haché** des 34 générations directes + 5 mesures (tours, constructions, contenu livré, juges, isolation préparée) · rapport `RAPPORT.md` · lecture seule, sorties identiques à l'octet |
 | `observation/` | **instrument d'observation v0** | rend l'écran ÉMIS avec le runtime ÉMIS, presse chaque identité, enregistre le delta, **contrôle négatif**. Produit `APP-D002`. Lancement : `npx vitest run --config docs/elite-protocol/evidence/observation/obs.config.ts --reporter=verbose` |
 
 ## Réserve permanente

@@ -1,0 +1,527 @@
+{
+ "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
+ "correctifs": {
+  "disque_react": {
+   "commit": "c6040924",
+   "date": "2026-10-31T07:44:22-04:00"
+  },
+  "cloture_markdown": {
+   "commit": "8eef0e6e",
+   "date": "2026-11-01T04:16:19-05:00"
+  }
+ },
+ "accepteesImportantReactAvantCorrectifDisque": [
+  "4a6e160d-1867-463b-8e99-d0fb4f2c8270",
+  "cbf1cb34-f806-4c8c-8723-5702ff730ae0",
+  "7be93be8-2a0f-41f0-aa95-fecc191d94a5",
+  "eb7b62b5-0614-48f4-852e-bbc164e4bab4"
+ ],
+ "total": 20,
+ "generationsTouchees": 9,
+ "parType": {
+  "PAQUET_NON_EMBARQUE": 12,
+  "PARSE_ERROR": 5,
+  "BINDING_NATIF_ROLLDOWN": 3
+ },
+ "parSousType": {
+  "react / react-dom seulement": 7,
+  "contient un paquet natif": 5,
+  "BINDING_NATIF_ROLLDOWN": 3,
+  "Expected `}` but found `EOF`": 2,
+  "Unexpected token": 1,
+  "Unexpected token. Did you mean `{'>'}` or `&gt;`?": 1,
+  "Unterminated string": 1
+ },
+ "parAuteur": {
+  "CONTESTÉ (react seul)": 7,
+  "MODÈLE (syntaxe)": 5,
+  "MODÈLE (natif)": 5,
+  "ENVIRONNEMENT": 3
+ },
+ "echecs": [
+  {
+   "id": "2ef5f1d3-b1e1-41c3-b191-c41cb5d0d226",
+   "date": "2026-10-19",
+   "tour": 1,
+   "tronquee": null,
+   "type": "PARSE_ERROR",
+   "sousType": "Unexpected token",
+   "fichier": "index.tsx",
+   "paquets": [],
+   "auteur": "MODÈLE (syntaxe)",
+   "message": "La construction a échoué :\nBuild failed with 1 error:\n\n[PARSE_ERROR] Unexpected token\n     ╭─[ index.tsx:684:43 ]\n     │\n 684 │         <div style={styles.rowItem}><span>kWh cumulés\n     │                                           ─────┬─────  ",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "2ef5f1d3-b1e1-41c3-b191-c41cb5d0d226",
+   "date": "2026-10-19",
+   "tour": 2,
+   "tronquee": null,
+   "type": "PARSE_ERROR",
+   "sousType": "Expected `}` but found `EOF`",
+   "fichier": "index.tsx",
+   "paquets": [],
+   "auteur": "MODÈLE (syntaxe)",
+   "message": "La construction a échoué :\nBuild failed with 1 error:\n\n[PARSE_ERROR] Expected `}` but found `EOF`\n     ╭─[ index.tsx:626:65 ]\n     │\n 626 │         bareme: 'v2024-01', dateEmission: new Date().toISOStri",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "2ef5f1d3-b1e1-41c3-b191-c41cb5d0d226",
+   "date": "2026-10-19",
+   "tour": 3,
+   "tronquee": null,
+   "type": "PARSE_ERROR",
+   "sousType": "Expected `}` but found `EOF`",
+   "fichier": "index.tsx",
+   "paquets": [],
+   "auteur": "MODÈLE (syntaxe)",
+   "message": "La construction a échoué :\nBuild failed with 1 error:\n\n[PARSE_ERROR] Expected `}` but found `EOF`\n     ╭─[ index.tsx:554:12 ]\n     │\n 552 │   function repondre(r: 'coupure' | 'pasconso') {\n     │                                                ┬  ",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "6f7c9499-6a06-4d77-8645-c3de01a65464",
+   "date": "2026-10-19",
+   "tour": 1,
+   "tronquee": false,
+   "type": "BINDING_NATIF_ROLLDOWN",
+   "sousType": "BINDING_NATIF_ROLLDOWN",
+   "fichier": null,
+   "paquets": [],
+   "auteur": "ENVIRONNEMENT",
+   "message": "La construction a échoué :\nFailed to load external module rolldown-9192626778594803: Error: Cannot find native binding. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "6f7c9499-6a06-4d77-8645-c3de01a65464",
+   "date": "2026-10-19",
+   "tour": 2,
+   "tronquee": false,
+   "type": "BINDING_NATIF_ROLLDOWN",
+   "sousType": "BINDING_NATIF_ROLLDOWN",
+   "fichier": null,
+   "paquets": [],
+   "auteur": "ENVIRONNEMENT",
+   "message": "La construction a échoué :\nFailed to load external module rolldown-9192626778594803: Error: Cannot find native binding. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "6f7c9499-6a06-4d77-8645-c3de01a65464",
+   "date": "2026-10-19",
+   "tour": 3,
+   "tronquee": false,
+   "type": "BINDING_NATIF_ROLLDOWN",
+   "sousType": "BINDING_NATIF_ROLLDOWN",
+   "fichier": null,
+   "paquets": [],
+   "auteur": "ENVIRONNEMENT",
+   "message": "La construction a échoué :\nFailed to load external module rolldown-9192626778594803: Error: Cannot find native binding. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "cbf1cb34-f806-4c8c-8723-5702ff730ae0",
+   "date": "2026-10-19",
+   "tour": 1,
+   "tronquee": false,
+   "type": "PARSE_ERROR",
+   "sousType": "Unexpected token. Did you mean `{'>'}` or `&gt;`?",
+   "fichier": "components/NewReading.tsx",
+   "paquets": [],
+   "auteur": "MODÈLE (syntaxe)",
+   "message": "La construction a échoué :\nBuild failed with 1 error:\n\n[PARSE_ERROR] Unexpected token. Did you mean `{'>'}` or `&gt;`?\n     ╭─[ components/NewReading.tsx:190:25 ]\n     │\n 190 │           <p>Tranche 2 (>150 kWh) : {billPreview.tier2Qty} \u001b[38;5;",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "7d17287f-9a89-4ace-adb3-85607745375d",
+   "date": "2026-10-31",
+   "tour": 1,
+   "tronquee": false,
+   "type": "PAQUET_NON_EMBARQUE",
+   "sousType": "contient un paquet natif",
+   "fichier": null,
+   "paquets": [
+    "react",
+    "react-native",
+    "expo-status-bar"
+   ],
+   "auteur": "MODÈLE (natif)",
+   "message": "La construction a échoué :\npaquet(s) non embarqué(s) dans le bundle : react, react-native, expo-status-bar — l'environnement d'assemblage ne les fournit pas ; l'application mourrait au chargement dans le navigateur",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "7d17287f-9a89-4ace-adb3-85607745375d",
+   "date": "2026-10-31",
+   "tour": 2,
+   "tronquee": false,
+   "type": "PAQUET_NON_EMBARQUE",
+   "sousType": "react / react-dom seulement",
+   "fichier": null,
+   "paquets": [
+    "react",
+    "react-dom/client"
+   ],
+   "auteur": "CONTESTÉ (react seul)",
+   "message": "La construction a échoué :\npaquet(s) non embarqué(s) dans le bundle : react, react-dom/client — l'environnement d'assemblage ne les fournit pas ; l'application mourrait au chargement dans le navigateur",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "7d17287f-9a89-4ace-adb3-85607745375d",
+   "date": "2026-10-31",
+   "tour": 3,
+   "tronquee": false,
+   "type": "PAQUET_NON_EMBARQUE",
+   "sousType": "react / react-dom seulement",
+   "fichier": null,
+   "paquets": [
+    "react",
+    "react-dom"
+   ],
+   "auteur": "CONTESTÉ (react seul)",
+   "message": "La construction a échoué :\npaquet(s) non embarqué(s) dans le bundle : react, react-dom — l'environnement d'assemblage ne les fournit pas ; l'application mourrait au chargement dans le navigateur",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "96768b7f-f52b-43da-b543-c92448e651bc",
+   "date": "2026-10-31",
+   "tour": 1,
+   "tronquee": false,
+   "type": "PAQUET_NON_EMBARQUE",
+   "sousType": "react / react-dom seulement",
+   "fichier": null,
+   "paquets": [
+    "react",
+    "react-dom/client"
+   ],
+   "auteur": "CONTESTÉ (react seul)",
+   "message": "La construction a échoué :\npaquet(s) non embarqué(s) dans le bundle : react, react-dom/client — l'environnement d'assemblage ne les fournit pas ; l'application mourrait au chargement dans le navigateur",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "96768b7f-f52b-43da-b543-c92448e651bc",
+   "date": "2026-10-31",
+   "tour": 2,
+   "tronquee": false,
+   "type": "PAQUET_NON_EMBARQUE",
+   "sousType": "react / react-dom seulement",
+   "fichier": null,
+   "paquets": [
+    "react-dom"
+   ],
+   "auteur": "CONTESTÉ (react seul)",
+   "message": "La construction a échoué :\npaquet(s) non embarqué(s) dans le bundle : react-dom — l'environnement d'assemblage ne les fournit pas ; l'application mourrait au chargement dans le navigateur",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "96768b7f-f52b-43da-b543-c92448e651bc",
+   "date": "2026-10-31",
+   "tour": 3,
+   "tronquee": false,
+   "type": "PAQUET_NON_EMBARQUE",
+   "sousType": "react / react-dom seulement",
+   "fichier": null,
+   "paquets": [
+    "react",
+    "react-dom/client"
+   ],
+   "auteur": "CONTESTÉ (react seul)",
+   "message": "La construction a échoué :\npaquet(s) non embarqué(s) dans le bundle : react, react-dom/client — l'environnement d'assemblage ne les fournit pas ; l'application mourrait au chargement dans le navigateur",
+   "avant_correctif_disque_react": true,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "88c94164-b9fa-441f-9b2d-f7b93308c4ea",
+   "date": "2026-10-31",
+   "tour": 1,
+   "tronquee": false,
+   "type": "PAQUET_NON_EMBARQUE",
+   "sousType": "contient un paquet natif",
+   "fichier": null,
+   "paquets": [
+    "react-native-safe-area-context",
+    "react-native"
+   ],
+   "auteur": "MODÈLE (natif)",
+   "message": "La construction a échoué :\npaquet(s) non embarqué(s) dans le bundle : react-native-safe-area-context, react-native — l'environnement d'assemblage ne les fournit pas ; l'application mourrait au chargement dans le navigateur",
+   "avant_correctif_disque_react": false,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "b21cf508-16bd-4c83-a48a-19f708af0c37",
+   "date": "2026-11-01",
+   "tour": 1,
+   "tronquee": false,
+   "type": "PAQUET_NON_EMBARQUE",
+   "sousType": "react / react-dom seulement",
+   "fichier": null,
+   "paquets": [
+    "react",
+    "react-dom/client"
+   ],
+   "auteur": "CONTESTÉ (react seul)",
+   "message": "La construction a échoué :\npaquet(s) non embarqué(s) dans le bundle : react, react-dom/client — l'environnement d'assemblage ne les fournit pas ; l'application mourrait au chargement dans le navigateur",
+   "avant_correctif_disque_react": false,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "b21cf508-16bd-4c83-a48a-19f708af0c37",
+   "date": "2026-11-01",
+   "tour": 2,
+   "tronquee": false,
+   "type": "PAQUET_NON_EMBARQUE",
+   "sousType": "contient un paquet natif",
+   "fichier": null,
+   "paquets": [
+    "expo"
+   ],
+   "auteur": "MODÈLE (natif)",
+   "message": "La construction a échoué :\npaquet(s) non embarqué(s) dans le bundle : expo — l'environnement d'assemblage ne les fournit pas ; l'application mourrait au chargement dans le navigateur",
+   "avant_correctif_disque_react": false,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "b21cf508-16bd-4c83-a48a-19f708af0c37",
+   "date": "2026-11-01",
+   "tour": 3,
+   "tronquee": false,
+   "type": "PAQUET_NON_EMBARQUE",
+   "sousType": "react / react-dom seulement",
+   "fichier": null,
+   "paquets": [
+    "react",
+    "react-dom"
+   ],
+   "auteur": "CONTESTÉ (react seul)",
+   "message": "La construction a échoué :\npaquet(s) non embarqué(s) dans le bundle : react, react-dom — l'environnement d'assemblage ne les fournit pas ; l'application mourrait au chargement dans le navigateur",
+   "avant_correctif_disque_react": false,
+   "avant_correctif_cloture_markdown": true
+  },
+  {
+   "id": "82d64d9d-caa0-42bb-a443-69f45c43f642",
+   "date": "2026-11-01",
+   "tour": 1,
+   "tronquee": false,
+   "type": "PAQUET_NON_EMBARQUE",
+   "sousType": "contient un paquet natif",
+   "fichier": null,
+   "paquets": [
+    "react-native",
+    "react-native-safe-area-context"
+   ],
+   "auteur": "MODÈLE (natif)",
+   "message": "La construction a échoué :\npaquet(s) non embarqué(s) dans le bundle : react-native, react-native-safe-area-context — l'environnement d'assemblage ne les fournit pas ; l'application mourrait au chargement dans le navigateur",
+   "avant_correctif_disque_react": false,
+   "avant_correctif_cloture_markdown": false
+  },
+  {
+   "id": "82d64d9d-caa0-42bb-a443-69f45c43f642",
+   "date": "2026-11-01",
+   "tour": 2,
+   "tronquee": false,
+   "type": "PAQUET_NON_EMBARQUE",
+   "sousType": "contient un paquet natif",
+   "fichier": null,
+   "paquets": [
+    "react-native-safe-area-context"
+   ],
+   "auteur": "MODÈLE (natif)",
+   "message": "La construction a échoué :\npaquet(s) non embarqué(s) dans le bundle : react-native-safe-area-context — l'environnement d'assemblage ne les fournit pas ; l'application mourrait au chargement dans le navigateur",
+   "avant_correctif_disque_react": false,
+   "avant_correctif_cloture_markdown": false
+  },
+  {
+   "id": "fd1b4896-e074-4b8c-bd67-835175813044",
+   "date": "2026-11-01",
+   "tour": 1,
+   "tronquee": false,
+   "type": "PARSE_ERROR",
+   "sousType": "Unterminated string",
+   "fichier": "composants/Pages.tsx",
+   "paquets": [],
+   "auteur": "MODÈLE (syntaxe)",
+   "message": "La construction a échoué :\nBuild failed with 2 errors:\n\n[PARSE_ERROR] Unterminated string\n      ╭─[ composants/Pages.tsx:1045:3 ]\n      │\n 1045 │ ```\n      │   ┬  ",
+   "avant_correctif_disque_react": false,
+   "avant_correctif_cloture_markdown": false
+  }
+ ],
+ "contreMesureReact": [
+  {
+   "id": "4a6e160d-1867-463b-8e99-d0fb4f2c8270",
+   "date": "2026-10-19",
+   "fichiersEnBase": 2,
+   "importeReact": true
+  },
+  {
+   "id": "cbf1cb34-f806-4c8c-8723-5702ff730ae0",
+   "date": "2026-10-19",
+   "fichiersEnBase": 13,
+   "importeReact": true
+  },
+  {
+   "id": "7be93be8-2a0f-41f0-aa95-fecc191d94a5",
+   "date": "2026-10-30",
+   "fichiersEnBase": 6,
+   "importeReact": true
+  },
+  {
+   "id": "eb7b62b5-0614-48f4-852e-bbc164e4bab4",
+   "date": "2026-10-31",
+   "fichiersEnBase": 14,
+   "importeReact": true
+  },
+  {
+   "id": "88c94164-b9fa-441f-9b2d-f7b93308c4ea",
+   "date": "2026-10-31",
+   "fichiersEnBase": 6,
+   "importeReact": true
+  },
+  {
+   "id": "52f34017-283d-46f7-a6d2-4e023c599378",
+   "date": "2026-11-01",
+   "fichiersEnBase": 6,
+   "importeReact": true
+  },
+  {
+   "id": "950e1b9e-8b41-418e-b1d3-3abf61f1e904",
+   "date": "2026-11-01",
+   "fichiersEnBase": 10,
+   "importeReact": true
+  },
+  {
+   "id": "82d64d9d-caa0-42bb-a443-69f45c43f642",
+   "date": "2026-11-01",
+   "fichiersEnBase": 5,
+   "importeReact": true
+  },
+  {
+   "id": "91381918-c3d2-44fc-8e23-24d9dcb0cabf",
+   "date": "2026-11-01",
+   "fichiersEnBase": 9,
+   "importeReact": true
+  },
+  {
+   "id": "f21071cf-9780-4382-b310-c4814217fcf3",
+   "date": "2026-11-01",
+   "fichiersEnBase": 17,
+   "importeReact": true
+  },
+  {
+   "id": "fd1b4896-e074-4b8c-bd67-835175813044",
+   "date": "2026-11-01",
+   "fichiersEnBase": 8,
+   "importeReact": true
+  },
+  {
+   "id": "d09d921d-e82f-4661-9c12-df06a63358cc",
+   "date": "2026-11-01",
+   "fichiersEnBase": 15,
+   "importeReact": true
+  },
+  {
+   "id": "fa0ede2c-8db9-40eb-9fad-8ed174c14bfe",
+   "date": "2026-11-01",
+   "fichiersEnBase": 16,
+   "importeReact": true
+  },
+  {
+   "id": "8a2735f0-ec78-4a8b-a320-dfc3f0d813a9",
+   "date": "2026-11-04",
+   "fichiersEnBase": 9,
+   "importeReact": true
+  },
+  {
+   "id": "08a20016-c58f-40c8-8da7-0180c0ac768c",
+   "date": "2026-11-04",
+   "fichiersEnBase": 9,
+   "importeReact": true
+  },
+  {
+   "id": "a85966bc-0165-4e6c-a6d3-669f57d5cbcb",
+   "date": "2026-11-04",
+   "fichiersEnBase": 5,
+   "importeReact": true
+  },
+  {
+   "id": "0b1f3bb6-1024-478e-b93c-913bbd4753d6",
+   "date": "2026-11-04",
+   "fichiersEnBase": 9,
+   "importeReact": true
+  },
+  {
+   "id": "60bf2c40-81f4-4cde-9e0b-36f1ccff6b0a",
+   "date": "2026-11-04",
+   "fichiersEnBase": 9,
+   "importeReact": true
+  },
+  {
+   "id": "15158240-c5c6-4bf6-b8d0-218eb2cb4301",
+   "date": "2026-11-04",
+   "fichiersEnBase": 4,
+   "importeReact": true
+  },
+  {
+   "id": "faa9f0c3-51fa-4a82-b74b-5012d390d717",
+   "date": "2026-11-04",
+   "fichiersEnBase": 6,
+   "importeReact": true
+  },
+  {
+   "id": "d3ece28a-7cf6-4560-b96d-3ef0943c6f07",
+   "date": "2026-11-05",
+   "fichiersEnBase": 6,
+   "importeReact": true
+  },
+  {
+   "id": "cec8bddf-5c25-474f-909d-4cc6198848ed",
+   "date": "2026-11-05",
+   "fichiersEnBase": 9,
+   "importeReact": true
+  },
+  {
+   "id": "272fa964-c702-4db9-be80-51156863b3da",
+   "date": "2026-11-06",
+   "fichiersEnBase": 5,
+   "importeReact": true
+  },
+  {
+   "id": "ba20655a-f30b-4325-8094-8f4460d5c088",
+   "date": "2026-11-06",
+   "fichiersEnBase": 8,
+   "importeReact": true
+  },
+  {
+   "id": "35ed32c1-86c6-4f1e-b082-02e108cb134b",
+   "date": "2026-11-06",
+   "fichiersEnBase": 9,
+   "importeReact": true
+  },
+  {
+   "id": "97244e75-5ad5-458c-a185-143b7868ec84",
+   "date": "2026-11-06",
+   "fichiersEnBase": 5,
+   "importeReact": true
+  },
+  {
+   "id": "27ba05fb-23bf-4f95-9f93-3175d944e2b4",
+   "date": "2026-11-12",
+   "fichiersEnBase": 8,
+   "importeReact": true
+  },
+  {
+   "id": "f1b753a6-4de4-44ef-a688-36839d253d88",
+   "date": "2026-11-12",
+   "fichiersEnBase": 9,
+   "importeReact": true
+  }
+ ]
+}

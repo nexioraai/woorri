@@ -1,0 +1,1814 @@
+{
+ "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
+ "regle": "voir en-tête de m1-tours.mjs",
+ "compte": {
+  "transitions": 48,
+  "MEME": 30,
+  "NOUVELLE": 10,
+  "CORRIGEE": 37,
+  "buildMemeErreur": 4,
+  "buildAutreErreur": 7
+ },
+ "parTransition": {
+  "toutCorrige": 13,
+  "dont_versDernierTourReconstitue": 5,
+  "uniquementMeme": 27,
+  "uniquementNouvelle": 0,
+  "mixte_meme_et_nouvelle": 0,
+  "corrigeEtNouvelle": 8
+ },
+ "generations": [
+  {
+   "id": "2abfdb08-2768-4592-b9fe-59a7312ec1a0",
+   "date": "2026-10-18",
+   "nbTours": 0,
+   "livree": false,
+   "tours": [],
+   "transitions": []
+  },
+  {
+   "id": "2ef5f1d3-b1e1-41c3-b191-c41cb5d0d226",
+   "date": "2026-10-19",
+   "nbTours": 3,
+   "livree": false,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PARSE_ERROR @ index.tsx"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PARSE_ERROR @ index.tsx"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PARSE_ERROR @ index.tsx"
+      }
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "CONSTRUCTION"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": "même erreur exacte",
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [
+      "CONSTRUCTION"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": "même erreur exacte",
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "6f7c9499-6a06-4d77-8645-c3de01a65464",
+   "date": "2026-10-19",
+   "nbTours": 3,
+   "livree": false,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "BINDING_NATIF_ROLLDOWN"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "BINDING_NATIF_ROLLDOWN"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "BINDING_NATIF_ROLLDOWN"
+      }
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "CONSTRUCTION"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": "même erreur exacte",
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [
+      "CONSTRUCTION"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": "même erreur exacte",
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "4a6e160d-1867-463b-8e99-d0fb4f2c8270",
+   "date": "2026-10-19",
+   "nbTours": 1,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": []
+  },
+  {
+   "id": "cbf1cb34-f806-4c8c-8723-5702ff730ae0",
+   "date": "2026-10-19",
+   "nbTours": 2,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PARSE_ERROR @ components/NewReading.tsx"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "CONSTRUCTION"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "7be93be8-2a0f-41f0-aa95-fecc191d94a5",
+   "date": "2026-10-30",
+   "nbTours": 1,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": []
+  },
+  {
+   "id": "7d17287f-9a89-4ace-adb3-85607745375d",
+   "date": "2026-10-31",
+   "nbTours": 3,
+   "livree": false,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PAQUET_NON_EMBARQUE : react, react-native, expo-status-bar"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PAQUET_NON_EMBARQUE : react, react-dom/client"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PAQUET_NON_EMBARQUE : react, react-dom"
+      }
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "CONSTRUCTION"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": "autre erreur de construction",
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [
+      "CONSTRUCTION"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": "autre erreur de construction",
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "96768b7f-f52b-43da-b543-c92448e651bc",
+   "date": "2026-10-31",
+   "nbTours": 3,
+   "livree": false,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PAQUET_NON_EMBARQUE : react, react-dom/client"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PAQUET_NON_EMBARQUE : react-dom"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PAQUET_NON_EMBARQUE : react, react-dom/client"
+      }
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "CONSTRUCTION"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": "autre erreur de construction",
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [
+      "CONSTRUCTION"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": "autre erreur de construction",
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "eb7b62b5-0614-48f4-852e-bbc164e4bab4",
+   "date": "2026-10-31",
+   "nbTours": 1,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": []
+  },
+  {
+   "id": "88c94164-b9fa-441f-9b2d-f7b93308c4ea",
+   "date": "2026-10-31",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PAQUET_NON_EMBARQUE : react-native-safe-area-context, react-native"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - agences (le cahier y insiste 8 fois, le code n’en dit rien) ⏎ - entreprises (le cahier y insiste 8 fois, le code n’en dit rien)"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [],
+     "nouvelle": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "corrigee": [
+      "CONSTRUCTION"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "52f34017-283d-46f7-a6d2-4e023c599378",
+   "date": "2026-11-01",
+   "nbTours": 2,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - application native (Android/iPhone) (le cahier y insiste 8 fois, le code n’en dit rien) ⏎ - entreprises (le cahier y insiste 8 fois, le code n’en dit rien)"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "b21cf508-16bd-4c83-a48a-19f708af0c37",
+   "date": "2026-11-01",
+   "nbTours": 3,
+   "livree": false,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PAQUET_NON_EMBARQUE : react, react-dom/client"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PAQUET_NON_EMBARQUE : expo"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PAQUET_NON_EMBARQUE : react, react-dom"
+      }
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "CONSTRUCTION"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": "autre erreur de construction",
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [
+      "CONSTRUCTION"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": "autre erreur de construction",
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "950e1b9e-8b41-418e-b1d3-3abf61f1e904",
+   "date": "2026-11-01",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES JETONS QUI N’EXISTENT PAS",
+       "exact": "DES JETONS QUI N’EXISTENT PAS — l’application MOURRAIT au démarrage (mesuré : undefined.fontSize sur un tir réel) : ⏎ - index.tsx : ESPACE.moyen — ce qui existe : xs, s, m, l, xl, xxl ⏎ - index.tsx : ESPACE.grand — ce qui existe : xs, s, m, l, xl, xxl"
+      },
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - application native (Android/iPhone) (le cahier y insiste 8 fois, le code n’en dit rien) ⏎ - paiement : déclarée hors périmètre alors que le cahier y insiste 36 fois — trop central pour être écarté sans l’accord du clien"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - administration : déclarée hors périmètre alors que le cahier y insiste 12 fois — trop central pour être écarté sans l’accord du client ⏎ Couvre-les, ou déclare-les dans PERIMETRE.md avec un motif d’une ligne. Le silence"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "nouvelle": [],
+     "corrigee": [
+      "DES JETONS QUI N’EXISTENT PAS"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "82d64d9d-caa0-42bb-a443-69f45c43f642",
+   "date": "2026-11-01",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PAQUET_NON_EMBARQUE : react-native, react-native-safe-area-context"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PAQUET_NON_EMBARQUE : react-native-safe-area-context"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "(reconstitué depuis les verdicts conservés)"
+      }
+     ],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "CONSTRUCTION"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": "autre erreur de construction",
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [],
+     "nouvelle": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "corrigee": [
+      "CONSTRUCTION"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "91381918-c3d2-44fc-8e23-24d9dcb0cabf",
+   "date": "2026-11-01",
+   "nbTours": 2,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES CONTRÔLES SANS NOM LISIBLE",
+       "exact": "DES CONTRÔLES SANS NOM LISIBLE — rendus, liés, et pourtant inutilisables : personne ne sait ce qu’ils font : ⏎ - <button> : <button type=\"button\" style=\"background: var(--primary); color: var(--primary-foreground); border: none none;  ⏎ - <button> : <button type=\"button\" style=\"background: var(--pri"
+      },
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - mobile money : déclarée hors périmètre alors que le cahier y insiste 15 fois — trop central pour être écarté sans l’accord du client ⏎ - tableau de bord (le cahier y insiste 3 fois, le code n’en dit rien)"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "DES CONTRÔLES SANS NOM LISIBLE",
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "f21071cf-9780-4382-b310-c4814217fcf3",
+   "date": "2026-11-01",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES JETONS QUI N’EXISTENT PAS",
+       "exact": "DES JETONS QUI N’EXISTENT PAS — l’application MOURRAIT au démarrage (mesuré : undefined.fontSize sur un tir réel) : ⏎ - App.tsx : ESPACE.grand — ce qui existe : xs, s, m, l, xl, xxl ⏎ - App.tsx : ESPACE.moyen — ce qui existe : xs, s, m, l, xl, xxl"
+      },
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - connexion et comptes : déclarée hors périmètre alors que le cahier y insiste 10 fois — trop central pour être écarté sans l’accord du client ⏎ - recherche : déclarée hors périmètre alors que le cahier y insiste 11 fois "
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - connexion et comptes : déclarée hors périmètre alors que le cahier y insiste 10 fois — trop central pour être écarté sans l’accord du client ⏎ - recherche : déclarée hors périmètre alors que le cahier y insiste 11 fois "
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "(reconstitué depuis les verdicts conservés)"
+      }
+     ],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "nouvelle": [],
+     "corrigee": [
+      "DES JETONS QUI N’EXISTENT PAS"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "fd1b4896-e074-4b8c-bd67-835175813044",
+   "date": "2026-11-01",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CONSTRUCTION",
+       "exact": "PARSE_ERROR @ composants/Pages.tsx"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - connexion et comptes (le cahier y insiste 10 fois, le code n’en dit rien) ⏎ - notifications (le cahier y insiste 4 fois, le code n’en dit rien)"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "(reconstitué depuis les verdicts conservés)"
+      }
+     ],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [],
+     "nouvelle": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "corrigee": [
+      "CONSTRUCTION"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "d09d921d-e82f-4661-9c12-df06a63358cc",
+   "date": "2026-11-01",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - mobile money : le code en PARLE (78 fois) mais aucun écran ouvert ne la porte — une mention n’est pas une couverture ⏎ Couvre-les, ou déclare-les dans PERIMETRE.md avec un motif d’une ligne. Le silence est interdit."
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - mobile money : le code en PARLE (93 fois) mais aucun écran ouvert ne la porte — une mention n’est pas une couverture ⏎ Couvre-les, ou déclare-les dans PERIMETRE.md avec un motif d’une ligne. Le silence est interdit."
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "fa0ede2c-8db9-40eb-9fad-8ed174c14bfe",
+   "date": "2026-11-01",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue avant de rendre quoi que ce soit : ⏎ - console — écran « Appels d’offres » : Pastille is not defined ⏎ Corrige la cause : une application livrée doit s’ouvrir et afficher ses écrans."
+      },
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - connexion et comptes : déclarée hors périmètre alors que le cahier y insiste 10 fois — trop central pour être écarté sans l’accord du client ⏎ - recherche : déclarée hors périmètre alors que le cahier y insiste 11 fois "
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - connexion et comptes : déclarée hors périmètre alors que le cahier y insiste 10 fois — trop central pour être écarté sans l’accord du client ⏎ - recherche : déclarée hors périmètre alors que le cahier y insiste 11 fois "
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "nouvelle": [],
+     "corrigee": [
+      "L'APPLICATION NE SE MONTE PAS"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "8a2735f0-ec78-4a8b-a320-dfc3f0d813a9",
+   "date": "2026-11-04",
+   "nbTours": 2,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES JETONS QUI N’EXISTENT PAS",
+       "exact": "DES JETONS QUI N’EXISTENT PAS — l’application MOURRAIT au démarrage (mesuré : undefined.fontSize sur un tir réel) : ⏎ - composants/App.tsx : ESPACE.grand — ce qui existe : xs, s, m, l, xl, xxl ⏎ - composants/Navigation.tsx : ESPACE.grand — ce qui existe : xs, s, m, l, xl, xxl"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "DES JETONS QUI N’EXISTENT PAS"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "08a20016-c58f-40c8-8da7-0180c0ac768c",
+   "date": "2026-11-04",
+   "nbTours": 2,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue avant de rendre quoi que ce soit : ⏎ - import : Cannot read properties of undefined (reading 'url') (at data:text/javascript;base64,Ly8jcmVnaW9uIFwwcm9sbGRvd24vcnVudGltZS5qcwp2YXIgX19jcmVhdGUgPSBPYmplY3QuY3JlYXRlOwp2YXIgX19kZWZQc"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "L'APPLICATION NE SE MONTE PAS"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "a85966bc-0165-4e6c-a6d3-669f57d5cbcb",
+   "date": "2026-11-04",
+   "nbTours": 1,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": []
+  },
+  {
+   "id": "0b1f3bb6-1024-478e-b93c-913bbd4753d6",
+   "date": "2026-11-04",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue avant de rendre quoi que ce soit : ⏎ - console : formaterIndex is not defined ⏎ Corrige la cause : une application livrée doit s’ouvrir et afficher ses écrans."
+      },
+      {
+       "cle": "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE",
+       "exact": "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE — ce qui y est saisi DISPARAÎT, sans message : ⏎ - composants/EcranReleves.tsx : un écran « releves » ⏎ Un rangement du navigateur N’EST PAS une base : il ne suit ni un autre appareil, ni un vidage de cache, et il se perd sans prévenir."
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue avant de rendre quoi que ce soit : ⏎ - import : Cannot read properties of undefined (reading 'VITE_SUPABASE_URL') (at data:text/javascript;base64,Ly8jcmVnaW9uIFwwcm9sbGRvd24vcnVudGltZS5qcwp2YXIgX19jcmVhdGUgPSBPYmplY3QuY3JlYXRlOwp"
+      },
+      {
+       "cle": "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE",
+       "exact": "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE — ce qui y est saisi DISPARAÎT, sans message : ⏎ - composants/EcranReleves.tsx : un écran « releves » ⏎ Un rangement du navigateur N’EST PAS une base : il ne suit ni un autre appareil, ni un vidage de cache, et il se perd sans prévenir."
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [
+      {
+       "cle": "PERSISTANCE (au moins une table non lue/écrite)",
+       "exact": "(reconstitué depuis les verdicts conservés)"
+      }
+     ],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "L'APPLICATION NE SE MONTE PAS",
+      "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [],
+     "nouvelle": [
+      "PERSISTANCE (au moins une table non lue/écrite)"
+     ],
+     "corrigee": [
+      "L'APPLICATION NE SE MONTE PAS",
+      "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "60bf2c40-81f4-4cde-9e0b-36f1ccff6b0a",
+   "date": "2026-11-04",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES CONTRÔLES SANS NOM LISIBLE",
+       "exact": "DES CONTRÔLES SANS NOM LISIBLE — rendus, liés, et pourtant inutilisables : personne ne sait ce qu’ils font : ⏎ - <button> : <button type=\"submit\" style=\"background: var(--primary); color: var(--primary-foreground); border: none none;  ⏎ - <button> : <button type=\"submit\" style=\"background: var(--pri"
+      },
+      {
+       "cle": "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE",
+       "exact": "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE — ce qui y est saisi DISPARAÎT, sans message : ⏎ - composants/Historique.tsx : un écran « historique » ⏎ Un rangement du navigateur N’EST PAS une base : il ne suit ni un autre appareil, ni un vidage de cache, et il se perd sans prévenir."
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE",
+       "exact": "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE — ce qui y est saisi DISPARAÎT, sans message : ⏎ - composants/Historique.tsx : un écran « historique » ⏎ Un rangement du navigateur N’EST PAS une base : il ne suit ni un autre appareil, ni un vidage de cache, et il se perd sans prévenir."
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [
+      {
+       "cle": "PERSISTANCE (au moins une table non lue/écrite)",
+       "exact": "(reconstitué depuis les verdicts conservés)"
+      }
+     ],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE"
+     ],
+     "nouvelle": [],
+     "corrigee": [
+      "DES CONTRÔLES SANS NOM LISIBLE"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [],
+     "nouvelle": [
+      "PERSISTANCE (au moins une table non lue/écrite)"
+     ],
+     "corrigee": [
+      "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "15158240-c5c6-4bf6-b8d0-218eb2cb4301",
+   "date": "2026-11-04",
+   "nbTours": 2,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue avant de rendre quoi que ce soit : ⏎ - import : supabaseUrl is required. (at Sn (data:text/javascript;base64,Ly8jcmVnaW9uIFwwcm9sbGRvd24vcnVudGltZS5qcwp2YXIgX19jcmVhdGUgPSBPYmplY3QuY3JlYXRlOwp2YXIgX19kZWZQcm9wID0gT2JqZWN0LmRlZmlu"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "L'APPLICATION NE SE MONTE PAS"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "faa9f0c3-51fa-4a82-b74b-5012d390d717",
+   "date": "2026-11-04",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - mobile money : déclarée hors périmètre alors que le cahier y insiste 10 fois — trop central pour être écarté sans l’accord du client ⏎ Couvre-les, ou déclare-les dans PERIMETRE.md avec un motif d’une ligne. Le silence e"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées : ⏎ - mobile money : déclarée hors périmètre alors que le cahier y insiste 10 fois — trop central pour être écarté sans l’accord du client ⏎ Couvre-les, ou déclare-les dans PERIMETRE.md avec un motif d’une ligne. Le silence e"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [
+      {
+       "cle": "DES EXIGENCES DU CAHIER SONT MUETTES",
+       "exact": "(reconstitué depuis les verdicts conservés)"
+      }
+     ],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "nouvelle": [],
+     "corrigee": [],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "d3ece28a-7cf6-4560-b96d-3ef0943c6f07",
+   "date": "2026-11-05",
+   "nbTours": 2,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES CONTRÔLES MORTS",
+       "exact": "DES CONTRÔLES MORTS — un écran qui a l’air de fonctionner et ne fait rien : ⏎ - composants/Application.tsx : bouton au gestionnaire VIDE — la photo d'un contrôle, pas un contrôle → <button style={styleActif} onClick={() => {}}> ⏎ - composants/Application.tsx : bouton au gestionnaire VIDE — la photo "
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "DES CONTRÔLES MORTS"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "cec8bddf-5c25-474f-909d-4cc6198848ed",
+   "date": "2026-11-05",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES JETONS QUI N’EXISTENT PAS",
+       "exact": "DES JETONS QUI N’EXISTENT PAS — l’application MOURRAIT au démarrage (mesuré : undefined.fontSize sur un tir réel) : ⏎ - composants/Application.tsx : ESPACE.moyen — ce qui existe : xs, s, m, l, xl, xxl ⏎ - composants/Application.tsx : ESPACE.petit — ce qui existe : xs, s, m, l, xl, xxl"
+      },
+      {
+       "cle": "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE",
+       "exact": "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE — ce qui y est saisi DISPARAÎT, sans message : ⏎ - composants/EcranHistorique.tsx : un écran « historique » ⏎ Un rangement du navigateur N’EST PAS une base : il ne suit ni un autre appareil, ni un vidage de cache, et il se perd sans prévenir."
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE",
+       "exact": "DERNIER TOUR. CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE — ce qui y est saisi DISPARAÎT, sans message : ⏎ - composants/EcranHistorique.tsx : un écran « historique » ⏎ Un rangement du navigateur N’EST PAS une base : il ne suit ni un autre appareil, ni un vidage de cache, et il se perd san"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [
+      {
+       "cle": "PERSISTANCE (au moins une table non lue/écrite)",
+       "exact": "(reconstitué depuis les verdicts conservés)"
+      }
+     ],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE"
+     ],
+     "nouvelle": [],
+     "corrigee": [
+      "DES JETONS QUI N’EXISTENT PAS"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [],
+     "nouvelle": [
+      "PERSISTANCE (au moins une table non lue/écrite)"
+     ],
+     "corrigee": [
+      "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "272fa964-c702-4db9-be80-51156863b3da",
+   "date": "2026-11-06",
+   "nbTours": 2,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue avant de rendre quoi que ce soit : ⏎ - rejet : navigator.locks.request est refusé dans un cadre isolé (origine opaque) : les Web Locks exigent une origine non opaque. (at Object.request (file:///var/task/apps/web/.next/server/ass"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "L'APPLICATION NE SE MONTE PAS"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    }
+   ]
+  },
+  {
+   "id": "ba20655a-f30b-4325-8094-8f4460d5c088",
+   "date": "2026-11-06",
+   "nbTours": 1,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": true,
+     "classes": [],
+     "note": "accepté sans reproche (rang < 3)"
+    }
+   ],
+   "transitions": []
+  },
+  {
+   "id": "35ed32c1-86c6-4f1e-b082-02e108cb134b",
+   "date": "2026-11-06",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue avant de rendre quoi que ce soit : ⏎ - import : Cannot read properties of undefined (reading 'url') (at data:text/javascript;base64,Ly8jcmVnaW9uIFwwcm9sbGRvd24vcnVudGltZS5qcwp2YXIgX19jcmVhdGUgPSBPYmplY3QuY3JlYXRlOwp2YXIgX19kZWZQc"
+      },
+      {
+       "cle": "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+       "exact": "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE — ce qui y est saisi DISPARAÎT au rechargement, sans message : ⏎ - membre : ni lue ni écrite — cette table n’existe que dans le schéma ⏎ - annonce : ni lue ni écrite — cette table n’existe que dans le schéma"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+       "exact": "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE — ce qui y est saisi DISPARAÎT au rechargement, sans message : ⏎ - membre : ni lue ni écrite — cette table n’existe que dans le schéma ⏎ - annonce : ni lue ni écrite — cette table n’existe que dans le schéma"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [
+      {
+       "cle": "PERSISTANCE (au moins une table non lue/écrite)",
+       "exact": "(reconstitué depuis les verdicts conservés)"
+      }
+     ],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE"
+     ],
+     "nouvelle": [],
+     "corrigee": [
+      "L'APPLICATION NE SE MONTE PAS"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [],
+     "nouvelle": [
+      "PERSISTANCE (au moins une table non lue/écrite)"
+     ],
+     "corrigee": [
+      "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "97244e75-5ad5-458c-a185-143b7868ec84",
+   "date": "2026-11-06",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue avant de rendre quoi que ce soit : ⏎ - import : Cannot read properties of undefined (reading 'url') (at data:text/javascript;base64,Ly8jcmVnaW9uIFwwcm9sbGRvd24vcnVudGltZS5qcwp2YXIgX19jcmVhdGUgPSBPYmplY3QuY3JlYXRlOwp2YXIgX19kZWZQc"
+      },
+      {
+       "cle": "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+       "exact": "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION — mesuré en montant ton application sans session : ⏎ - « annonce » est LUE ET AFFICHÉE par ta face publique, sans connexion. Déclare-la publique : rends un fichier DONNEES.json qui redéclare « annonce » avec \"lecturePublique\": true. Sinon la base ref"
+      },
+      {
+       "cle": "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE",
+       "exact": "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE — mesuré : deux montages, l'un où la base refuse, l'autre où elle rend zéro ligne, et le MÊME texte à l'écran. ⏎ Ton code fait `if (!error && data)` : sur un refus, il ne se passe RIEN et l'écran affiche « aucun élément ». Le visiteur"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+       "exact": "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION — mesuré en montant ton application sans session : ⏎ - « annonce » est LUE ET AFFICHÉE par ta face publique, sans connexion. Déclare-la publique : rends un fichier DONNEES.json qui redéclare « annonce » avec \"lecturePublique\": true. Sinon la base ref"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION"
+     ],
+     "nouvelle": [],
+     "corrigee": [
+      "L'APPLICATION NE SE MONTE PAS",
+      "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [],
+     "nouvelle": [],
+     "corrigee": [
+      "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "27ba05fb-23bf-4f95-9f93-3175d944e2b4",
+   "date": "2026-11-12",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "DES JETONS QUI N’EXISTENT PAS",
+       "exact": "DES JETONS QUI N’EXISTENT PAS — l’application MOURRAIT au démarrage (mesuré : undefined.fontSize sur un tir réel) : ⏎ - composants/PublicPage.tsx : ESPACE.grand — ce qui existe : xs, s, m, l, xl, xxl ⏎ - composants/PublicPage.tsx : ESPACE.moyen — ce qui existe : xs, s, m, l, xl, xxl"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue avant de rendre quoi que ce soit : ⏎ - import : Cannot read properties of undefined (reading 'url') (at data:text/javascript;base64,Ly8jcmVnaW9uIFwwcm9sbGRvd24vcnVudGltZS5qcwp2YXIgX19jcmVhdGUgPSBPYmplY3QuY3JlYXRlOwp2YXIgX19kZWZQc"
+      },
+      {
+       "cle": "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+       "exact": "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION — mesuré en montant ton application sans session : ⏎ - « horaire » est LUE au montage mais n'est affichée QU'APRÈS la connexion. Ne la déclare PAS publique — ce serait ouvrir à tout le monde des données réservées. Charge-la seulement une fois la sess"
+      },
+      {
+       "cle": "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE",
+       "exact": "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE — mesuré : deux montages, l'un où la base refuse, l'autre où elle rend zéro ligne, et le MÊME texte à l'écran. ⏎ Ton code fait `if (!error && data)` : sur un refus, il ne se passe RIEN et l'écran affiche « aucun élément ». Le visiteur"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "(reconstitué depuis les verdicts conservés)"
+      }
+     ],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [],
+     "nouvelle": [
+      "L'APPLICATION NE SE MONTE PAS",
+      "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+      "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE"
+     ],
+     "corrigee": [
+      "DES JETONS QUI N’EXISTENT PAS"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [
+      "L'APPLICATION NE SE MONTE PAS"
+     ],
+     "nouvelle": [],
+     "corrigee": [
+      "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+      "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  },
+  {
+   "id": "f1b753a6-4de4-44ef-a688-36839d253d88",
+   "date": "2026-11-12",
+   "nbTours": 3,
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue avant de rendre quoi que ce soit : ⏎ - espace de gestion — console : object is not iterable (cannot read property Symbol(Symbol.iterator)) ⏎ - espace de gestion — console : [section en erreur] object is not iterable (cannot read "
+      },
+      {
+       "cle": "DES CONTRÔLES SANS NOM LISIBLE",
+       "exact": "DES CONTRÔLES SANS NOM LISIBLE — rendus, liés, et pourtant inutilisables : personne ne sait ce qu’ils font : ⏎ - <button> : <button type=\"button\" style=\"width: 76px; display: flex; flex-direction: column; align-items: center; gap: 4px ⏎ - <button> : <button type=\"button\" style=\"width: 76px; display:"
+      },
+      {
+       "cle": "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+       "exact": "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE — ce qui y est saisi DISPARAÎT au rechargement, sans message : ⏎ - medicament : ni lue ni écrite — cette table n’existe que dans le schéma ⏎ - entree_stock : ni lue ni écrite — cette table n’existe que dans le schéma"
+      },
+      {
+       "cle": "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+       "exact": "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION — mesuré en montant ton application sans session : ⏎ - « horaire » est LUE au montage mais n'est affichée QU'APRÈS la connexion. Ne la déclare PAS publique — ce serait ouvrir à tout le monde des données réservées. Charge-la seulement une fois la sess"
+      },
+      {
+       "cle": "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE",
+       "exact": "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE — mesuré : deux montages, l'un où la base refuse, l'autre où elle rend zéro ligne, et le MÊME texte à l'écran. ⏎ Ton code fait `if (!error && data)` : sur un refus, il ne se passe RIEN et l'écran affiche « aucun élément ». Le visiteur"
+      }
+     ]
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue avant de rendre quoi que ce soit : ⏎ - espace de gestion — console : object is not iterable (cannot read property Symbol(Symbol.iterator)) ⏎ - espace de gestion — console : [section en erreur] object is not iterable (cannot read "
+      },
+      {
+       "cle": "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+       "exact": "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE — ce qui y est saisi DISPARAÎT au rechargement, sans message : ⏎ - medicament : lue, jamais écrite — la saisie ne part nulle part, et personne ne le voit ⏎ - entree_stock : ni lue ni écrite — cette table n’existe que dans le schéma"
+      },
+      {
+       "cle": "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+       "exact": "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION — mesuré en montant ton application sans session : ⏎ - « horaire » est LUE au montage mais n'est affichée QU'APRÈS la connexion. Ne la déclare PAS publique — ce serait ouvrir à tout le monde des données réservées. Charge-la seulement une fois la sess"
+      }
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "livreAuDernierTour": true,
+     "classes": [
+      {
+       "cle": "L'APPLICATION NE SE MONTE PAS",
+       "exact": "(reconstitué depuis les verdicts conservés)"
+      }
+     ],
+     "inconnu": [
+      "faces (non conservé)",
+      "gestion (non conservé)"
+     ]
+    }
+   ],
+   "transitions": [
+    {
+     "de": 1,
+     "vers": 2,
+     "meme": [
+      "L'APPLICATION NE SE MONTE PAS",
+      "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+      "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION"
+     ],
+     "nouvelle": [],
+     "corrigee": [
+      "DES CONTRÔLES SANS NOM LISIBLE",
+      "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": false
+    },
+    {
+     "de": 2,
+     "vers": 3,
+     "meme": [
+      "L'APPLICATION NE SE MONTE PAS"
+     ],
+     "nouvelle": [],
+     "corrigee": [
+      "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+      "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION"
+     ],
+     "detailBuild": null,
+     "versDernierTourReconstitue": true
+    }
+   ]
+  }
+ ]
+}

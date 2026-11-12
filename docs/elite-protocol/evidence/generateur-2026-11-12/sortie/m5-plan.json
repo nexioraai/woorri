@@ -1,0 +1,77 @@
+{
+ "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
+ "plan": [
+  {
+   "id": "f1b753a6-4de4-44ef-a688-36839d253d88",
+   "date": "2026-11-12",
+   "entites": 6,
+   "refusTour1": [
+    "L'APPLICATION NE SE MONTE PAS",
+    "DES CONTRÔLES SANS NOM LISIBLE",
+    "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+    "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+    "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE"
+   ],
+   "observe": {
+    "entree": 40101,
+    "sortie": 66940,
+    "coutDeepseekPaye": 0.159
+   },
+   "estimation": {
+    "A_anthropic_central": 1.874,
+    "A_anthropic_plafond": 3,
+    "T_deepseek_central": 0.318,
+    "T_deepseek_plafond": 0.94
+   },
+   "demande": "Une pharmacie à N'Djamena : les médicaments (nom, prix, quantité en stock, date d'expiration, catégorie, emplacement dans la pharmacie), les entrées de stock (médicament, quantité, date, fournisseur), les sorties de stock (médicament, quantité, date, motif : vente, périmé ou perte), les ventes (médicament, quantité, date, payée ou non), les fournisseurs et les clients. Un espace de gestion derrière connexion et une page publique avec les médicaments disponibles et les horaires.\n\noui appli"
+  },
+  {
+   "id": "97244e75-5ad5-458c-a185-143b7868ec84",
+   "date": "2026-11-06",
+   "entites": 2,
+   "refusTour1": [
+    "L'APPLICATION NE SE MONTE PAS",
+    "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+    "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE"
+   ],
+   "observe": {
+    "entree": 30372,
+    "sortie": 34837,
+    "coutDeepseekPaye": 0.089
+   },
+   "estimation": {
+    "A_anthropic_central": 1.023,
+    "A_anthropic_plafond": 2.86,
+    "T_deepseek_central": 0.178,
+    "T_deepseek_plafond": 0.9
+   },
+   "demande": "Je veux une application pour gérer une association.\n\nUn espace de gestion, derrière connexion, où je tiens la liste des membres :\nnom, téléphone, date d'inscription. Je peux ajouter, corriger, supprimer.\n\nEt une page publique qui affiche les annonces de l'association."
+  },
+  {
+   "id": "272fa964-c702-4db9-be80-51156863b3da",
+   "date": "2026-11-06",
+   "entites": 0,
+   "refusTour1": [
+    "L'APPLICATION NE SE MONTE PAS"
+   ],
+   "observe": {
+    "entree": 8586,
+    "sortie": 19042,
+    "coutDeepseekPaye": 0.0434
+   },
+   "estimation": {
+    "A_anthropic_central": 0.519,
+    "A_anthropic_plafond": 2.53,
+    "T_deepseek_central": 0.087,
+    "T_deepseek_plafond": 0.81
+   },
+   "demande": "oui cest bien une application"
+  }
+ ],
+ "totaux": {
+  "A_central": 3.42,
+  "A_plafond": 8.39,
+  "T_central": 0.58,
+  "T_plafond": 2.65
+ }
+}

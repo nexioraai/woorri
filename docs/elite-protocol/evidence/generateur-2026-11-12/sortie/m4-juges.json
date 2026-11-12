@@ -1,0 +1,301 @@
+{
+ "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
+ "ecransNavigation": [
+  {
+   "id": "f1b753a6-4de4-44ef-a688-36839d253d88",
+   "livree": true,
+   "ecrans": 8,
+   "ecransErreurNavigation": 6
+  }
+ ],
+ "toursRefuses": 53,
+ "juges": [
+  {
+   "fichier": "juge-bandeau.ts",
+   "fonctions": [
+    "jugerBandeau"
+   ],
+   "titre": "NON BRANCHÉ DANS LA BOUCLE — et il ne protège donc RIEN aujourd'hui.",
+   "cree": "2026-11-05T18:45:39-05:00",
+   "brancheDansLaBoucle": false,
+   "generationsExposees": 0,
+   "toursRefusesAttribues": 0,
+   "intitulesObserves": []
+  },
+  {
+   "fichier": "juge-contrat.ts",
+   "fonctions": [
+    "jugerContrat"
+   ],
+   "titre": "LE JUGE DU CONTRAT DES COMPOSANTS — les réglages qu'un composant fourni",
+   "cree": "2026-11-12T15:38:46-05:00",
+   "brancheDansLaBoucle": true,
+   "generationsExposees": 1,
+   "toursRefusesAttribues": 0,
+   "intitulesObserves": []
+  },
+  {
+   "fichier": "juge-couverture.ts",
+   "fonctions": [
+    "jugerCouverture"
+   ],
+   "titre": "LE JUGE DE COUVERTURE — le silence est interdit.",
+   "cree": "2026-10-31T09:43:01-04:00",
+   "brancheDansLaBoucle": true,
+   "generationsExposees": 25,
+   "toursRefusesAttribues": 14,
+   "intitulesObserves": [
+    "DES EXIGENCES DU CAHIER SONT MUETTES"
+   ]
+  },
+  {
+   "fichier": "juge-devise.ts",
+   "fonctions": [
+    "jugerDevise"
+   ],
+   "titre": "LE JUGE DE DEVISE — l'argent parle la devise du client, aucune autre.",
+   "cree": "2026-10-31T10:08:06-04:00",
+   "brancheDansLaBoucle": true,
+   "generationsExposees": 25,
+   "toursRefusesAttribues": 0,
+   "intitulesObserves": []
+  },
+  {
+   "fichier": "juge-execution.ts",
+   "fonctions": [
+    "jugerExecution"
+   ],
+   "titre": "LE JUGE D'EXÉCUTION — « ça démarre » rejoint les critères d'acceptation.",
+   "cree": "2026-10-31T15:28:03-04:00",
+   "brancheDansLaBoucle": true,
+   "generationsExposees": 24,
+   "toursRefusesAttribues": 14,
+   "intitulesObserves": [
+    "L'APPLICATION NE SE MONTE PAS",
+    "DES CONTRÔLES SANS NOM LISIBLE"
+   ]
+  },
+  {
+   "fichier": "juge-faces.ts",
+   "fonctions": [
+    "jugerFaces"
+   ],
+   "titre": "J1 · LES DEUX FACES, MESURÉES EN MONTANT L'ŒUVRE SANS SESSION.",
+   "cree": "2026-11-06T09:22:48-05:00",
+   "brancheDansLaBoucle": true,
+   "generationsExposees": 3,
+   "toursRefusesAttribues": 8,
+   "intitulesObserves": [
+    "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+    "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE"
+   ]
+  },
+  {
+   "fichier": "juge-gestion.ts",
+   "fonctions": [
+    "jugerGestion"
+   ],
+   "titre": "A2 · LE JUGE DE LA GESTION — une table qu'on ne peut que remplir.",
+   "cree": "2026-11-05T19:00:07-05:00",
+   "brancheDansLaBoucle": true,
+   "generationsExposees": 6,
+   "toursRefusesAttribues": 0,
+   "intitulesObserves": []
+  },
+  {
+   "fichier": "juge-jetons.ts",
+   "fonctions": [
+    "jugerJetons"
+   ],
+   "titre": "LE JUGE DES JETONS — un nom qui n'existe pas ne part plus en production,",
+   "cree": "2026-10-31T15:28:03-04:00",
+   "brancheDansLaBoucle": true,
+   "generationsExposees": 24,
+   "toursRefusesAttribues": 5,
+   "intitulesObserves": [
+    "DES JETONS QUI N’EXISTENT PAS"
+   ]
+  },
+  {
+   "fichier": "juge-navigateur.ts",
+   "fonctions": [
+    "jugerNavigateur"
+   ],
+   "titre": "NON BRANCHÉ DANS LA BOUCLE — et c'est voulu (EP-361).",
+   "cree": "2026-11-05T06:27:25-05:00",
+   "brancheDansLaBoucle": false,
+   "generationsExposees": 0,
+   "toursRefusesAttribues": 0,
+   "intitulesObserves": []
+  },
+  {
+   "fichier": "juge-persistance.ts",
+   "fonctions": [
+    "jugerPersistance"
+   ],
+   "titre": "LE JUGE DE LA PERSISTANCE — chaque table déclarée se lit ET s'écrit.",
+   "cree": "2026-11-03T01:24:50-05:00",
+   "brancheDansLaBoucle": true,
+   "generationsExposees": 15,
+   "toursRefusesAttribues": 10,
+   "intitulesObserves": [
+    "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE",
+    "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE"
+   ]
+  },
+  {
+   "fichier": "juge-vivacite.ts",
+   "fonctions": [
+    "jugerVivacite"
+   ],
+   "titre": "LE JUGE DE VIVACITÉ — un écran qui a l'air de fonctionner et ne fait rien",
+   "cree": "2026-10-31T09:43:01-04:00",
+   "brancheDansLaBoucle": true,
+   "generationsExposees": 25,
+   "toursRefusesAttribues": 1,
+   "intitulesObserves": [
+    "DES CONTRÔLES MORTS"
+   ]
+  }
+ ],
+ "intitules": [
+  {
+   "intitule": "CONSTRUCTION",
+   "toursRefuses": 20,
+   "generations": 9,
+   "exposees": 33,
+   "ecritDans": [
+    "lib/apps/boucle-directe.ts"
+   ],
+   "conditionDansLaBoucle": "branche « sinon » de if (v.ok), après const v = await assembler(carte)",
+   "introduit": "2026-10-18T17:53:32-04:00 47837412",
+   "juge": "ASSEMBLAGE (bac-a-sable.ts › assembler)"
+  },
+  {
+   "intitule": "DES EXIGENCES DU CAHIER SONT MUETTES",
+   "toursRefuses": 14,
+   "generations": 9,
+   "exposees": 25,
+   "ecritDans": [
+    "lib/apps/boucle-directe.ts"
+   ],
+   "conditionDansLaBoucle": "if (couverture.absentes.length > 0) {",
+   "introduit": "2026-10-31T09:43:01-04:00 b8114817",
+   "juge": "juge-couverture.ts"
+  },
+  {
+   "intitule": "L'APPLICATION NE SE MONTE PAS",
+   "toursRefuses": 11,
+   "generations": 9,
+   "exposees": 19,
+   "ecritDans": [
+    "lib/apps/boucle-directe.ts"
+   ],
+   "conditionDansLaBoucle": "if (execution !== null && execution.indisponible === undefined && !execution.monteDansSimulateur) {",
+   "introduit": "2026-11-01T05:25:23-05:00 d2d109a3",
+   "juge": "juge-execution.ts"
+  },
+  {
+   "intitule": "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE",
+   "toursRefuses": 6,
+   "generations": 3,
+   "exposees": 14,
+   "ecritDans": [
+    "lib/apps/juge-persistance.ts"
+   ],
+   "conditionDansLaBoucle": null,
+   "introduit": "2026-11-04T09:16:39-05:00 7d4a3777",
+   "juge": "juge-persistance.ts"
+  },
+  {
+   "intitule": "DES JETONS QUI N’EXISTENT PAS",
+   "toursRefuses": 5,
+   "generations": 5,
+   "exposees": 24,
+   "ecritDans": [
+    "lib/apps/boucle-directe.ts"
+   ],
+   "conditionDansLaBoucle": "if (jetons.length > 0) {",
+   "introduit": "2026-10-31T15:28:03-04:00 43090fd6",
+   "juge": "juge-jetons.ts"
+  },
+  {
+   "intitule": "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+   "toursRefuses": 5,
+   "generations": 3,
+   "exposees": 3,
+   "ecritDans": [
+    "lib/apps/juge-faces.ts"
+   ],
+   "conditionDansLaBoucle": null,
+   "introduit": "2026-11-06T09:22:48-05:00 29d082c9",
+   "juge": "juge-faces.ts"
+  },
+  {
+   "intitule": "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+   "toursRefuses": 4,
+   "generations": 2,
+   "exposees": 15,
+   "ecritDans": [
+    "lib/apps/juge-persistance.ts"
+   ],
+   "conditionDansLaBoucle": null,
+   "introduit": "2026-11-03T01:24:50-05:00 8902959e",
+   "juge": "juge-persistance.ts"
+  },
+  {
+   "intitule": "DES CONTRÔLES SANS NOM LISIBLE",
+   "toursRefuses": 3,
+   "generations": 3,
+   "exposees": 23,
+   "ecritDans": [
+    "lib/apps/boucle-directe.ts"
+   ],
+   "conditionDansLaBoucle": "if ((execution?.controlesMuets ?? []).length > 0) {",
+   "introduit": "2026-11-01T03:32:52-05:00 29fd2147",
+   "juge": "juge-execution.ts"
+  },
+  {
+   "intitule": "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE",
+   "toursRefuses": 3,
+   "generations": 3,
+   "exposees": 3,
+   "ecritDans": [
+    "lib/apps/juge-faces.ts"
+   ],
+   "conditionDansLaBoucle": null,
+   "introduit": "2026-11-06T09:22:48-05:00 29d082c9",
+   "juge": "juge-faces.ts"
+  },
+  {
+   "intitule": "DES CONTRÔLES MORTS",
+   "toursRefuses": 1,
+   "generations": 1,
+   "exposees": 25,
+   "ecritDans": [
+    "lib/apps/boucle-directe.ts"
+   ],
+   "conditionDansLaBoucle": "if (vivacite.length > 0) {",
+   "introduit": "2026-10-31T09:43:01-04:00 b8114817",
+   "juge": "juge-vivacite.ts"
+  }
+ ],
+ "coOccurrences": {
+  "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION ⟷ L'APPLICATION NE SE MONTE PAS": 4,
+  "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE ⟷ L'APPLICATION NE SE MONTE PAS": 3,
+  "L'APPLICATION NE SE MONTE PAS ⟷ UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE": 3,
+  "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION ⟷ UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE": 3,
+  "DES EXIGENCES DU CAHIER SONT MUETTES ⟷ DES JETONS QUI N’EXISTENT PAS": 2,
+  "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE ⟷ L'APPLICATION NE SE MONTE PAS": 2,
+  "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE ⟷ DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION": 2,
+  "DES CONTRÔLES SANS NOM LISIBLE ⟷ DES EXIGENCES DU CAHIER SONT MUETTES": 1,
+  "DES EXIGENCES DU CAHIER SONT MUETTES ⟷ L'APPLICATION NE SE MONTE PAS": 1,
+  "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE ⟷ DES CONTRÔLES SANS NOM LISIBLE": 1,
+  "CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE ⟷ DES JETONS QUI N’EXISTENT PAS": 1,
+  "DES CONTRÔLES SANS NOM LISIBLE ⟷ L'APPLICATION NE SE MONTE PAS": 1,
+  "DES CONTRÔLES SANS NOM LISIBLE ⟷ DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE": 1,
+  "DES CONTRÔLES SANS NOM LISIBLE ⟷ DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION": 1,
+  "DES CONTRÔLES SANS NOM LISIBLE ⟷ UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE": 1,
+  "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE ⟷ UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE": 1
+ }
+}

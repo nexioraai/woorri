@@ -1,0 +1,1050 @@
+{
+ "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
+ "definition": "tour accepté ET execution.erreurs = [] ET persistance = []",
+ "resume": {
+  "retenues": 21,
+  "mediane_lignesModele": 881,
+  "min_lignes": 314,
+  "max_lignes": 1873,
+  "mediane_composants": 7,
+  "mediane_ecransDistincts": 4,
+  "apps_1_seul_ecran_distinct": 2,
+  "apps_sans_ecran_enregistre": 6,
+  "apps_avec_tables": 6,
+  "apps_tables_inconnues": 12,
+  "apps_zero_table_mesure": 3,
+  "accueil_avec_marqueurVide": 2,
+  "mediane_signes_accueil": 164,
+  "avant_2026_11_04": {
+   "n": 12,
+   "mediane_lignes": 1268,
+   "mediane_signes_accueil": 702,
+   "mediane_ecransDistincts": 10
+  },
+  "depuis_2026_11_04": {
+   "n": 9,
+   "mediane_lignes": 466,
+   "mediane_signes_accueil": 114,
+   "mediane_ecransDistincts": 2
+  },
+  "longueur_mediane_cahier_avant": 22866,
+  "longueur_mediane_cahier_depuis": 268
+ },
+ "apps": [
+  {
+   "id": "4a6e160d-1867-463b-8e99-d0fb4f2c8270",
+   "date": "2026-10-19",
+   "tourLivre": 1,
+   "tables": null,
+   "fichiersModele": 2,
+   "lignesModele": 1873,
+   "composants": 9,
+   "ecransDistincts": null,
+   "ecransVisites": null,
+   "ecransDecouverts": null,
+   "ecransEnregistres": 0,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": null,
+   "octetsRendus": null,
+   "ecrans": []
+  },
+  {
+   "id": "cbf1cb34-f806-4c8c-8723-5702ff730ae0",
+   "date": "2026-10-19",
+   "tourLivre": 2,
+   "tables": null,
+   "fichiersModele": 13,
+   "lignesModele": 1461,
+   "composants": 9,
+   "ecransDistincts": null,
+   "ecransVisites": null,
+   "ecransDecouverts": null,
+   "ecransEnregistres": 0,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": null,
+   "octetsRendus": null,
+   "ecrans": []
+  },
+  {
+   "id": "7be93be8-2a0f-41f0-aa95-fecc191d94a5",
+   "date": "2026-10-30",
+   "tourLivre": 1,
+   "tables": null,
+   "fichiersModele": 6,
+   "lignesModele": 1029,
+   "composants": 12,
+   "ecransDistincts": null,
+   "ecransVisites": null,
+   "ecransDecouverts": null,
+   "ecransEnregistres": 0,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": null,
+   "octetsRendus": null,
+   "ecrans": []
+  },
+  {
+   "id": "eb7b62b5-0614-48f4-852e-bbc164e4bab4",
+   "date": "2026-10-31",
+   "tourLivre": 1,
+   "tables": null,
+   "fichiersModele": 14,
+   "lignesModele": 881,
+   "composants": 12,
+   "ecransDistincts": null,
+   "ecransVisites": null,
+   "ecransDecouverts": null,
+   "ecransEnregistres": 0,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": null,
+   "octetsRendus": null,
+   "ecrans": []
+  },
+  {
+   "id": "88c94164-b9fa-441f-9b2d-f7b93308c4ea",
+   "date": "2026-10-31",
+   "tourLivre": 3,
+   "tables": null,
+   "fichiersModele": 3,
+   "lignesModele": 767,
+   "composants": 6,
+   "ecransDistincts": null,
+   "ecransVisites": null,
+   "ecransDecouverts": null,
+   "ecransEnregistres": 0,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": null,
+   "octetsRendus": null,
+   "ecrans": []
+  },
+  {
+   "id": "52f34017-283d-46f7-a6d2-4e023c599378",
+   "date": "2026-11-01",
+   "tourLivre": 2,
+   "tables": null,
+   "fichiersModele": 3,
+   "lignesModele": 656,
+   "composants": 7,
+   "ecransDistincts": 10,
+   "ecransVisites": 24,
+   "ecransDecouverts": 66,
+   "ecransEnregistres": 0,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": null,
+   "octetsRendus": 6750,
+   "ecrans": []
+  },
+  {
+   "id": "950e1b9e-8b41-418e-b1d3-3abf61f1e904",
+   "date": "2026-11-01",
+   "tourLivre": 3,
+   "tables": null,
+   "fichiersModele": 7,
+   "lignesModele": 1093,
+   "composants": 6,
+   "ecransDistincts": 10,
+   "ecransVisites": 24,
+   "ecransDecouverts": 89,
+   "ecransEnregistres": 10,
+   "ecransAvecMarqueurVide": 2,
+   "accueil": {
+    "rang": 0,
+    "signes": 585,
+    "marqueurVide": false,
+    "exerce": true,
+    "debut": "Hayine Accueil Réservations Agent IA Profil Administration Accueil Démonstration Tableau de bord Revenus encaissés 649 5"
+   },
+   "octetsRendus": 11795,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 585,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Hayine Accueil Réservations Agent IA Profil Administration Accueil Démonstration Tableau de bord Revenus encaissés 649 5"
+    },
+    {
+     "rang": 1,
+     "signes": 557,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Hayine Accueil Réservations Agent IA Profil Administration Réservations Démonstration Gestion des réservations Toutes Pa"
+    },
+    {
+     "rang": 2,
+     "signes": 585,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Hayine Accueil Réservations Agent IA Profil Administration Accueil Démonstration Tableau de bord Revenus encaissés 649 5"
+    },
+    {
+     "rang": 3,
+     "signes": 446,
+     "marqueurVide": true,
+     "exerce": true,
+     "debut": "Hayine Accueil Réservations Agent IA Profil Administration Agent IA Démonstration Agent IA premium Vous pouvez utiliser "
+    },
+    {
+     "rang": 4,
+     "signes": 585,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Hayine Accueil Réservations Agent IA Profil Administration Accueil Démonstration Tableau de bord Revenus encaissés 649 5"
+    },
+    {
+     "rang": 5,
+     "signes": 557,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Hayine Accueil Réservations Agent IA Profil Administration Réservations Démonstration Gestion des réservations Toutes Pa"
+    },
+    {
+     "rang": 6,
+     "signes": 434,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Hayine Accueil Réservations Agent IA Profil Administration Profil Démonstration Profil et préférences Informations perso"
+    },
+    {
+     "rang": 7,
+     "signes": 585,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Hayine Accueil Réservations Agent IA Profil Administration Accueil Démonstration Tableau de bord Revenus encaissés 649 5"
+    },
+    {
+     "rang": 8,
+     "signes": 557,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Hayine Accueil Réservations Agent IA Profil Administration Réservations Démonstration Gestion des réservations Toutes Pa"
+    },
+    {
+     "rang": 9,
+     "signes": 446,
+     "marqueurVide": true,
+     "exerce": true,
+     "debut": "Hayine Accueil Réservations Agent IA Profil Administration Agent IA Démonstration Agent IA premium Vous pouvez utiliser "
+    }
+   ]
+  },
+  {
+   "id": "91381918-c3d2-44fc-8e23-24d9dcb0cabf",
+   "date": "2026-11-01",
+   "tourLivre": 2,
+   "tables": null,
+   "fichiersModele": 6,
+   "lignesModele": 1296,
+   "composants": 8,
+   "ecransDistincts": 7,
+   "ecransVisites": 16,
+   "ecransDecouverts": 59,
+   "ecransEnregistres": 7,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": {
+    "rang": 0,
+    "signes": 596,
+    "marqueurVide": false,
+    "exerce": true,
+    "debut": "Tontine Digitale Accueil Séances Cotisations Enchères Membres Trésorerie Paramètres Connecté : PRESIDENT Bienvenue, PRES"
+   },
+   "octetsRendus": 15446,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 596,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Tontine Digitale Accueil Séances Cotisations Enchères Membres Trésorerie Paramètres Connecté : PRESIDENT Bienvenue, PRES"
+    },
+    {
+     "rang": 1,
+     "signes": 254,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Tontine Digitale Accueil Séances Cotisations Enchères Membres Trésorerie Paramètres Connecté : PRESIDENT Bienvenue, PRES"
+    },
+    {
+     "rang": 2,
+     "signes": 975,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Tontine Digitale Accueil Séances Cotisations Enchères Membres Trésorerie Paramètres Connecté : PRESIDENT Bienvenue, PRES"
+    },
+    {
+     "rang": 3,
+     "signes": 436,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Tontine Digitale Accueil Séances Cotisations Enchères Membres Trésorerie Paramètres Connecté : PRESIDENT Bienvenue, PRES"
+    },
+    {
+     "rang": 4,
+     "signes": 573,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Tontine Digitale Accueil Séances Cotisations Enchères Membres Trésorerie Paramètres Connecté : PRESIDENT Bienvenue, PRES"
+    },
+    {
+     "rang": 5,
+     "signes": 747,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Tontine Digitale Accueil Séances Cotisations Enchères Membres Trésorerie Paramètres Connecté : PRESIDENT Bienvenue, PRES"
+    },
+    {
+     "rang": 6,
+     "signes": 422,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Tontine Digitale Accueil Séances Cotisations Enchères Membres Trésorerie Paramètres Connecté : PRESIDENT Bienvenue, PRES"
+    }
+   ]
+  },
+  {
+   "id": "f21071cf-9780-4382-b310-c4814217fcf3",
+   "date": "2026-11-01",
+   "tourLivre": 3,
+   "tables": null,
+   "fichiersModele": 14,
+   "lignesModele": 1268,
+   "composants": 12,
+   "ecransDistincts": 10,
+   "ecransVisites": 24,
+   "ecransDecouverts": 113,
+   "ecransEnregistres": 10,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": {
+    "rang": 0,
+    "signes": 702,
+    "marqueurVide": false,
+    "exerce": true,
+    "debut": "CPA-Tchad Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Contact Suivi Espace agent A"
+   },
+   "octetsRendus": 12712,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 702,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Contact Suivi Espace agent A"
+    },
+    {
+     "rang": 1,
+     "signes": 663,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Contact Suivi Espace agent L"
+    },
+    {
+     "rang": 2,
+     "signes": 702,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Contact Suivi Espace agent A"
+    },
+    {
+     "rang": 3,
+     "signes": 584,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Contact Suivi Espace agent N"
+    },
+    {
+     "rang": 4,
+     "signes": 702,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Contact Suivi Espace agent A"
+    },
+    {
+     "rang": 5,
+     "signes": 663,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Contact Suivi Espace agent L"
+    },
+    {
+     "rang": 6,
+     "signes": 424,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Contact Suivi Espace agent C"
+    },
+    {
+     "rang": 7,
+     "signes": 702,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Contact Suivi Espace agent A"
+    },
+    {
+     "rang": 8,
+     "signes": 663,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Contact Suivi Espace agent L"
+    },
+    {
+     "rang": 9,
+     "signes": 584,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Contact Suivi Espace agent N"
+    }
+   ]
+  },
+  {
+   "id": "fd1b4896-e074-4b8c-bd67-835175813044",
+   "date": "2026-11-01",
+   "tourLivre": 3,
+   "tables": null,
+   "fichiersModele": 5,
+   "lignesModele": 1754,
+   "composants": 13,
+   "ecransDistincts": 10,
+   "ecransVisites": 24,
+   "ecransDecouverts": 111,
+   "ecransEnregistres": 10,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": {
+    "rang": 0,
+    "signes": 1370,
+    "marqueurVide": false,
+    "exerce": true,
+    "debut": "CPA Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Recherche Contact Administration M"
+   },
+   "octetsRendus": 12922,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 1370,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Recherche Contact Administration M"
+    },
+    {
+     "rang": 1,
+     "signes": 1346,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Recherche Contact Administration P"
+    },
+    {
+     "rang": 2,
+     "signes": 1370,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Recherche Contact Administration M"
+    },
+    {
+     "rang": 3,
+     "signes": 704,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Recherche Contact Administration A"
+    },
+    {
+     "rang": 4,
+     "signes": 1370,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Recherche Contact Administration M"
+    },
+    {
+     "rang": 5,
+     "signes": 1346,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Recherche Contact Administration P"
+    },
+    {
+     "rang": 6,
+     "signes": 692,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Recherche Contact Administration T"
+    },
+    {
+     "rang": 7,
+     "signes": 1370,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Recherche Contact Administration M"
+    },
+    {
+     "rang": 8,
+     "signes": 1346,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Recherche Contact Administration P"
+    },
+    {
+     "rang": 9,
+     "signes": 704,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA Accueil La CPA Activités Produits Clients Fournisseurs Appels d’offres Actualités Recherche Contact Administration A"
+    }
+   ]
+  },
+  {
+   "id": "d09d921d-e82f-4661-9c12-df06a63358cc",
+   "date": "2026-11-01",
+   "tourLivre": 3,
+   "tables": null,
+   "fichiersModele": 12,
+   "lignesModele": 1484,
+   "composants": 10,
+   "ecransDistincts": 10,
+   "ecransVisites": 24,
+   "ecransDecouverts": 78,
+   "ecransEnregistres": 10,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": {
+    "rang": 0,
+    "signes": 640,
+    "marqueurVide": false,
+    "exerce": true,
+    "debut": "CONTERAK Accueil Saisie relevé Historique Comparaison SNE Paiements Administration Tableau de bord Hamid Abakar Mahamat "
+   },
+   "octetsRendus": 10184,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 640,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CONTERAK Accueil Saisie relevé Historique Comparaison SNE Paiements Administration Tableau de bord Hamid Abakar Mahamat "
+    },
+    {
+     "rang": 1,
+     "signes": 368,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CONTERAK Accueil Saisie relevé Historique Comparaison SNE Paiements Administration Saisie de relevé Dernier index mensue"
+    },
+    {
+     "rang": 2,
+     "signes": 640,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CONTERAK Accueil Saisie relevé Historique Comparaison SNE Paiements Administration Tableau de bord Hamid Abakar Mahamat "
+    },
+    {
+     "rang": 3,
+     "signes": 787,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CONTERAK Accueil Saisie relevé Historique Comparaison SNE Paiements Administration Historique de consommation novembre 2"
+    },
+    {
+     "rang": 4,
+     "signes": 640,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CONTERAK Accueil Saisie relevé Historique Comparaison SNE Paiements Administration Tableau de bord Hamid Abakar Mahamat "
+    },
+    {
+     "rang": 5,
+     "signes": 368,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CONTERAK Accueil Saisie relevé Historique Comparaison SNE Paiements Administration Saisie de relevé Dernier index mensue"
+    },
+    {
+     "rang": 6,
+     "signes": 277,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CONTERAK Accueil Saisie relevé Historique Comparaison SNE Paiements Administration Comparaison avec facture SNE Numéro c"
+    },
+    {
+     "rang": 7,
+     "signes": 640,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CONTERAK Accueil Saisie relevé Historique Comparaison SNE Paiements Administration Tableau de bord Hamid Abakar Mahamat "
+    },
+    {
+     "rang": 8,
+     "signes": 368,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CONTERAK Accueil Saisie relevé Historique Comparaison SNE Paiements Administration Saisie de relevé Dernier index mensue"
+    },
+    {
+     "rang": 9,
+     "signes": 787,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CONTERAK Accueil Saisie relevé Historique Comparaison SNE Paiements Administration Historique de consommation novembre 2"
+    }
+   ]
+  },
+  {
+   "id": "fa0ede2c-8db9-40eb-9fad-8ed174c14bfe",
+   "date": "2026-11-01",
+   "tourLivre": 3,
+   "tables": null,
+   "fichiersModele": 13,
+   "lignesModele": 1254,
+   "composants": 11,
+   "ecransDistincts": 10,
+   "ecransVisites": 24,
+   "ecransDecouverts": 104,
+   "ecransEnregistres": 10,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": {
+    "rang": 0,
+    "signes": 1112,
+    "marqueurVide": false,
+    "exerce": true,
+    "debut": "CPA-Tchad Plateforme institutionnelle Accueil Appels d’offres Recherche Actualités Produits Référentiels Contact Adminis"
+   },
+   "octetsRendus": 13275,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 1112,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Plateforme institutionnelle Accueil Appels d’offres Recherche Actualités Produits Référentiels Contact Adminis"
+    },
+    {
+     "rang": 1,
+     "signes": 698,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Plateforme institutionnelle Accueil Appels d’offres Recherche Actualités Produits Référentiels Contact Adminis"
+    },
+    {
+     "rang": 2,
+     "signes": 1112,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Plateforme institutionnelle Accueil Appels d’offres Recherche Actualités Produits Référentiels Contact Adminis"
+    },
+    {
+     "rang": 3,
+     "signes": 190,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Plateforme institutionnelle Accueil Appels d’offres Recherche Actualités Produits Référentiels Contact Adminis"
+    },
+    {
+     "rang": 4,
+     "signes": 1112,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Plateforme institutionnelle Accueil Appels d’offres Recherche Actualités Produits Référentiels Contact Adminis"
+    },
+    {
+     "rang": 5,
+     "signes": 698,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Plateforme institutionnelle Accueil Appels d’offres Recherche Actualités Produits Référentiels Contact Adminis"
+    },
+    {
+     "rang": 6,
+     "signes": 856,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Plateforme institutionnelle Accueil Appels d’offres Recherche Actualités Produits Référentiels Contact Adminis"
+    },
+    {
+     "rang": 7,
+     "signes": 1112,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Plateforme institutionnelle Accueil Appels d’offres Recherche Actualités Produits Référentiels Contact Adminis"
+    },
+    {
+     "rang": 8,
+     "signes": 698,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Plateforme institutionnelle Accueil Appels d’offres Recherche Actualités Produits Référentiels Contact Adminis"
+    },
+    {
+     "rang": 9,
+     "signes": 190,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "CPA-Tchad Plateforme institutionnelle Accueil Appels d’offres Recherche Actualités Produits Référentiels Contact Adminis"
+    }
+   ]
+  },
+  {
+   "id": "8a2735f0-ec78-4a8b-a320-dfc3f0d813a9",
+   "date": "2026-11-04",
+   "tourLivre": 2,
+   "tables": 0,
+   "fichiersModele": 6,
+   "lignesModele": 411,
+   "composants": 4,
+   "ecransDistincts": 3,
+   "ecransVisites": 7,
+   "ecransDecouverts": 8,
+   "ecransEnregistres": 3,
+   "ecransAvecMarqueurVide": 1,
+   "accueil": {
+    "rang": 0,
+    "signes": 109,
+    "marqueurVide": false,
+    "exerce": true,
+    "debut": "SNE Énergie Calcul Historique Calcul de consommation Index précédent Index actuel Tarif (FCFA / kWh) Calculer"
+   },
+   "octetsRendus": 2591,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 109,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "SNE Énergie Calcul Historique Calcul de consommation Index précédent Index actuel Tarif (FCFA / kWh) Calculer"
+    },
+    {
+     "rang": 1,
+     "signes": 92,
+     "marqueurVide": true,
+     "exerce": true,
+     "debut": "SNE Énergie Calcul Historique Historique des relevés Aucun relevé enregistré pour le moment."
+    },
+    {
+     "rang": 2,
+     "signes": 164,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "SNE Énergie Calcul Historique Calcul de consommation Index précédent Index actuel Tarif (FCFA / kWh) Veuillez saisir des"
+    }
+   ]
+  },
+  {
+   "id": "08a20016-c58f-40c8-8da7-0180c0ac768c",
+   "date": "2026-11-04",
+   "tourLivre": 2,
+   "tables": 1,
+   "fichiersModele": 6,
+   "lignesModele": 638,
+   "composants": 5,
+   "ecransDistincts": 1,
+   "ecransVisites": 0,
+   "ecransDecouverts": 0,
+   "ecransEnregistres": 1,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": {
+    "rang": 0,
+    "signes": 92,
+    "marqueurVide": false,
+    "exerce": false,
+    "debut": "La configuration de la base de données est manquante. L'application ne peut pas fonctionner."
+   },
+   "octetsRendus": 299,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 92,
+     "marqueurVide": false,
+     "exerce": false,
+     "debut": "La configuration de la base de données est manquante. L'application ne peut pas fonctionner."
+    }
+   ]
+  },
+  {
+   "id": "a85966bc-0165-4e6c-a6d3-669f57d5cbcb",
+   "date": "2026-11-04",
+   "tourLivre": 1,
+   "tables": 1,
+   "fichiersModele": 2,
+   "lignesModele": 430,
+   "composants": 4,
+   "ecransDistincts": 2,
+   "ecransVisites": 4,
+   "ecransDecouverts": 5,
+   "ecransEnregistres": 2,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": {
+    "rang": 0,
+    "signes": 162,
+    "marqueurVide": false,
+    "exerce": true,
+    "debut": "SNE Saisie Historique Date du relevé Index précédent Index actuel Calculer et enregistrer Aperçu sans base : les données"
+   },
+   "octetsRendus": 4319,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 162,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "SNE Saisie Historique Date du relevé Index précédent Index actuel Calculer et enregistrer Aperçu sans base : les données"
+    },
+    {
+     "rang": 1,
+     "signes": 94,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "SNE Saisie Historique Aperçu sans base : les données restent en mémoire pendant cette session."
+    }
+   ]
+  },
+  {
+   "id": "15158240-c5c6-4bf6-b8d0-218eb2cb4301",
+   "date": "2026-11-04",
+   "tourLivre": 2,
+   "tables": 1,
+   "fichiersModele": 1,
+   "lignesModele": 314,
+   "composants": 1,
+   "ecransDistincts": 3,
+   "ecransVisites": 6,
+   "ecransDecouverts": 8,
+   "ecransEnregistres": 3,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": {
+    "rang": 0,
+    "signes": 164,
+    "marqueurVide": false,
+    "exerce": true,
+    "debut": "Électricité SNE Saisir un relevé Historique Aperçu — les données restent en mémoire pendant cette session. Date Index pr"
+   },
+   "octetsRendus": 2892,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 164,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Électricité SNE Saisir un relevé Historique Aperçu — les données restent en mémoire pendant cette session. Date Index pr"
+    },
+    {
+     "rang": 1,
+     "signes": 106,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Électricité SNE Saisir un relevé Historique Aperçu — les données restent en mémoire pendant cette session."
+    },
+    {
+     "rang": 2,
+     "signes": 164,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Électricité SNE Saisir un relevé Historique Aperçu — les données restent en mémoire pendant cette session. Date Index pr"
+    }
+   ]
+  },
+  {
+   "id": "faa9f0c3-51fa-4a82-b74b-5012d390d717",
+   "date": "2026-11-04",
+   "tourLivre": 3,
+   "tables": 4,
+   "fichiersModele": 3,
+   "lignesModele": 1330,
+   "composants": 8,
+   "ecransDistincts": 2,
+   "ecransVisites": 12,
+   "ecransDecouverts": 12,
+   "ecransEnregistres": 2,
+   "ecransAvecMarqueurVide": 2,
+   "accueil": {
+    "rang": 0,
+    "signes": 158,
+    "marqueurVide": true,
+    "exerce": true,
+    "debut": "Tontine Digitale Accueil Tontines Membres Opérations Profil Nom complet Téléphone Membre sans téléphone Mandataire Aucun"
+   },
+   "octetsRendus": 7142,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 158,
+     "marqueurVide": true,
+     "exerce": true,
+     "debut": "Tontine Digitale Accueil Tontines Membres Opérations Profil Nom complet Téléphone Membre sans téléphone Mandataire Aucun"
+    },
+    {
+     "rang": 1,
+     "signes": 185,
+     "marqueurVide": true,
+     "exerce": true,
+     "debut": "Tontine Digitale Accueil Tontines Membres Opérations Profil Le nom complet est requis. Nom complet Téléphone Membre sans"
+    }
+   ]
+  },
+  {
+   "id": "d3ece28a-7cf6-4560-b96d-3ef0943c6f07",
+   "date": "2026-11-05",
+   "tourLivre": 2,
+   "tables": 0,
+   "fichiersModele": 3,
+   "lignesModele": 372,
+   "composants": 2,
+   "ecransDistincts": 2,
+   "ecransVisites": 2,
+   "ecransDecouverts": 2,
+   "ecransEnregistres": 2,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": {
+    "rang": 0,
+    "signes": 114,
+    "marqueurVide": false,
+    "exerce": true,
+    "debut": "Calcul facture Calcul de facture SNE Type de client Domestique Professionnel Index précédent Index actuel Calculer"
+   },
+   "octetsRendus": 4768,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 114,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Calcul facture Calcul de facture SNE Type de client Domestique Professionnel Index précédent Index actuel Calculer"
+    },
+    {
+     "rang": 1,
+     "signes": 160,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Calcul facture Calcul de facture SNE Type de client Domestique Professionnel Index précédent Index actuel Calculer Veuil"
+    }
+   ]
+  },
+  {
+   "id": "272fa964-c702-4db9-be80-51156863b3da",
+   "date": "2026-11-06",
+   "tourLivre": 2,
+   "tables": 0,
+   "fichiersModele": 2,
+   "lignesModele": 466,
+   "composants": 3,
+   "ecransDistincts": 2,
+   "ecransVisites": 3,
+   "ecransDecouverts": 5,
+   "ecransEnregistres": 2,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": {
+    "rang": 0,
+    "signes": 444,
+    "marqueurVide": false,
+    "exerce": true,
+    "debut": "Suivi Compteur Accueil Relevés Démonstration Mode démonstration — les données ne sont pas persistées Vue d'ensemble Dern"
+   },
+   "octetsRendus": 8490,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 444,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Suivi Compteur Accueil Relevés Démonstration Mode démonstration — les données ne sont pas persistées Vue d'ensemble Dern"
+    },
+    {
+     "rang": 1,
+     "signes": 377,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Suivi Compteur Accueil Relevés Démonstration Mode démonstration — les données ne sont pas persistées Relevés Date du rel"
+    }
+   ]
+  },
+  {
+   "id": "ba20655a-f30b-4325-8094-8f4460d5c088",
+   "date": "2026-11-06",
+   "tourLivre": 1,
+   "tables": 2,
+   "fichiersModele": 5,
+   "lignesModele": 613,
+   "composants": 3,
+   "ecransDistincts": 4,
+   "ecransVisites": 9,
+   "ecransDecouverts": 12,
+   "ecransEnregistres": 4,
+   "ecransAvecMarqueurVide": 0,
+   "accueil": {
+    "rang": 0,
+    "signes": 54,
+    "marqueurVide": false,
+    "exerce": true,
+    "debut": "Association Annonces Gestion Annonces de l'association"
+   },
+   "octetsRendus": 2861,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 54,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Association Annonces Gestion Annonces de l'association"
+    },
+    {
+     "rang": 1,
+     "signes": 135,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Association Annonces Gestion Gestion de l'association Membres Annonces Membres Ajouter Membres Nom Téléphone Date d'insc"
+    },
+    {
+     "rang": 2,
+     "signes": 54,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Association Annonces Gestion Annonces de l'association"
+    },
+    {
+     "rang": 3,
+     "signes": 164,
+     "marqueurVide": false,
+     "exerce": true,
+     "debut": "Association Annonces Gestion Gestion de l'association Membres Annonces Membres Ajouter Membres Nom Téléphone Date d'insc"
+    }
+   ]
+  },
+  {
+   "id": "97244e75-5ad5-458c-a185-143b7868ec84",
+   "date": "2026-11-06",
+   "tourLivre": 3,
+   "tables": 2,
+   "fichiersModele": 2,
+   "lignesModele": 565,
+   "composants": 7,
+   "ecransDistincts": 1,
+   "ecransVisites": 0,
+   "ecransDecouverts": 0,
+   "ecransEnregistres": 1,
+   "ecransAvecMarqueurVide": 1,
+   "accueil": {
+    "rang": 0,
+    "signes": 69,
+    "marqueurVide": true,
+    "exerce": false,
+    "debut": "Association Accueil Annonces de l'association Aucune annonce publiée."
+   },
+   "octetsRendus": 1798,
+   "ecrans": [
+    {
+     "rang": 0,
+     "signes": 69,
+     "marqueurVide": true,
+     "exerce": false,
+     "debut": "Association Accueil Annonces de l'association Aucune annonce publiée."
+    }
+   ]
+  }
+ ],
+ "horsDefinition_capture": [
+  {
+   "id": "27ba05fb-23bf-4f95-9f93-3175d944e2b4",
+   "accueilSignes": 162,
+   "accueilMarqueurVide": true,
+   "accueilTexte": "Pharmacie Aucun médicament disponible Le stock est épuisé ou aucun médicament n'est renseigné. Pharmacie Horaires non renseignés Les horaires seront affichés ici."
+  },
+  {
+   "id": "f1b753a6-4de4-44ef-a688-36839d253d88",
+   "accueilSignes": 273,
+   "accueilMarqueurVide": true,
+   "accueilTexte": "Pharmacie Pharmacie de N'Djamena Médicaments disponibles et horaires d'ouverture Médicaments disponibles Aucun médicament disponible La liste des médicaments en stock apparaîtra ici. Horaires d'ouverture Horaires non renseignés Les horaires d'ouverture seront affichés ici."
+  }
+ ]
+}
