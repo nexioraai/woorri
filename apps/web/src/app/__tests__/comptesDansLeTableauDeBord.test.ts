@@ -71,7 +71,7 @@ describe('la pastille ne dit jamais ce qu’elle n’a pas mesuré', () => {
     // (undefined) n'en produit aucune.
     expect(BORD).toMatch(/pastille\s*!==\s*undefined\s*&&\s*pastille\s*>\s*0\s*&&/)
     expect(BORD).toMatch(/pastille=\{comptesEnAttente\}/)
-    expect(BORD).toMatch(/comptesEnAttente=\{site\.ouvre_des_comptes === true \? demandesEnAttente\[site\.slug\] : undefined\}/)
+    expect(BORD).toMatch(motifTexte('comptesEnAttente={site.ouvre_des_comptes === true ? demandesEnAttente[site.slug] : undefined}'))
   })
 
   it('🔴 un échec de lecture laisse le tableau de bord ENTIER', () => {
@@ -137,7 +137,7 @@ describe('l’écran des offres suit la même frontière', () => {
     // dirait « rien à faire » avant d'avoir regardé.
     expect(BORD).toMatch(/pastille\s*!==\s*undefined\s*&&\s*pastille\s*>\s*0\s*&&/)
     expect(BORD).toMatch(/pastille=\{offresRecues\}/)
-    expect(BORD).toMatch(/offresRecues=\{site\.publishes_tenders === true \? offresEnAttente\[site\.slug\] : undefined\}/)
+    expect(BORD).toMatch(motifTexte('offresRecues={site.publishes_tenders === true ? offresEnAttente[site.slug] : undefined}'))
   })
 
   it('🔴 l’écran RELIT après chaque décision', () => {
