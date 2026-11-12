@@ -67,6 +67,7 @@ import {
   resumeEntites,
   type EntiteDeclaree,
 } from '@/lib/apps/entites-declarees';
+import type { LectureBrief } from '@/lib/apps/lecture-brief';
 
 // ETAGE 4 — le drapeau : OFF (defaut), l'UX synchrone ci-dessous reste SEULE
 // au monde ; le chemin async n'existe qu'arme consciemment. L'ecran ne fait
@@ -707,7 +708,7 @@ export default function ConversationApplication({
    */
   const deduireConfiguration = async (
     texte: string,
-  ): Promise<{ config: Configuration; entites: EntiteDeclaree[] }> => {
+  ): Promise<{ config: Configuration; entites: EntiteDeclaree[]; lecture?: LectureBrief }> => {
     try {
       const rl = await fetch('/api/generateur/lire-brief', {
         method: 'POST',
@@ -718,6 +719,7 @@ export default function ConversationApplication({
         deduites?: Record<string, unknown>;
         entites?: EntiteDeclaree[];
         entitesRefusees?: { quoi: string; motif: string }[];
+        lecture?: LectureBrief;
       };
       setEntites(dl.entites ?? []);
       setEntitesRefusees(dl.entitesRefusees ?? []);
@@ -748,6 +750,8 @@ export default function ConversationApplication({
       return {
         config: c.currency === undefined ? { ...c, currency: DEVISE_PAR_DEFAUT } : c,
         entites: lues,
+        // Le statut de la lecture VOYAGE avec, comme les entités (M6).
+        lecture: dl.lecture,
       };
     } catch {
       return { config: { currency: DEVISE_PAR_DEFAUT }, entites: [] };
@@ -786,6 +790,7 @@ export default function ConversationApplication({
       autre,
       config: lu.config,
       entites: lu.entites,
+      lecture: lu.lecture,
       dejaAffiche: true,
     });
   };
@@ -900,6 +905,7 @@ export default function ConversationApplication({
           autre: '',
           config: lu.config,
           entites: lu.entites,
+          lecture: lu.lecture,
           dejaAffiche: false,
         });
         return;
@@ -941,6 +947,9 @@ export default function ConversationApplication({
      *  l'œuvre `8a2735f0` a été livrée en « AUCUNE DONNÉE DÉCLARÉE »
      *  alors que la lecture du brief avait trouvé une table. */
     entites?: EntiteDeclaree[];
+    /** LE STATUT DE LA LECTURE DU BRIEF, passé et jamais relu (M6, 2026-11-12) :
+     *  34 générations sur 34 sans trace de ce résultat. */
+    lecture?: LectureBrief;
   }) => {
     const texte = opts.texte;
     // La note du document joint est MISE DE COTE avant d'etre effacee : si le
@@ -1053,6 +1062,7 @@ export default function ConversationApplication({
             configuration,
             nom: opts.nom ?? '',
             entites: opts.entites ?? entites,
+            lectureBrief: opts.lecture,
           }),
           signal: avorteur.signal,
         });
@@ -1317,6 +1327,7 @@ export default function ConversationApplication({
         autre: '',
         config: lu.config,
         entites: lu.entites,
+        lecture: lu.lecture,
         dejaAffiche: true,
       });
     })();
