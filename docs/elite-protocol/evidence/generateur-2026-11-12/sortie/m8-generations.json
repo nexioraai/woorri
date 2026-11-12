@@ -1,0 +1,43 @@
+{
+ "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
+ "plafond": 0.5,
+ "depense": 0.2285,
+ "generations": [
+  {
+   "etat": "a",
+   "copie": "53424b25",
+   "modifie": "M src/lib/apps/bibliotheque-ui.ts\n?? node_modules",
+   "debut": "2026-11-12T22:18:17.872Z",
+   "livree": false,
+   "interrompu": false,
+   "erreur": "Cannot read properties of undefined (reading 'replace')",
+   "ms": 143234
+  },
+  {
+   "etat": "b",
+   "copie": "158bac74",
+   "modifie": "?? node_modules",
+   "debut": "2026-11-12T22:20:43.030Z",
+   "livree": true,
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "motif": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées :"
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "motif": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées :"
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "motif": ""
+    }
+   ],
+   "fichiersSha256": "f7bcbcf004b1c8f3a09bf233319ed8f6cfea2a5aac801c6c5440823b3e80f498",
+   "ms": 342673
+  }
+ ]
+}

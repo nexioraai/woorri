@@ -79,6 +79,8 @@ propriété) · `COMPLÉTUDE` (tous les défauts de la catégorie) · `RÉSISTAN
 | Gate | Propriété | Validité | Observabilité | État |
 |---|---|---|---|---|
 | **G25** juge de navigation | **chaque entrée de menu mène à un écran valide ; aucun « Section inconnue » livré** | ❓ — n'existe pas | 🟢 les écrans visités sont déjà enregistrés par le juge d'exécution (`sections_acquises.execution.ecrans`) | ⏳ **premier juge à ajouter, après M5**. Cas-tueur **réel** disponible (règle de composition n° 3) : `f1b753a6`, livrée avec **6 écrans sur 8** disant « Section inconnue » (M4, `ecransNavigation`). Il l'aurait refusée. |
+| **G26** *(candidate)* typage strict des appels à la bibliothèque fournie | **tout appel du code généré à une fonction ou une pièce de `systeme/` respecte sa signature (ordre, type et forme des arguments), vérifié par COMPILATION** | ❓ — n'existe pas | 🟢 le code généré et les signatures sont conservés | ⏳ candidate, **non implémentée**. Constat (M5, M7) : le modèle appelle `sommeParMois(paiements, 'montant', 'date')` (les deux champs inversés), `recents(paiements, 5)` (un nombre à la place d'un nom de champ), et passe `details={[{ libelle, valeur }]}` à `CarteVedette`, qui attend `[string, string][]` — la cause **lue** de `object is not iterable` dans 3 cas sur 3 (M7). `juge-contrat` ne le voit pas : il ne lit que les **noms** des réglages des composants, ni leur forme ni les arguments des fonctions. L'assembleur ne vérifie aucun type (`juge-execution.ts`, en-tête). |
+
 
 **Note d'architecture — la boucle de trois tours (non implémentée, « pas
 maintenant »).** M1 mesure que **27 transitions sur 48 (56 %)** gardent

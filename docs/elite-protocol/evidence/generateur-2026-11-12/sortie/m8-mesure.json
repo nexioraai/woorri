@@ -1,0 +1,49 @@
+{
+ "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
+ "depense": 0.2285,
+ "lignes": [
+  {
+   "nom": "octobre (7be93be8)",
+   "demarre": true,
+   "erreurs": 0,
+   "ecransDistincts": 13,
+   "signesAccueil": 857,
+   "sectionInconnue": 0,
+   "ecransVides": 1,
+   "messages": []
+  },
+  {
+   "nom": "a)",
+   "statut": "NON LIVRÉ",
+   "erreur": "Cannot read properties of undefined (reading 'replace')"
+  },
+  {
+   "nom": "b)",
+   "statut": "livré",
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "motif": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées :"
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "motif": "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées :"
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "motif": ""
+    }
+   ],
+   "demarre": true,
+   "erreurs": 0,
+   "ecransDistincts": 10,
+   "signesAccueil": 609,
+   "sectionInconnue": 0,
+   "ecransVides": 0,
+   "messages": []
+  }
+ ]
+}

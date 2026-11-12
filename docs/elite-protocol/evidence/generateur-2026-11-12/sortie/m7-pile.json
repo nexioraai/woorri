@@ -1,0 +1,815 @@
+{
+ "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
+ "resultats": [
+  {
+   "cas": "pharmacie f1b753a6 (livrée)",
+   "adresse": "#gestion",
+   "quoi": "console",
+   "message": "object is not iterable (cannot read property Symbol(Symbol.iterator))",
+   "cadres": [
+    {
+     "fonction": "(anonyme)",
+     "ligne": 18876,
+     "colonne": 16,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1171,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "CarteVedette",
+     "ligne": 18876,
+     "colonne": 12,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1171,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "renderWithHooks",
+     "ligne": 3569,
+     "colonne": 21,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 2763,
+     "code": "nextRenderLanes = Component(props, secondArg);"
+    },
+    {
+     "fonction": "updateFunctionComponent",
+     "ligne": 4947,
+     "colonne": 15,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 4141,
+     "code": "Component = renderWithHooks(current, workInProgress, Component, nextProps, void 0, renderLanes);"
+    },
+    {
+     "fonction": "beginWork",
+     "ligne": 5337,
+     "colonne": 19,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 4531,
+     "code": "case 0: return updateFunctionComponent(current, workInProgress, workInProgress.type, workInProgress.pendingProps, renderLanes);"
+    },
+    {
+     "fonction": "performUnitOfWork",
+     "ligne": 7350,
+     "colonne": 14,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 6544,
+     "code": "var next = beginWork(unitOfWork.alternate, unitOfWork, entangledRenderLanes);"
+    },
+    {
+     "fonction": "workLoopSync",
+     "ligne": 7254,
+     "colonne": 36,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 6448,
+     "code": "for (; null !== workInProgress;) performUnitOfWork(workInProgress);"
+    },
+    {
+     "fonction": "renderRootSync",
+     "ligne": 7238,
+     "colonne": 5,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 6432,
+     "code": "workLoopSync();"
+    },
+    {
+     "fonction": "performWorkOnRoot",
+     "ligne": 7019,
+     "colonne": 35,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 6213,
+     "code": "JSCompiler_inline_result = renderRootSync(root, JSCompiler_inline_result, !1);"
+    }
+   ],
+   "pileDeComposants": []
+  },
+  {
+   "cas": "pharmacie f1b753a6 (livrée)",
+   "adresse": "#gestion",
+   "quoi": "console",
+   "message": "[section en erreur] object is not iterable (cannot read property Symbol(Symbol.iterator))",
+   "cadres": [
+    {
+     "fonction": "(anonyme)",
+     "ligne": 18876,
+     "colonne": 16,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1171,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "CarteVedette",
+     "ligne": 18876,
+     "colonne": 12,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1171,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "renderWithHooks",
+     "ligne": 3569,
+     "colonne": 21,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 2763,
+     "code": "nextRenderLanes = Component(props, secondArg);"
+    },
+    {
+     "fonction": "updateFunctionComponent",
+     "ligne": 4947,
+     "colonne": 15,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 4141,
+     "code": "Component = renderWithHooks(current, workInProgress, Component, nextProps, void 0, renderLanes);"
+    },
+    {
+     "fonction": "beginWork",
+     "ligne": 5337,
+     "colonne": 19,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 4531,
+     "code": "case 0: return updateFunctionComponent(current, workInProgress, workInProgress.type, workInProgress.pendingProps, renderLanes);"
+    },
+    {
+     "fonction": "performUnitOfWork",
+     "ligne": 7350,
+     "colonne": 14,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 6544,
+     "code": "var next = beginWork(unitOfWork.alternate, unitOfWork, entangledRenderLanes);"
+    },
+    {
+     "fonction": "workLoopSync",
+     "ligne": 7254,
+     "colonne": 36,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 6448,
+     "code": "for (; null !== workInProgress;) performUnitOfWork(workInProgress);"
+    },
+    {
+     "fonction": "renderRootSync",
+     "ligne": 7238,
+     "colonne": 5,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 6432,
+     "code": "workLoopSync();"
+    },
+    {
+     "fonction": "performWorkOnRoot",
+     "ligne": 7019,
+     "colonne": 35,
+     "region": "\\0embarque:@supabase/supabase-js",
+     "ligneDansRegion": 6213,
+     "code": "JSCompiler_inline_result = renderRootSync(root, JSCompiler_inline_result, !1);"
+    }
+   ],
+   "pileDeComposants": []
+  },
+  {
+   "cas": "rejeu M5 institution 88fc434f0e76",
+   "adresse": "accueil",
+   "quoi": "console",
+   "message": "object is not iterable (cannot read property Symbol(Symbol.iterator))",
+   "cadres": [
+    {
+     "fonction": "(anonyme)",
+     "ligne": 11154,
+     "colonne": 16,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1007,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "CarteVedette",
+     "ligne": 11154,
+     "colonne": 12,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1007,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "renderWithHooks",
+     "ligne": 3569,
+     "colonne": 21,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 2772,
+     "code": "nextRenderLanes = Component(props, secondArg);"
+    },
+    {
+     "fonction": "updateFunctionComponent",
+     "ligne": 4947,
+     "colonne": 15,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4150,
+     "code": "Component = renderWithHooks(current, workInProgress, Component, nextProps, void 0, renderLanes);"
+    },
+    {
+     "fonction": "beginWork",
+     "ligne": 5337,
+     "colonne": 19,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4540,
+     "code": "case 0: return updateFunctionComponent(current, workInProgress, workInProgress.type, workInProgress.pendingProps, renderLanes);"
+    },
+    {
+     "fonction": "performUnitOfWork",
+     "ligne": 7350,
+     "colonne": 14,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6553,
+     "code": "var next = beginWork(unitOfWork.alternate, unitOfWork, entangledRenderLanes);"
+    },
+    {
+     "fonction": "workLoopSync",
+     "ligne": 7254,
+     "colonne": 36,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6457,
+     "code": "for (; null !== workInProgress;) performUnitOfWork(workInProgress);"
+    },
+    {
+     "fonction": "renderRootSync",
+     "ligne": 7238,
+     "colonne": 5,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6441,
+     "code": "workLoopSync();"
+    },
+    {
+     "fonction": "performWorkOnRoot",
+     "ligne": 7019,
+     "colonne": 35,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6222,
+     "code": "JSCompiler_inline_result = renderRootSync(root, JSCompiler_inline_result, !1);"
+    }
+   ],
+   "pileDeComposants": []
+  },
+  {
+   "cas": "rejeu M5 institution 88fc434f0e76",
+   "adresse": "accueil",
+   "quoi": "console",
+   "message": "[section en erreur] object is not iterable (cannot read property Symbol(Symbol.iterator))",
+   "cadres": [
+    {
+     "fonction": "(anonyme)",
+     "ligne": 11154,
+     "colonne": 16,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1007,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "CarteVedette",
+     "ligne": 11154,
+     "colonne": 12,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1007,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "renderWithHooks",
+     "ligne": 3569,
+     "colonne": 21,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 2772,
+     "code": "nextRenderLanes = Component(props, secondArg);"
+    },
+    {
+     "fonction": "updateFunctionComponent",
+     "ligne": 4947,
+     "colonne": 15,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4150,
+     "code": "Component = renderWithHooks(current, workInProgress, Component, nextProps, void 0, renderLanes);"
+    },
+    {
+     "fonction": "beginWork",
+     "ligne": 5337,
+     "colonne": 19,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4540,
+     "code": "case 0: return updateFunctionComponent(current, workInProgress, workInProgress.type, workInProgress.pendingProps, renderLanes);"
+    },
+    {
+     "fonction": "performUnitOfWork",
+     "ligne": 7350,
+     "colonne": 14,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6553,
+     "code": "var next = beginWork(unitOfWork.alternate, unitOfWork, entangledRenderLanes);"
+    },
+    {
+     "fonction": "workLoopSync",
+     "ligne": 7254,
+     "colonne": 36,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6457,
+     "code": "for (; null !== workInProgress;) performUnitOfWork(workInProgress);"
+    },
+    {
+     "fonction": "renderRootSync",
+     "ligne": 7238,
+     "colonne": 5,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6441,
+     "code": "workLoopSync();"
+    },
+    {
+     "fonction": "performWorkOnRoot",
+     "ligne": 7019,
+     "colonne": 35,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6222,
+     "code": "JSCompiler_inline_result = renderRootSync(root, JSCompiler_inline_result, !1);"
+    }
+   ],
+   "pileDeComposants": []
+  },
+  {
+   "cas": "rejeu M5 institution 88fc434f0e76",
+   "adresse": "#gestion",
+   "quoi": "console",
+   "message": "object is not iterable (cannot read property Symbol(Symbol.iterator))",
+   "cadres": [
+    {
+     "fonction": "(anonyme)",
+     "ligne": 11154,
+     "colonne": 16,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1007,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "CarteVedette",
+     "ligne": 11154,
+     "colonne": 12,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1007,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "renderWithHooks",
+     "ligne": 3569,
+     "colonne": 21,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 2772,
+     "code": "nextRenderLanes = Component(props, secondArg);"
+    },
+    {
+     "fonction": "updateFunctionComponent",
+     "ligne": 4947,
+     "colonne": 15,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4150,
+     "code": "Component = renderWithHooks(current, workInProgress, Component, nextProps, void 0, renderLanes);"
+    },
+    {
+     "fonction": "beginWork",
+     "ligne": 5337,
+     "colonne": 19,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4540,
+     "code": "case 0: return updateFunctionComponent(current, workInProgress, workInProgress.type, workInProgress.pendingProps, renderLanes);"
+    },
+    {
+     "fonction": "performUnitOfWork",
+     "ligne": 7350,
+     "colonne": 14,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6553,
+     "code": "var next = beginWork(unitOfWork.alternate, unitOfWork, entangledRenderLanes);"
+    },
+    {
+     "fonction": "workLoopSync",
+     "ligne": 7254,
+     "colonne": 36,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6457,
+     "code": "for (; null !== workInProgress;) performUnitOfWork(workInProgress);"
+    },
+    {
+     "fonction": "renderRootSync",
+     "ligne": 7238,
+     "colonne": 5,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6441,
+     "code": "workLoopSync();"
+    },
+    {
+     "fonction": "performWorkOnRoot",
+     "ligne": 7019,
+     "colonne": 35,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6222,
+     "code": "JSCompiler_inline_result = renderRootSync(root, JSCompiler_inline_result, !1);"
+    }
+   ],
+   "pileDeComposants": []
+  },
+  {
+   "cas": "rejeu M5 institution 88fc434f0e76",
+   "adresse": "#gestion",
+   "quoi": "console",
+   "message": "[section en erreur] object is not iterable (cannot read property Symbol(Symbol.iterator))",
+   "cadres": [
+    {
+     "fonction": "(anonyme)",
+     "ligne": 11154,
+     "colonne": 16,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1007,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "CarteVedette",
+     "ligne": 11154,
+     "colonne": 12,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1007,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "renderWithHooks",
+     "ligne": 3569,
+     "colonne": 21,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 2772,
+     "code": "nextRenderLanes = Component(props, secondArg);"
+    },
+    {
+     "fonction": "updateFunctionComponent",
+     "ligne": 4947,
+     "colonne": 15,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4150,
+     "code": "Component = renderWithHooks(current, workInProgress, Component, nextProps, void 0, renderLanes);"
+    },
+    {
+     "fonction": "beginWork",
+     "ligne": 5337,
+     "colonne": 19,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4540,
+     "code": "case 0: return updateFunctionComponent(current, workInProgress, workInProgress.type, workInProgress.pendingProps, renderLanes);"
+    },
+    {
+     "fonction": "performUnitOfWork",
+     "ligne": 7350,
+     "colonne": 14,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6553,
+     "code": "var next = beginWork(unitOfWork.alternate, unitOfWork, entangledRenderLanes);"
+    },
+    {
+     "fonction": "workLoopSync",
+     "ligne": 7254,
+     "colonne": 36,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6457,
+     "code": "for (; null !== workInProgress;) performUnitOfWork(workInProgress);"
+    },
+    {
+     "fonction": "renderRootSync",
+     "ligne": 7238,
+     "colonne": 5,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6441,
+     "code": "workLoopSync();"
+    },
+    {
+     "fonction": "performWorkOnRoot",
+     "ligne": 7019,
+     "colonne": 35,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6222,
+     "code": "JSCompiler_inline_result = renderRootSync(root, JSCompiler_inline_result, !1);"
+    }
+   ],
+   "pileDeComposants": []
+  },
+  {
+   "cas": "rejeu M5 réservation 9ee1ca865053",
+   "adresse": "accueil",
+   "quoi": "console",
+   "message": "object is not iterable (cannot read property Symbol(Symbol.iterator))",
+   "cadres": [
+    {
+     "fonction": "(anonyme)",
+     "ligne": 11163,
+     "colonne": 16,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1016,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "CarteVedette",
+     "ligne": 11163,
+     "colonne": 12,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1016,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "renderWithHooks",
+     "ligne": 3569,
+     "colonne": 21,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 2772,
+     "code": "nextRenderLanes = Component(props, secondArg);"
+    },
+    {
+     "fonction": "updateFunctionComponent",
+     "ligne": 4947,
+     "colonne": 15,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4150,
+     "code": "Component = renderWithHooks(current, workInProgress, Component, nextProps, void 0, renderLanes);"
+    },
+    {
+     "fonction": "beginWork",
+     "ligne": 5337,
+     "colonne": 19,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4540,
+     "code": "case 0: return updateFunctionComponent(current, workInProgress, workInProgress.type, workInProgress.pendingProps, renderLanes);"
+    },
+    {
+     "fonction": "performUnitOfWork",
+     "ligne": 7350,
+     "colonne": 14,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6553,
+     "code": "var next = beginWork(unitOfWork.alternate, unitOfWork, entangledRenderLanes);"
+    },
+    {
+     "fonction": "workLoopSync",
+     "ligne": 7254,
+     "colonne": 36,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6457,
+     "code": "for (; null !== workInProgress;) performUnitOfWork(workInProgress);"
+    },
+    {
+     "fonction": "renderRootSync",
+     "ligne": 7238,
+     "colonne": 5,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6441,
+     "code": "workLoopSync();"
+    },
+    {
+     "fonction": "performWorkOnRoot",
+     "ligne": 7019,
+     "colonne": 35,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6222,
+     "code": "JSCompiler_inline_result = renderRootSync(root, JSCompiler_inline_result, !1);"
+    }
+   ],
+   "pileDeComposants": []
+  },
+  {
+   "cas": "rejeu M5 réservation 9ee1ca865053",
+   "adresse": "accueil",
+   "quoi": "console",
+   "message": "[section en erreur] object is not iterable (cannot read property Symbol(Symbol.iterator))",
+   "cadres": [
+    {
+     "fonction": "(anonyme)",
+     "ligne": 11163,
+     "colonne": 16,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1016,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "CarteVedette",
+     "ligne": 11163,
+     "colonne": 12,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1016,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "renderWithHooks",
+     "ligne": 3569,
+     "colonne": 21,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 2772,
+     "code": "nextRenderLanes = Component(props, secondArg);"
+    },
+    {
+     "fonction": "updateFunctionComponent",
+     "ligne": 4947,
+     "colonne": 15,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4150,
+     "code": "Component = renderWithHooks(current, workInProgress, Component, nextProps, void 0, renderLanes);"
+    },
+    {
+     "fonction": "beginWork",
+     "ligne": 5337,
+     "colonne": 19,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4540,
+     "code": "case 0: return updateFunctionComponent(current, workInProgress, workInProgress.type, workInProgress.pendingProps, renderLanes);"
+    },
+    {
+     "fonction": "performUnitOfWork",
+     "ligne": 7350,
+     "colonne": 14,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6553,
+     "code": "var next = beginWork(unitOfWork.alternate, unitOfWork, entangledRenderLanes);"
+    },
+    {
+     "fonction": "workLoopSync",
+     "ligne": 7254,
+     "colonne": 36,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6457,
+     "code": "for (; null !== workInProgress;) performUnitOfWork(workInProgress);"
+    },
+    {
+     "fonction": "renderRootSync",
+     "ligne": 7238,
+     "colonne": 5,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6441,
+     "code": "workLoopSync();"
+    },
+    {
+     "fonction": "performWorkOnRoot",
+     "ligne": 7019,
+     "colonne": 35,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6222,
+     "code": "JSCompiler_inline_result = renderRootSync(root, JSCompiler_inline_result, !1);"
+    }
+   ],
+   "pileDeComposants": []
+  },
+  {
+   "cas": "rejeu M5 réservation 9ee1ca865053",
+   "adresse": "#gestion",
+   "quoi": "console",
+   "message": "object is not iterable (cannot read property Symbol(Symbol.iterator))",
+   "cadres": [
+    {
+     "fonction": "(anonyme)",
+     "ligne": 11163,
+     "colonne": 16,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1016,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "CarteVedette",
+     "ligne": 11163,
+     "colonne": 12,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1016,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "renderWithHooks",
+     "ligne": 3569,
+     "colonne": 21,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 2772,
+     "code": "nextRenderLanes = Component(props, secondArg);"
+    },
+    {
+     "fonction": "updateFunctionComponent",
+     "ligne": 4947,
+     "colonne": 15,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4150,
+     "code": "Component = renderWithHooks(current, workInProgress, Component, nextProps, void 0, renderLanes);"
+    },
+    {
+     "fonction": "beginWork",
+     "ligne": 5337,
+     "colonne": 19,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4540,
+     "code": "case 0: return updateFunctionComponent(current, workInProgress, workInProgress.type, workInProgress.pendingProps, renderLanes);"
+    },
+    {
+     "fonction": "performUnitOfWork",
+     "ligne": 7350,
+     "colonne": 14,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6553,
+     "code": "var next = beginWork(unitOfWork.alternate, unitOfWork, entangledRenderLanes);"
+    },
+    {
+     "fonction": "workLoopSync",
+     "ligne": 7254,
+     "colonne": 36,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6457,
+     "code": "for (; null !== workInProgress;) performUnitOfWork(workInProgress);"
+    },
+    {
+     "fonction": "renderRootSync",
+     "ligne": 7238,
+     "colonne": 5,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6441,
+     "code": "workLoopSync();"
+    },
+    {
+     "fonction": "performWorkOnRoot",
+     "ligne": 7019,
+     "colonne": 35,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6222,
+     "code": "JSCompiler_inline_result = renderRootSync(root, JSCompiler_inline_result, !1);"
+    }
+   ],
+   "pileDeComposants": []
+  },
+  {
+   "cas": "rejeu M5 réservation 9ee1ca865053",
+   "adresse": "#gestion",
+   "quoi": "console",
+   "message": "[section en erreur] object is not iterable (cannot read property Symbol(Symbol.iterator))",
+   "cadres": [
+    {
+     "fonction": "(anonyme)",
+     "ligne": 11163,
+     "colonne": 16,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1016,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "CarteVedette",
+     "ligne": 11163,
+     "colonne": 12,
+     "region": "systeme/ui.tsx",
+     "ligneDansRegion": 1016,
+     "code": "details.map(([l, v]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(\"div\", {"
+    },
+    {
+     "fonction": "renderWithHooks",
+     "ligne": 3569,
+     "colonne": 21,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 2772,
+     "code": "nextRenderLanes = Component(props, secondArg);"
+    },
+    {
+     "fonction": "updateFunctionComponent",
+     "ligne": 4947,
+     "colonne": 15,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4150,
+     "code": "Component = renderWithHooks(current, workInProgress, Component, nextProps, void 0, renderLanes);"
+    },
+    {
+     "fonction": "beginWork",
+     "ligne": 5337,
+     "colonne": 19,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 4540,
+     "code": "case 0: return updateFunctionComponent(current, workInProgress, workInProgress.type, workInProgress.pendingProps, renderLanes);"
+    },
+    {
+     "fonction": "performUnitOfWork",
+     "ligne": 7350,
+     "colonne": 14,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6553,
+     "code": "var next = beginWork(unitOfWork.alternate, unitOfWork, entangledRenderLanes);"
+    },
+    {
+     "fonction": "workLoopSync",
+     "ligne": 7254,
+     "colonne": 36,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6457,
+     "code": "for (; null !== workInProgress;) performUnitOfWork(workInProgress);"
+    },
+    {
+     "fonction": "renderRootSync",
+     "ligne": 7238,
+     "colonne": 5,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6441,
+     "code": "workLoopSync();"
+    },
+    {
+     "fonction": "performWorkOnRoot",
+     "ligne": 7019,
+     "colonne": 35,
+     "region": "\\0embarque:react-dom/client",
+     "ligneDansRegion": 6222,
+     "code": "JSCompiler_inline_result = renderRootSync(root, JSCompiler_inline_result, !1);"
+    }
+   ],
+   "pileDeComposants": []
+  }
+ ]
+}

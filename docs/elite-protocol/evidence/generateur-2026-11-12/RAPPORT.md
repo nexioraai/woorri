@@ -368,6 +368,159 @@ tableau de bord) datent **tous du 2026-11-12** et sont **les miens** :
 
 ---
 
+## M6 · La lecture du brief, et ce qui en sort
+
+`m6-lecture-brief.mjs`, sortie `sortie/m6-lecture-brief.json`.
+
+**Ce que la base conserve.** Le **résultat** de la lecture du brief (réussie,
+illisible, JSON cassé) n'est enregistré **nulle part** : ni colonne, ni
+diagnostic, ni section. → **INCONNU pour les 34**, et il n'est pas reconstruit
+ici. Ce qui **en sort** est en revanche conservé : les tables
+(`document.entites` depuis le 2026-11-05, le schéma SQL depuis le 2026-11-04).
+La coupe à 24 000 signes, elle, se calcule depuis la longueur du cahier.
+
+**Quand « 0 table » a un sens.** Dates lues dans git :
+- `c6e6b576` (2026-11-02) : la route accepte des tables ;
+- `158bac74` (2026-11-03 23:52 UTC) : la lecture du brief en demande ;
+- `17a95453` (2026-11-04 11:23 UTC) : le client les **transmet** de façon fiable.
+
+Avant cette dernière date, « 0 table » n'est pas un échec de lecture : la
+chaîne n'existait pas encore, ou perdait ses tables (défaut écrit dans le code).
+
+| | nombre |
+|---|---|
+| générations où le résultat de la lecture est enregistré | **0 / 34** |
+| cahiers coupés à 24 000 signes | 7 / 34 (6 d'octobre, 1 du 2026-11-01), **tous avant** la mise en place de la chaîne ; **0 / 14** après |
+| générations après la mise en place de la chaîne | 14 (tables connues pour les 14) |
+
+**Croisement avec les écrans livrés** (les 14, comme en M3)
+
+| | générations | démarrent | écrans distincts (médiane) | signes de l'accueil (médiane) | accueil avec état vide |
+|---|---|---|---|---|---|
+| **0 table** | 5 | 5 | 2 | 114 | 0 |
+| **au moins 1 table** | 9 | 7 | **1** | 158 | 4 |
+
+> **Verdict sur l'hypothèse « 0 table → appli vide » : NON, pour les générations
+> de novembre en production.** Les applications **avec** des tables sont aussi
+> petites (médiane d'**1** écran) que celles qui n'en ont pas (2 écrans). « 0
+> table » ne sépare pas les applications vides des autres.
+>
+> **Mais pour les cahiers riches (M5), la lecture a bien échoué 2 fois sur 3,
+> aujourd'hui** (une réponse illisible, un JSON mal formé), et le pipeline a
+> continué sans table. Dans un cas, l'œuvre a ouvert une base inexistante
+> (`supabaseUrl is required`). Ce mécanisme est **réel**, mais ce n'est pas lui
+> qui explique les petites applications de novembre.
+
+**Fait relié, découvert en mesurant.** Depuis le **2026-11-01 23:28 UTC**
+(`fa0ede2c`), la configuration reçue par le générateur est **vide (`{}`) pour 16
+générations sur 16**, alors qu'elle portait auparavant la devise et
+l'encaissement.
+- Cause lue dans le code (`CONCL`, non corrigée) : la génération directe envoie
+  `configuration`, la **variable d'état React** initialisée à `{}`
+  (`ConversationApplication.tsx:222` et `:1053`), et non `opts.config` que la
+  lecture du brief vient de calculer. C'est la classe de défaut déjà corrigée
+  pour les tables le 2026-11-04 (« lues dans l'état, elles partaient VIDES »).
+- Conséquence mesurée : `juge-devise` n'a rien à juger quand aucune devise
+  n'est configurée. Cela concourt à son 0 refus (M4).
+- **Conséquence sur ma propre mesure M5 : elle n'était pas fidèle à la
+  production sur ce point.** Mes rejeux envoyaient `{ currency: 'XAF' }`, la
+  production envoie `{}`.
+
+---
+
+## M7 · « object is not iterable » : l'origine, LUE
+
+`m7-pile.mts` (gratuit). La pile complète est obtenue par **une copie** du
+processus enfant du juge (`m7-enfant.mjs`). Seule la capture des erreurs y
+diffère, et le `diff` est documenté en tête de la copie. Les positions du
+paquet sont ramenées à leur fichier source par les repères `//#region` de
+rolldown.
+
+| cas | adresse | pile, jusqu'au code |
+|---|---|---|
+| pharmacie `f1b753a6` (livrée) | #gestion | `CarteVedette` → `systeme/ui.tsx` : `details.map(([l, v]) => …)` |
+| rejeu institution | accueil et #gestion | idem |
+| rejeu réservation | accueil et #gestion | idem |
+
+**Ce que le modèle a passé, dans les 3 cas** :
+`details={[{ libelle: 'Payées', valeur: … }, …]}`, c'est-à-dire des **objets**.
+
+**Ce que la pièce attend** : des **paires** `[libellé, valeur]`
+(`details?: [string, string][]`), qu'elle déstructure avec `([l, v]) =>`. Un
+objet ne se déstructure pas comme un tableau : d'où `object is not iterable`.
+
+**D'où vient cette ligne** (`git blame`, `bibliotheque-ui.ts`) : la ligne
+`details.map(([l, v])` et la signature de `CarteVedette` → **`6f870335`**. Le
+type `[string, string][]` → **`1a73ce63`**. Ce sont deux de **mes** commits du
+2026-11-12.
+
+**Pourquoi aucun juge ne l'a arrêté** : la consigne enseigne
+`CarteVedette(…, details[])` sans dire la **forme** des éléments, et
+`juge-contrat` vérifie le **nom** `details`, qui existe. Il ne vérifie pas la
+forme de sa valeur. Le registre porte désormais la gate candidate **G26**.
+
+> **Verdict : l'INCONNU « origine de `object is not iterable` » est levé.**
+> 3 cas sur 3 : une pièce que j'ai écrite aujourd'hui exige une forme
+> (`[string, string][]`) que le modèle n'emploie pas (`{ libelle, valeur }[]`).
+
+---
+
+## M8 · Bissection sur le cahier institution
+
+Deux copies de travail (`git worktree`), **hors de la branche**. DeepSeek
+seulement, un essai par état. Coût **0,2285 $** (plafond 0,50 $).
+
+**Entrées tenues constantes** : le cahier institution, 0 table, devise XAF.
+Ce sont les entrées exactes du rejeu M5 « institution » ; la lecture du brief
+n'est **pas** rejouée.
+
+**Mesure** : depuis la branche de travail, avec l'instrument de M5
+(`m8-mesurer.mts`).
+
+| état | ce qu'il contient | résultat | démarre | erreurs | écrans distincts | signes de l'accueil | « Section inconnue » | écrans vides |
+|---|---|---|---|---|---|---|---|---|
+| **octobre** `7be93be8` | code livré le 2026-10-30 | accepté au tour 1 | **oui** | 0 | **13** | 857 | 0 | 1 |
+| **a)** | HEAD d'aujourd'hui, `bibliotheque-ui.ts` remise à `9cb89380` (avant mes 5 commits) | **ARRÊTÉ sans livrer** après 143 s : `Cannot read properties of undefined (reading 'replace')` | — | — | — | — | — | — |
+| **b)** | tout le dépôt à `158bac74` (2026-11-03 23:52 UTC) | livré au tour 3 (2 refus de couverture) | **oui** | 0 | **10** | 609 | 0 | 0 |
+| *rappel M5* | pipeline d'aujourd'hui complet | livré au tour 3 | **non** (`CarteVedette`) | 3 | 1 | 251 | 0 | 0 |
+
+**Contrôle de cohérence** : `bibliotheque-ui.ts` est **identique à l'octet**
+dans a) et b) (`5edfd815…`). Aucun commit n'a touché la bibliothèque entre le
+2026-11-03 et mes 5 commits. **a) et b) ne diffèrent donc que par les 48
+autres commits.**
+
+**L'arrêt de a), examiné gratuitement** (`m8-pile-a.mts`). La même copie,
+nourrie d'une réponse connue (les fichiers de b) à la place du modèle), **ne
+plante pas** et livre. L'arrêt dépend donc du **contenu de la réponse** du
+modèle pendant a). Cette réponse **n'a pas été conservée** : c'est une lacune
+de **mon** instrument, qui ne gardait les fichiers qu'en cas de succès. Elle
+est corrigée (réponses brutes et pile désormais conservées). Le générateur
+n'a pas été touché.
+
+**Lecture selon la règle du propriétaire**
+
+| condition posée | constat |
+|---|---|
+| « si a) démarre → mes commits sont suspects n° 1 » | **non applicable** : a) n'a rien livré |
+| « si b) démarre et a) non → la régression est dans les 48 autres commits » | b) **démarre**. Mais a) n'a pas « échoué à démarrer » : il n'a **pas été mesuré**. La condition n'est **pas remplie** |
+| « si rien ne démarre → antérieure ou inexistante » | **non** : b) démarre |
+
+**Ce que M8 établit malgré tout** :
+- sur ce cahier, le générateur du **3 novembre** produit une application qui
+  démarre (10 écrans) ;
+- le générateur d'**aujourd'hui complet** (M5) produit une application qui ne
+  démarre pas, et **M7 lit pourquoi** : `CarteVedette`, mes commits.
+
+Ce sont deux essais uniques, l'un contre l'autre : **le hasard d'un tirage
+n'est pas exclu**.
+
+**Ce qu'il manque pour conclure la bissection** : un passage réussi de a),
+c'est-à-dire un nouvel essai, avec cette fois la réponse brute conservée.
+Le reste du budget M8 (0,27 $) **ne suffit pas** à la garde au tarif de pointe
+(jusqu'à 0,29 $ de marge par appel). Je ne relance pas sans accord.
+
+---
+
 # PARTIE II — RÉVISION DE MON DIAGNOSTIC ORAL, AFFIRMATION PAR AFFIRMATION
 
 | ce que j'ai dit | verdict | appui |
@@ -389,7 +542,9 @@ tableau de bord) datent **tous du 2026-11-12** et sont **les miens** :
 - Les écrans de 6 applications et les tables de 12 (non enregistrés avant novembre).
 - Ce que valent les applications **avec des données** : rien de conservé ne le montre.
 - Si l'écart octobre → aujourd'hui de M5 est une régression ou le hasard d'un seul tirage par cahier.
-- Le point de départ de `object is not iterable` (aucune ligne fournie par le simulateur).
+- ~~Le point de départ de `object is not iterable`~~ → **levé par M7** : `CarteVedette`, `details.map(([l, v]))`, commits `6f870335` / `1a73ce63`.
+- Le résultat de la lecture du brief pour les 34 générations (jamais enregistré, M6).
+- La cause de l'arrêt de l'état a) en M8 (réponse du modèle non conservée).
 - Le comportement du pipeline actuel **avec des tables** sur un cahier riche : non exercé par M5.
 - Tout ce qui précède le 2026-10-18 : la base ne contient pas de génération directe plus ancienne.
 
