@@ -65,7 +65,7 @@ const NOMS: Record<string, string> = {
   image: 'Photo', photo: 'Photo', texte: 'Texte', titre: 'Titre', libelle: 'Libellé court', auteur: 'Signature',
   fonction: 'Fonction', nom: 'Nom', url: 'Adresse', alt: 'Description de la photo', legende: 'Légende',
   question: 'Question', reponse: 'Réponse', valeur: 'Valeur', date: 'Date', chemin: 'Page', lien: 'Lien',
-  detail: 'Détail', couleur: 'Couleur', logo: 'Logo', format: 'Format', poids: 'Poids', note: 'Note',
+  detail: 'Détail', couleur: 'Couleur', ton: 'Style (info, attention…)', niveau: 'Niveau', logo: 'Logo', format: 'Format', poids: 'Poids', note: 'Note',
 }
 const nomLisible = (chemin: Chemin) => {
   const mots = chemin.filter((x): x is string => typeof x === 'string' && x !== 'items')
@@ -259,12 +259,12 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
 
   // ── RENDU ──────────────────────────────────────────────────────────────────
   if (introuvable) return (
-    <div className="min-h-screen bg-[#0B0711] text-white flex items-center justify-center p-6 text-center">
+    <div className="nexiora-bg min-h-screen text-white flex items-center justify-center p-6 text-center">
       <div><p className="mb-4">Ce site est introuvable, ou il ne vous appartient pas.</p>
         <Link href="/dashboard" className="text-[#FFB08F] underline">Retour au tableau de bord</Link></div>
     </div>
   )
-  if (!site || !pages) return <div className="min-h-screen bg-[#0B0711] text-white/60 flex items-center justify-center">Chargement de l’éditeur…</div>
+  if (!site || !pages) return <div className="nexiora-bg min-h-screen text-white/60 flex items-center justify-center">Chargement de l’éditeur…</div>
 
   const filtre = recherche.trim().toLowerCase()
   const correspond = (t: string) => !filtre || t.toLowerCase().includes(filtre)
@@ -556,10 +556,13 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
   const lienPublic = site.published ? `/sites/${slug}` : `/preview/${slug}`
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-[#0B0711] text-white" data-editeur-visuel="">
-      <header className="flex h-[60px] shrink-0 items-center gap-3 border-b border-white/[0.08] bg-[#0E0915] px-3 md:px-4">
-        <Link href="/dashboard" className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm text-white/80 hover:text-white">
-          <ChevronLeft className="h-4 w-4" aria-hidden /><span className="hidden sm:inline">Tableau de bord</span>
+    <div className="nexiora-bg flex h-[100dvh] flex-col text-white" data-editeur-visuel="">
+      <header className="flex h-[60px] shrink-0 items-center gap-3 border-b border-white/[0.08] bg-white/[0.03] px-3 backdrop-blur-xl md:px-4">
+        <Link href="/dashboard" aria-label="Retour au tableau de bord" className="inline-flex items-center gap-2 rounded-lg px-1.5 py-1.5 text-sm text-white/80 hover:text-white">
+          <ChevronLeft className="h-4 w-4" aria-hidden />
+          <span className="flex h-8 w-8 items-center justify-center rounded-[10px] text-[15px] font-black text-white"
+            style={{ background: 'radial-gradient(circle at 30% 30%, #4F6EF5 0%, transparent 60%), radial-gradient(circle at 70% 70%, #FA5D1E 0%, transparent 60%), #16090e' }}>D</span>
+          <span className="hidden text-lg font-black tracking-tight text-nexiora sm:inline" translate="no">deribfy</span>
         </Link>
         <span className="hidden h-6 w-px bg-white/10 md:block" />
         <span className="hidden truncate text-sm font-semibold md:block">{site.name}</span>
@@ -576,7 +579,7 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
           <Undo2 className="h-4 w-4" aria-hidden /><span className="hidden sm:inline">Annuler</span>
         </button>
         <a href={lienPublic} target="_blank" rel="noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[#FA5D1E] px-3.5 py-2 text-sm font-bold text-[#1A0A03] hover:brightness-110">
+          className="btn-nexiora inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold text-white">
           <ExternalLink className="h-4 w-4" aria-hidden />Voir le site
         </a>
       </header>
@@ -590,13 +593,13 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <aside className={`${onglet === 'structure' ? 'block' : 'hidden'} w-full overflow-y-auto border-white/[0.08] bg-[#0E0915] p-3 lg:block lg:w-[268px] lg:shrink-0 lg:border-e`}>
+        <aside className={`${onglet === 'structure' ? 'block' : 'hidden'} w-full overflow-y-auto border-white/[0.08] bg-white/[0.025] p-3 backdrop-blur-xl lg:block lg:w-[268px] lg:shrink-0 lg:border-e`}>
           {structure}
         </aside>
-        <section aria-label="Aperçu en direct" className={`${onglet === 'apercu' ? 'flex' : 'hidden'} min-w-0 flex-1 flex-col bg-[#07040B] p-3 lg:flex lg:p-5`}>
+        <section aria-label="Aperçu en direct" className={`${onglet === 'apercu' ? 'flex' : 'hidden'} min-w-0 flex-1 flex-col bg-black/20 p-3 lg:flex lg:p-5`}>
           {centre}
         </section>
-        <aside aria-label="Réglages" className={`${onglet === 'reglages' ? 'block' : 'hidden'} w-full overflow-y-auto border-white/[0.08] bg-[#0E0915] p-4 lg:block lg:w-[340px] lg:shrink-0 lg:border-s`}>
+        <aside aria-label="Réglages" className={`${onglet === 'reglages' ? 'block' : 'hidden'} w-full overflow-y-auto border-white/[0.08] bg-white/[0.025] p-4 backdrop-blur-xl lg:block lg:w-[340px] lg:shrink-0 lg:border-s`}>
           {reglages}
         </aside>
       </div>
