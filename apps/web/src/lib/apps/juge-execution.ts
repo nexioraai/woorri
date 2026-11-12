@@ -143,7 +143,12 @@ export const DECANTATION_MS = 400
  */
 export async function jugerExecution(
   code: string,
-  options: { readonly plafondMs?: number; readonly decantationMs?: number } = {},
+  options: {
+    readonly plafondMs?: number
+    readonly decantationMs?: number
+    /** L'ancre de départ (« #gestion ») — sinon l'accueil public. */
+    readonly adresse?: string
+  } = {},
 ): Promise<VerdictExecution> {
   const debut = Date.now()
   const vide: VerdictExecution = { monteDansSimulateur: false, erreurs: [], octetsRendus: 0, texte: '', ms: 0 }
@@ -167,6 +172,7 @@ export async function jugerExecution(
         bundle,
         sortie,
         String(options.decantationMs ?? DECANTATION_MS),
+        options.adresse ?? '',
       ],
       {
         // ① L'ENVIRONNEMENT VIDE — rien à prendre, nulle part où l'envoyer.

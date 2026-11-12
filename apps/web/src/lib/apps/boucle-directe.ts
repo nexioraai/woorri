@@ -37,6 +37,7 @@ import {
 import { jugerDevise, marqueRecommandee } from './juge-devise'
 import { CONSIGNE_BIBLIOTHEQUE, fichiersSysteme, VARIABLES_CSS } from './bibliotheque-ui'
 import {
+  ADRESSE_GESTION,
   blocBase,
   REGLE_6_COMMUN,
   type EntiteDeclaree,
@@ -493,8 +494,35 @@ export async function boucleEcriture(o: {
         // le défaut qui a frappé l'écran du propriétaire. N'est exercé que
         // si les jetons sont sains : inutile de monter une œuvre dont on
         // sait déjà qu'elle mourra, et un tour coûte de l'argent.
-        const execution: VerdictExecution | null =
+        const accueil: VerdictExecution | null =
           jetons.length === 0 ? await (o.juger ?? jugerExecution)(v.code) : null
+        // ── ET L'ESPACE DE GESTION, MONTÉ LUI AUSSI (2026-11-12).
+        //
+        // MESURÉ sur une vraie génération : l'accueil public démarrait, la
+        // gestion PLANTAIT à l'ouverture (« reading 'length' of undefined »),
+        // et l'œuvre a été ACCEPTÉE — le juge partait de l'accueil, et aucun
+        // lien public ne mène à #gestion. Une œuvre à tables a une gestion :
+        // on la monte, on y clique tout, et ses erreurs portent son nom.
+        const gestionMontee: VerdictExecution | null =
+          accueil !== null && entitesConnues.length > 0
+            ? await (o.juger ?? jugerExecution)(v.code, { adresse: ADRESSE_GESTION })
+            : null
+        const execution: VerdictExecution | null =
+          accueil === null || gestionMontee === null || gestionMontee.indisponible !== undefined
+            ? accueil
+            : {
+                ...accueil,
+                monteDansSimulateur: accueil.monteDansSimulateur && gestionMontee.monteDansSimulateur,
+                erreurs: [
+                  ...accueil.erreurs,
+                  ...gestionMontee.erreurs.map((e) => ({ ...e, quoi: `espace de gestion — ${e.quoi}` })),
+                ],
+                controlesMuets: [...(accueil.controlesMuets ?? []), ...(gestionMontee.controlesMuets ?? [])],
+                ecrans: [...(accueil.ecrans ?? []), ...(gestionMontee.ecrans ?? [])],
+                ecransVisites: (accueil.ecransVisites ?? 0) + (gestionMontee.ecransVisites ?? 0),
+                ecransDecouverts: (accueil.ecransDecouverts ?? 0) + (gestionMontee.ecransDecouverts ?? 0),
+                ms: accueil.ms + gestionMontee.ms,
+              }
         // La couverture se juge APRÈS l'exécution : elle a besoin des ÉCRANS
         // RÉELLEMENT OUVERTS. Jugée avant, elle ne voyait que des mots — et
         // « réservation couverte » avec 2 occurrences pour 59 au cahier
@@ -778,6 +806,23 @@ String(e.message||"")+"\\n\\n"+String((e.error&&e.error.stack)||""))});
 window.addEventListener("unhandledrejection",function(e){
 montrer("Cette application s'est arretee en cours d'execution.",
 String((e.reason&&e.reason.stack)||e.reason))});
+// LIBELLES ET CHAMPS RELIES (2026-11-12) : mesure sur une vraie generation,
+// aucun <label> n etait relie a son champ - le lecteur d ecran lisait des
+// champs sans nom, et un clic sur le libelle ne placait pas le curseur.
+var N=0;function lier(){var ls=document.querySelectorAll("label:not([for])");
+for(var i=0;i<ls.length;i++){var l=ls[i];if(l.querySelector("input,select,textarea"))continue;
+var c=l.nextElementSibling,k=0,t=null;while(c&&k<2&&!t){if(/^(INPUT|SELECT|TEXTAREA)$/.test(c.tagName))t=c;
+else if(c.tagName!=="LABEL"&&c.querySelector)t=c.querySelector("input,select,textarea");c=c.nextElementSibling;k++}
+if(!t)continue;if(!t.id)t.id="deribfy-champ-"+(++N);l.setAttribute("for",t.id)}
+// Et le libelle ecrit dans un simple <span> juste avant le champ (mesure :
+// c est la forme que le modele ecrit le plus) : il devient son nom.
+var fs=document.querySelectorAll("input,select,textarea");
+for(var j=0;j<fs.length;j++){var f=fs[j];if(f.type==="hidden"||f.getAttribute("aria-label")||f.getAttribute("aria-labelledby"))continue;
+if(f.labels&&f.labels.length>0)continue;var p=f.previousElementSibling;if(!p||p.querySelector("input,select,textarea"))continue;
+var x=(p.textContent||"").replace(/\\s+/g," ").trim();if(x===""||x.length>60)continue;
+if(!p.id)p.id="deribfy-libelle-"+(++N);f.setAttribute("aria-labelledby",p.id)}}
+document.addEventListener("DOMContentLoaded",function(){lier();
+try{new MutationObserver(lier).observe(document.body,{childList:true,subtree:true})}catch(e){}});
 })()`
 
 /**

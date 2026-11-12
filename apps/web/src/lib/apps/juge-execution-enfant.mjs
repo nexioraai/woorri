@@ -40,10 +40,15 @@ function armerLeVerrouReseau() {
   })
 }
 
-const [, , cheminBundle, cheminSortie, attenteMs] = process.argv
+const [, , cheminBundle, cheminSortie, attenteMs, adresse] = process.argv
 
+// ── L'ADRESSE DE DÉPART (2026-11-12). Sans elle, on n'ouvrait QUE l'accueil
+// public — et l'espace de gestion (#gestion), qu'aucun lien public n'atteint,
+// n'était JAMAIS monté : une vraie génération a été ACCEPTÉE alors que sa
+// gestion plantait à l'ouverture. Seule une ancre est admise.
+const ancre = typeof adresse === 'string' && /^#[a-z0-9-]{1,40}$/u.test(adresse) ? adresse : ''
 const { GlobalRegistrator } = await import('@happy-dom/global-registrator')
-GlobalRegistrator.register({ url: 'https://oeuvre.invalid/' })
+GlobalRegistrator.register({ url: 'https://oeuvre.invalid/' + ancre })
 
 // ── ③ LES CONDITIONS DE L'APERÇU : ORIGINE OPAQUE, STOCKAGE REFUSÉ.
 //

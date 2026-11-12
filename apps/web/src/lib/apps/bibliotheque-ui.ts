@@ -665,7 +665,7 @@ export function Anneau({ titre: t, libelle, description, parts: pts, donnees, po
           <div style={{ display: 'flex', flexDirection: 'column', gap: ESPACE.s, flex: 1, minWidth: 120 }}>
             {parts.map((p, i) => (
               <div key={p.libelle} style={{ display: 'flex', alignItems: 'center', gap: ESPACE.s, fontSize: 'var(--text-sm)', color: 'var(--foreground)' }}>
-                <span style={{ width: 10, height: 10, borderRadius: 3, background: teintes[i % teintes.length] }} />{p.libelle}
+                <span style={{ width: 10, height: 10, borderRadius: 3, background: teintes[i % teintes.length] }} />{p.libelle.charAt(0).toUpperCase() + p.libelle.slice(1)}
                 <b style={{ marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{p.valeur}</b>
               </div>
             ))}
@@ -688,7 +688,7 @@ export function Classement({ titre: t, libelle, description, lignes: pts, donnee
       {lignes.length === 0 ? <EtatVide message="Pas encore de données" /> : lignes.slice(0, 6).map((l, i) => (
         <div key={l.libelle} style={{ paddingTop: ESPACE.s }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)', color: 'var(--foreground)' }}>
-            <b>{l.libelle}</b><span style={{ fontVariantNumeric: 'tabular-nums' }}>{l.valeur}</span>
+            <b>{l.libelle.charAt(0).toUpperCase() + l.libelle.slice(1)}</b><span style={{ fontVariantNumeric: 'tabular-nums' }}>{l.valeur}</span>
           </div>
           <div style={{ height: 6, borderRadius: 99, background: 'var(--secondary)', marginTop: 6, overflow: 'hidden' }}>
             <div style={{ height: '100%', borderRadius: 99, width: Math.round((l.valeur / max) * 100) + '%', background: i % 2 ? 'var(--chart-2)' : 'var(--primary)' }} />
@@ -854,6 +854,10 @@ export function tendance(actuel: number | readonly Point[] | readonly number[], 
     const m = Math.floor(v.length / 2)
     const avant = v.slice(0, m).reduce((a, b) => a + b, 0)
     const apres = v.slice(v.length - m).reduce((a, b) => a + b, 0)
+    // Trop peu de données pour une tendance qui veuille dire quelque chose
+    // (mesuré : « −100 % » pour UNE cotisation passée de la 1re à la 2de
+    // moitié d'une semaine). En dessous de 4 éléments, on ne dit rien.
+    if (avant + apres < 4) return null
     return tendance(apres, avant)
   }
   if (typeof actuel !== 'number' || typeof precedent !== 'number') return null
