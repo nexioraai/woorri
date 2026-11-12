@@ -395,17 +395,24 @@ export function ChoixApparence() {
 }
 
 /** LA COQUE DE L'ESPACE DE GESTION : barre latérale (≥ 840 px) ou barre du bas. */
-export type SectionGestion = { cle: string; libelle: string; icone?: string; nombre?: number }
-export function CoqueGestion({ nom, sousTitre = 'Espace de gestion', sections, active, surChoix, onChange,
+export type SectionGestion = { cle?: string; id?: string; libelle: string; icone?: string; nombre?: number }
+export function CoqueGestion({ nom: n, sousTitre = 'Espace de gestion', sections: secs, active: a1, actif, surChoix, onChange, onNavigate,
   titre, description, action, surAction, onAction, onClick, utilisateur, surDeconnexion, children, enfants }: {
-  nom: string; sousTitre?: string; sections: SectionGestion[]; active: string
-  surChoix?: (cle: string) => void; onChange?: (cle: string) => void
+  nom?: string; sousTitre?: string; sections?: SectionGestion[]; active?: string; actif?: string
+  surChoix?: (cle: string) => void; onChange?: (cle: string) => void; onNavigate?: (cle: string) => void
   titre?: string; description?: string; action?: string; surAction?: () => void; onAction?: () => void; onClick?: () => void
   utilisateur?: string; surDeconnexion?: () => void
   children?: React.ReactNode; enfants?: React.ReactNode
 }) {
   const large = useLargeur() >= 840
-  const choisir = surChoix ?? onChange ?? (() => {})
+  // MESURÉ sur une vraie génération (2026-11-12) : nom= oublié, actif= et
+  // onNavigate= à la place d'active= et onChange= — un « ? » à la place de
+  // l'initiale. Le nom retombe sur le titre de la page, que Deribfy pose.
+  const nom = n ?? (typeof document === 'undefined' ? '' : document.title)
+  // id= est lu comme cle= (mesuré : le modèle écrit id=, un clic menait à une page vide).
+  const sections = (secs ?? []).map((s) => ({ ...s, cle: s.cle ?? s.id ?? s.libelle }))
+  const active = a1 ?? actif ?? sections[0]?.cle ?? ''
+  const choisir = surChoix ?? onChange ?? onNavigate ?? (() => {})
   const agir = onClick ?? surAction ?? onAction
   const courante = sections.find((s) => s.cle === active)
   const initiale = (nom || '?').trim().charAt(0).toUpperCase()
@@ -423,6 +430,9 @@ export function CoqueGestion({ nom, sousTitre = 'Espace de gestion', sections, a
       {action !== undefined && agir !== undefined && <div style={{ marginLeft: 'auto' }}><Bouton onClick={agir}>{'+ ' + action}</Bouton></div>}
     </header>
   )
+  // L'en-tête n'apparaît que s'il a quelque chose à dire : sinon une bande
+  // vide, ou un second « Accueil » au-dessus de celui que l'écran pose.
+  const aEnTete = titre !== undefined || description !== undefined || (action !== undefined && agir !== undefined)
   const contenu = <main style={{ padding: large ? ESPACE.xl : ESPACE.m, display: 'flex', flexDirection: 'column', gap: ESPACE.l, paddingBottom: large ? ESPACE.xl : 96 }}>{children ?? enfants}</main>
   if (!large) {
     const visibles = sections.slice(0, 5)
@@ -432,7 +442,7 @@ export function CoqueGestion({ nom, sousTitre = 'Espace de gestion', sections, a
           <span style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--primary)', color: 'var(--primary-foreground)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 750 }}>{initiale}</span>
           <div style={{ fontWeight: 700, fontSize: 'var(--text-base)', color: 'var(--foreground)' }}>{nom}</div>
         </div>
-        {enTete}{contenu}
+        {aEnTete && enTete}{contenu}
         <nav aria-label="Navigation" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, display: 'grid', gridTemplateColumns: 'repeat(' + visibles.length + ', minmax(0, 1fr))',
           background: 'var(--card)', borderTop: '1px solid var(--border)', padding: '6px 4px 12px' }}>
           {visibles.map((s) => (
@@ -475,7 +485,7 @@ export function CoqueGestion({ nom, sousTitre = 'Espace de gestion', sections, a
           {surDeconnexion !== undefined && <button type="button" onClick={surDeconnexion} style={{ marginTop: ESPACE.s, border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)', fontSize: 'var(--text-xs)', fontWeight: 600 }}>Se déconnecter</button>}
         </div>
       </aside>
-      <div style={{ flex: 1, minWidth: 0 }}>{enTete}{contenu}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>{aEnTete && enTete}{contenu}</div>
     </div>
   )
 }
@@ -514,7 +524,7 @@ function Tendance({ valeur }: { valeur: number | null | undefined }) {
 
 /** LA CARTE MISE EN AVANT — le chiffre qui compte le plus, sur fond foncé. */
 export function CarteVedette({ libelle, valeur, contexte, tendance, details = [] }: {
-  libelle: string; valeur: string; contexte?: string; tendance?: number | null; details?: [string, string][]
+  libelle: string; valeur: string; contexte?: string; tendance?: number | null; details?: [string, string][]; icone?: string
 }) {
   return (
     <div style={{ background: 'var(--vedette)', color: 'var(--vedette-foreground)', borderRadius: 'var(--radius-xl)', padding: ESPACE.l,
@@ -539,6 +549,17 @@ export function CarteVedette({ libelle, valeur, contexte, tendance, details = []
 
 type Point = { libelle: string; valeur: number }
 
+function dateCourte(v: unknown): string | undefined {
+  if (typeof v !== 'string' && typeof v !== 'number') return undefined
+  const d = new Date(v)
+  if (Number.isNaN(d.getTime())) return undefined
+  const s = (Date.now() - d.getTime()) / 1000
+  if (s >= 0 && s < 3600) return 'il y a ' + Math.max(1, Math.floor(s / 60)) + ' min'
+  if (s >= 0 && s < 86400) return 'il y a ' + Math.floor(s / 3600) + ' h'
+  if (s >= 0 && s < 172800) return 'hier'
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
+
 function CadreGraphique({ titre, description, valeur, children }: { titre: string; description?: string; valeur?: string; children: React.ReactNode }) {
   return (
     <div style={{ ...CARTE, display: 'flex', flexDirection: 'column', gap: ESPACE.s, minWidth: 0 }}>
@@ -553,9 +574,18 @@ function CadreGraphique({ titre, description, valeur, children }: { titre: strin
 }
 
 /** LA COURBE — une série dans le temps, avec ou sans la période précédente en pointillé. */
-export function Courbe({ titre, description, valeur, points, comparaison }: {
-  titre: string; description?: string; valeur?: string; points: Point[]; comparaison?: number[]
+/*
+ * LES GRAPHIQUES ACCEPTENT LES NOMS QUE LE MODÈLE ÉCRIT PAR RÉFLEXE.
+ * Mesuré le 2026-11-12 sur une vraie génération : donnees= et libelle= au
+ * lieu de points= et titre= — l'espace de gestion PLANTAIT à l'ouverture
+ * (« reading 'length' of undefined »). Les deux noms sont lus, et une
+ * série absente vaut une série vide : un graphique ne casse plus l'écran.
+ */
+export function Courbe({ titre: t, libelle, description, valeur, points: pts, donnees, comparaison }: {
+  titre?: string; libelle?: string; description?: string; valeur?: string; points?: Point[]; donnees?: Point[]; comparaison?: number[]
 }) {
+  const titre = t ?? libelle ?? ''
+  const points = pts ?? donnees ?? []
   if (points.length === 0) return <CadreGraphique titre={titre} description={description}><EtatVide message="Pas encore de données" detail="La courbe apparaîtra dès les premiers ajouts." /></CadreGraphique>
   const L = 600, H = 180, n = points.length
   const max = Math.max(1, ...points.map((p) => p.valeur), ...(comparaison ?? []))
@@ -583,7 +613,11 @@ export function Courbe({ titre, description, valeur, points, comparaison }: {
 }
 
 /** LES BARRES — une valeur par période ou par catégorie ; la dernière en couleur. */
-export function Barres({ titre, description, valeur, points }: { titre: string; description?: string; valeur?: string; points: Point[] }) {
+export function Barres({ titre: t, libelle, description, valeur, points: pts, donnees }: {
+  titre?: string; libelle?: string; description?: string; valeur?: string; points?: Point[]; donnees?: Point[]
+}) {
+  const titre = t ?? libelle ?? ''
+  const points = pts ?? donnees ?? []
   const max = Math.max(1, ...points.map((p) => p.valeur))
   return (
     <CadreGraphique titre={titre} description={description} valeur={valeur}>
@@ -604,7 +638,11 @@ export function Barres({ titre, description, valeur, points }: { titre: string; 
 }
 
 /** L'ANNEAU — une répartition (par état, par type). */
-export function Anneau({ titre, description, parts }: { titre: string; description?: string; parts: Point[] }) {
+export function Anneau({ titre: t, libelle, description, parts: pts, donnees, points }: {
+  titre?: string; libelle?: string; description?: string; parts?: Point[]; donnees?: Point[]; points?: Point[]
+}) {
+  const titre = t ?? libelle ?? ''
+  const parts = pts ?? donnees ?? points ?? []
   const total = parts.reduce((s, p) => s + p.valeur, 0)
   const teintes = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)']
   let cumul = 0
@@ -639,7 +677,11 @@ export function Anneau({ titre, description, parts }: { titre: string; descripti
 }
 
 /** LE CLASSEMENT — d'où viennent les choses (quartier, produit, canal). */
-export function Classement({ titre, description, lignes }: { titre: string; description?: string; lignes: Point[] }) {
+export function Classement({ titre: t, libelle, description, lignes: pts, donnees, points }: {
+  titre?: string; libelle?: string; description?: string; lignes?: Point[]; donnees?: Point[]; points?: Point[]
+}) {
+  const titre = t ?? libelle ?? ''
+  const lignes = pts ?? donnees ?? points ?? []
   const max = Math.max(1, ...lignes.map((l) => l.valeur))
   return (
     <CadreGraphique titre={titre} description={description}>
@@ -658,10 +700,14 @@ export function Classement({ titre, description, lignes }: { titre: string; desc
 }
 
 /** LES DERNIERS AJOUTS — les éléments les plus récents, toutes tables confondues. */
-export function ListeRecente({ titre = 'Derniers ajouts', elements, action, surAction, onAction, onClick }: {
-  titre?: string; elements: { titre: string; detail?: string; genre?: string; quand?: string }[]
+type ElementRecent = { titre: string; detail?: string; genre?: string; quand?: string; date?: string }
+export function ListeRecente({ titre: t, libelle, elements: els, donnees, action, surAction, onAction, onClick }: {
+  titre?: string; libelle?: string; elements?: ElementRecent[]; donnees?: ElementRecent[]
   action?: string; surAction?: () => void; onAction?: () => void; onClick?: () => void
 }) {
+  const titre = t ?? libelle ?? 'Derniers ajouts'
+  // date= est lu comme quand= : « hier », « 9 nov. ».
+  const elements = (els ?? donnees ?? []).map((e) => ({ ...e, quand: e.quand ?? dateCourte(e.date) }))
   const agir = onClick ?? surAction ?? onAction
   return (
     <div style={{ ...CARTE, padding: 0, overflow: 'hidden' }}>
@@ -800,7 +846,17 @@ export function recents(elements: readonly unknown[], champ: string, jours = 30,
 }
 
 /** L'évolution en % entre deux périodes ; null si la période précédente est vide. */
-export function tendance(actuel: number, precedent: number): number | null {
+export function tendance(actuel: number | readonly Point[] | readonly number[], precedent?: number): number | null {
+  // UNE SÉRIE AUSSI (mesuré : le modèle écrit tendance(parJour(...))) — la
+  // seconde moitié de la série comparée à la première.
+  if (Array.isArray(actuel)) {
+    const v = (actuel as readonly (Point | number)[]).map((x) => (typeof x === 'number' ? x : x.valeur))
+    const m = Math.floor(v.length / 2)
+    const avant = v.slice(0, m).reduce((a, b) => a + b, 0)
+    const apres = v.slice(v.length - m).reduce((a, b) => a + b, 0)
+    return tendance(apres, avant)
+  }
+  if (typeof actuel !== 'number' || typeof precedent !== 'number') return null
   if (!Number.isFinite(actuel) || !Number.isFinite(precedent) || precedent === 0) return null
   return ((actuel - precedent) / precedent) * 100
 }
