@@ -200,7 +200,24 @@ export const CONFIGS: Readonly<Record<Fournisseur, Config>> = {
   },
 }
 
-export type Usage = { readonly entree: number; readonly sortie: number }
+export type Usage = {
+  readonly entree: number
+  readonly sortie: number
+  /**
+   * JETONS DE RÉFLEXION, comptés dans `sortie` et FACTURÉS (M16, 2026-11-13) :
+   * sur chat/completions la réflexion est activée par défaut, et un écran
+   * payait 8 125 jetons de réflexion sur 9 703 de sortie (84 %) sans que
+   * personne ne les lise. Ils sont désormais LUS et enregistrés, coupés ou pas.
+   */
+  readonly reflexion: number
+}
+/** Ce qu'un appel peut régler sans que l'appelant connaisse le dialecte. */
+export type OptionsAppel = {
+  /** `false` : la réflexion est COUPÉE (`thinking: { type: 'disabled' }`). Absent : conduite du fournisseur. */
+  readonly reflexion?: boolean
+  /** Plafond de sortie pour cet appel ; absent : celui du modèle. */
+  readonly maxJetons?: number
+}
 export type Reponse = {
   readonly texte: string
   readonly usage: Usage
@@ -232,8 +249,11 @@ export async function appelerFournisseur(
   cle: string,
   system: string,
   messages: readonly { role: 'user' | 'assistant'; content: string }[],
+  options: OptionsAppel = {},
 ): Promise<Reponse> {
   const c = CONFIGS[f]
+  const maxJetons = options.maxJetons ?? c.maxJetons
+  const reflexionCoupee = options.reflexion === false
 
   if (f === 'deepseek') {
     // Dialecte compatible OpenAI, sans flux — et c'est une ARITHMÉTIQUE, pas
@@ -245,18 +265,24 @@ export async function appelerFournisseur(
       headers: { Authorization: `Bearer ${cle}`, 'content-type': 'application/json' },
       body: JSON.stringify({
         model: c.modele,
-        max_tokens: c.maxJetons,
+        max_tokens: maxJetons,
         messages: [{ role: 'system', content: system }, ...messages],
+        // Rien d'envoyé = réflexion ACTIVÉE par défaut (doc DeepSeek, lue le 2026-11-13).
+        ...(reflexionCoupee ? { thinking: { type: 'disabled' } } : {}),
       }),
     })
     if (!r.ok) throw new Error(`${String(r.status)} ${(await r.text()).slice(0, 300)}`)
     const d = (await r.json()) as {
       choices?: { message?: { content?: string }; finish_reason?: string }[]
-      usage?: { prompt_tokens?: number; completion_tokens?: number }
+      usage?: { prompt_tokens?: number; completion_tokens?: number; completion_tokens_details?: { reasoning_tokens?: number } }
     }
     return {
       texte: d.choices?.[0]?.message?.content ?? '',
-      usage: { entree: d.usage?.prompt_tokens ?? 0, sortie: d.usage?.completion_tokens ?? 0 },
+      usage: {
+        entree: d.usage?.prompt_tokens ?? 0,
+        sortie: d.usage?.completion_tokens ?? 0,
+        reflexion: d.usage?.completion_tokens_details?.reasoning_tokens ?? 0,
+      },
       // `length` : le modèle n'avait pas fini, c'est la borne qui l'a arrêté.
       tronquee: d.choices?.[0]?.finish_reason === 'length',
     }
@@ -271,14 +297,16 @@ export async function appelerFournisseur(
   const client = new Anthropic({ apiKey: cle })
   const flux = client.messages.stream({
     model: c.modele,
-    max_tokens: c.maxJetons,
+    max_tokens: maxJetons,
     system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
+    ...(reflexionCoupee ? { thinking: { type: 'disabled' as const } } : {}),
   })
   const r = await flux.finalMessage()
   return {
     texte: r.content.map((b) => (b.type === 'text' ? b.text : '')).join(''),
-    usage: { entree: r.usage.input_tokens, sortie: r.usage.output_tokens },
+    // Ce dialecte ne compte pas la réflexion à part : 0, et c'est dit.
+    usage: { entree: r.usage.input_tokens, sortie: r.usage.output_tokens, reflexion: 0 },
     // Même fait, autre nom : ce dialecte dit `max_tokens`, l'autre `length`.
     tronquee: r.stop_reason === 'max_tokens',
   }
