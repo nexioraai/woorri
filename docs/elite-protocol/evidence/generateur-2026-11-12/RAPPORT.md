@@ -1206,3 +1206,51 @@ INCONNU (réflexion ? prose hors fichiers ?) et se mesure par un appel instrumen
 « tables interrogées avant connexion » ×3, « contrôles sans nom » ×3, « réglages/jetons inconnus » ×3, « ne se
 monte pas (Node) » ×2, « chargement muet » ×2, construction ×1. Trois de ces classes (mémoire, tables avant
 connexion, chargement) tiennent à la couche d'accès aux données que le modèle réécrit à chaque fois.
+
+---
+
+# PLAN « ASSEMBLER » — REGISTRE (2026-11-14)
+
+Branches : `etape-c1-contrat` (`1f874a6a`, étape 1) → `etape-v2` (`e88edfcf`) → `etape-v3`. Rien n'est poussé.
+
+## Critère de sortie de V4 (décision du propriétaire, 2026-11-14) — REMPLACEMENT, pas de résidu
+
+V4 n'est PAS terminée tant que cette liste de suppression n'est pas exécutée :
+
+| supprimé | lignes au 2026-11-14 | tests qui partent avec |
+|---|---|---|
+| `lib/apps/boucle-directe.ts` (boucleEcriture, CONSIGNE, REGLE_6…) — après déplacement de `pageAutonome`, `optionsPour`, `ConfigurationOeuvre` vers un module neutre | 1 226 | 20 fichiers |
+| `lib/apps/boucle-ecran.ts`, `boucle-ecrans.ts` | 256 + 187 | 4 |
+| `lib/apps/consigne-ecran.ts`, `plan-ecrans.ts` | 118 + 253 | 9 |
+| `lib/apps/juge-jetons.ts`, `juge-contrat.ts` | 227 + 252 | 6 |
+| les parties de `lib/apps/squelette.ts` tournées vers le modèle (écrans « à compléter », accueil écrit en code) | — | — |
+| la retouche par écriture de code : `retouche.ts` (`CONSIGNE_RETOUCHE`), `api/generateur/retoucher` → retouche de SPEC | — | — |
+
+Reste : lecture, contrat (branché), bibliothèque de pièces (moteur des écrans compilés), assemblage, juges
+d'exécution et d'expérience, moteur du squelette (navigation, langue, base), journal, déploiement.
+Cliquet : EP-365 ⑥ (B2) rougit si un module du contrat reste exempté une fois branché, ou après V4
+(témoin : `boucle-directe.ts` absent).
+
+## Risque inscrit — les clés de texte suivent l'emplacement
+
+Une clé est fabriquée depuis la route et l'emplacement (`ecranPublic.corps2.enfants0.libelle`). Insérer un
+composant avant un texte change sa clé : la traduction de l'ancienne clé devient orpheline, la nouvelle est
+redemandée (TRADUCTION_MANQUANTE) — une retraduction. Accepté pour l'instant ; À REVOIR si cela coûte en V4
+(passe de traduction, retouches).
+
+## V2 — preuve sur cinq lectures réelles (2026-11-14)
+
+Trois lectures achetées par la vraie route (`src/tirs/lectures-v2.tir.ts`, DeepSeek) : **0,00366 $ mesurés**
+(budget 0,006 $). Brut : `brut/v2/*.json.gz` ; relevé : `sortie/v2-lectures.json`. Les cahiers école et
+pièces auto n'existent en base qu'à **1 000 signes, coupés** par l'ancienne limite : lus tels quels.
+
+| lecture | tables (tétrade complète) | routes couvertes | refus de graphe |
+|---|---|---|---|
+| Hayine `5b1c20bc` | 7 / 7 | 47 / 47 | 0 |
+| Hayine `94cf0489` | 7 / 7 | 47 / 47 | 0 |
+| école (1 000 signes) | 6 / 6 | 37 / 37 | 0 |
+| pièces auto (1 000 signes) | 7 / 7 | 39 / 39 | 0 |
+| CPA (20 658 signes) | 7 / 7 | 41 / 41 | 0 |
+
+Défaut vu, consigné : pièces auto ne lit aucun rôle de gestion ; la gestion des tables tombe au premier rôle
+lu, « client ».

@@ -1,0 +1,59 @@
+{
+ "quand": "2026-11-13T23:17:01.562Z",
+ "cumulUsd": 0.00366,
+ "budgetUsd": 0.006,
+ "releve": {
+  "cpa-fa0ede2c": {
+   "status": 200,
+   "ms": 8578,
+   "signes": 20658,
+   "resultat": "reussie",
+   "coutUsd": 0.002387,
+   "tables": 7,
+   "ecrans": 12,
+   "roles": [
+    "visiteur",
+    "client",
+    "fournisseur",
+    "agent habilité",
+    "administrateur",
+    "communication",
+    "direction",
+    "prestataire",
+    "initiateur / référent projet",
+    "référent métier"
+   ]
+  },
+  "ecole-a13f8f9f": {
+   "status": 200,
+   "ms": 3887,
+   "signes": 1000,
+   "resultat": "reussie",
+   "coutUsd": 0.000604,
+   "tables": 6,
+   "ecrans": 10,
+   "roles": [
+    "parents",
+    "école",
+    "gestion",
+    "enseignant principal",
+    "administration",
+    "secrétariat"
+   ]
+  },
+  "pieces-c4522e43": {
+   "status": 200,
+   "ms": 3989,
+   "signes": 1000,
+   "resultat": "reussie",
+   "coutUsd": 0.000671,
+   "tables": 7,
+   "ecrans": 6,
+   "roles": [
+    "client",
+    "vendeur",
+    "magasinier"
+   ]
+  }
+ }
+}

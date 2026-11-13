@@ -1,5 +1,5 @@
 {
- "note": "V2 — preuve à 0 $ : graphe dérivé AVANT tout appel au modèle. « lectures » : lectures réellement enregistrées. « sansLecture » : aucune lecture n’existe ; tables tirées du code, AUCUN écran lu — ce n’est pas une lecture.",
+ "note": "V2 — preuve à 0 $ (hors les trois lectures, 0,00366 $ mesurés) : graphe dérivé AVANT tout appel au modèle de génération, sur cinq lectures RÉELLES — Hayine ×2 (tables lues dans les types de l’œuvre livrée) ; école, pièces auto, CPA (lues le 2026-11-13 par la vraie route, tables = entités de la lecture).",
  "lectures": {
   "5b1c20bc": {
    "source": "lecture enregistrée de la génération 5b1c20bc (2026-11-13T20:14 UTC) ; tables lues dans systeme/types.ts de l’œuvre livrée",
@@ -218,110 +218,131 @@
      ]
     }
    ]
-  }
- },
- "sansLecture": {
+  },
   "ecole-a13f8f9f": {
-   "source": "AUCUNE lecture exploitable (la ligne ne garde que des compteurs) ; tables tirées du code de l’œuvre (composants/donnees.tsx), colonnes lues dans ses écrans",
+   "source": "lecture RÉELLE du 2026-11-13 par la route lire-brief (tir lectures-v2.tir.ts, DeepSeek) ; cahier de la base, 1000 signes (COUPÉ à 1 000 signes en base par l’ancienne limite : seule version existante), sha256 429c0e117bf9… ; tables = entités rendues par la lecture",
+   "lecture": {
+    "ecrans": [
+     "connexion",
+     "enfants inscrits",
+     "notes et bulletins",
+     "absences et retards",
+     "emploi du temps",
+     "calendrier des examens",
+     "frais de scolarité",
+     "annonces",
+     "justifier une absence",
+     "élèves"
+    ],
+    "roles": [
+     "parents",
+     "école",
+     "gestion",
+     "enseignant principal",
+     "administration",
+     "secrétariat"
+    ],
+    "parcours": [],
+    "langues": [
+     "fr"
+    ],
+    "devises": [],
+    "moyensPaiement": [],
+    "pays": [
+     "N'Djamena"
+    ]
+   },
    "tables": [
-    {
-     "nom": "annonce",
-     "colonnes": [
-      "titre",
-      "date",
-      "contenu"
-     ]
-    },
-    {
-     "nom": "emploi_du_temps",
-     "colonnes": [
-      "classe",
-      "jour",
-      "heure",
-      "matiere"
-     ]
-    },
-    {
-     "nom": "examen",
-     "colonnes": [
-      "classe",
-      "matiere",
-      "date"
-     ]
-    },
     {
      "nom": "eleve",
      "colonnes": [
       "nom",
+      "date_naissance",
       "classe",
-      "enseignant_principal",
-      "parent_id"
-     ]
-    },
-    {
-     "nom": "note",
-     "colonnes": [
-      "eleve",
-      "matiere",
-      "trimestre",
-      "valeur"
-     ]
-    },
-    {
-     "nom": "absence",
-     "colonnes": [
-      "eleve_id",
-      "date",
-      "type",
-      "motif",
-      "justifie",
-      "justification_message"
-     ]
-    },
-    {
-     "nom": "versement",
-     "colonnes": [
-      "eleve",
-      "montant"
-     ]
-    },
-    {
-     "nom": "frais",
-     "colonnes": [
-      "eleve_id",
-      "montant_total",
-      "prochaine_echeance"
+      "parent_nom",
+      "parent_telephone",
+      "photo",
+      "date_inscription",
+      "statut"
      ]
     },
     {
      "nom": "parent",
      "colonnes": [
-      "nom",
-      "telephone"
+      "telephone",
+      "nom"
+     ]
+    },
+    {
+     "nom": "note",
+     "colonnes": [
+      "matiere",
+      "valeur",
+      "trimestre"
+     ]
+    },
+    {
+     "nom": "absence",
+     "colonnes": [
+      "date",
+      "motif",
+      "justificatif_photo"
+     ]
+    },
+    {
+     "nom": "versement",
+     "colonnes": [
+      "montant",
+      "date"
+     ],
+     "journal": true
+    },
+    {
+     "nom": "annonce",
+     "colonnes": [
+      "titre",
+      "contenu",
+      "date"
      ]
     }
    ]
   },
   "pieces-c4522e43": {
-   "source": "AUCUNE lecture exploitable ; tables tirées du code de l’œuvre (composants/Gestion.tsx)",
+   "source": "lecture RÉELLE du 2026-11-13 par la route lire-brief (tir lectures-v2.tir.ts, DeepSeek) ; cahier de la base, 1000 signes (COUPÉ à 1 000 signes en base par l’ancienne limite : seule version existante), sha256 969897b6a998… ; tables = entités rendues par la lecture",
+   "lecture": {
+    "ecrans": [
+     "Catalogue de pièces",
+     "Recherche par modèle de véhicule ou par nom de pièce",
+     "Demande de devis",
+     "Réservation d'une pièce avec acompte",
+     "Suivi de commande d'importation",
+     "Stock par boutique"
+    ],
+    "roles": [
+     "client",
+     "vendeur",
+     "magasinier"
+    ],
+    "parcours": [
+     "Catalogue de pièces",
+     "Recherche par modèle de véhicule ou par nom de pièce",
+     "Réservation d'une pièce avec acompte"
+    ],
+    "langues": [],
+    "devises": [],
+    "moyensPaiement": [],
+    "pays": []
+   },
    "tables": [
     {
      "nom": "piece",
      "colonnes": [
       "reference",
       "nom",
+      "photo",
       "modele_vehicule",
       "etat",
-      "prix",
-      "photo"
-     ]
-    },
-    {
-     "nom": "boutique",
-     "colonnes": [
-      "nom",
-      "emplacement",
-      "telephone"
+      "prix"
      ]
     },
     {
@@ -333,134 +354,182 @@
      ]
     },
     {
-     "nom": "reservation",
-     "colonnes": [
-      "piece",
-      "client_nom",
-      "telephone",
-      "acompte",
-      "date_retrait",
-      "statut"
-     ]
-    },
-    {
-     "nom": "devis",
-     "colonnes": [
-      "description",
-      "modele_vehicule",
-      "photo",
-      "telephone",
-      "statut"
-     ]
-    },
-    {
-     "nom": "commande_importation",
-     "colonnes": [
-      "reference",
-      "client_nom",
-      "statut",
-      "date_commande"
-     ]
-    },
-    {
-     "nom": "utilisateur",
+     "nom": "boutique",
      "colonnes": [
       "nom",
-      "role",
-      "boutique"
-     ]
-    }
-   ]
-  },
-  "cpa-fa0ede2c": {
-   "source": "AUCUNE lecture (2026-11-01, avant la lecture) ; tables tirées de composants/types.ts de l’œuvre",
-   "tables": [
-    {
-     "nom": "produit",
-     "colonnes": [
-      "designation",
-      "reference",
-      "categorie",
-      "forme",
-      "conditionnement",
-      "prix",
-      "disponible",
-      "alerte"
-     ]
-    },
-    {
-     "nom": "appel_offre",
-     "colonnes": [
-      "reference",
-      "objet",
-      "categorie",
-      "datePublication",
-      "dateLimite",
-      "statut",
-      "contact",
-      "documents"
+      "adresse",
+      "telephone"
      ]
     },
     {
      "nom": "client",
      "colonnes": [
       "nom",
+      "telephone",
+      "type"
+     ]
+    },
+    {
+     "nom": "devis",
+     "colonnes": [
+      "client",
+      "description",
+      "photo",
+      "statut"
+     ]
+    },
+    {
+     "nom": "reservation",
+     "colonnes": [
+      "client",
+      "piece",
+      "boutique",
+      "acompte",
+      "date_retrait"
+     ]
+    },
+    {
+     "nom": "commande_importation",
+     "colonnes": [
+      "client",
+      "piece",
+      "statut"
+     ]
+    }
+   ]
+  },
+  "cpa-fa0ede2c": {
+   "source": "lecture RÉELLE du 2026-11-13 par la route lire-brief (tir lectures-v2.tir.ts, DeepSeek) ; cahier de la base, 20658 signes, sha256 88fc434f0e76… ; tables = entités rendues par la lecture",
+   "lecture": {
+    "ecrans": [
+     "Accueil",
+     "La CPA",
+     "Nos activités",
+     "Produits / catalogue",
+     "Clients",
+     "Fournisseurs",
+     "Appels d’offres et avis",
+     "Actualités et documents",
+     "Contact",
+     "Organigramme",
+     "Tableau de bord",
+     "Administration"
+    ],
+    "roles": [
+     "visiteur",
+     "client",
+     "fournisseur",
+     "agent habilité",
+     "administrateur",
+     "communication",
+     "direction",
+     "prestataire",
+     "initiateur / référent projet",
+     "référent métier"
+    ],
+    "parcours": [
+     "Accueil",
+     "Appels d’offres et avis",
+     "Contact"
+    ],
+    "langues": [
+     "fr"
+    ],
+    "devises": [],
+    "moyensPaiement": [],
+    "pays": [
+     "Tchad"
+    ]
+   },
+   "tables": [
+    {
+     "nom": "client",
+     "colonnes": [
+      "identite",
       "type",
+      "contacts",
       "zone",
       "statut",
-      "contact",
-      "responsables"
+      "pieces",
+      "observations",
+      "historique"
      ]
     },
     {
      "nom": "fournisseur",
      "colonnes": [
-      "nom",
-      "origine",
+      "identite_legale",
+      "contacts",
+      "categories",
+      "produits",
+      "pieces",
+      "prequalification",
+      "evaluations",
+      "historique"
+     ]
+    },
+    {
+     "nom": "produit",
+     "colonnes": [
+      "reference",
+      "designation",
       "categorie",
+      "forme_dosage",
+      "documents",
+      "statut_publication",
+      "disponibilite_autorisee"
+     ]
+    },
+    {
+     "nom": "publication",
+     "colonnes": [
+      "type",
+      "titre",
+      "reference",
+      "contenu",
+      "auteur",
+      "validateur",
+      "dates",
       "statut",
-      "contact",
-      "produits"
+      "documents",
+      "archive"
      ]
     },
     {
      "nom": "demande",
      "colonnes": [
       "reference",
-      "type",
+      "demandeur",
+      "categorie",
       "objet",
-      "priorite",
+      "service",
       "statut",
-      "date"
-     ]
-    },
-    {
-     "nom": "actualite",
-     "colonnes": [
-      "titre",
-      "date",
-      "contenu",
-      "categorie"
+      "dates",
+      "pieces",
+      "traitement"
      ]
     },
     {
      "nom": "utilisateur",
      "colonnes": [
-      "nom",
-      "email",
+      "compte",
       "role",
+      "service",
       "statut",
-      "derniereConnexion"
+      "derniere_connexion",
+      "journaux"
      ]
     },
     {
      "nom": "journal_audit",
      "colonnes": [
+      "horodatage",
+      "utilisateur",
       "action",
-      "auteur",
-      "date",
+      "objet",
       "details"
-     ]
+     ],
+     "journal": true
     }
    ]
   }
