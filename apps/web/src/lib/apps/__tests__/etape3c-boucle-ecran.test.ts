@@ -119,13 +119,15 @@ describe('3c · brique 5 · la boucle d’un écran', () => {
     expect(r.join('\n')).toMatch(/UNE AUTRE MONNAIE QUE XAF : « € »/u)
   }, 60_000)
 
-  it('⑤ montage réel : un écran qui jette est repris avec « NE SE MONTE PAS » ; un écran sain se monte à son adresse', async () => {
-    const { appeler, appels } = appeleur([JETTE, VALIDE])
-    const e = await ecrireEcran({ ecran: RESERVATIONS, plan: PLAN, entites: ENTITES, devise: 'XAF', nom: 'Hayine', roles: LECTURE.roles, appeler })
+  it('⑤ montage réel : un écran qui jette au rendu est refusé avec « NE SE MONTE PAS » et la cause', async () => {
+    // UN seul montage réel (≈ 1 s de processus) : la reprise est prouvée en ②
+    // avec un juge simulé ; ici c'est le juge RÉEL qui voit l'écran mourir.
+    const { appeler, appels } = appeleur([JETTE])
+    const e = await ecrireEcran({ ecran: RESERVATIONS, plan: PLAN, entites: ENTITES, devise: 'XAF', nom: 'Hayine', roles: LECTURE.roles, appeler, tentativesMax: 1 })
     expect(e.tentatives[0]!.reproches.join('\n')).toMatch(/NE SE MONTE PAS[\s\S]*boum au rendu/u)
-    expect(e.resultat).toBe('ok')
-    expect(appels).toHaveLength(2)
-  }, 120_000)
+    expect(e.resultat).toBe('a_completer')
+    expect(appels).toHaveLength(1)
+  }, 60_000)
 
   it('⑥ appelerFournisseur : réflexion coupée et plafond propre, jetons de réflexion lus', async () => {
     const corps: Record<string, unknown>[] = []

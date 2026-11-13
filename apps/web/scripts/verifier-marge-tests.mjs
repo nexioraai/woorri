@@ -90,6 +90,16 @@ const CONNUS = [
     plafond: 2800,
     raison: 'ATTENTE de ~2,2 s par cas (délais d’idempotence simulés).',
   },
+  {
+    motif: /generateur\/direct\/__tests__\/route\.test[\s\S]*UN SUCCÈS REND LA PAGE/u,
+    plafond: 3000,
+    raison:
+      'DEUX PROCESSUS du juge d’exécution, réels (3c, 2026-11-13) : l’écran seul, ' +
+      'puis l’application entière — ≈ 0,9 s chacun, dominés par le démarrage de Node ' +
+      'et de happy-dom, pas par un calcul. C’est la seule épreuve de bout en bout de la ' +
+      'route avec l’assembleur et le juge RÉELS : c’est elle qui a attrapé la panne du ' +
+      '2026-11-01. Mesuré : 1 777 ms sur ce portable.',
+  },
 ]
 
 if (!existsSync(RAPPORT)) {
