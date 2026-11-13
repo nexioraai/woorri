@@ -1,0 +1,100 @@
+{
+  "oeuvre": "94cf0489",
+  "note": "Traductions À LA MAIN d'écrans LIVRÉS de l'œuvre 94cf0489 ([TEST-3C], 2026-11-13 16:49 UTC) en specs du contrat. L'œuvre n'est pas réparée. Contexte : les tables de SES types ; langues, devises, moyens de paiement, pays et parcours de la lecture du même cahier (Hayine) faite pour 5b1c20bc — la lecture de 94cf0489 ne les extrayait pas encore.",
+  "contexte": {
+    "routes": ["demarrage-langue", "inscription-connexion", "verification", "accueil", "recherche", "resultats", "detail", "recapitulatif-paiement", "confirmation", "reservations", "documents", "notifications", "profil", "abonnement-ia", "agent-ia", "aide"],
+    "roles": ["Particulier", "Agence", "Entreprise", "Administrateur"],
+    "tables": [
+      { "nom": "compte", "colonnes": ["nom", "email", "telephone", "type_compte", "langue", "verifie"] },
+      { "nom": "fournisseur", "colonnes": ["nom", "categorie", "actif", "capacites"] },
+      { "nom": "offre", "colonnes": ["fournisseur", "categorie", "prix_origine", "devise_origine", "conditions"] },
+      { "nom": "reservation", "colonnes": ["compte", "offre", "statut", "montant_origine", "devise_origine", "date_creation"] },
+      { "nom": "paiement", "colonnes": ["reservation", "montant", "devise", "statut", "reference_externe"] },
+      { "nom": "abonnement_ia", "colonnes": ["compte", "debut", "fin", "credit", "actif"] },
+      { "nom": "evenement_audit", "colonnes": ["compte", "action", "details", "date"], "journal": true }
+    ],
+    "langues": ["fr", "en", "ar"],
+    "devises": [],
+    "moyensPaiement": [],
+    "pays": [],
+    "parcours": ["accueil", "recherche", "resultats", "detail", "recapitulatif-paiement", "confirmation"]
+  },
+  "ecrans": [
+    {
+      "ecran": "demarrage-langue",
+      "source": "fichier livré ecrans/demarrage-langue.tsx",
+      "defautsMesures": ["constat du propriétaire et juge Chromium : « Kiswahili » proposé, le cahier lit fr, en, ar", "juge Chromium : choisir « arabe » ne change ni lang ni dir (la langue était posée dans la ligne de parcours du compte, que rien n'applique)"],
+      "portee": "la coche de la langue choisie (comparaison d'égalité) n'a pas d'équivalent : laissée.",
+      "attendu": ["ECRITURE_HORS_ETAT", "LANGUE_HORS_LECTURE", "TRADUCTION_MANQUANTE"],
+      "fragment": {
+        "ecran": {
+          "route": "demarrage-langue", "acces": "visiteur", "titre": { "$t": "langue.titre" },
+          "corps": [
+            { "composant": "Phrase", "texte": { "$t": "langue.bienvenue" }, "taille": "legende" },
+            { "composant": "Titre", "texte": { "$t": "langue.titre" }, "niveau": "page" },
+            { "composant": "Phrase", "texte": { "$t": "langue.description" } },
+            { "composant": "Encart", "enfants": [
+              { "composant": "Bouton", "libelle": { "$t": "langue.fr" }, "genre": "discret", "effets": [{ "faire": "setState", "chemin": "parcours.compte.langue", "valeur": "fr" }] },
+              { "composant": "Bouton", "libelle": { "$t": "langue.en" }, "genre": "discret", "effets": [{ "faire": "setState", "chemin": "parcours.compte.langue", "valeur": "en" }] },
+              { "composant": "Bouton", "libelle": { "$t": "langue.ar" }, "genre": "discret", "effets": [{ "faire": "setState", "chemin": "parcours.compte.langue", "valeur": "ar" }] },
+              { "composant": "Bouton", "libelle": { "$t": "langue.sw" }, "genre": "discret", "effets": [{ "faire": "setState", "chemin": "parcours.compte.langue", "valeur": "sw" }] }
+            ] },
+            { "composant": "Bouton", "libelle": { "$t": "langue.continuer" }, "genre": "principal", "effets": [{ "faire": "navigate", "route": "inscription-connexion" }] },
+            { "composant": "Phrase", "texte": { "$t": "langue.modifier" }, "couleur": "texteDiscret", "taille": "legende" }
+          ]
+        },
+        "traductions": [{ "langue": "fr", "textes": [
+          { "cle": "langue.bienvenue", "texte": "Bienvenue" },
+          { "cle": "langue.titre", "texte": "Choisissez votre langue" },
+          { "cle": "langue.description", "texte": "Votre préférence sera enregistrée dans votre compte." },
+          { "cle": "langue.fr", "texte": "Français" }, { "cle": "langue.en", "texte": "English" },
+          { "cle": "langue.ar", "texte": "العربية" }, { "cle": "langue.sw", "texte": "Kiswahili" },
+          { "cle": "langue.continuer", "texte": "Continuer" },
+          { "cle": "langue.modifier", "texte": "Vous pourrez modifier votre langue à tout moment depuis votre compte." }
+        ] }]
+      }
+    },
+    {
+      "ecran": "resultats",
+      "source": "fichier livré ecrans/resultats.tsx",
+      "defautsMesures": ["aucun par les anciens juges (livré « ok ») ; textes en français seulement"],
+      "portee": "chargement et erreur de la table sont au squelette ; le prix est montré dans le format montant du contrat.",
+      "attendu": ["TRADUCTION_MANQUANTE"],
+      "fragment": {
+        "ecran": {
+          "route": "resultats", "acces": "Particulier", "titre": { "$t": "resultats.titre" },
+          "corps": [
+            { "composant": "Phrase", "texte": { "$t": "resultats.surtitre" }, "taille": "legende" },
+            { "composant": "Titre", "texte": { "$t": "resultats.titre" }, "niveau": "page" },
+            { "composant": "Phrase", "texte": { "$t": "resultats.description" } },
+            { "composant": "Lignes", "donnee": { "$data": "table.offre" }, "vide": { "$t": "resultats.vide" }, "modele": [
+              { "composant": "Encart", "espace": "m", "rayon": "m", "enfants": [
+                { "composant": "Valeur", "donnee": { "$data": "ligne.fournisseur" } },
+                { "composant": "Valeur", "donnee": { "$data": "ligne.categorie" }, "format": "statut" },
+                { "composant": "Valeur", "donnee": { "$data": "ligne.prix_origine" }, "format": "montant" },
+                { "composant": "Valeur", "donnee": { "$data": "ligne.devise_origine" } },
+                { "composant": "Valeur", "donnee": { "$data": "ligne.conditions" } },
+                { "composant": "Bouton", "libelle": { "$t": "resultats.voir" }, "genre": "principal", "effets": [{ "faire": "navigate", "route": "detail", "avec": { "$data": "ligne.id" } }] }
+              ] }
+            ] },
+            { "composant": "Titre", "texte": { "$t": "resultats.disponibilites" }, "niveau": "section" },
+            { "composant": "Phrase", "texte": { "$t": "resultats.fournies" }, "couleur": "texteDiscret" },
+            { "composant": "Lignes", "donnee": { "$data": "table.offre" }, "vide": { "$t": "resultats.vide" }, "modele": [
+              { "composant": "Valeur", "donnee": { "$data": "ligne.fournisseur" } },
+              { "composant": "Valeur", "donnee": { "$data": "ligne.conditions" } }
+            ] }
+          ]
+        },
+        "traductions": [{ "langue": "fr", "textes": [
+          { "cle": "resultats.surtitre", "texte": "Résultats" },
+          { "cle": "resultats.titre", "texte": "Offres disponibles" },
+          { "cle": "resultats.description", "texte": "Prix, devise d’origine, frais connus, conditions, disponibilités et restrictions retournés par les fournisseurs." },
+          { "cle": "resultats.vide", "texte": "Aucune offre trouvée" },
+          { "cle": "resultats.voir", "texte": "Voir le détail" },
+          { "cle": "resultats.disponibilites", "texte": "Disponibilités et restrictions" },
+          { "cle": "resultats.fournies", "texte": "Fournies par les fournisseurs" }
+        ] }]
+      }
+    }
+  ]
+}

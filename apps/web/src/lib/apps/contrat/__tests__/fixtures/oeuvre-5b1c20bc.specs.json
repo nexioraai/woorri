@@ -1,0 +1,426 @@
+{
+  "oeuvre": "5b1c20bc",
+  "note": "Traductions À LA MAIN d'écrans de l'œuvre 5b1c20bc ([TEST-3C-2], 2026-11-13 20:14 UTC) en specs du contrat. L'œuvre n'est pas réparée : chaque spec rend ce que le code faisait, défauts compris. « portee » dit ce qui n'a pas d'équivalent dans le contrat et a été laissé.",
+  "contexte": {
+    "routes": ["demarrage-langue", "inscription-connexion", "verification", "accueil", "recherche", "resultats", "detail", "recapitulatif-paiement", "confirmation", "reservations", "documents", "notifications", "profil", "abonnement-ia", "agent-ia", "aide"],
+    "roles": ["Particulier", "Agence", "Entreprise", "Administrateur"],
+    "tables": [
+      { "nom": "compte", "colonnes": ["nom", "email", "telephone", "type", "langue", "verifie"] },
+      { "nom": "fournisseur", "colonnes": ["nom", "capacites", "actif", "etat"] },
+      { "nom": "offre", "colonnes": ["fournisseur", "categorie", "prix_origine", "devise_origine", "disponible"] },
+      { "nom": "reservation", "colonnes": ["compte", "offre", "statut", "date", "montant_total", "devise_debitee"] },
+      { "nom": "paiement", "colonnes": ["reservation", "statut", "montant", "devise", "prestataire", "reference"] },
+      { "nom": "abonnement_ia", "colonnes": ["compte", "debut", "fin", "quota", "credits_utilises"] },
+      { "nom": "journal_audit", "colonnes": ["compte", "action", "horodatage"], "journal": true }
+    ],
+    "langues": ["fr", "en", "ar"],
+    "devises": [],
+    "moyensPaiement": [],
+    "pays": [],
+    "parcours": ["accueil", "recherche", "resultats", "detail", "recapitulatif-paiement", "confirmation"]
+  },
+  "ecrans": [
+    {
+      "ecran": "inscription-connexion",
+      "source": "dernière tentative refusée (sections_acquises.ecrans[].dernierTexte)",
+      "defautsMesures": ["juge Chromium : « Français », « English », « العربية » ne changent rien à l'écran"],
+      "portee": "les états chargement/erreur de la table sont au squelette ; le message d'erreur dynamique devient une clé affichée si etat.erreur.",
+      "attendu": ["ACTION_SANS_EFFET", "TRADUCTION_MANQUANTE"],
+      "fragment": {
+        "ecran": {
+          "route": "inscription-connexion", "acces": "visiteur", "titre": { "$t": "inscription.titre" },
+          "etat": [
+            { "nom": "enInscription", "nature": "booleen", "initial": false },
+            { "nom": "nom", "nature": "texte" }, { "nom": "email", "nature": "texte" }, { "nom": "telephone", "nature": "texte" },
+            { "nom": "typeCompte", "nature": "texte", "initial": "particulier" },
+            { "nom": "langueCourante", "nature": "texte", "initial": "fr" },
+            { "nom": "erreur", "nature": "texte", "initial": "" }
+          ],
+          "corps": [
+            { "composant": "Titre", "texte": { "$t": "inscription.titreConnexion" }, "niveau": "page", "siNon": { "$data": "etat.enInscription" } },
+            { "composant": "Titre", "texte": { "$t": "inscription.titreCreation" }, "niveau": "page", "si": { "$data": "etat.enInscription" } },
+            { "composant": "Phrase", "texte": { "$t": "inscription.description" } },
+            { "composant": "Encart", "espace": "l", "enfants": [
+              { "composant": "Pile", "sens": "ligne", "espace": "s", "enfants": [
+                { "composant": "Phrase", "texte": { "$t": "inscription.langue" }, "taille": "legende", "couleur": "texteDiscret" },
+                { "composant": "Bouton", "libelle": { "$t": "langue.fr" }, "effets": [{ "faire": "setState", "chemin": "etat.langueCourante", "valeur": "fr" }] },
+                { "composant": "Bouton", "libelle": { "$t": "langue.en" }, "effets": [{ "faire": "setState", "chemin": "etat.langueCourante", "valeur": "en" }] },
+                { "composant": "Bouton", "libelle": { "$t": "langue.ar" }, "effets": [{ "faire": "setState", "chemin": "etat.langueCourante", "valeur": "ar" }] }
+              ] },
+              { "composant": "Pile", "sens": "ligne", "espace": "s", "enfants": [
+                { "composant": "Bouton", "libelle": { "$t": "inscription.connexion" }, "effets": [{ "faire": "setState", "chemin": "etat.enInscription", "valeur": false }, { "faire": "setState", "chemin": "etat.erreur", "valeur": "" }] },
+                { "composant": "Bouton", "libelle": { "$t": "inscription.inscription" }, "effets": [{ "faire": "setState", "chemin": "etat.enInscription", "valeur": true }, { "faire": "setState", "chemin": "etat.erreur", "valeur": "" }] }
+              ] },
+              { "composant": "Pile", "siNon": { "$data": "etat.enInscription" }, "enfants": [
+                { "composant": "Champ", "libelle": { "$t": "inscription.courriel" }, "donnee": { "$data": "etat.email" }, "nature": "courriel" },
+                { "composant": "Champ", "libelle": { "$t": "inscription.telephone" }, "donnee": { "$data": "etat.telephone" }, "nature": "telephone" },
+                { "composant": "Bouton", "libelle": { "$t": "inscription.seConnecter" }, "genre": "principal", "effets": [{ "faire": "emit", "evenement": "connexion" }] }
+              ] },
+              { "composant": "Pile", "si": { "$data": "etat.enInscription" }, "enfants": [
+                { "composant": "Champ", "libelle": { "$t": "inscription.nom" }, "donnee": { "$data": "etat.nom" }, "nature": "texte" },
+                { "composant": "Champ", "libelle": { "$t": "inscription.courriel" }, "donnee": { "$data": "etat.email" }, "nature": "courriel" },
+                { "composant": "Champ", "libelle": { "$t": "inscription.telephone" }, "donnee": { "$data": "etat.telephone" }, "nature": "telephone" },
+                { "composant": "Champ", "libelle": { "$t": "inscription.typeCompte" }, "donnee": { "$data": "etat.typeCompte" }, "nature": "choix", "choix": [
+                  { "valeur": "particulier", "libelle": { "$t": "inscription.particulier" } },
+                  { "valeur": "agence", "libelle": { "$t": "inscription.agence" } },
+                  { "valeur": "entreprise", "libelle": { "$t": "inscription.entreprise" } }
+                ] },
+                { "composant": "Bouton", "libelle": { "$t": "inscription.creer" }, "genre": "principal", "effets": [
+                  { "faire": "submit", "table": "compte", "mode": "creer", "valeurs": [
+                    { "champ": "nom", "depuis": { "$data": "etat.nom" } }, { "champ": "email", "depuis": { "$data": "etat.email" } },
+                    { "champ": "telephone", "depuis": { "$data": "etat.telephone" } }, { "champ": "type", "depuis": { "$data": "etat.typeCompte" } },
+                    { "champ": "langue", "depuis": { "$data": "etat.langueCourante" } }, { "champ": "verifie", "depuis": false }
+                  ] },
+                  { "faire": "navigate", "route": "accueil" }
+                ] }
+              ] },
+              { "composant": "Message", "nature": "erreur", "texte": { "$t": "inscription.erreur" }, "si": { "$data": "etat.erreur" } }
+            ] },
+            { "composant": "Pile", "sens": "ligne", "enfants": [
+              { "composant": "Bouton", "libelle": { "$t": "inscription.aide" }, "genre": "secondaire", "effets": [{ "faire": "navigate", "route": "aide" }] },
+              { "composant": "Bouton", "libelle": { "$t": "inscription.changerLangue" }, "genre": "secondaire", "effets": [{ "faire": "navigate", "route": "demarrage-langue" }] }
+            ] }
+          ]
+        },
+        "traductions": [{ "langue": "fr", "textes": [
+          { "cle": "inscription.titre", "texte": "Espace personnel" },
+          { "cle": "inscription.titreConnexion", "texte": "Connexion" },
+          { "cle": "inscription.titreCreation", "texte": "Créer un compte" },
+          { "cle": "inscription.description", "texte": "La création de compte est obligatoire pour réserver un service." },
+          { "cle": "inscription.langue", "texte": "Langue" },
+          { "cle": "langue.fr", "texte": "Français" }, { "cle": "langue.en", "texte": "English" }, { "cle": "langue.ar", "texte": "العربية" },
+          { "cle": "inscription.connexion", "texte": "Connexion" }, { "cle": "inscription.inscription", "texte": "Inscription" },
+          { "cle": "inscription.courriel", "texte": "Adresse e-mail" }, { "cle": "inscription.telephone", "texte": "Numéro de téléphone" },
+          { "cle": "inscription.seConnecter", "texte": "Se connecter" }, { "cle": "inscription.nom", "texte": "Nom complet" },
+          { "cle": "inscription.typeCompte", "texte": "Type de compte" }, { "cle": "inscription.particulier", "texte": "Particulier" },
+          { "cle": "inscription.agence", "texte": "Agence" }, { "cle": "inscription.entreprise", "texte": "Entreprise" },
+          { "cle": "inscription.creer", "texte": "Créer mon compte" },
+          { "cle": "inscription.erreur", "texte": "Veuillez remplir tous les champs obligatoires." },
+          { "cle": "inscription.aide", "texte": "Aide" }, { "cle": "inscription.changerLangue", "texte": "Changer de langue" }
+        ] }]
+      }
+    },
+    {
+      "ecran": "recherche",
+      "source": "dernière tentative refusée (dernierTexte)",
+      "defautsMesures": ["refus : DES JETONS QUI N'EXISTENT PAS — ui:JETONS (JETONS.ESPACE.s)", "le sélecteur de langue local ne fait rien (useEffect vide)"],
+      "portee": "les catégories du filtre étaient calculées depuis les lignes : ici une saisie texte ; le fournisseur actif était recherché dans une seconde table : laissé.",
+      "attenduCouche1": ["JETON_INCONNU"],
+      "attendu": ["JETON_INCONNU", "CHAMP_SANS_EFFET", "TRADUCTION_MANQUANTE"],
+      "fragment": {
+        "ecran": {
+          "route": "recherche", "acces": "Particulier", "titre": { "$t": "recherche.titre" },
+          "etat": [
+            { "nom": "langueChoisie", "nature": "texte", "initial": "fr" },
+            { "nom": "categorie", "nature": "texte", "initial": "" },
+            { "nom": "disponibilite", "nature": "texte", "initial": "" }
+          ],
+          "corps": [
+            { "composant": "Titre", "texte": { "$t": "recherche.titre" }, "niveau": "page" },
+            { "composant": "Phrase", "texte": { "$t": "recherche.description" } },
+            { "composant": "Encart", "enfants": [
+              { "composant": "Pile", "espace": "JETONS.ESPACE.s", "enfants": [
+                { "composant": "Champ", "libelle": { "$t": "recherche.langue" }, "donnee": { "$data": "etat.langueChoisie" }, "nature": "choix", "choix": [
+                  { "valeur": "fr", "libelle": { "$t": "langue.fr" } }, { "valeur": "en", "libelle": { "$t": "langue.en" } }, { "valeur": "ar", "libelle": { "$t": "langue.ar" } }
+                ] },
+                { "composant": "Champ", "libelle": { "$t": "recherche.categorie" }, "donnee": { "$data": "etat.categorie" }, "nature": "texte" },
+                { "composant": "Champ", "libelle": { "$t": "recherche.disponibilite" }, "donnee": { "$data": "etat.disponibilite" }, "nature": "choix", "choix": [
+                  { "valeur": "oui", "libelle": { "$t": "recherche.oui" } }, { "valeur": "non", "libelle": { "$t": "recherche.non" } }
+                ] }
+              ] }
+            ] },
+            { "composant": "Lignes", "donnee": { "$data": "table.offre" }, "vide": { "$t": "recherche.aucunResultat" },
+              "filtre": [{ "champ": "categorie", "egal": { "$data": "etat.categorie" } }, { "champ": "disponible", "egal": { "$data": "etat.disponibilite" } }],
+              "modele": [{ "composant": "Encart", "enfants": [
+                { "composant": "Valeur", "libelle": { "$t": "recherche.fournisseur" }, "donnee": { "$data": "ligne.fournisseur" } },
+                { "composant": "Valeur", "libelle": { "$t": "recherche.categorie" }, "donnee": { "$data": "ligne.categorie" } },
+                { "composant": "Valeur", "libelle": { "$t": "recherche.prix" }, "donnee": { "$data": "ligne.prix_origine" }, "format": "montant" },
+                { "composant": "Valeur", "libelle": { "$t": "recherche.disponible" }, "donnee": { "$data": "ligne.disponible" }, "format": "statut" },
+                { "composant": "Bouton", "libelle": { "$t": "recherche.voir" }, "genre": "principal", "effets": [{ "faire": "navigate", "route": "detail", "avec": { "$data": "ligne.id" } }] }
+              ] }] }
+          ]
+        },
+        "traductions": [{ "langue": "fr", "textes": [
+          { "cle": "recherche.titre", "texte": "Offres disponibles" },
+          { "cle": "recherche.description", "texte": "Recherchez, filtrez et comparez les offres par catégorie." },
+          { "cle": "recherche.langue", "texte": "Langue" },
+          { "cle": "langue.fr", "texte": "Français" }, { "cle": "langue.en", "texte": "English" }, { "cle": "langue.ar", "texte": "العربية" },
+          { "cle": "recherche.categorie", "texte": "Catégorie" }, { "cle": "recherche.disponibilite", "texte": "Disponibilité" },
+          { "cle": "recherche.oui", "texte": "oui" }, { "cle": "recherche.non", "texte": "non" },
+          { "cle": "recherche.aucunResultat", "texte": "Aucune offre ne correspond à vos critères." },
+          { "cle": "recherche.fournisseur", "texte": "Fournisseur" }, { "cle": "recherche.prix", "texte": "Prix" },
+          { "cle": "recherche.disponible", "texte": "Disponible" }, { "cle": "recherche.voir", "texte": "Voir détails" }
+        ] }]
+      }
+    },
+    {
+      "ecran": "confirmation",
+      "source": "dernière tentative refusée (dernierTexte)",
+      "defautsMesures": ["refus : var(--space-m), var(--space-l), var(--space-s)", "faux refus de l'ancien juge : types:Reservation, Paiement, Session (l'écran s'assemblait)"],
+      "portee": "la « réponse du fournisseur » simulée (Math.random, setTimeout) n'a pas d'équivalent : un écran ne simule rien ; la coque CoqueGestion est au squelette.",
+      "attenduCouche1": ["JETON_INCONNU"],
+      "attendu": ["JETON_INCONNU", "DEVISE_HORS_LECTURE", "TRADUCTION_MANQUANTE"],
+      "fragment": {
+        "ecran": {
+          "route": "confirmation", "acces": "Particulier", "titre": { "$t": "confirmation.titre" },
+          "corps": [
+            { "composant": "Pile", "espace": "var(--space-m, 1rem)", "enfants": [
+              { "composant": "Encart", "espace": "var(--space-l, 1.5rem)", "enfants": [
+                { "composant": "Pile", "sens": "ligne", "espace": "var(--space-s, 0.5rem)", "enfants": [
+                  { "composant": "Valeur", "donnee": { "$data": "parcours.reservation.statut" }, "format": "statut" }
+                ] }
+              ] },
+              { "composant": "Encart", "enfants": [
+                { "composant": "Valeur", "libelle": { "$t": "confirmation.montantTotal" }, "donnee": { "$data": "parcours.reservation.montant_total" }, "format": "montant" },
+                { "composant": "Phrase", "texte": { "$t": "confirmation.devise" } },
+                { "composant": "Valeur", "libelle": { "$t": "confirmation.offre" }, "donnee": { "$data": "parcours.reservation.offre" } },
+                { "composant": "Valeur", "libelle": { "$t": "confirmation.compte" }, "donnee": { "$data": "parcours.reservation.compte" } }
+              ] },
+              { "composant": "Titre", "texte": { "$t": "confirmation.details" }, "niveau": "section" },
+              { "composant": "Lignes", "donnee": { "$data": "table.reservation" }, "vide": { "$t": "confirmation.aucune" }, "modele": [
+                { "composant": "Valeur", "donnee": { "$data": "ligne.offre" } },
+                { "composant": "Valeur", "donnee": { "$data": "ligne.compte" } },
+                { "composant": "Valeur", "donnee": { "$data": "ligne.montant_total" }, "format": "montant" },
+                { "composant": "Valeur", "donnee": { "$data": "ligne.statut" }, "format": "statut" }
+              ] },
+              { "composant": "Pile", "sens": "ligne", "enfants": [
+                { "composant": "Bouton", "libelle": { "$t": "confirmation.retour" }, "genre": "secondaire", "effets": [{ "faire": "navigate", "route": "accueil" }] },
+                { "composant": "Bouton", "libelle": { "$t": "confirmation.mesReservations" }, "genre": "principal", "effets": [{ "faire": "navigate", "route": "reservations" }] }
+              ] }
+            ] }
+          ]
+        },
+        "traductions": [{ "langue": "fr", "textes": [
+          { "cle": "confirmation.titre", "texte": "Confirmation de réservation" },
+          { "cle": "confirmation.montantTotal", "texte": "Montant total" }, { "cle": "confirmation.devise", "texte": "XAF" },
+          { "cle": "confirmation.offre", "texte": "Offre" }, { "cle": "confirmation.compte", "texte": "Compte" },
+          { "cle": "confirmation.details", "texte": "Détails de la réservation" },
+          { "cle": "confirmation.aucune", "texte": "Aucune réservation à confirmer" },
+          { "cle": "confirmation.retour", "texte": "Retour à l'accueil" }, { "cle": "confirmation.mesReservations", "texte": "Mes réservations" }
+        ] }]
+      }
+    },
+    {
+      "ecran": "abonnement-ia",
+      "source": "dernière tentative refusée (dernierTexte)",
+      "defautsMesures": ["refus : jetons:JETONS (JETONS.ESPACE.m)", "refus : window et location (window.location.reload)"],
+      "portee": "le choix perso/pro calculait le quota par une expression : laissé (le contrat n'a pas d'expression) ; l'abonnement actif était choisi par date : ici la liste des abonnements.",
+      "attenduCouche1": ["JETON_INCONNU", "ACTION_INCONNUE"],
+      "attendu": ["JETON_INCONNU", "ACTION_INCONNUE", "TRADUCTION_MANQUANTE"],
+      "fragment": {
+        "ecran": {
+          "route": "abonnement-ia", "acces": "Particulier", "titre": { "$t": "abonnement.titre" },
+          "corps": [
+            { "composant": "Pile", "espace": "JETONS.ESPACE.m", "enfants": [
+              { "composant": "Message", "nature": "erreur", "texte": { "$t": "abonnement.erreur" }, "effets": [{ "faire": "recharger" }] },
+              { "composant": "Titre", "texte": { "$t": "abonnement.titre" }, "niveau": "page" },
+              { "composant": "Phrase", "texte": { "$t": "abonnement.description" } },
+              { "composant": "Lignes", "donnee": { "$data": "table.abonnement_ia" }, "vide": { "$t": "abonnement.inactif" }, "modele": [
+                { "composant": "Encart", "enfants": [
+                  { "composant": "Valeur", "libelle": { "$t": "abonnement.debut" }, "donnee": { "$data": "ligne.debut" }, "format": "date" },
+                  { "composant": "Valeur", "libelle": { "$t": "abonnement.fin" }, "donnee": { "$data": "ligne.fin" }, "format": "date" },
+                  { "composant": "Valeur", "libelle": { "$t": "abonnement.credits" }, "donnee": { "$data": "ligne.credits_utilises" }, "format": "nombre" },
+                  { "composant": "Bouton", "libelle": { "$t": "abonnement.resilier" }, "genre": "danger", "effets": [{ "faire": "submit", "table": "abonnement_ia", "mode": "supprimer" }] }
+                ] }
+              ] },
+              { "composant": "Bouton", "libelle": { "$t": "abonnement.souscrire" }, "genre": "principal", "effets": [
+                { "faire": "submit", "table": "abonnement_ia", "mode": "creer", "valeurs": [
+                  { "champ": "compte", "depuis": { "$data": "session.utilisateur" } }, { "champ": "quota", "depuis": 150 }, { "champ": "credits_utilises", "depuis": 0 }
+                ] }
+              ] }
+            ] }
+          ]
+        },
+        "traductions": [
+          { "langue": "fr", "textes": [
+            { "cle": "abonnement.erreur", "texte": "Impossible de lire votre abonnement. Vérifiez votre connexion puis rechargez la page." },
+            { "cle": "abonnement.titre", "texte": "Abonnement IA premium" },
+            { "cle": "abonnement.description", "texte": "Accédez à l'agent IA premium pendant une durée définie. Si l'abonnement expire ou si le crédit est épuisé, la réservation classique reste disponible." },
+            { "cle": "abonnement.inactif", "texte": "Aucun abonnement actif" }, { "cle": "abonnement.debut", "texte": "Début" }, { "cle": "abonnement.fin", "texte": "Fin" },
+            { "cle": "abonnement.credits", "texte": "Crédits restants" }, { "cle": "abonnement.resilier", "texte": "Résilier" }, { "cle": "abonnement.souscrire", "texte": "Souscrire" }
+          ] },
+          { "langue": "en", "textes": [
+            { "cle": "abonnement.titre", "texte": "Premium AI subscription" },
+            { "cle": "abonnement.description", "texte": "Access the premium AI agent for a defined period. If the subscription expires or credits are exhausted, standard booking remains available." },
+            { "cle": "abonnement.inactif", "texte": "No active subscription" }, { "cle": "abonnement.debut", "texte": "Start" }, { "cle": "abonnement.fin", "texte": "End" },
+            { "cle": "abonnement.credits", "texte": "Remaining credits" }, { "cle": "abonnement.resilier", "texte": "Cancel" }, { "cle": "abonnement.souscrire", "texte": "Subscribe" }
+          ] },
+          { "langue": "ar", "textes": [
+            { "cle": "abonnement.titre", "texte": "اشتراك الذكاء المتميز" },
+            { "cle": "abonnement.description", "texte": "الوصول إلى وكيل الذكاء المتميز لفترة محددة. إذا انتهى الاشتراك أو نفد الرصيد، يبقى الحجز العادي متاحًا." },
+            { "cle": "abonnement.inactif", "texte": "لا يوجد اشتراك نشط" }, { "cle": "abonnement.debut", "texte": "البداية" }, { "cle": "abonnement.fin", "texte": "النهاية" },
+            { "cle": "abonnement.credits", "texte": "الرصيد المتبقي" }, { "cle": "abonnement.resilier", "texte": "إلغاء" }, { "cle": "abonnement.souscrire", "texte": "اشترك" }
+          ] }
+        ]
+      }
+    },
+    {
+      "ecran": "detail",
+      "source": "fichier livré ecrans/detail.tsx (le seul écran du modèle traduit en fr/en/ar dans les deux œuvres)",
+      "defautsMesures": ["aucun par les anciens juges (livré « ok »)"],
+      "portee": "cree_le (new Date()) n'a pas d'équivalent littéral : laissé ; la reprise après erreur et le repli sur la première offre aussi.",
+      "attendu": ["CHAMP_INCONNU"],
+      "fragment": {
+        "ecran": {
+          "route": "detail", "acces": "Particulier", "titre": { "$t": "detail.titre" },
+          "corps": [
+            { "composant": "Titre", "texte": { "$t": "detail.titre" }, "niveau": "page" },
+            { "composant": "Valeur", "donnee": { "$data": "parcours.offre.fournisseur" } },
+            { "composant": "Valeur", "donnee": { "$data": "parcours.offre.categorie" } },
+            { "composant": "Phrase", "texte": { "$t": "detail.sousTitre" } },
+            { "composant": "Pile", "sens": "ligne", "espace": "s", "enfants": [
+              { "composant": "Bouton", "libelle": { "$t": "detail.retour" }, "genre": "secondaire", "effets": [{ "faire": "navigate", "route": "accueil" }] },
+              { "composant": "Bouton", "libelle": { "$t": "detail.reserver" }, "genre": "principal", "effets": [
+                { "faire": "submit", "table": "reservation", "mode": "creer", "valeurs": [
+                  { "champ": "offre_id", "depuis": { "$data": "parcours.offre.id" } },
+                  { "champ": "utilisateur_id", "depuis": { "$data": "session.utilisateur" } },
+                  { "champ": "statut", "depuis": "en_attente" },
+                  { "champ": "montant", "depuis": { "$data": "parcours.offre.prix_origine" } },
+                  { "champ": "devise", "depuis": { "$data": "parcours.offre.devise_origine" } }
+                ] },
+                { "faire": "navigate", "route": "recapitulatif-paiement" }
+              ] }
+            ] },
+            { "composant": "Encart", "fond": "surface", "enfants": [
+              { "composant": "Valeur", "libelle": { "$t": "detail.fournisseur" }, "donnee": { "$data": "parcours.offre.fournisseur" } },
+              { "composant": "Valeur", "libelle": { "$t": "detail.categorie" }, "donnee": { "$data": "parcours.offre.categorie" } },
+              { "composant": "Valeur", "libelle": { "$t": "detail.prix" }, "donnee": { "$data": "parcours.offre.prix_origine" }, "format": "montant" },
+              { "composant": "Valeur", "libelle": { "$t": "detail.disponibilite" }, "donnee": { "$data": "parcours.offre.disponible" }, "format": "statut" }
+            ] },
+            { "composant": "Encart", "enfants": [
+              { "composant": "Titre", "texte": { "$t": "detail.conditionsTitre" }, "niveau": "encart" },
+              { "composant": "Phrase", "texte": { "$t": "detail.conditionsDescription" }, "couleur": "texteDiscret" },
+              { "composant": "Pile", "sens": "ligne", "enfants": [
+                { "composant": "Pictogramme", "icone": "alerte", "couleur": "alerte" },
+                { "composant": "Phrase", "texte": { "$t": "detail.fonctionIndisponible" } }
+              ] },
+              { "composant": "Phrase", "texte": { "$t": "detail.annulationApi" } },
+              { "composant": "Phrase", "texte": { "$t": "detail.suiviTempsReel" } },
+              { "composant": "Phrase", "texte": { "$t": "detail.nonSimule" }, "couleur": "texteDiscret" }
+            ] }
+          ]
+        },
+        "traductions": [
+          { "langue": "fr", "textes": [
+            { "cle": "detail.titre", "texte": "Détail de l’offre" }, { "cle": "detail.sousTitre", "texte": "Consultez les conditions avant de confirmer" },
+            { "cle": "detail.fournisseur", "texte": "Fournisseur" }, { "cle": "detail.categorie", "texte": "Catégorie" }, { "cle": "detail.prix", "texte": "Prix" },
+            { "cle": "detail.disponibilite", "texte": "Disponibilité" }, { "cle": "detail.reserver", "texte": "Réserver" }, { "cle": "detail.retour", "texte": "Retour" },
+            { "cle": "detail.conditionsTitre", "texte": "Conditions" },
+            { "cle": "detail.conditionsDescription", "texte": "Certaines fonctions (annulation via API, suivi en temps réel) ne sont pas disponibles chez ce fournisseur." },
+            { "cle": "detail.fonctionIndisponible", "texte": "Fonctions indisponibles" }, { "cle": "detail.annulationApi", "texte": "Annulation via API" },
+            { "cle": "detail.suiviTempsReel", "texte": "Suivi en temps réel" }, { "cle": "detail.nonSimule", "texte": "Ces fonctions ne sont pas simulées." }
+          ] },
+          { "langue": "en", "textes": [
+            { "cle": "detail.titre", "texte": "Offer details" }, { "cle": "detail.sousTitre", "texte": "Review the conditions before confirming" },
+            { "cle": "detail.fournisseur", "texte": "Provider" }, { "cle": "detail.categorie", "texte": "Category" }, { "cle": "detail.prix", "texte": "Price" },
+            { "cle": "detail.disponibilite", "texte": "Availability" }, { "cle": "detail.reserver", "texte": "Book" }, { "cle": "detail.retour", "texte": "Back" },
+            { "cle": "detail.conditionsTitre", "texte": "Conditions" },
+            { "cle": "detail.conditionsDescription", "texte": "Some functions (API cancellation, real-time tracking) are not available from this provider." },
+            { "cle": "detail.fonctionIndisponible", "texte": "Unavailable functions" }, { "cle": "detail.annulationApi", "texte": "API cancellation" },
+            { "cle": "detail.suiviTempsReel", "texte": "Real-time tracking" }, { "cle": "detail.nonSimule", "texte": "These functions are not simulated." }
+          ] },
+          { "langue": "ar", "textes": [
+            { "cle": "detail.titre", "texte": "تفاصيل العرض" }, { "cle": "detail.sousTitre", "texte": "راجع الشروط قبل التأكيد" },
+            { "cle": "detail.fournisseur", "texte": "المزوّد" }, { "cle": "detail.categorie", "texte": "الفئة" }, { "cle": "detail.prix", "texte": "السعر" },
+            { "cle": "detail.disponibilite", "texte": "التوفر" }, { "cle": "detail.reserver", "texte": "احجز" }, { "cle": "detail.retour", "texte": "رجوع" },
+            { "cle": "detail.conditionsTitre", "texte": "الشروط" },
+            { "cle": "detail.conditionsDescription", "texte": "بعض الوظائف (الإلغاء عبر API، التتبع الفوري) غير متاحة لدى هذا المزوّد." },
+            { "cle": "detail.fonctionIndisponible", "texte": "وظائف غير متاحة" }, { "cle": "detail.annulationApi", "texte": "الإلغاء عبر API" },
+            { "cle": "detail.suiviTempsReel", "texte": "التتبع الفوري" }, { "cle": "detail.nonSimule", "texte": "هذه الوظائف لا تتم محاكاتها." }
+          ] }
+        ]
+      }
+    },
+    {
+      "ecran": "accueil",
+      "source": "fichier livré ecrans/accueil.tsx — ÉCRIT PAR DERIBFY (squelette 3c-2), session Particulier",
+      "defautsMesures": ["constat du propriétaire : les cartes de l'accueil restent en français quand EN est choisi (noms du plan non traduits)"],
+      "portee": "les cartes suivent la liste du plan pour le rôle Particulier ; « Vos écrans » et « Espace de gestion » passaient déjà par t().",
+      "attenduCouche1": ["TEXTE_LITTERAL"],
+      "attendu": ["TEXTE_LITTERAL"],
+      "fragment": {
+        "ecran": {
+          "route": "accueil", "acces": "visiteur", "titre": "Hayine",
+          "corps": [
+            { "composant": "Titre", "texte": "Hayine", "niveau": "page" },
+            { "composant": "Phrase", "texte": { "$t": "systeme.vosEcrans" } },
+            { "composant": "Pile", "espace": "s", "enfants": [
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "demarrage-langue" }], "enfants": [{ "composant": "Phrase", "texte": "Démarrage/langue" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "inscription-connexion" }], "enfants": [{ "composant": "Phrase", "texte": "Inscription/connexion" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "verification" }], "enfants": [{ "composant": "Phrase", "texte": "Vérification" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "recherche" }], "enfants": [{ "composant": "Phrase", "texte": "Recherche" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "resultats" }], "enfants": [{ "composant": "Phrase", "texte": "Résultats" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "detail" }], "enfants": [{ "composant": "Phrase", "texte": "Détail" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "recapitulatif-paiement" }], "enfants": [{ "composant": "Phrase", "texte": "Récapitulatif/paiement" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "confirmation" }], "enfants": [{ "composant": "Phrase", "texte": "Confirmation" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "reservations" }], "enfants": [{ "composant": "Phrase", "texte": "Réservations" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "documents" }], "enfants": [{ "composant": "Phrase", "texte": "Documents" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "notifications" }], "enfants": [{ "composant": "Phrase", "texte": "Notifications" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "profil" }], "enfants": [{ "composant": "Phrase", "texte": "Profil" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "abonnement-ia" }], "enfants": [{ "composant": "Phrase", "texte": "Abonnement IA" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "agent-ia" }], "enfants": [{ "composant": "Phrase", "texte": "Agent IA" }] },
+              { "composant": "Encart", "effets": [{ "faire": "navigate", "route": "aide" }], "enfants": [{ "composant": "Phrase", "texte": "Aide" }] }
+            ] }
+          ]
+        },
+        "traductions": [
+          { "langue": "fr", "textes": [{ "cle": "systeme.vosEcrans", "texte": "Vos écrans" }] },
+          { "langue": "en", "textes": [{ "cle": "systeme.vosEcrans", "texte": "Your screens" }] },
+          { "langue": "ar", "textes": [{ "cle": "systeme.vosEcrans", "texte": "شاشاتك" }] }
+        ]
+      }
+    },
+    {
+      "ecran": "gestion-offre",
+      "source": "fichier livré ecrans/gestion-offre.tsx + systeme/gestion.tsx — ÉCRIT PAR DERIBFY (squelette 3c-2)",
+      "defautsMesures": ["juge Chromium : « Ajouter » ne change rien (envoi de formulaire bloqué par sandbox=\"allow-scripts\")", "constat du propriétaire : « Ajouter » mort en gestion"],
+      "portee": "les boutons Modifier / Retirer de chaque ligne sont rendus dans le modèle de Lignes ; le compteur d'enregistrements est laissé.",
+      "attenduCouche1": ["FORMULAIRE_NATIF"],
+      "attendu": ["FORMULAIRE_NATIF", "TRADUCTION_MANQUANTE"],
+      "fragment": {
+        "ecran": {
+          "route": "gestion-offre", "acces": "Administrateur", "titre": { "$t": "gestion.offre.titre" },
+          "etat": [
+            { "nom": "fournisseur", "nature": "texte" }, { "nom": "categorie", "nature": "texte" }, { "nom": "prixOrigine", "nature": "texte" },
+            { "nom": "deviseOrigine", "nature": "texte" }, { "nom": "disponible", "nature": "booleen", "initial": false }
+          ],
+          "corps": [
+            { "composant": "Titre", "texte": { "$t": "gestion.offre.titre" }, "niveau": "page" },
+            { "composant": "Formulaire", "enfants": [
+              { "composant": "Champ", "libelle": { "$t": "gestion.offre.fournisseur" }, "donnee": { "$data": "etat.fournisseur" }, "nature": "texte", "requis": true },
+              { "composant": "Champ", "libelle": { "$t": "gestion.offre.categorie" }, "donnee": { "$data": "etat.categorie" }, "nature": "texte", "requis": true },
+              { "composant": "Champ", "libelle": { "$t": "gestion.offre.prixOrigine" }, "donnee": { "$data": "etat.prixOrigine" }, "nature": "texte", "requis": true },
+              { "composant": "Champ", "libelle": { "$t": "gestion.offre.deviseOrigine" }, "donnee": { "$data": "etat.deviseOrigine" }, "nature": "texte", "requis": true },
+              { "composant": "Champ", "libelle": { "$t": "gestion.offre.disponible" }, "donnee": { "$data": "etat.disponible" }, "nature": "case" },
+              { "composant": "Bouton", "libelle": { "$t": "gestion.ajouter" }, "genre": "principal", "effets": [
+                { "faire": "submit", "table": "offre", "mode": "creer", "valeurs": [
+                  { "champ": "fournisseur", "depuis": { "$data": "etat.fournisseur" } }, { "champ": "categorie", "depuis": { "$data": "etat.categorie" } },
+                  { "champ": "prix_origine", "depuis": { "$data": "etat.prixOrigine" } }, { "champ": "devise_origine", "depuis": { "$data": "etat.deviseOrigine" } },
+                  { "champ": "disponible", "depuis": { "$data": "etat.disponible" } }
+                ] }
+              ] }
+            ] },
+            { "composant": "Lignes", "donnee": { "$data": "table.offre" }, "vide": { "$t": "gestion.offre.vide" }, "modele": [
+              { "composant": "Pile", "sens": "ligne", "enfants": [
+                { "composant": "Valeur", "donnee": { "$data": "ligne.fournisseur" } },
+                { "composant": "Valeur", "donnee": { "$data": "ligne.categorie" } },
+                { "composant": "Valeur", "donnee": { "$data": "ligne.prix_origine" } },
+                { "composant": "Valeur", "donnee": { "$data": "ligne.devise_origine" } },
+                { "composant": "Valeur", "donnee": { "$data": "ligne.disponible" } },
+                { "composant": "Bouton", "libelle": { "$t": "gestion.retirer" }, "genre": "discret", "effets": [{ "faire": "submit", "table": "offre", "mode": "supprimer" }] }
+              ] }
+            ] },
+            { "composant": "Bouton", "libelle": { "$t": "gestion.retourAccueil" }, "genre": "discret", "effets": [{ "faire": "navigate", "route": "accueil" }] }
+          ]
+        },
+        "traductions": [{ "langue": "fr", "textes": [
+          { "cle": "gestion.offre.titre", "texte": "Offre" }, { "cle": "gestion.offre.fournisseur", "texte": "Fournisseur" },
+          { "cle": "gestion.offre.categorie", "texte": "Categorie" }, { "cle": "gestion.offre.prixOrigine", "texte": "Prix origine" },
+          { "cle": "gestion.offre.deviseOrigine", "texte": "Devise origine" }, { "cle": "gestion.offre.disponible", "texte": "Disponible" },
+          { "cle": "gestion.ajouter", "texte": "Ajouter" }, { "cle": "gestion.offre.vide", "texte": "Aucun enregistrement dans « Offre »" },
+          { "cle": "gestion.retirer", "texte": "Retirer" }, { "cle": "gestion.retourAccueil", "texte": "Retour à l’accueil" }
+        ] }]
+      }
+    }
+  ]
+}
