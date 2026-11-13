@@ -42,6 +42,7 @@ import {
 import { projectAirSchema } from '@deribfy/air-schema'
 import { lireEntites } from '@/lib/apps/entites-declarees'
 import { lectureAEnregistrer } from '@/lib/apps/lecture-brief'
+import { deploiementQuiSert } from '@/lib/apps/deploiement'
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
 import { proportionEprouvee } from '@/lib/apps/portee-epreuve'
@@ -371,6 +372,10 @@ export async function POST(req: Request) {
   // 34 sur 34 sans trace. Écrit en succès ET en échec ; absent, il s'écrit
   // `non_transmise` — voir lib/apps/lecture-brief.ts.
   const lectureBrief = lectureAEnregistrer((corps as { lectureBrief?: unknown }).lectureBrief, entitesDeclarees.length)
+  // ── LE DÉPLOIEMENT QUI SERT, ÉCRIT DANS CHAQUE LIGNE (étape 2, 2026-11-13).
+  // « Déploiement d'origine INCONNU » sur la ligne c4522e43 : plus jamais.
+  // Même dérivation que /api/version — voir lib/apps/deploiement.ts.
+  const deploiement = deploiementQuiSert(process.env)
 
   let demande = typeof corps.demande === 'string' ? corps.demande.trim() : ''
   let nomExistant: string | null = null
@@ -551,7 +556,7 @@ export async function POST(req: Request) {
         statut: 'refusee',
         duree_ms: Date.now() - debut,
         diagnostics: [`la construction a ete interrompue — ${message.slice(0, 300)}`],
-        sections_acquises: { lectureBrief },
+        sections_acquises: { lectureBrief, deploiement },
       })
     } catch {
       /* le journal peut manquer ; l'alerte, elle, doit partir quand meme */
@@ -788,6 +793,7 @@ export async function POST(req: Request) {
     sections_acquises: {
       configuration,
       lectureBrief,
+      deploiement,
       tours: resultat.tours,
       // EP-297 : les deux juges accompagnent toute œuvre acceptée. Sans eux,
       // « livrée » redevient un mot sans mesure — le défaut fondateur.

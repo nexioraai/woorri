@@ -708,7 +708,7 @@ export default function ConversationApplication({
    */
   const deduireConfiguration = async (
     texte: string,
-  ): Promise<{ config: Configuration; entites: EntiteDeclaree[]; lecture?: LectureBrief }> => {
+  ): Promise<{ config: Configuration; entites: EntiteDeclaree[]; lecture?: LectureBrief; nom?: string }> => {
     try {
       const rl = await fetch('/api/generateur/lire-brief', {
         method: 'POST',
@@ -720,6 +720,7 @@ export default function ConversationApplication({
         entites?: EntiteDeclaree[];
         entitesRefusees?: { quoi: string; motif: string }[];
         lecture?: LectureBrief;
+        nomProduit?: { nom?: string };
       };
       setEntites(dl.entites ?? []);
       setEntitesRefusees(dl.entitesRefusees ?? []);
@@ -752,6 +753,11 @@ export default function ConversationApplication({
         entites: lues,
         // Le statut de la lecture VOYAGE avec, comme les entités (M6).
         lecture: dl.lecture,
+        // LE NOM AUSSI (étape 2, 2026-11-13). MESURÉ : `nom` null pour 16
+        // générations sur 16 depuis le 2026-11-04 — `lire-brief` le proposait
+        // (`nomProduit`, EP-309 ⑨), et cette fonction le jetait. La route le
+        // revalide (`nomProduitValide`) : un remplissage y reste refusé.
+        nom: typeof dl.nomProduit?.nom === 'string' ? dl.nomProduit.nom : undefined,
       };
     } catch {
       return { config: { currency: DEVISE_PAR_DEFAUT }, entites: [] };
@@ -791,6 +797,7 @@ export default function ConversationApplication({
       config: lu.config,
       entites: lu.entites,
       lecture: lu.lecture,
+      nom: lu.nom,
       dejaAffiche: true,
     });
   };
@@ -906,6 +913,7 @@ export default function ConversationApplication({
           config: lu.config,
           entites: lu.entites,
           lecture: lu.lecture,
+          nom: lu.nom,
           dejaAffiche: false,
         });
         return;
@@ -1057,9 +1065,19 @@ export default function ConversationApplication({
           // LES ENTITÉS VOYAGENT : sans elles, `schema.sql` repartirait en
           // « aucune donnée déclarée » alors que la lecture du brief en a
           // trouvé. Le pré-vol les a montrées, la personne n'a pas refusé.
+          // ── LA CONFIGURATION CALCULÉE, PAS L'ÉTAT (étape 2, 2026-11-13).
+          //
+          // MESURÉ (M6) : configuration reçue `{}` pour 16 générations sur 16
+          // depuis le 2026-11-01. Le corps envoyait l'état React
+          // `configuration`, que plus rien n'écrit depuis que le pré-vol ne
+          // pose plus de questions (83a7261e, 2026-11-04) : une variable
+          // morte, pas un retard d'un rendu. `deduireConfiguration` calcule
+          // la devise et le reste ; `construire` les reçoit en argument —
+          // même réparation que les entités. Le commentaire reste HORS de
+          // l'objet : EP-319 ⑤ ancre `entites:` à distance bornée de `body:`.
           body: JSON.stringify({
             demande: texte,
-            configuration,
+            configuration: opts.config ?? {},
             nom: opts.nom ?? '',
             entites: opts.entites ?? entites,
             lectureBrief: opts.lecture,
@@ -1328,6 +1346,7 @@ export default function ConversationApplication({
         config: lu.config,
         entites: lu.entites,
         lecture: lu.lecture,
+        nom: lu.nom,
         dejaAffiche: true,
       });
     })();

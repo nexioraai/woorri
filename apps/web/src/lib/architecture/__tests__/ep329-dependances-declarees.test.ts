@@ -146,16 +146,31 @@ describe('EP-329 · les dépendances de cet espace de travail', () => {
     const route = readFileSync(join(RACINE, 'src', 'app', 'api', 'version', 'route.ts'), 'utf8')
       .replace(/\/\*[\s\S]*?\*\//gu, '')
       .replace(/^[ \t]*\/\/.*$/gmu, '')
-    expect(route, 'la route ne lit pas l’empreinte du commit').toContain('VERCEL_GIT_COMMIT_SHA')
+    // ── L'EMPREINTE EST LUE PAR UNE DÉRIVATION PARTAGÉE (étape 2, 2026-11-13).
+    //
+    // La ligne de génération enregistre désormais le déploiement qui l'a
+    // servie (la ligne c4522e43 ne pouvait pas dire le sien). Pour que ce
+    // que la ligne écrit et ce que cette route affiche ne divergent jamais,
+    // la lecture de `VERCEL_GIT_COMMIT_SHA` vit dans lib/apps/deploiement.ts
+    // et la route l'appelle. La propriété de ce cliquet est intacte : la
+    // route rend l'empreinte SERVIE — elle la lit, par cette fonction.
+    expect(route, 'la route ne lit plus l’empreinte du commit').toContain('commitDuDeploiement(process.env)')
+    const derivation = readFileSync(join(RACINE, 'src', 'lib', 'apps', 'deploiement.ts'), 'utf8')
+    expect(derivation, 'la dérivation partagée ne lit pas l’empreinte du commit').toContain('VERCEL_GIT_COMMIT_SHA')
     expect(route, 'une empreinte mise en cache dirait l’ancien déploiement').toMatch(
       /force-dynamic|no-store/u,
     )
     // ET RIEN D'AUTRE NE SORT : une route de diagnostic qui grossit devient
     // une fuite. Sept signes sur un dépôt privé ne donnent de prise à
     // personne ; une variable de plus, si.
+    // Depuis la dérivation partagée, la route ne lit AUCUNE variable en
+    // direct : `process.env` passe entier à `commitDuDeploiement`, qui ne
+    // rend que sept signes. Une lecture directe ici contournerait la
+    // dérivation unique ; une clef de plus dans la réponse serait la fuite.
     const autresVariables = [...route.matchAll(/process\.env\.(\w+)/gu)].map((m) => m[1])
-    expect(autresVariables, 'la route de version expose autre chose que l’empreinte').toEqual([
-      'VERCEL_GIT_COMMIT_SHA',
-    ])
+    expect(autresVariables, 'la route de version lit une variable en direct — la dérivation partagée est contournée').toEqual([])
+    expect(route, 'la route de version expose autre chose que l’empreinte').toMatch(
+      /NextResponse\.json\(\s*\{\s*commit:\s*commitDuDeploiement\(process\.env\)\s*\}/u,
+    )
   })
 })

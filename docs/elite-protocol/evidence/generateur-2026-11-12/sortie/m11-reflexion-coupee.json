@@ -1,0 +1,165 @@
+{
+ "cahierSha256": "32e6bb42ca17e370b5cbb46d8d647008c7094692c1eb57a32f354fdc3fbffc9f",
+ "reference": {
+  "tables": 8,
+  "source": "M10 rejeux 2 et 4"
+ },
+ "modele": "deepseek-flash",
+ "plafond": 0.04,
+ "depense": 0.0115,
+ "rejeux": [
+  {
+   "variante": "A-thinking-disabled",
+   "rang": 1,
+   "stop_reason": "end_turn",
+   "jetonsSortie": 1464,
+   "blocs": [
+    {
+     "type": "text",
+     "signes": 4428
+    }
+   ],
+   "signesReflexion": 0,
+   "signesTexte": 4428,
+   "resultatRoute": "reussie",
+   "tables": 2,
+   "deduites": {
+    "ARGENT_DANS_APP": "paiements",
+    "MARCHE_VISE": "Tchad",
+    "NOM_PRODUIT": "Atelier Mariam",
+    "NOM_CITATION": "Application mobile et web pour « Atelier Mariam », atelier de couture à N'Djamena"
+   },
+   "ms": 6663,
+   "usd": 0.0012
+  },
+  {
+   "variante": "A-thinking-disabled",
+   "rang": 2,
+   "stop_reason": "end_turn",
+   "jetonsSortie": 1518,
+   "blocs": [
+    {
+     "type": "text",
+     "signes": 4546
+    }
+   ],
+   "signesReflexion": 0,
+   "signesTexte": 4546,
+   "resultatRoute": "reussie",
+   "tables": 6,
+   "deduites": {
+    "ARGENT_DANS_APP": "paiements",
+    "MARCHE_VISE": "Tchad",
+    "NOM_PRODUIT": "Atelier Mariam",
+    "NOM_CITATION": "Application mobile et web pour « Atelier Mariam »"
+   },
+   "ms": 5514,
+   "usd": 0.00095
+  },
+  {
+   "variante": "A-thinking-disabled",
+   "rang": 3,
+   "stop_reason": "end_turn",
+   "jetonsSortie": 1528,
+   "blocs": [
+    {
+     "type": "text",
+     "signes": 4594
+    }
+   ],
+   "signesReflexion": 0,
+   "signesTexte": 4594,
+   "resultatRoute": "reussie",
+   "tables": 7,
+   "deduites": {
+    "ARGENT_DANS_APP": "paiements",
+    "MARCHE_VISE": "N'Djamena",
+    "NOM_PRODUIT": "Atelier Mariam",
+    "NOM_CITATION": "Application mobile et web pour « Atelier Mariam »"
+   },
+   "ms": 5495,
+   "usd": 0.00096
+  },
+  {
+   "variante": "B-effort-low",
+   "rang": 1,
+   "stop_reason": "end_turn",
+   "jetonsSortie": 4289,
+   "blocs": [
+    {
+     "type": "thinking",
+     "signes": 9559
+    },
+    {
+     "type": "text",
+     "signes": 5144
+    }
+   ],
+   "signesReflexion": 9559,
+   "signesTexte": 5144,
+   "resultatRoute": "reussie",
+   "tables": 8,
+   "deduites": {
+    "ARGENT_DANS_APP": "aucun",
+    "NOM_PRODUIT": "Atelier Mariam",
+    "NOM_CITATION": "Application mobile et web pour « Atelier Mariam »"
+   },
+   "ms": 20124,
+   "usd": 0.0029
+  },
+  {
+   "variante": "B-effort-low",
+   "rang": 2,
+   "stop_reason": "end_turn",
+   "jetonsSortie": 5242,
+   "blocs": [
+    {
+     "type": "thinking",
+     "signes": 15579
+    },
+    {
+     "type": "text",
+     "signes": 3729
+    }
+   ],
+   "signesReflexion": 15579,
+   "signesTexte": 3729,
+   "resultatRoute": "reussie",
+   "tables": 2,
+   "deduites": {
+    "ARGENT_DANS_APP": "aucun",
+    "NOM_PRODUIT": "Atelier Mariam",
+    "NOM_CITATION": "Application mobile et web pour « Atelier Mariam »"
+   },
+   "ms": 27823,
+   "usd": 0.00319
+  },
+  {
+   "variante": "B-effort-low",
+   "rang": 3,
+   "stop_reason": "end_turn",
+   "jetonsSortie": 3790,
+   "blocs": [
+    {
+     "type": "thinking",
+     "signes": 9726
+    },
+    {
+     "type": "text",
+     "signes": 3996
+    }
+   ],
+   "signesReflexion": 9726,
+   "signesTexte": 3996,
+   "resultatRoute": "reussie",
+   "tables": 8,
+   "deduites": {
+    "ARGENT_DANS_APP": "aucun",
+    "NOM_PRODUIT": "Atelier Mariam",
+    "NOM_CITATION": "Application mobile et web pour « Atelier Mariam »"
+   },
+   "ms": 19161,
+   "usd": 0.00232
+  }
+ ]
+}

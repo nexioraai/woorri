@@ -1,0 +1,102 @@
+{
+ "cahierSha256": "32e6bb42ca17e370b5cbb46d8d647008c7094692c1eb57a32f354fdc3fbffc9f",
+ "cahierSignes": 1709,
+ "consigneSignes": 5475,
+ "modele": "deepseek-flash",
+ "plafond": 0.1,
+ "depense": 0.0312,
+ "rejeux": [
+  {
+   "rang": 1,
+   "maxJetons": 8000,
+   "stop_reason": "max_tokens",
+   "jetonsEntree": 251,
+   "jetonsSortie": 8000,
+   "blocs": [
+    {
+     "type": "thinking",
+     "signes": 28665
+    },
+    {
+     "type": "text",
+     "signes": 1342
+    }
+   ],
+   "signesReflexion": 28665,
+   "signesTexte": 1342,
+   "resultatRoute": "tronquee",
+   "tables": 0,
+   "ms": 41595,
+   "usd": 0.00968
+  },
+  {
+   "rang": 2,
+   "maxJetons": 8000,
+   "stop_reason": "end_turn",
+   "jetonsEntree": 251,
+   "jetonsSortie": 4540,
+   "blocs": [
+    {
+     "type": "thinking",
+     "signes": 9860
+    },
+    {
+     "type": "text",
+     "signes": 5351
+    }
+   ],
+   "signesReflexion": 9860,
+   "signesTexte": 5351,
+   "resultatRoute": "reussie",
+   "tables": 8,
+   "ms": 20264,
+   "usd": 0.00552
+  },
+  {
+   "rang": 3,
+   "maxJetons": 8000,
+   "stop_reason": "max_tokens",
+   "jetonsEntree": 251,
+   "jetonsSortie": 8000,
+   "blocs": [
+    {
+     "type": "thinking",
+     "signes": 28116
+    },
+    {
+     "type": "text",
+     "signes": 1606
+    }
+   ],
+   "signesReflexion": 28116,
+   "signesTexte": 1606,
+   "resultatRoute": "tronquee",
+   "tables": 0,
+   "ms": 42160,
+   "usd": 0.00968
+  },
+  {
+   "rang": 4,
+   "maxJetons": 20000,
+   "stop_reason": "end_turn",
+   "jetonsEntree": 251,
+   "jetonsSortie": 5196,
+   "blocs": [
+    {
+     "type": "thinking",
+     "signes": 11607
+    },
+    {
+     "type": "text",
+     "signes": 5267
+    }
+   ],
+   "signesReflexion": 11607,
+   "signesTexte": 5267,
+   "resultatRoute": "reussie",
+   "tables": 8,
+   "ms": 22107,
+   "usd": 0.00631
+  }
+ ]
+}
