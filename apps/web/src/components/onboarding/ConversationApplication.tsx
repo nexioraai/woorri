@@ -1057,9 +1057,19 @@ export default function ConversationApplication({
           // LES ENTITÉS VOYAGENT : sans elles, `schema.sql` repartirait en
           // « aucune donnée déclarée » alors que la lecture du brief en a
           // trouvé. Le pré-vol les a montrées, la personne n'a pas refusé.
+          // ── LA CONFIGURATION CALCULÉE, PAS L'ÉTAT (étape 2, 2026-11-13).
+          //
+          // MESURÉ (M6) : configuration reçue `{}` pour 16 générations sur 16
+          // depuis le 2026-11-01. Le corps envoyait l'état React
+          // `configuration`, que plus rien n'écrit depuis que le pré-vol ne
+          // pose plus de questions (83a7261e, 2026-11-04) : une variable
+          // morte, pas un retard d'un rendu. `deduireConfiguration` calcule
+          // la devise et le reste ; `construire` les reçoit en argument —
+          // même réparation que les entités. Le commentaire reste HORS de
+          // l'objet : EP-319 ⑤ ancre `entites:` à distance bornée de `body:`.
           body: JSON.stringify({
             demande: texte,
-            configuration,
+            configuration: opts.config ?? {},
             nom: opts.nom ?? '',
             entites: opts.entites ?? entites,
             lectureBrief: opts.lecture,
