@@ -28,6 +28,8 @@ export type LectureBrief = {
   readonly entreeCoupee: boolean
   /** Tables sorties de la lecture (avant revalidation par la route). */
   readonly tables: number
+  /** Appels au modèle faits par la route : 1, ou 2 après la reprise unique (2b). */
+  readonly tentatives?: number
 }
 
 /** Ce que la route écrit en base. */
@@ -38,6 +40,7 @@ export type LectureBriefEnregistree = {
   /** Compté par la route sur les entités qu'elle a revalidées. */
   readonly tablesRecues: number
   readonly source: 'client' | 'absente'
+  readonly tentatives: number | null
 }
 
 /** Limite de lecture du cahier — la même que `lire-brief/route.ts`. */
@@ -57,7 +60,7 @@ export function lectureAEnregistrer(brut: unknown, tablesRecues: number): Lectur
   const o = typeof brut === 'object' && brut !== null ? (brut as Record<string, unknown>) : null
   const resultat = o?.resultat
   if (o === null || typeof resultat !== 'string' || !(RESULTATS_LECTURE as readonly string[]).includes(resultat)) {
-    return { resultat: 'non_transmise', entreeCoupee: null, tablesLues: null, tablesRecues, source: 'absente' }
+    return { resultat: 'non_transmise', entreeCoupee: null, tablesLues: null, tablesRecues, source: 'absente', tentatives: null }
   }
   return {
     resultat: resultat as ResultatLecture,
@@ -65,5 +68,25 @@ export function lectureAEnregistrer(brut: unknown, tablesRecues: number): Lectur
     tablesLues: typeof o.tables === 'number' && Number.isInteger(o.tables) && o.tables >= 0 ? o.tables : null,
     tablesRecues,
     source: 'client',
+    tentatives: typeof o.tentatives === 'number' && Number.isInteger(o.tentatives) && o.tentatives >= 0 ? o.tentatives : null,
   }
+}
+
+/**
+ * LE MOT VISIBLE QUAND LA LECTURE N'A PAS ABOUTI — jamais silencieux (2b, 2026-11-13).
+ *
+ * MESURÉ (M10) : la réflexion du modèle mangeait la limite 2 fois sur 3, le
+ * texte était coupé au milieu des tables, et la génération partait SANS TABLE
+ * sans qu'un mot le dise. La route coupe la réflexion et reprend une fois
+ * (M11 : reussie 6/6) ; si la reprise échoue encore, CETTE phrase s'affiche
+ * avant que la génération parte. Signaler, pas bloquer : la règle « zéro
+ * question avant de construire » reste.
+ */
+export function noteDeLecture(lecture: { readonly resultat: string; readonly tentatives?: number } | undefined): string {
+  if (lecture === undefined || lecture.resultat === 'reussie' || lecture.resultat === 'demande_vide') return ''
+  const fois = lecture.tentatives === undefined ? '' : ` (${String(lecture.tentatives)} tentative${lecture.tentatives > 1 ? 's' : ''})`
+  const suite = ' La génération part sans les tables déduites du cahier — vous pourrez les ajouter dans l’atelier.'
+  if (lecture.resultat === 'tronquee') return `Lecture du cahier incomplète : la réponse a été coupée avant la fin${fois}.${suite}`
+  if (lecture.resultat === 'erreur') return `Lecture du cahier impossible : le service de lecture n’a pas répondu.${suite}`
+  return `Lecture du cahier incomplète : rien d’exploitable n’a pu être lu${fois}.${suite}`
 }
