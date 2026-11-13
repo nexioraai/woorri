@@ -29,7 +29,8 @@ const page = (corps: string) =>
       'index.tsx',
       "import { createRoot } from 'react-dom/client'\n" +
         `${corps}\n` +
-        "export function monter(n: Element) { createRoot(n).render(<App />) }\n",
+        // Le témoin SE MONTE, comme une vraie œuvre (règle 1 ; étape 3b).
+        "createRoot(document.getElementById('racine')!).render(<App />)\n",
     ],
     ...fichiersSysteme('XAF'),
   ])

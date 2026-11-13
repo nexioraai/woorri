@@ -17,14 +17,12 @@ import { fichiersSysteme } from '../bibliotheque-ui'
 const APP_BIBLIOTHEQUE = `import { createRoot } from 'react-dom/client'
 import { CarteDeChiffre, EtatVide } from './systeme/ui'
 import { formaterMontant } from './systeme/argent'
-export function monter(noeud: Element) {
-  createRoot(noeud).render(
-    <main>
-      <CarteDeChiffre icone="argent" libelle="Encaissé ce mois" valeur={formaterMontant(25000)} contexte="+12 % vs octobre — prochaine échéance le 5" ton="succes" />
-      <EtatVide message="Aucune réservation" detail="La première apparaîtra ici." />
-    </main>,
-  )
-}`
+createRoot(document.getElementById('racine')!).render(
+  <main>
+    <CarteDeChiffre icone="argent" libelle="Encaissé ce mois" valeur={formaterMontant(25000)} contexte="+12 % vs octobre — prochaine échéance le 5" ton="succes" />
+    <EtatVide message="Aucune réservation" detail="La première apparaîtra ici." />
+  </main>,
+)`
 
 describe('EP-299 · la bibliothèque injectée', () => {
   it('① LA DEVISE DU CLIENT EST CUITE DANS L’ARGENT — et l’invalide jamais', () => {

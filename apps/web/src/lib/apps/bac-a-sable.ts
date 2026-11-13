@@ -77,6 +77,19 @@ function resoudre(
 }
 
 /**
+ * LES EXPORTS DE NIVEAU MODULE QUI SURVIVENT DANS UN PAQUET — G29 statique.
+ *
+ * La liste de l'EMPAQUETEUR fait foi (`exports` du morceau rendu) ; le texte
+ * n'est lu qu'en repli, si le champ manquait (autre version de rolldown), et
+ * seulement aux lignes qui COMMENCENT par `export` — une prose en pleine
+ * chaîne ne commence pas une ligne par ce mot au niveau du module.
+ */
+export function exportsSurvivants(exportes: readonly string[] | undefined, code: string): string[] {
+  if (Array.isArray(exportes)) return [...exportes]
+  return code.split('\n').filter((l) => /^export\b/u.test(l)).map((l) => l.trim().slice(0, 80))
+}
+
+/**
  * Assemble, et rend soit le code, soit l'erreur TELLE QUE LE MODÈLE PEUT LA LIRE.
  *
  * L'erreur n'est pas avalée ni reformulée : c'est elle qu'on renverra au
@@ -95,6 +108,28 @@ export async function assembler(
     const paquet = await rolldown({
       input: entree,
       platform: 'browser',
+      // ── AUCUN EXPORT DE NIVEAU MODULE NE SURVIT DANS LE PAQUET (étape 3b, 2026-11-13).
+      //
+      // MESURÉ (M12, puis mesure-exports sur trois œuvres livrées) : rolldown
+      // conservait les exports du fichier d'entrée en fin de paquet —
+      // `export { App as default };` (4b8b1d20), `export { base, enBase,
+      // useTable };` (9cc16d10, l'arrêt de l'application Hayine). La page les
+      // enveloppe dans `try{ … }catch` : un `export` y est une faute de
+      // syntaxe, et le navigateur s'arrête AVANT la première ligne
+      // (« Unexpected token 'export' »). Le juge d'exécution, lui, importe
+      // le paquet nu sous Node où l'export est légal : il disait « démarre ».
+      //
+      // `preserveEntrySignatures: false` dit à l'empaqueteur que la signature
+      // de l'entrée n'est due à personne : ses exports sont élagués, ses
+      // EFFETS (le montage dans #racine) gardés. Mesuré : les deux œuvres
+      // s'affichent dans Chromium, zéro erreur. C'est l'empaqueteur qui
+      // transforme, pas une expression régulière sur son texte — et pas une
+      // prière à la consigne (elle le dit aussi, en complément).
+      //
+      // CONSÉQUENCE ASSUMÉE : une entrée qui n'exporte qu'un `monter()` sans
+      // l'appeler ne monte RIEN — comme dans la page. Les témoins de test se
+      // montent donc eux-mêmes, comme les vraies œuvres (règle 1).
+      preserveEntrySignatures: false,
       plugins: [
         {
           name: 'memoire',
@@ -160,6 +195,24 @@ export async function assembler(
           `paquet(s) non embarqué(s) dans le bundle : ${nus.join(', ')} — ` +
           `l'environnement d'assemblage ne les fournit pas ; l'application ` +
           `mourrait au chargement dans le navigateur`,
+        ms: Date.now() - debut,
+      }
+    }
+    // ── ET SI UN EXPORT SURVIVAIT QUAND MÊME, ON REFUSE — G29 statique (2026-11-13).
+    //
+    // Même discipline que les imports nus : c'est l'EMPAQUETEUR qui répond
+    // (`exports` du morceau), le texte n'est lu qu'en repli si le champ
+    // manquait. Un paquet qui exporte encore ne démarrerait pas dans la page ;
+    // le livrer serait un vert aveugle. Avec l'option ci-dessus la liste est
+    // vide ; ce contrôle garde la porte si l'empaqueteur changeait de conduite.
+    const survivants = exportsSurvivants(output[0]?.exports, code)
+    if (survivants.length > 0) {
+      return {
+        ok: false,
+        erreur:
+          `export(s) de niveau module dans le paquet : ${survivants.join(', ')} — ` +
+          `la page enveloppe le code dans try{ } et le navigateur s'arrête sur ` +
+          `« Unexpected token 'export' » avant la première ligne`,
         ms: Date.now() - debut,
       }
     }

@@ -44,6 +44,7 @@ import { lireEntites } from '@/lib/apps/entites-declarees'
 import { FUSIBLE_SIGNES, lectureAEnregistrer } from '@/lib/apps/lecture-brief'
 import { deploiementQuiSert } from '@/lib/apps/deploiement'
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
+import { TEMOIN_FICHIERS } from '@/lib/apps/temoin-sonde'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
 import { proportionEprouvee } from '@/lib/apps/portee-epreuve'
 import { appelerFournisseur, CONFIGS, fournisseurChoisi, tarifDe } from '@/lib/apps/fournisseur'
@@ -78,21 +79,9 @@ export const maxDuration = 900
  * sonde générale : le secret des crons — un geste qui coûte du processeur
  * ne s'offre pas à l'anonyme.
  */
-const TEMOIN_FICHIERS: ReadonlyMap<string, string> = new Map([
-  [
-    'index.tsx',
-    "import { createRoot } from 'react-dom/client'\n" +
-      "import { App } from './App'\n" +
-      'export function monter(noeud: Element) {\n' +
-      '  createRoot(noeud).render(<App />)\n' +
-      '}\n',
-  ],
-  ['App.tsx', "import { useState } from 'react'\n" +
-    'export function App() {\n' +
-    '  const [n] = useState(12)\n' +
-    '  return <p>témoin {n}</p>\n' +
-    '}\n'],
-])
+// Le témoin vit dans son propre module (lib/apps/temoin-sonde.ts) : il se
+// monte lui-même, comme une vraie œuvre, et sa chaîne porte une API de
+// navigateur que la route n'appelle jamais.
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET

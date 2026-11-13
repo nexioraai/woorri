@@ -110,6 +110,8 @@ RÈGLES, et chacune vient d'un défaut réel :
 
 1. \`index.tsx\` est le point d'entrée. Il monte l'application dans l'élément
    d'identifiant "racine" avec \`createRoot\`. Sans lui, rien ne s'affiche.
+   ET IL N'EXPORTE RIEN (ni \`export default App\`, ni \`export const\`) : un
+   export en fin de fichier arrêtait l'application (« Unexpected token 'export' »).
 
 2. TU N'IMPORTES QUE CES PAQUETS : ${PAQUETS_PROPOSES.join(', ')}.
    Aucun autre, jamais, même pour une date ou un graphique. L'environnement

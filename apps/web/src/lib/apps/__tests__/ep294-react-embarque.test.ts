@@ -61,9 +61,9 @@ describe('EP-294 · la famille react vit dans le bundle, pas sur le disque', () 
           'index.tsx',
           "import { createRoot } from 'react-dom/client'\n" +
             "import { App } from './App'\n" +
-            'export function monter(noeud: Element) {\n' +
-            '  createRoot(noeud).render(<App />)\n' +
-            '}\n',
+            // Le témoin SE MONTE (règle 1) : depuis l'étape 3b, un export
+            // jamais appelé est élagué — et react-dom avec lui.
+            "createRoot(document.getElementById('racine')!).render(<App />)\n",
         ],
         [
           'App.tsx',

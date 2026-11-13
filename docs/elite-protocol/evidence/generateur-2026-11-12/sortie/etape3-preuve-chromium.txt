@@ -1,0 +1,18 @@
+fichiers livrés : index.tsx, PERIMETRE.md
+exports écrits par le modèle dans index.tsx : []
+paquet : 837612 octets · 140 ms · lignes export : 0
+{
+ "adresse": "(accueil)",
+ "erreurs": [],
+ "signesCorps": 276,
+ "controles": 4,
+ "debut": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. Hayine Accueil Langue FR EN AR Catalogue Prestataires actifs intégrés à la plateforme Hayine Il n'y a actuellement aucun fournisseur disponible."
+}
+{
+ "adresse": "#gestion",
+ "erreurs": [],
+ "signesCorps": 900,
+ "controles": 13,
+ "debut": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. H Hayine Plateforme de réservation GESTION 0 0 0 0 0 0 0 0 0 0 Données à jour Aperçu Se déconnecter VENDREDI 13 NOVEMBRE 2026 Hayine — Gestion. Espace de gestion + RÉSE"
+}
+CHROMIUM : AUCUNE ERREUR

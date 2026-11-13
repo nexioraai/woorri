@@ -37,11 +37,17 @@ import { assembler } from '../bac-a-sable'
 /** Importe et exécute le bundle — pas le paquet installé. */
 async function executer<T>(code: string): Promise<T> {
   const url = 'data:text/javascript;base64,' + Buffer.from(code).toString('base64')
-  return (await import(/* @vite-ignore */ url)) as T
+  await import(/* @vite-ignore */ url)
+  // ── L'ENTRÉE N'EXPORTE PLUS RIEN (étape 3b, 2026-11-13) : l'assembleur
+  //    élague les exports du fichier d'entrée, comme pour toute œuvre livrée
+  //    (un `export` dans la page servie arrêtait l'application). Le témoin se
+  //    publie donc lui-même sur `globalThis`, par effet — exactement ce qui
+  //    reste d'une entrée après assemblage.
+  return (globalThis as Record<string, unknown>).__temoinEp327 as T
 }
 
 const OEUVRE = `import { createClient } from '@supabase/supabase-js'
-export function faire(f) {
+function faire(f) {
   const base = createClient('https://exemple.supabase.co', 'sb_publishable_sonde', {
     db: { schema: 'oeuvre_x' },
     global: { fetch: f },
@@ -58,7 +64,7 @@ export function faire(f) {
     ecrire: () => base.from('membre').insert({ nom: 'x' }),
   }
 }
-export function App() { return <div>ok</div> }`
+;(globalThis as any).__temoinEp327 = { faire }`
 
 type Api = {
   readonly faire: (f: unknown) => {
@@ -112,13 +118,15 @@ describe('EP-327 · la base dans le bundle', () => {
     // Un cliquet dont le dénominateur dépend de la PROSE D'UN TIERS casse
     // le jour où ce tiers reformule un message d'erreur. Le piège est donc
     // écrit ici, et il ne peut plus s'évaporer.
+    // Le piège est GARDÉ par un effet (publication sur globalThis) : depuis
+    // l'étape 3b, un `export` jamais lu serait élagué, et le piège avec lui.
     const PIEGE = [
-      'export const aide = `',
+      'const aide = `',
       'Pour le temps réel hors navigateur, installez le paquet :',
       "import ws from 'ws'",
       "import quelqueChose from '@paquet/inexistant'",
       '`',
-      'export function App() { return <div>{aide}</div> }',
+      ';(globalThis as any).__piegeEp327 = aide',
     ].join('\n')
     const v = await assembler(new Map([['index.tsx', PIEGE]]))
     expect(

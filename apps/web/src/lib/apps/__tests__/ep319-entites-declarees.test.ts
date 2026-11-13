@@ -262,7 +262,12 @@ describe('EP-319 · les données déclarées', () => {
     // ── 7 900 → 8 800 le 2026-11-12 : les RÉGLAGES EXACTS de chaque pièce,
     // lus dans la bibliothèque (pharmacie : data=, onSelect=, serie="…"
     // inventés, gestion plantée). Mesuré : 8 674 (+893 signes ≈ 250 jetons).
-    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(8800)
+    // ── 8 800 → 9 000 le 2026-11-13 (étape 3) : « index.tsx N'EXPORTE RIEN »
+    // (4b8b1d20 et 9cc16d10 arrêtées sur « Unexpected token 'export' ») et la
+    // FORME des éléments d'une liste d'objets (`details[{libelle, valeur}]`,
+    // M7 : « object is not iterable » 3/3). Compressé au minimum : mesuré 8 927
+    // (+253 signes ≈ 70 jetons par tour, ~210 par génération à trois tours).
+    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(9000)
   })
 
   it('⑥ter LA DÉROGATION DE PORTABILITÉ EST BORNÉE À `blocBase`', () => {
@@ -448,7 +453,9 @@ describe('EP-319 · les données déclarées', () => {
     // (voir ⑥). Mesuré : 12 155.
     // ── 12 300 → 12 550 le 2026-11-12 : le style par activité (⑥). Mesuré : 12 412.
     // ── 12 550 → 13 450 le 2026-11-12 : les réglages exacts (⑥). Mesuré : 13 305.
-    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(13450)
+    // ── 13 450 → 13 700 le 2026-11-13 : l'étape 3 (⑥) — mêmes ajouts, présents une
+    // fois dans les deux variantes. Mesuré : 13 558.
+    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(13700)
 
     // ── ET LE BANDEAU N'EST PLUS DEMANDÉ À L'ŒUVRE (2026-11-05).
     //
@@ -516,7 +523,9 @@ describe('EP-319 · les données déclarées', () => {
       // Mesurée PAR CE CLIQUET : 18 227 — la même hausse de 1 046 signes.
       // ── 18 400 → 18 650 le 2026-11-12 : le style par activité (+257 signes).
       // ── 18 650 → 19 550 le 2026-11-12 : les réglages exacts (+893 signes).
-    ).toBeLessThan(19550)
+      // ── 19 550 → 19 800 le 2026-11-13 : l'étape 3 (⑥, +253 signes).
+      // Mesurée PAR CE CLIQUET : 19 630.
+    ).toBeLessThan(19800)
 
     // ── ③ ET LA PORTE DES DONNÉES RESTE UNE PORTE ÉTROITE.
     //

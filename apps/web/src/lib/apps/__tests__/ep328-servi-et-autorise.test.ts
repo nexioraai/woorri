@@ -69,8 +69,13 @@ describe('EP-328 · servi et autorisé', () => {
     // ── MESURÉ : la consigne citait `expo`, `react-native`,
     //    `@expo/vector-icons`… Un modèle qui prend une icône d'Expo obéit à
     //    la consigne et fait échouer l'assemblage.
+    // ── `\bexpo\b`, pas `expo` (2026-11-13) : la consigne dit désormais
+    //    « index.tsx n'exporte rien » et cite « Unexpected token 'export' » —
+    //    « export » contient « expo ». Le paquet, lui, se lit entier :
+    //    `expo`, `@expo/vector-icons`, `expo-router` ont tous une frontière
+    //    de mot après le o ; « export » n'en a pas.
     expect(CONSIGNE, 'la consigne propose encore un paquet natif').not.toMatch(
-      /expo|react-native|@react-navigation/u,
+      /\bexpo\b|react-native|@react-navigation/u,
     )
     for (const p of PAQUETS_PROPOSES) {
       expect(CONSIGNE, `« ${p} » est servable et la consigne ne le nomme pas`).toContain(p)

@@ -70,7 +70,7 @@ const lire = async (t) => {
   if (!r.ok) return ${o.distingue === true ? "{ echec: true, lignes: [] }" : "{ echec: false, lignes: [] }"}
   return { echec: false, lignes: await r.json() }
 }
-export function monter(racine) {
+function monter(racine) {
   const rendre = (html) => { racine.innerHTML = html }
   rendre('<h1>Accueil</h1>')
   Promise.all([${toutes.map((t) => `lire('${t}')`).join(', ')}]).then((res) => {
@@ -90,6 +90,7 @@ export function monter(racine) {
     rendre(html)
   })
 }
+monter(document.getElementById('racine'))
 `
 }
 
