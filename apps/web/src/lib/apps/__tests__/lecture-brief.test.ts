@@ -48,8 +48,8 @@ describe('le résultat de la lecture du brief est enregistré', () => {
 
   it('③ la route de génération l’écrit en succès ET en échec', () => {
     const src = lire('app/api/generateur/direct/route.ts')
-    expect(src).toMatch(motifTexte('sections_acquises: { lectureBrief },'))
-    expect(src).toMatch(motifTexte('      configuration,\n      lectureBrief,\n      tours: resultat.tours,'))
+    expect(src).toMatch(motifTexte('sections_acquises: { lectureBrief, deploiement },'))
+    expect(src).toMatch(motifTexte('      configuration,\n      lectureBrief,\n      deploiement,\n      tours: resultat.tours,'))
   })
 
   it('④ le client le transmet par argument, jamais par l’état', () => {

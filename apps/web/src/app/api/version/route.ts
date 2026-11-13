@@ -27,6 +27,7 @@
  * plutôt que de rendre une chaîne vide qu'on prendrait pour une empreinte.
  */
 import { NextResponse } from 'next/server'
+import { commitDuDeploiement } from '@/lib/apps/deploiement'
 
 export const runtime = 'nodejs'
 // Jamais de cache : une empreinte mise en cache dirait l'ancien déploiement,
@@ -34,9 +35,10 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export function GET() {
-  const sha = process.env.VERCEL_GIT_COMMIT_SHA ?? ''
+  // La MÊME dérivation que la ligne de génération (lib/apps/deploiement.ts) :
+  // ce que la version affiche et ce que la ligne enregistre ne divergent pas.
   return NextResponse.json(
-    { commit: sha === '' ? 'inconnu' : sha.slice(0, 7) },
+    { commit: commitDuDeploiement(process.env) },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }
