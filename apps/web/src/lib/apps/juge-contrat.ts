@@ -45,6 +45,8 @@ export type Signature = {
   readonly acceptes: readonly string[] | null
   /** Réglages typés comme des LISTES. */
   readonly listes: readonly string[]
+  /** Pour une liste d'OBJETS, les clés de chaque élément (`details` → libelle, valeur) — ce que la consigne enseigne. */
+  readonly formes: Readonly<Record<string, readonly string[]>>
 }
 
 export type DefautContrat = {
@@ -120,6 +122,7 @@ export function signaturesDe(systeme: ReadonlyMap<string, string>): Map<string, 
         .filter((n): n is string => n !== undefined)
       // Le type littéral qui suit `}:` — pour reconnaître les listes.
       const listes: string[] = []
+      const formes: Record<string, readonly string[]> = {}
       const apres = source.slice(ferme + 1).match(/^\s*:\s*\{/u)
       if (apres !== null) {
         const ouvreType = ferme + 1 + apres[0].length - 1
@@ -127,11 +130,20 @@ export function signaturesDe(systeme: ReadonlyMap<string, string>): Map<string, 
         if (fermeType !== -1) {
           const type = source.slice(ouvreType + 1, fermeType)
           for (const t of type.matchAll(/([A-Za-z_$][\w$]*)\??\s*:\s*([^;\n]*)/gu)) {
-            if (/\[\]|Array</u.test(t[2]!) && !/=>/u.test(t[2]!)) listes.push(t[1]!)
+            if (/\[\]|Array</u.test(t[2]!) && !/=>/u.test(t[2]!)) {
+              listes.push(t[1]!)
+              // Un élément objet `{ a: T, b: T }` (virgules, pas de point-virgule :
+              // le lecteur de membres s'arrête au premier `;`) donne ses clés.
+              const objet = /\{([^}]*)\}/u.exec(t[2]!)
+              if (objet !== null) {
+                const cles = [...objet[1]!.matchAll(/([A-Za-z_$][\w$]*)\??\s*:/gu)].map((c) => c[1]!)
+                if (cles.length > 0) formes[t[1]!] = cles
+              }
+            }
           }
         }
       }
-      sig.set(m[1]!, { acceptes: reste ? null : acceptes, listes })
+      sig.set(m[1]!, { acceptes: reste ? null : acceptes, listes, formes })
     }
   }
   return sig

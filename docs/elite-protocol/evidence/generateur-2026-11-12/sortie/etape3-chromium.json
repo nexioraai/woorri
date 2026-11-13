@@ -1,0 +1,19 @@
+{
+ "quand": "2026-11-13T13:57:28.191Z",
+ "mesures": [
+  {
+   "id": "4b8b1d20",
+   "octets": 829867,
+   "erreurs": [],
+   "corps": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. Logone Pièces Auto Catalogue Recherche Suivi commande CATALOGUE Pièc",
+   "ms": 3158
+  },
+  {
+   "id": "9cc16d10",
+   "octets": 823526,
+   "erreurs": [],
+   "corps": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. CATALOGUE PUBLIC Fournisseurs disponibles Prestataires actifs et leu",
+   "ms": 3138
+  }
+ ]
+}

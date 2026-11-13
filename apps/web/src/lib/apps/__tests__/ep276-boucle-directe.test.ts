@@ -236,11 +236,19 @@ describe('EP-276 · la consigne et la page', () => {
     }
     const natifs = PAQUETS_AUTORISES.filter((x) => !PAQUETS_PROPOSES.includes(x))
     expect(natifs.length, 'plus aucun paquet natif : ce contrôle ne mesure rien').toBeGreaterThan(5)
+    // ── UN NOM DE PAQUET SE LIT ENTIER (2026-11-13). `toContain('expo')`
+    //    rougissait sur « export » — la consigne dit désormais « index.tsx
+    //    n'exporte rien » (étape 3b). Le nom est donc borné : rien d'un
+    //    identifiant ni d'un chemin de paquet juste avant ou juste après.
+    const nommeLePaquet = (p: string) =>
+      new RegExp(`(?<![\\w@/.-])${p.replace(/[.*+?^${}()|[\]\\/]/gu, '\\$&')}(?![\\w/-])`, 'u')
+    expect('… prends expo pour les icônes', 'le contrôle ne voit plus un vrai paquet').toMatch(nommeLePaquet('expo'))
+    expect("« Unexpected token 'export' »", 'le contrôle prend « export » pour « expo »').not.toMatch(nommeLePaquet('expo'))
     for (const p of natifs) {
       expect(
         CONSIGNE,
         `« ${p} » est proposé au modèle et ne s’assemble pas : trois tours payés pour rien`,
-      ).not.toContain(p)
+      ).not.toMatch(nommeLePaquet(p))
     }
     // Et elle exige le travail, pas la navigation : c'est le défaut mesuré
     // sur CONTERAK, dont le bouton « Calculer » naviguait vers un formulaire.

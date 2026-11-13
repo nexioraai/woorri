@@ -1090,3 +1090,62 @@ brut : `brut/g30/decoupe-reponse-essai1.json.gz`, `brut/g30/decoupe-reponse.json
 **Limite mesurée, consignée** : `lire-brief` a `maxDuration = 60` s et une tranche prend ≈ 8 s → ≈ 7 tranches
 (≈ 170 000 signes) avant la coupure de la passerelle ; et cette coupure serait **muette** côté client
 (`rl.json().catch(() => ({}))` → `noteDeLecture(undefined)` = `''`). Défaut à part, au registre.
+
+**Fusion** : `main` = `4682f584` (merge de `g30-cahier-long`, gate verte, 1 absorbé connu) ; production
+`nexiora-5zegw8sp9` READY, `/api/version` → `4682f58`.
+
+---
+
+# ÉTAPE 3 — « L'APPLI NE DÉMARRE PAS » (2026-11-13)
+
+## 3b · L'export de niveau module — la cause, mesurée, puis fermée par l'empaqueteur
+
+`mesure-exports` (gratuit, Chromium, pages reconstruites par `pageAutonome` comme l'atelier les sert) :
+
+| œuvre | export en fin de paquet (rolldown) | Chromium, assembleur d'avant | Chromium, `preserveEntrySignatures: false` |
+|---|---|---|---|
+| `4b8b1d20` | `export { App as default };` | **« Unexpected token 'export' »**, écran d'arrêt | 0 erreur, l'application s'affiche |
+| `9cc16d10` (Hayine) | `export { base, enBase, useTable };` | **« Unexpected token 'export' »**, écran d'arrêt — **c'est l'arrêt vu par le propriétaire** | 0 erreur, l'application s'affiche |
+| `f29323f6` | aucun | s'affiche | s'affiche |
+
+La page enveloppe le code dans `try{ … }catch` (nécessaire : origine opaque, sinon « Script error. ») ; un
+`export` y est une faute de syntaxe, le navigateur s'arrête avant la première ligne. Le juge d'exécution
+importe le paquet nu sous Node (export légal) : « démarre ». `juge-navigateur-enfant.mjs` charge le paquet
+dans un `<script type="module">` SANS l'enveloppe : aveugle aussi.
+
+**Réparation déterministe** (`bac-a-sable.ts`) : `preserveEntrySignatures: false` — l'empaqueteur élague les
+exports de l'entrée et garde ses effets (le montage) ; puis `exportsSurvivants(output.exports, code)` : si
+l'empaqueteur rendait encore un export, l'assembleur REFUSE (G29 statique, liste de l'empaqueteur, texte en
+repli seulement). **Consigne**, règle 1 : « ET IL N'EXPORTE RIEN ». Conséquence assumée : cinq témoins de test
+et le témoin de la sonde `direct` exportaient `monter()` sans l'appeler — ils se montent désormais eux-mêmes,
+comme les vraies œuvres.
+
+| cliquet | juge | rouge quand on remet l'ancien assembleur |
+|---|---|---|
+| `etape3-demarrage` ① ×2 | `4b8b1d20`, `9cc16d10` rejouées : le script du module de la page **se compile** (`new Function`, la compilation que fait le navigateur) et aucune ligne `export` | **`SyntaxError: Unexpected token 'export'`** |
+| ② | une entrée avec `export default App` + `export const` : l'export disparaît, le montage reste (« Bonjour témoin » dans le paquet) | rouge |
+| ③ | `exportsSurvivants` : liste de l'empaqueteur d'abord, texte en repli, prose ignorée | — |
+| ④ | la consigne dit « ET IL N'EXPORTE RIEN » et cite le message | — |
+| tir `demarrage-chromium` (gratuit) | les deux pages servies dans Chromium : **0 erreur, corps rendu** | « Unexpected token 'export' » ×2, écran d'arrêt ×2 (relevé `sortie/etape3-chromium.json`) |
+
+## 3a · CarteVedette — la forme que le modèle écrit
+
+M7 : 3 cas sur 3, `details={[{ libelle, valeur }]}` (objets) contre une pièce qui exigeait des paires →
+« object is not iterable ». La pièce lit désormais les objets (et toujours les paires) ; `signaturesDe` lit la
+forme des éléments d'une liste d'objets (`formes`) et `reglagesEnumeres` l'enseigne :
+`CarteVedette(libelle, valeur, contexte, tendance, details[{libelle, valeur}], icone)` ; la consigne ajoute
+« des objets, jamais des paires [a, b] ».
+
+| cliquet | juge | rouge quand on remet l'ancienne pièce |
+|---|---|---|
+| `etape3-carte-vedette` ① | pièce ASSEMBLÉE et MONTÉE (juge d'exécution) avec des objets : se monte, « Payées », « 3 commandes », « Reste à encaisser » à l'écran | **« object is not iterable (cannot read property Symbol(Symbol.iterator)) »** |
+| ② | des paires restent lues | — |
+| ③ | `formes.details = ['libelle', 'valeur']` ; la consigne porte `details[{libelle, valeur}]` et « jamais des paires [a, b] » | — |
+
+**Taille de la consigne (EP-319 ⑥, ⑥bis)** : les deux ajouts faisaient d'abord 590 signes et rougissaient les
+trois bornes ; compressés à **253 signes** (≈ 70 jetons par tour, ~210 par génération à trois tours), bornes
+relevées à la mesure plus la même marge étroite : 8 800 → 9 000 (mesuré 8 927), 13 450 → 13 700 (13 558),
+19 550 → 19 800 (19 630, mesuré par le cliquet lui-même).
+
+Rouge-puis-vert vérifiés par `cmp` contre les versions de l'étape 3. **Preuve en prévisualisation** : Hayine
+regénéré `[TEST-ETAPE-3]`, l'aperçu doit s'afficher.

@@ -694,10 +694,15 @@ function Tendance({ valeur }: { valeur: number | null | undefined }) {
   )
 }
 
-/** LA CARTE MISE EN AVANT — le chiffre qui compte le plus, sur fond foncé. */
+/** LA CARTE MISE EN AVANT — le chiffre qui compte le plus, sur fond foncé.
+ *  details : des OBJETS { libelle, valeur } — la forme que le modèle écrit (mesuré 3/3,
+ *  2026-11-12) ; la pièce exigeait des paires [l, v] et plantait (« object is not
+ *  iterable »). Les paires restent lues, pour les œuvres déjà écrites ainsi. */
 export function CarteVedette({ libelle, valeur, contexte, tendance, details = [] }: {
-  libelle: string; valeur: string; contexte?: string; tendance?: number | null; details?: [string, string][]; icone?: string
+  libelle: string; valeur: string; contexte?: string; tendance?: number | null; details?: ({ libelle: string, valeur: string } | [string, string])[]; icone?: string
 }) {
+  const lignes = (Array.isArray(details) ? details : []).map((d) =>
+    Array.isArray(d) ? { libelle: String(d[0] ?? ''), valeur: String(d[1] ?? '') } : { libelle: String(d?.libelle ?? ''), valeur: String(d?.valeur ?? '') })
   return (
     <div style={{ background: 'var(--vedette)', color: 'var(--vedette-foreground)', borderRadius: 'var(--radius-xl)', padding: ESPACE.l,
       display: 'flex', flexDirection: 'column', gap: ESPACE.s, position: 'relative', overflow: 'hidden' }}>
@@ -709,8 +714,8 @@ export function CarteVedette({ libelle, valeur, contexte, tendance, details = []
           <b style={{ fontWeight: 700 }}>{(tendance >= 0 ? '↗ +' : '↘ ') + new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(tendance) + ' %'}</b>
         )}{contexte}
       </div>
-      {details.map(([l, v]) => (
-        <div key={l} style={{ display: 'flex', justifyContent: 'space-between', gap: ESPACE.s, fontSize: 'var(--text-xs)', paddingTop: ESPACE.s,
+      {lignes.map(({ libelle: l, valeur: v }, i) => (
+        <div key={l + i} style={{ display: 'flex', justifyContent: 'space-between', gap: ESPACE.s, fontSize: 'var(--text-xs)', paddingTop: ESPACE.s,
           borderTop: '1px solid color-mix(in srgb, var(--vedette-foreground) 14%, transparent)' }}>
           <span style={{ opacity: 0.75 }}>{l}</span><b>{v}</b>
         </div>
@@ -1111,7 +1116,10 @@ function reglagesEnumeres(): string {
   for (const [piece, s] of signaturesDe(fichiersSysteme(undefined))) {
     if (s.acceptes === null) continue
     const r = s.acceptes.filter((a) => a !== 'children' && a !== 'enfants' && a !== 'enfant')
-    lignes.push(`     ${piece}(${r.map((a) => (s.listes.includes(a) ? a + '[]' : a)).join(', ')})`)
+    // Une liste d'OBJETS dit ses clés : `details[{libelle, valeur}]` — la forme
+    // des éléments manquait à la consigne, et le modèle écrivait la sienne (M7).
+    const forme = (a: string) => (s.formes[a] !== undefined ? `${a}[{${s.formes[a].join(', ')}}]` : s.listes.includes(a) ? `${a}[]` : a)
+    lignes.push(`     ${piece}(${r.map(forme).join(', ')})`)
   }
   return lignes.join('\n')
 }
@@ -1126,7 +1134,8 @@ export const CONSIGNE_BIBLIOTHEQUE = `L'INTERFACE VIENT DE LA BIBLIOTHÈQUE FOUR
    · ./systeme/ui : Icone (noms : ${vocabulaireIcones()}) ; CarteDeChiffre
      porte une LIGNE DE CONTEXTE obligatoire. RÉGLAGES EXACTS de chaque
      pièce — aucun autre n'existe, un nom inventé est REFUSÉ ; « [] » = une
-     LISTE, jamais un texte :
+     LISTE, jamais un texte ; « [{a, b}] » = une liste d'OBJETS à ces clés,
+     jamais des paires [a, b] :
 ${reglagesEnumeres()}
    · ./systeme/donnees : parMois, parJour, sommeParMois, compterPar, somme,
      recents, tendance, plusRecents, ilYA.
