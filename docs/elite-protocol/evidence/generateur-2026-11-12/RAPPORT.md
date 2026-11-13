@@ -914,3 +914,29 @@ visible au navigateur. `INCONNU` pourquoi ; noté, non corrigé.
 **Erreurs d'instrument déclarées** : un chemin relatif résolu depuis `/Users/yia` (M11 non lancé la
 première fois, 0 $ ; fichiers m12 créés hors dépôt, rapatriés, résidu supprimé) ; un hôte `srcdoc`
 écrit dans un script inline (fermé par le `</script>` de la page) — remplacé par un passage en argument.
+
+---
+
+# ÉTAPE 2 — PREUVE EN PRÉVISUALISATION : NON OBTENUE (2026-11-13)
+
+**Ligne de test à retirer : `c4522e43-6bdc-4570-87c8-d4b0bbd032cd`** (avec `f29323f6` et `4b8b1d20`).
+
+| champ | valeur |
+|---|---|
+| démarrée ≈ / écrite | 10:04:41 / **10:15:05 UTC** (624 s) — après la mise à disposition de `n5enu7utx` (10:00:25) |
+| fournisseur · coût | deepseek · 0,1658 $ |
+| lecture du brief | `reussie`, 7 tables lues, 7 reçues, source client |
+| **configuration reçue** | **`{}`** (document et sections_acquises) |
+| **nom** | **`null`** |
+| tours | 1 refus (réglages inconnus, ne se monte pas, mémoire, avant connexion, échec=vide) · 2 refus · **3 livré** |
+| exécution (juge) | ne se monte pas : `reading 'url'` (accueil et gestion) — `DERIBFY_BASE` absent du juge, injecté par la page |
+
+**Ce que la route peut écrire** (`direct/route.ts:416-420`, seule écriture de `configuration`) : le nom
+validé puis chaque champ texte non vide de `corps.configuration`. `{}` + `null` ⇒ le corps n'apportait
+**ni nom valide ni champ texte**. Or `lectureBrief` est arrivé (`client`) : il voyage dans le **même
+objet littéral** que `config` et `nom` dans le client de l'étape 2 (`construire`, 3 appelants sur 3).
+**`CONCL`, non mesurée** : cette requête vient du client de l'**étape 1** (`353a7t9xj`), pas de
+`n5enu7utx`. La base n'enregistre pas le déploiement ; les logs Vercel n'ont rien (aucune ligne
+écrite sur succès). Le déploiement d'origine reste **INCONNU** par la donnée.
+
+**Étape 2 : NON PROUVÉE.** Rien n'est fusionné.
