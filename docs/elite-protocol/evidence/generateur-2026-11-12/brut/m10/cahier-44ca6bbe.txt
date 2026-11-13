@@ -1,0 +1,24 @@
+[TEST-ETAPE-1] Application mobile et web pour « Atelier Mariam », atelier de couture à N'Djamena, quartier Moursal.
+
+CE QU'ON FAIT : couture sur mesure (robes, boubous, costumes, tenues de cérémonie) et retouches. Environ 60 clientes régulières, 15 à 25 commandes par semaine, 3 couturières.
+
+CÔTÉ CLIENTE (application publique) :
+- Catalogue de modèles avec photos, par catégorie (femme, homme, enfant, cérémonie), avec fourchette de prix.
+- Prise de rendez-vous pour les mesures, avec choix du jour et de l'heure.
+- Suivi de sa commande : mesures prises → coupe → couture → essayage → prête → livrée.
+- Notification WhatsApp à chaque changement d'étape.
+- Bouton WhatsApp et bouton d'appel pour joindre l'atelier.
+- Historique de ses commandes et de ses mesures enregistrées.
+
+CÔTÉ ATELIER (gestion, derrière connexion) :
+- Fiche cliente : nom, téléphone, mesures (tour de poitrine, taille, hanches, longueur, épaules, manches), photos de référence, notes.
+- Commandes : cliente, modèle, tissu (fourni par la cliente ou acheté par l'atelier), prix convenu, acompte versé, reste à payer, date promise, couturière assignée, étape en cours.
+- Paiements : acompte, solde, mode (espèces, Airtel Money, Moov Money), historique.
+- Planning des couturières : qui fait quoi cette semaine, retards à venir.
+- Tableau de bord : commandes en cours, en retard, chiffre d'affaires du mois, acomptes en attente.
+- Stock de fournitures : tissus, fils, boutons, fermetures, avec alerte quand c'est bas.
+
+CONTRAINTES :
+- En français, prix en FCFA.
+- Marche sur téléphone d'abord, souvent avec une mauvaise connexion.
+- Le paiement se fait à l'atelier ou par mobile money, pas de paiement en ligne dans l'appli pour l'instant.

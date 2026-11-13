@@ -818,3 +818,35 @@ et n'ont écrit **aucune** ligne : rien d'autre à retirer.
   `globalThis.process`). Le juge mesure le même code et répond « démarre » —
   **aveugle à cette classe par construction**. Le seul juge qui tourne dans un
   vrai navigateur (`juge-navigateur`) n'est pas branché (M4).
+
+---
+
+# ÉTAPE 2b — MESURE M10 : LA LECTURE DU BRIEF TRONQUÉE (2026-11-13)
+
+`m10-lecture-tronquee.mts` — l'appel **exact** de `lire-brief/route.ts` rejoué sur le
+cahier de `44ca6bbe` (`brut/m10/cahier-44ca6bbe.txt`, sha `32e6bb42ca17…`, 1 709 signes ;
+consigne 5 475 signes ; `deepseek-flash`). **Dépense 0,0312 $** (plafond 0,10 $) ; les
+1 920 jetons d'entrée servis en cache par appel ne sont pas comptés (≈ 0,00001 $ chacun).
+
+| rejeu | limite | `stop_reason` | jetons sortie | **réflexion** (signes) | texte (signes) | ce que la route aurait enregistré | tables |
+|---|---|---|---|---|---|---|---|
+| 1 | 8 000 | **max_tokens** | 8 000 | **28 665** | 1 342 | **tronquee** | 0 |
+| 2 | 8 000 | end_turn | 4 540 | 9 860 | 5 351 | reussie | **8** |
+| 3 | 8 000 | **max_tokens** | 8 000 | **28 116** | 1 606 | **tronquee** | 0 |
+| 4 | 20 000 | end_turn | 5 196 | 11 607 | 5 267 | reussie | **8** |
+
+**Part du brief lue** : l'entrée (1 709 signes) tient sous la limite de 24 000 — **100 % du
+cahier est donné au modèle** à chaque appel. La coupe est en **sortie**.
+
+**Ce qu'aurait demandé la lecture complète** : **4 540 et 5 196 jetons de sortie** (rejeux 2
+et 4), dont ~5 300 signes de texte JSON, complet, avec **8 tables**.
+
+**La réflexion mange-t-elle la limite ? OUI**, 2 rejeux sur 3 à 8 000 : la réflexion y
+fait **28 000 signes** (≈ 6 400 jetons et plus), contre ~10 000 quand la lecture aboutit,
+et il ne reste que ~1 400 signes de texte — coupé **au milieu de la liste des tables**
+(rejeu 1 : `"fld_tour_taille" … "required":`). Même cahier, même consigne, même limite :
+la seule variable est la longueur de la réflexion, qui triple d'un tirage à l'autre.
+
+**Ce que M10 ne prouve pas** : qu'un paramètre de budget de réflexion soit honoré par ce
+point d'accès (non mesuré) ; qu'une limite de 20 000 aurait suffi aux rejeux 1 et 3 (leur
+réflexion seule approche 7 000 jetons — probable, non mesuré).
