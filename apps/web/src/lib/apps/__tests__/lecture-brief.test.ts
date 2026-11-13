@@ -18,7 +18,7 @@ const lire = (chemin: string) => readFileSync(join(__dirname, '..', '..', '..', 
 
 describe('le résultat de la lecture du brief est enregistré', () => {
   it('① une valeur douteuse ne devient jamais un statut', () => {
-    const VIDES = { coutUsd: null, jetonsEntree: null, jetonsSortie: null, parTranche: [], roles: [], ecrans: [], questionsOuvertes: [] }
+    const VIDES = { coutUsd: null, jetonsEntree: null, jetonsSortie: null, parTranche: [], roles: [], ecrans: [], questionsOuvertes: [], parcours: [], langues: [], devises: [], moyensPaiement: [], pays: [] }
     expect(lectureAEnregistrer(undefined, 0)).toEqual({ resultat: 'non_transmise', tablesLues: null, tablesRecues: 0, source: 'absente', tentatives: null, tranches: null, tranchesEchouees: null, signesLus: null, ...VIDES })
     expect(lectureAEnregistrer({ resultat: 'parfait' }, 2).resultat).toBe('non_transmise')
     expect(lectureAEnregistrer('reussie', 2).resultat).toBe('non_transmise')

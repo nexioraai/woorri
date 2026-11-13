@@ -36,10 +36,28 @@ export type PlanEcran = {
   readonly tables: { readonly lit: readonly string[]; readonly ecrit: readonly string[] }
   /** Passages du cahier, RECOPIÉS (vérifié) — vide si le modèle n'a pas cité. */
   readonly extrait: string
+  /**
+   * `deribfy` : écrit par Deribfy, jamais par le modèle (3c-2, correction 2) —
+   * l'accueil (depuis le plan), le choix de langue (depuis la lecture), la
+   * gestion de chaque table (depuis les entités). Absent : écrit par le modèle.
+   */
+  readonly origine?: 'deribfy'
+  /** Pour un écran de gestion écrit par Deribfy : la table qu'il gère. */
+  readonly gere?: string
 }
 
 export type RefusPlan = { readonly quoi: string; readonly motif: string }
-export type Plan = { readonly ecrans: readonly PlanEcran[]; readonly refuses: readonly RefusPlan[] }
+export type Plan = {
+  readonly ecrans: readonly PlanEcran[]
+  readonly refuses: readonly RefusPlan[]
+  /** Le parcours principal, en slugs du plan, dans l'ordre (lu dans le cahier). */
+  readonly parcours?: readonly string[]
+}
+
+/** Un rôle de GESTION lu : administrateur, gestionnaire, gérant, direction, responsable, propriétaire. */
+export const ROLE_GESTION = /admin|gestion|g[ée]rant|direction|responsable|propri[ée]taire/iu
+const EST_ACCUEIL = /^(accueil|home|page d.accueil)$/iu
+const EST_LANGUE = /langue/iu
 
 export const ROLE_VISITEUR = 'visiteur'
 const EXTRAIT_MAX = 600
@@ -75,7 +93,7 @@ const chaines = (brut: unknown, max: number): string[] =>
  */
 export function validerPlan(
   brut: unknown,
-  lecture: { readonly ecrans: readonly string[]; readonly roles: readonly string[] },
+  lecture: { readonly ecrans: readonly string[]; readonly roles: readonly string[]; readonly parcours?: readonly string[] },
   entites: readonly EntiteDeclaree[],
   cahier: string,
 ): Plan {
@@ -139,7 +157,55 @@ export function validerPlan(
     if (typeof e.extrait === 'string' && e.extrait.trim() !== '' && extrait === '') refuses.push({ quoi: `écran « ${nom} », extrait`, motif: 'ne cite pas le cahier : vidé' })
     ecrans.push({ nom, slug, role, navigation, tables: { lit, ecrit: ecrit.filter((t) => t !== '') }, extrait })
   }
-  return { ecrans, refuses }
+  return completerParConstruction({ ecrans, refuses }, lecture, entites, slugs)
+}
+
+/**
+ * CE QUE DERIBFY ÉCRIT LUI-MÊME, PAR CONSTRUCTION (3c-2, correction 2).
+ *
+ * MESURÉ sur 94cf0489 : l'accueil « à compléter » (le propriétaire : « Accueil
+ * mène à une page vide »), le choix de langue sans effet, et 3 tables sur 7
+ * jamais écrites — aucun écran de gestion, aucun administrateur servi.
+ *   · l'ACCUEIL : visiteur, écrit depuis le plan ; ajouté s'il manque ;
+ *   · le CHOIX DE LANGUE : écrit depuis la lecture ;
+ *   · la GESTION : pour chaque table qu'aucun écran de gestion n'écrit, un
+ *     écran « gestion — <table> » (lister, ajouter, modifier, retirer), au
+ *     rôle de gestion lu. Sans rôle de gestion lu, le premier rôle lu, et
+ *     c'est consigné ; sans rôle du tout, visiteur, consigné aussi.
+ */
+function completerParConstruction(
+  p: { ecrans: PlanEcran[]; refuses: RefusPlan[] },
+  lecture: { readonly ecrans: readonly string[]; readonly roles: readonly string[]; readonly parcours?: readonly string[] },
+  entites: readonly EntiteDeclaree[],
+  slugs: Set<string>,
+): Plan {
+  const ecrans: PlanEcran[] = p.ecrans.map((e) =>
+    EST_ACCUEIL.test(e.nom.trim()) ? { ...e, role: ROLE_VISITEUR, navigation: 'public' as const, tables: { lit: [], ecrit: [] }, origine: 'deribfy' as const }
+      : EST_LANGUE.test(e.nom) ? { ...e, role: ROLE_VISITEUR, navigation: 'public' as const, tables: { lit: [], ecrit: [] }, origine: 'deribfy' as const }
+        : e,
+  )
+  const refuses = [...p.refuses]
+  if (!ecrans.some((e) => EST_ACCUEIL.test(e.nom.trim()))) {
+    let slug = 'accueil'
+    for (let n = 2; slugs.has(slug); n += 1) slug = `accueil-${String(n)}`
+    slugs.add(slug)
+    ecrans.unshift({ nom: 'accueil', slug, role: ROLE_VISITEUR, navigation: 'public', tables: { lit: [], ecrit: [] }, extrait: '', origine: 'deribfy' })
+  }
+  const roleGestion = lecture.roles.find((r) => ROLE_GESTION.test(r)) ?? lecture.roles[0] ?? ROLE_VISITEUR
+  if (entites.length > 0 && !lecture.roles.some((r) => ROLE_GESTION.test(r))) {
+    refuses.push({ quoi: 'gestion', motif: `aucun rôle de gestion lu : les écrans de gestion vont au rôle « ${roleGestion} »` })
+  }
+  for (const e of entites) {
+    const t = e.name
+    if (ecrans.some((x) => x.navigation === 'gestion' && x.tables.ecrit.includes(t))) continue
+    let slug = `gestion-${slugDe(t)}`
+    for (let n = 2; slugs.has(slug); n += 1) slug = `gestion-${slugDe(t)}-${String(n)}`
+    slugs.add(slug)
+    ecrans.push({ nom: `gestion — ${t}`, slug, role: roleGestion, navigation: 'gestion', tables: { lit: [t], ecrit: [t] }, extrait: '', origine: 'deribfy', gere: t })
+  }
+  const parSlugOuNom = (n: string) => ecrans.find((e) => cle(e.nom) === cle(n) || e.slug === slugDe(n))?.slug
+  const parcours = [...new Set((lecture.parcours ?? []).map(parSlugOuNom).filter((s): s is string => s !== undefined))]
+  return { ecrans, refuses, parcours }
 }
 
 /** La consigne du plan — courte : des listes fermées et une forme. */
@@ -178,7 +244,7 @@ export type AppelerLeger = (system: string, texte: string) => Promise<string>
 
 export async function planifierEcrans(
   appeler: AppelerLeger,
-  lecture: { readonly ecrans: readonly string[]; readonly roles: readonly string[] },
+  lecture: { readonly ecrans: readonly string[]; readonly roles: readonly string[]; readonly parcours?: readonly string[] },
   entites: readonly EntiteDeclaree[],
   cahier: string,
 ): Promise<Plan> {

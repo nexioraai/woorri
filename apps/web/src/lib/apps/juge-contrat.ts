@@ -36,6 +36,8 @@
  * tous, et le dire ici vaut mieux qu'un faux reproche.
  */
 
+import { plusProche } from './juge-jetons'
+
 const PREFIXE = 'systeme/'
 /** Toujours licites sur n'importe quel élément React. */
 const UNIVERSELS = new Set(['key', 'ref', 'children'])
@@ -241,7 +243,7 @@ export function reprocheContrat(defauts: readonly DefautContrat[]): string | nul
       .slice(0, 20)
       .map((d) =>
         d.nature === 'inconnu'
-          ? `- ${d.fichier} : <${d.piece} ${d.reglage}=…> — ${d.piece} n’a pas « ${d.reglage} ». Ses réglages : ${d.acceptes.join(', ')}`
+          ? `- ${d.fichier} : <${d.piece} ${d.reglage}=…> — ${d.piece} n’a pas « ${d.reglage} »${((p) => (p === null ? '' : ` → le plus proche : « ${p} »`))(plusProche(d.reglage, d.acceptes))}. Ses réglages : ${d.acceptes.join(', ')}`
           : `- ${d.fichier} : <${d.piece} ${d.reglage}=…> — « ${d.reglage} » attend une LISTE (tableau), pas un texte ni un nombre`,
       )
       .join('\n') +

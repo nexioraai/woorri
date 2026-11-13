@@ -193,7 +193,7 @@ describe('EP-337 · l’amnésie ne se certifie plus', () => {
     )
     const ecran = readFileSync(join(__dirname, '..', 'boucle-ecran.ts'), 'utf8')
     expect(ecran, 'la consigne d’un écran ne voit pas les entités').toMatch(
-      motifTexte('consigneEcran(ecran, o.plan, o.entites, o.devise)'),
+      motifTexte('consigneEcran(ecran, o.plan, o.entites, o.devise, o.contraintes)'),
     )
   })
 })

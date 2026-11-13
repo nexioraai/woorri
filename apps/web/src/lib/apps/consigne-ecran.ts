@@ -12,7 +12,7 @@
  * écrans voisins, extrait du cahier. Les réglages exacts des pièces sont LUS
  * dans la bibliothèque (reglagesEnumeres), jamais recopiés.
  */
-import { CONSIGNE_BIBLIOTHEQUE } from './bibliotheque-ui'
+import { CONSIGNE_BIBLIOTHEQUE, vocabulaireEnumere, vocabulaireVariables } from './bibliotheque-ui'
 import type { EntiteDeclaree } from './entites-declarees'
 import { nomColonne, nomTable } from './entites-declarees'
 import { ROLE_VISITEUR, type Plan, type PlanEcran } from './plan-ecrans'
@@ -50,8 +50,21 @@ export function nomDuType(e: EntiteDeclaree): string {
 
 const colonnes = (e: EntiteDeclaree) => e.fields.map((f) => `${nomColonne(f)} (${f.type}${f.required ? '' : ', facultatif'})`).join(', ')
 
+/**
+ * LES CONTRAINTES FERMÉES, lues dans le cahier (3c-2, correction 3) : langues,
+ * devises, moyens de paiement, pays. Tout écran les reçoit ; un juge statique
+ * refuse une valeur hors lecture (cas réel : « Kiswahili » dans 94cf0489, que
+ * le cahier Hayine ne nomme nulle part).
+ */
+export type ContraintesFermees = {
+  readonly langues: readonly string[]
+  readonly devises: readonly string[]
+  readonly moyensPaiement: readonly string[]
+  readonly pays: readonly string[]
+}
+
 /** LA FICHE de l'écran : ce qui ne vaut que pour lui. */
-export function ficheEcran(ecran: PlanEcran, plan: Plan, entites: readonly EntiteDeclaree[], devise: string | undefined): string {
+export function ficheEcran(ecran: PlanEcran, plan: Plan, entites: readonly EntiteDeclaree[], devise: string | undefined, contraintes?: ContraintesFermees): string {
   const parNom = new Map(entites.map((e) => [nomTable(e), e]))
   const tables = [...new Set([...ecran.tables.lit, ...ecran.tables.ecrit])]
   const lignesTables = tables.map((t) => {
@@ -68,11 +81,38 @@ export function ficheEcran(ecran: PlanEcran, plan: Plan, entites: readonly Entit
     tables.length === 0 ? 'TABLES : aucune — cet écran ne lit ni n’écrit de table.' : `TABLES :\n${lignesTables.join('\n')}`,
     parcours.length === 0 ? '' : `PARCOURS DISPONIBLES : ${parcours.join(' ; ')}`,
     voisins.length === 0 ? '' : `ÉCRANS VOISINS (naviguer) : ${voisins.join(', ')}`,
+    contraintes === undefined ? '' : [
+      'CONTRAINTES FERMÉES (lues dans le cahier — AUCUNE autre valeur, jamais) :',
+      `  langues : ${contraintes.langues.join(', ') || 'non précisées — n’en propose aucune'}${contraintes.langues.length > 1 ? " · la langue se lit et se choisit par useLangue / choisirLangue de '../systeme/langue'" : ''}`,
+      `  devises : ${contraintes.devises.join(', ') || (devise ?? 'non précisée')}`,
+      `  moyens de paiement : ${contraintes.moyensPaiement.join(', ') || 'non précisés — n’en nomme aucun'}`,
+      `  pays : ${contraintes.pays.join(', ') || 'non précisés — n’en nomme aucun'}`,
+    ].join('\n'),
     ecran.extrait === '' ? 'CE QUE LE CAHIER DIT DE CET ÉCRAN : rien de précis — fais le strict nécessaire pour son nom et ses tables.' : `CE QUE LE CAHIER DIT DE CET ÉCRAN :\n« ${ecran.extrait} »`,
   ].filter((l) => l !== '').join('\n')
 }
 
-/** La consigne complète d'un écran : le contrat + les pièces (system), la fiche (user). */
-export function consigneEcran(ecran: PlanEcran, plan: Plan, entites: readonly EntiteDeclaree[], devise: string | undefined): { readonly system: string; readonly user: string } {
-  return { system: `${CONTRAT_ECRAN}\n${reglagesDesPieces()}`, user: ficheEcran(ecran, plan, entites, devise) }
+/**
+ * LE VOCABULAIRE EXACT — jetons, icônes, variables CSS — GÉNÉRÉ depuis la
+ * bibliothèque, jamais écrit à la main (3c-2, correction 1).
+ *
+ * MESURÉ sur 94cf0489 : 88 % des écrans repris, et les refus étaient des noms
+ * inventés que la consigne d'écran n'enseignait pas — var(--espace-4) ×4,
+ * var(--rayon), var(--bordure), var(--primaire), Icone nom="chargement" ×4,
+ * nom="info", nom="search"… La consigne de l'application entière les
+ * énumérait ; celle de l'écran les avait perdus.
+ */
+export function vocabulaireDesPieces(): string {
+  return [
+    'NOMS EXACTS — aucun autre n’existe, un nom inventé est REFUSÉ :',
+    '  JETONS (import depuis ../systeme/jetons) et ICÔNES (<Icone nom=…>) :',
+    vocabulaireEnumere().replace(/^ {5}/gmu, '    '),
+    "  VARIABLES CSS (style={{ … 'var(--nom)' … }}) :",
+    vocabulaireVariables().replace(/^ {5}/gmu, '    '),
+  ].join('\n')
+}
+
+/** La consigne complète d'un écran : le contrat + les pièces + le vocabulaire (system), la fiche (user). */
+export function consigneEcran(ecran: PlanEcran, plan: Plan, entites: readonly EntiteDeclaree[], devise: string | undefined, contraintes?: ContraintesFermees): { readonly system: string; readonly user: string } {
+  return { system: `${CONTRAT_ECRAN}\n${reglagesDesPieces()}\n${vocabulaireDesPieces()}`, user: ficheEcran(ecran, plan, entites, devise, contraintes) }
 }

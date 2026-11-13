@@ -77,6 +77,8 @@ export type VerdictExecution = {
    * Rendu, lié, et pourtant inutilisable : on ne sait pas ce qu'il fait.
    */
   readonly controlesMuets?: readonly { readonly balise: string; readonly extrait: string }[]
+  /** Le juge d'expérience en mode écran (3c-2), quand on l'a demandé. */
+  readonly experience?: { readonly refus: readonly { readonly ecran: string; readonly controle: string; readonly quoi: string }[]; readonly erreur?: string } | null
   /**
    * LES ÉCRANS RÉELLEMENT OUVERTS, avec leur texte et s'ils ont été
    * EXERCÉS. C'est la matière qui manquait au juge de couverture : une
@@ -148,6 +150,8 @@ export async function jugerExecution(
     readonly decantationMs?: number
     /** L'ancre de départ (« #gestion ») — sinon l'accueil public. */
     readonly adresse?: string
+    /** Le juge d'expérience à exécuter après le montage : le script et ses arguments (3c-2). */
+    readonly experience?: { readonly script: string; readonly args: unknown }
   } = {},
 ): Promise<VerdictExecution> {
   const debut = Date.now()
@@ -158,6 +162,7 @@ export async function jugerExecution(
     const bundle = join(dossier, 'oeuvre.js')
     const sortie = join(dossier, 'verdict.json')
     await writeFile(bundle, code, 'utf8')
+    if (options.experience !== undefined) await writeFile(join(dossier, 'experience.json'), JSON.stringify(options.experience), 'utf8')
 
     const corps = new URL('./juge-execution-enfant.mjs', import.meta.url).pathname
     const enfant = spawn(
@@ -173,6 +178,7 @@ export async function jugerExecution(
         sortie,
         String(options.decantationMs ?? DECANTATION_MS),
         options.adresse ?? '',
+        ...(options.experience === undefined ? [] : [join(dossier, 'experience.json')]),
       ],
       {
         // ① L'ENVIRONNEMENT VIDE — rien à prendre, nulle part où l'envoyer.
@@ -233,6 +239,7 @@ export async function jugerExecution(
       ecransDistincts?: number
       controlesMuets?: { balise: string; extrait: string }[]
       ecrans?: { texte: string; exerce: boolean }[]
+      experience?: VerdictExecution['experience']
     }
     return {
       monteDansSimulateur: lu.monte && lu.erreurs.length === 0,
@@ -244,6 +251,7 @@ export async function jugerExecution(
       ecransDistincts: lu.ecransDistincts ?? 0,
       controlesMuets: lu.controlesMuets ?? [],
       ecrans: lu.ecrans ?? [],
+      ...(lu.experience === undefined ? {} : { experience: lu.experience }),
       ms: Date.now() - debut,
     }
   } catch (e) {

@@ -1,0 +1,57 @@
+{
+ "etapes": [
+  {
+   "quoi": "départ",
+   "hash": "#reservations",
+   "texte": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. Qui êtes-vous ? Cet écran est réservé au rôle « particulier ». Entrer comme particulier ",
+   "erreurs": 0
+  },
+  {
+   "quoi": "rôle",
+   "hash": "#reservations",
+   "texte": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. Votre historique de réservations est vide pour le moment. Dès que vous réservez un traje",
+   "erreurs": 0,
+   "clique": "Entrer comme particulier"
+  },
+  {
+   "quoi": "action",
+   "hash": "#reservations",
+   "texte": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. Votre historique de réservations est vide pour le moment. Dès que vous réservez un traje",
+   "erreurs": 0,
+   "clique": "Réservations"
+  },
+  {
+   "quoi": "état après action",
+   "hash": "#reservations",
+   "texte": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. Votre historique de réservations est vide pour le moment. Dès que vous réservez un traje",
+   "erreurs": 0,
+   "etat": "{\"session\":{\"role\":\"particulier\",\"utilisateur\":null}}",
+   "auPaiement": false
+  },
+  {
+   "quoi": "paiement (forcé par l’adresse)",
+   "hash": "#recapitulatif-paiement",
+   "texte": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. RÉCAPITULATIF Confirmez avant de payer Vérifiez le montant final et la devise réellement",
+   "erreurs": 0
+  },
+  {
+   "quoi": "payer",
+   "hash": "#confirmation",
+   "texte": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. À compléter : confirmation À compléter : confirmation Il n’a pas pu être écrit : DES RÉG",
+   "erreurs": 0,
+   "clique": "Confirmer sans payer maintenant"
+  },
+  {
+   "quoi": "fin",
+   "hash": "#confirmation",
+   "texte": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. À compléter : confirmation À compléter : confirmation Il n’a pas pu être écrit : DES RÉG",
+   "erreurs": 0,
+   "etat": "{\"session\":{\"role\":\"particulier\",\"utilisateur\":null},\"table:reservation\":[{\"compte\":\"\",\"offre\":\"\",\"statut\":\"en_attente\",\"montant_origine\":0,\"devise_origine\":\"XAF\",\"date_creation\":\"2026-11-13T16:50:45.985Z\",\"id\":\"mmwf7qteq-1\"}],\"reservation_en_cours\":{\"compte\":\"\",\"offre\":\"\",\"statut\":\"en_attente\",\"montant_origine\":0,\"devise_origine\":\"XAF\",\"date_creation\":\"2026-11-13T16:50:45.985Z\"}}",
+   "aLaConfirmation": true
+  }
+ ],
+ "erreurs": [],
+ "libelles": [
+  "Rechercher un trajet"
+ ]
+}

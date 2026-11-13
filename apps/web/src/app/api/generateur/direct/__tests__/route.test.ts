@@ -107,7 +107,7 @@ import { POST } from '../route'
 // 3c : le modèle n'écrit qu'un ÉCRAN par appel ; sans lecture ni table dans la
 // demande, le plan ne tient qu'un accueil. Le calcul de la facture y vit.
 const BON = [
-  '=== ecrans/accueil.tsx ===',
+  '=== ecrans/facture.tsx ===',
   "import React from 'react'",
   "import type { Session } from '../systeme/types'",
   'const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402',
@@ -115,7 +115,8 @@ const BON = [
   '  return <section><h1>Facture SNE</h1><p>Total pour 159 kWh : {facture(159)}</p></section>',
   '}',
 ].join('\n')
-const PLAN = JSON.stringify({ ECRANS: [{ nom: 'accueil', role: 'visiteur', navigation: 'public', lit: [], ecrit: [], extrait: '' }] })
+// 3c-2 : l'accueil est écrit par Deribfy ; l'écran du modèle s'appelle « facture », nommé par la lecture.
+const PLAN = JSON.stringify({ ECRANS: [{ nom: 'facture', role: 'visiteur', navigation: 'public', lit: [], ecrit: [], extrait: '' }] })
 
 /**
  * L'APPEL PORTE UN NOM DE PRODUIT (EP-309, 2026-11-01).
@@ -133,7 +134,7 @@ const appel = (demande = 'calcule ma facture SNE', nom: string | null = 'Facture
   new Request('https://deribfy.test/api/generateur/direct', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer j' },
-    body: JSON.stringify({ demande, ...(nom === null ? {} : { nom }) }),
+    body: JSON.stringify({ demande, ...(nom === null ? {} : { nom }), lectureBrief: { resultat: 'reussie', tables: 0, ecrans: ['facture'] } }),
   })
 
 beforeEach(() => {
@@ -196,7 +197,8 @@ describe('EP-276 · la route de l’écriture directe', () => {
     expect(d.ok, 'la boucle n’aboutit pas').toBe(true)
     // 3c : 1 écran du modèle + le squelette de Deribfy (index, 5 modules
     // systeme, PERIMETRE.md) + 4 de la bibliothèque injectée (EP-299) = 12.
-    expect(d.fichiers).toBe(12)
+    // 3c-2 : + systeme/langue.ts et systeme/gestion.tsx, + l'accueil de Deribfy = 15.
+    expect(d.fichiers).toBe(15)
     expect(d.html, 'la page n’est pas montable').toContain('<div id="racine">')
     // LE COÛT EST RÉEL, pas inventé : le plan (100 + 50) et l'écran (1200 +
     // 3400) aux tarifs du fournisseur. S'il tombait à zéro, personne ne
@@ -207,8 +209,8 @@ describe('EP-276 · la route de l’écriture directe', () => {
     expect(l.statut).toBe('livree')
     expect(l.jetons_sortie).toBe(3450)
     const sa = l.sections_acquises as { ecrans?: { slug: string; resultat: string }[]; plan?: { ecrans: unknown[] }; reflexion?: number }
-    expect(sa.ecrans?.map((e) => `${e.slug}:${e.resultat}`)).toEqual(['accueil:ok'])
-    expect(sa.plan?.ecrans).toHaveLength(1)
+    expect(sa.ecrans?.map((e) => `${e.slug}:${e.resultat}`)).toEqual(['accueil:ok', 'facture:ok'])
+    expect(sa.plan?.ecrans).toHaveLength(2)
     expect(sa.reflexion).toBe(0)
   })
 
@@ -217,12 +219,12 @@ describe('EP-276 · la route de l’écriture directe', () => {
     // en base, et le propriétaire incapable de savoir ce qu'il avait dépensé.
     // 3c : plus de « Non convergé » ni de règle du dernier tour. L'écran qui
     // échoue deux fois sort visible, nommé, compté — et ce qu'il a coûté aussi.
-    reponses.texte = ['=== ecrans/accueil.tsx ===\nconst x = {{{ ;']
+    reponses.texte = ['=== ecrans/facture.tsx ===\nconst x = {{{ ;']
     // Une demande UNIQUE : la ligne se retrouve par elle, quoi qu'écrivent les tests voisins.
     const DEMANDE = 'calcule ma facture SNE — écran fautif'
     const d = (await (await POST(appel(DEMANDE))).json()) as { ok: boolean; tours: unknown[]; ecrans: { nom: string; resultat: string; tentatives: number }[] }
     expect(d.ok, 'l’application doit être livrée, avec son écran à compléter').toBe(true)
-    expect(d.ecrans).toEqual([{ nom: 'accueil', resultat: 'a_completer', tentatives: 2 }])
+    expect(d.ecrans).toEqual([{ nom: 'accueil', resultat: 'ok', tentatives: 0 }, { nom: 'facture', resultat: 'a_completer', tentatives: 2 }])
     expect(d.tours.length, 'la borne de deux tentatives ne mord pas').toBe(2)
     // Une livraison INSÈRE la ligne puis repositionne son pointeur de version
     // (une mise à jour sur la même table) : on compte les INSERTIONS.
@@ -236,8 +238,8 @@ describe('EP-276 · la route de l’écriture directe', () => {
     expect(l.moteur).toBe('direct')
     expect(Number(l.cout_usd), 'un échec payé est compté à zéro').toBeGreaterThan(0)
     const fichiers = (l.document as { fichiers?: Record<string, string> } | null)?.fichiers ?? {}
-    expect(fichiers['ecrans/accueil.tsx'], 'l’écran échoué doit être livré « à compléter », pas muet').toContain('À compléter : accueil')
-    expect(fichiers['PERIMETRE.md']).toContain('Écrans livrés : 0 / 1.')
+    expect(fichiers['ecrans/facture.tsx'], 'l’écran échoué doit être livré « à compléter », pas muet').toContain('À compléter : facture')
+    expect(fichiers['PERIMETRE.md']).toContain('Écrans livrés : 1 / 2.')
   })
 
   it('⑤ L’APPEL EST EN FLUX — sinon le SDK refuse avant même d’envoyer', async () => {
@@ -340,7 +342,7 @@ describe('EP-276 · la route de l’écriture directe', () => {
     // écrit. Un échec qu'on ne sait pas lire est un échec qu'on repaiera.
     // 3c : la même exigence, par écran — chaque tentative garde son motif, et
     // le brut du dernier essai est conservé dans la ligne.
-    reponses.texte = ['=== ecrans/accueil.tsx ===\nconst x = {{{ ;']
+    reponses.texte = ['=== ecrans/facture.tsx ===\nconst x = {{{ ;']
     const DEMANDE = 'calcule ma facture SNE — écran fautif, à comprendre'
     await (await POST(appel(DEMANDE))).json()
     const l = lignesEcrites().find((x) => x.demande === DEMANDE) ?? {}
@@ -351,9 +353,9 @@ describe('EP-276 · la route de l’écriture directe', () => {
     expect(sa.tours?.length, 'les tentatives ne sont pas gardées').toBe(2)
     expect(sa.tours?.every((t) => !t.ok && typeof t.motif === 'string' && t.motif.length > 0)).toBe(true)
     // Chaque tentative garde SON motif — sinon on sait qu'il a échoué deux fois, pas pourquoi.
-    expect(sa.tours?.[0]?.motif).toMatch(/\[accueil\]/u)
+    expect(sa.tours?.[0]?.motif).toMatch(/\[facture\]/u)
     expect(sa.tours?.[0]?.motif).toMatch(/export default function Ecran|construction a échoué/u)
-    const e = sa.ecrans?.[0]
+    const e = sa.ecrans?.find((x) => x.resultat === 'a_completer')
     expect(e?.resultat).toBe('a_completer')
     expect(e?.reproches.length ?? 0).toBeGreaterThan(0)
     expect(

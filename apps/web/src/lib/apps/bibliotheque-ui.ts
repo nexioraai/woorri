@@ -1085,19 +1085,19 @@ export function fichiersSysteme(deviseConfiguree: string | undefined): ReadonlyM
  * lui DIT, et la liste se dérive de la source : la recopier ici la ferait
  * diverger au premier jeton ajouté.
  */
-function vocabulaireIcones(): string {
+export function vocabulaireIcones(): string {
   return vocabulaireDe(fichiersSysteme(undefined)).icones.join(', ')
 }
 
 /** Les variables, en colonnes lisibles — dérivées du bloc :root lui-même. */
-function vocabulaireVariables(): string {
+export function vocabulaireVariables(): string {
   const n = NOMS_VARIABLES
   const lignes: string[] = []
   for (let i = 0; i < n.length; i += 4) lignes.push('     ' + n.slice(i, i + 4).join('  '))
   return lignes.join('\n')
 }
 
-function vocabulaireEnumere(): string {
+export function vocabulaireEnumere(): string {
   const systeme = fichiersSysteme(undefined)
   const { espaces, icones } = vocabulaireDe(systeme)
   const lignes = [...espaces.entries()].map(([nom, membres]) => `     ${nom} : ${membres.join(', ')}`)

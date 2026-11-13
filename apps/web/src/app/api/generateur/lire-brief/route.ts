@@ -214,6 +214,11 @@ export async function POST(req: Request) {
         roles: chaines(lu.ROLES, 12),
         ecrans: chaines(lu.ECRANS, 40),
         questionsOuvertes: chaines(lu.QUESTIONS_OUVERTES, 20),
+        parcours: chaines(lu.PARCOURS, 8),
+        langues: chaines(lu.LANGUES, 12).map((x) => x.toLowerCase()).filter((x) => /^[a-z]{2}$/u.test(x)),
+        devises: chaines(lu.DEVISES, 8).map((x) => x.toUpperCase()).filter((x) => /^[A-Z]{3}$/u.test(x)),
+        moyensPaiement: chaines(lu.MOYENS_PAIEMENT, 12),
+        pays: chaines(lu.PAYS, 30),
       }
     }
 
@@ -256,6 +261,11 @@ export async function POST(req: Request) {
       roles: fusion.roles,
       ecrans: fusion.ecrans,
       questionsOuvertes: fusion.questionsOuvertes,
+      parcours: fusion.parcours ?? [],
+      langues: fusion.langues ?? [],
+      devises: fusion.devises ?? [],
+      moyensPaiement: fusion.moyensPaiement ?? [],
+      pays: fusion.pays ?? [],
     }
     return NextResponse.json({
       questionsIA: fusion.questionsIA,

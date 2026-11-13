@@ -41,9 +41,8 @@ const PLAN = validerPlan({ ECRANS: [
   { nom: 'aide', role: 'visiteur', navigation: 'public' },
 ] }, LECTURE, ENTITES, 'cahier')
 
+// L'accueil n'a pas de témoin : depuis 3c-2 il est écrit par Deribfy depuis le plan.
 const TEMOINS: Record<string, string> = {
-  'ecrans/accueil.tsx': `import React from 'react'
-export default function Ecran() { return <section><h1>Accueil témoin</h1><p>Bienvenue.</p></section> }`,
   'ecrans/reservations.tsx': `import React from 'react'
 import { useTable } from '../systeme/base'
 import { useParcours } from '../systeme/etat'
@@ -133,13 +132,18 @@ describe('3c · briques 2-3 · le squelette et l’état, montés', () => {
     expect(jugerJetons(new Map([...carte].filter(([c]) => c.startsWith('systeme/') && !fichiersSysteme('XAF').has(c))), fichiersSysteme('XAF')).filter((d) => d.reference.startsWith('var(')).map((d) => d.reference)).toEqual([])
   }, 90_000)
 
-  it('② l’accueil s’affiche, la barre du bas porte Accueil et Compte en liens', async () => {
-    const { racine, texte } = await monter(await assembleOuEchoue(await carteTemoin()))
-    expect(texte()).toContain('Accueil témoin')
-    expect(racine.querySelector('a[href="#accueil"]')).not.toBeNull()
-    expect(racine.querySelector('a[href="#compte"]')).not.toBeNull()
-    expect(racine.querySelector('a[href="#aide"]'), 'un écran public visiteur manque à la barre').not.toBeNull()
-    expect(racine.querySelector('a[href="#reservations"]'), 'un écran réservé à un rôle est proposé au visiteur').toBeNull()
+  it('② l’accueil, écrit par Deribfy, liste les écrans du rôle ; la barre porte Accueil et Compte', async () => {
+    const { racine, texte, cliquer } = await monter(await assembleOuEchoue(await carteTemoin()))
+    expect(texte()).toContain('Hayine témoin')
+    expect(texte()).toContain('Que voulez-vous faire ?')
+    expect(racine.querySelector('main a[href="#aide"]'), 'un écran public visiteur manque à l’accueil').not.toBeNull()
+    expect(racine.querySelector('main a[href="#reservations"]'), 'un écran réservé à un rôle est proposé au visiteur').toBeNull()
+    expect(racine.querySelector('nav a[href="#accueil"]')).not.toBeNull()
+    expect(racine.querySelector('nav a[href="#compte"]')).not.toBeNull()
+    await cliquer('Choisir mon rôle')
+    await cliquer('Entrer comme Particulier')
+    await cliquer('Accueil')
+    expect(racine.querySelector('main a[href="#reservations"]'), 'le Particulier ne voit pas ses écrans à l’accueil').not.toBeNull()
   }, 90_000)
 
   it('③ la garde de rôle : un écran réservé ouvre « Qui êtes-vous ? » ; « Entrer comme Particulier » l’ouvre', async () => {
@@ -163,8 +167,7 @@ describe('3c · briques 2-3 · le squelette et l’état, montés', () => {
     expect(texte()).toContain('Confirmation')
     expect(texte()).toMatch(/Réservation m[0-9a-z-]+ payée · paiements 1/u)
     expect(window.location.hash).toBe('#confirmation')
-    // La barre du bas liste désormais les écrans du Particulier.
-    expect(racine.querySelector('a[href="#reservations"]')).not.toBeNull()
+    void racine
   }, 90_000)
 
   it('⑤ « #gestion » ouvre la coque de gestion derrière le rôle Administrateur', async () => {
@@ -188,7 +191,7 @@ describe('3c · briques 2-3 · le squelette et l’état, montés', () => {
       { nom: 'accueil', slug: 'accueil', resultat: 'ok', reproches: [] },
       { nom: 'aide', slug: 'aide', resultat: 'a_completer', reproches: ['DES JETONS QUI N’EXISTENT PAS — …\n- détail'] },
     ], ['Tarification à préciser'])
-    expect(md).toContain('Écrans livrés : 1 / 6.')
+    expect(md).toContain(`Écrans livrés : 1 / ${String(PLAN.ecrans.length)}.`)
     expect(md).toContain('- accueil (visiteur, public) : livré')
     expect(md).toContain('- aide (visiteur, public) : À COMPLÉTER — DES JETONS QUI N’EXISTENT PAS — …')
     expect(md).toContain('- réservations (Particulier, public, tables : reservation) : à compléter (non écrit)')

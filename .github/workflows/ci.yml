@@ -506,8 +506,10 @@ jobs:
         continue-on-error: true
         working-directory: apps/web
         run: |
-          npx playwright install --with-deps webkit
+          npx playwright install --with-deps webkit chromium
           node scripts/verifier-juge-navigateur.mjs
+          # 3c-2 : le juge d'expérience, dans Chromium — 94cf0489 refusée, un témoin sain accepté.
+          npx vitest run -c vitest.navigateur.config.ts
 
       - name: Report system health
         if: always()

@@ -85,6 +85,13 @@ export type LectureBrief = {
   readonly ecrans: readonly string[]
   /** Ce que le cahier lui-même laisse à décider — pas d'affichage encore (étape intention). */
   readonly questionsOuvertes: readonly string[]
+  /** Le chemin principal, en noms d'écrans lus (3c-2). */
+  readonly parcours?: readonly string[]
+  /** Les contraintes fermées, lues telles quelles (3c-2, correction 3). */
+  readonly langues?: readonly string[]
+  readonly devises?: readonly string[]
+  readonly moyensPaiement?: readonly string[]
+  readonly pays?: readonly string[]
 }
 
 /** Ce que la route de génération écrit en base. */
@@ -107,6 +114,11 @@ export type LectureBriefEnregistree = {
   readonly roles: readonly string[]
   readonly ecrans: readonly string[]
   readonly questionsOuvertes: readonly string[]
+  readonly parcours: readonly string[]
+  readonly langues: readonly string[]
+  readonly devises: readonly string[]
+  readonly moyensPaiement: readonly string[]
+  readonly pays: readonly string[]
 }
 
 const BORNES = { roles: 20, ecrans: 60, questionsOuvertes: 30, signes: 200, tranches: 50, nom: 80 } as const
@@ -170,7 +182,7 @@ export function lectureAEnregistrer(brut: unknown, tablesRecues: number): Lectur
   const o = typeof brut === 'object' && brut !== null ? (brut as Record<string, unknown>) : null
   const resultat = o?.resultat
   if (o === null || typeof resultat !== 'string' || !(RESULTATS_LECTURE as readonly string[]).includes(resultat)) {
-    return { resultat: 'non_transmise', tablesLues: null, tablesRecues, source: 'absente', tentatives: null, tranches: null, tranchesEchouees: null, signesLus: null, coutUsd: null, jetonsEntree: null, jetonsSortie: null, parTranche: [], roles: [], ecrans: [], questionsOuvertes: [] }
+    return { resultat: 'non_transmise', tablesLues: null, tablesRecues, source: 'absente', tentatives: null, tranches: null, tranchesEchouees: null, signesLus: null, coutUsd: null, jetonsEntree: null, jetonsSortie: null, parTranche: [], roles: [], ecrans: [], questionsOuvertes: [], parcours: [], langues: [], devises: [], moyensPaiement: [], pays: [] }
   }
   const jetons = typeof o.jetons === 'object' && o.jetons !== null ? (o.jetons as Record<string, unknown>) : {}
   return {
@@ -189,6 +201,12 @@ export function lectureAEnregistrer(brut: unknown, tablesRecues: number): Lectur
     roles: listeDeChaines(o.roles, BORNES.roles),
     ecrans: listeDeChaines(o.ecrans, BORNES.ecrans),
     questionsOuvertes: listeDeChaines(o.questionsOuvertes, BORNES.questionsOuvertes),
+    parcours: listeDeChaines(o.parcours, 8),
+    // Un code de langue est deux lettres ; une devise, trois majuscules : le reste ne passe pas.
+    langues: listeDeChaines(o.langues, 12).map((x) => x.toLowerCase()).filter((x) => /^[a-z]{2}$/u.test(x)),
+    devises: listeDeChaines(o.devises, 8).map((x) => x.toUpperCase()).filter((x) => /^[A-Z]{3}$/u.test(x)),
+    moyensPaiement: listeDeChaines(o.moyensPaiement, 12),
+    pays: listeDeChaines(o.pays, 30),
   }
 }
 
@@ -259,6 +277,11 @@ export type LecturePartielle = {
   readonly roles: readonly string[]
   readonly ecrans: readonly string[]
   readonly questionsOuvertes: readonly string[]
+  readonly parcours?: readonly string[]
+  readonly langues?: readonly string[]
+  readonly devises?: readonly string[]
+  readonly moyensPaiement?: readonly string[]
+  readonly pays?: readonly string[]
 }
 
 /** La clé d'identité d'un nom : accents, casse et espaces ne font pas deux noms. */
@@ -318,5 +341,11 @@ export function fusionnerLectures(parties: readonly LecturePartielle[]): Lecture
     roles: unionDeChaines(parties.map((p) => p.roles), BORNES.roles),
     ecrans: unionDeChaines(parties.map((p) => p.ecrans), BORNES.ecrans),
     questionsOuvertes: unionDeChaines(parties.map((p) => p.questionsOuvertes), BORNES.questionsOuvertes),
+    // Le parcours : celui de la première tranche qui en décrit un (un chemin ne se fusionne pas).
+    parcours: parties.find((p) => (p.parcours ?? []).length > 0)?.parcours ?? [],
+    langues: unionDeChaines(parties.map((p) => (p.langues ?? []).map((x) => x.toLowerCase())), 12),
+    devises: unionDeChaines(parties.map((p) => (p.devises ?? []).map((x) => x.toUpperCase())), 8),
+    moyensPaiement: unionDeChaines(parties.map((p) => p.moyensPaiement ?? []), 12),
+    pays: unionDeChaines(parties.map((p) => p.pays ?? []), 30),
   }
 }

@@ -62,6 +62,10 @@ const HORS_BOUCLE: Readonly<Record<string, string>> = {
   // nomme aucun mot. Le brancher d'ici là coûterait une heure pour un
   // juge qu'on retire.
   'juge-bandeau.ts': 'limité aux formulations connues · remplacé par le montage double',
+  // 3c-2 : `jugerExperience` lance CHROMIUM — absent de la fonction de génération.
+  // Son SCRIPT, lui, tourne dans la boucle (juge d'exécution, mode écran et
+  // application) ; le lanceur Chromium sert la preuve, la CI et les tirs.
+  'juge-experience.ts': 'lanceur Chromium · le script tourne dans la boucle via le juge d’exécution',
 }
 
 const juges = (): { fichier: string; fonctions: string[] }[] =>

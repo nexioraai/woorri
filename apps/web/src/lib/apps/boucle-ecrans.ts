@@ -29,16 +29,25 @@ import { jugerJetons } from './juge-jetons'
 import type { DefautPersistance } from './juge-persistance'
 import { jugerVivacite } from './juge-vivacite'
 import { planifierEcrans, ROLE_VISITEUR, type AppelerLeger, type Plan, type PlanEcran } from './plan-ecrans'
-import { fichiersSquelette, sourceACompleter, sourcePerimetre } from './squelette'
+import { fichiersSquelette, sourceACompleter, sourceEcranDeribfy, sourcePerimetre } from './squelette'
+import type { ContraintesFermees } from './consigne-ecran'
+import { SCRIPT_EXPERIENCE, type RefusExperience } from './juge-experience'
 
 /** Mesuré (m15, 2026-11-13) : 4 et 8 appels flash simultanés passent, 0 refus. Quatre, avec repli séquentiel sur refus. */
 export const PARALLELISME = 4
 
-export type Lecture = { readonly ecrans: readonly string[]; readonly roles: readonly string[]; readonly questionsOuvertes: readonly string[] }
+export type Lecture = {
+  readonly ecrans: readonly string[]
+  readonly roles: readonly string[]
+  readonly questionsOuvertes: readonly string[]
+  readonly parcours?: readonly string[]
+  /** Contraintes fermées lues (3c-2). */
+  readonly contraintes?: ContraintesFermees
+}
 
 type Ok = Extract<Resultat, { ok: true }>
 export type ResultatEcrans =
-  | (Ok & { readonly ecrans: readonly EcranEcrit[]; readonly plan: Plan })
+  | (Ok & { readonly ecrans: readonly EcranEcrit[]; readonly plan: Plan; readonly experience: { readonly refus: readonly RefusExperience[]; readonly erreur?: string } | null })
   | (Extract<Resultat, { ok: false }> & { readonly ecrans: readonly EcranEcrit[]; readonly plan: Plan })
 
 /**
@@ -56,8 +65,11 @@ export function persistanceStructurelle(plan: Plan, ecrans: readonly EcranEcrit[
   for (const e of entites) {
     const t = nomTable(e)
     const livres = [...fichiers.keys()].map((s) => parSlug.get(s)).filter((p): p is PlanEcran => p !== undefined)
-    const lue = livres.some((p) => p.tables.lit.includes(t) && emploie(p.slug, t)) || livres.some((p) => p.tables.ecrit.includes(t) && emploie(p.slug, t))
-    const ecrite = livres.some((p) => p.tables.ecrit.includes(t) && emploie(p.slug, t) && ecritQuelqueChose(p.slug))
+    // La gestion écrite par Deribfy (`GestionTable`) lit ET écrit sa table par construction ;
+    // son fichier le dit : <GestionTable table="<table>" …>.
+    const geree = livres.some((p) => p.gere !== undefined && (p.gere === e.name || p.gere === t) && new RegExp(`<GestionTable table=\\{?["']${t}["']`, 'u').test(fichiers.get(p.slug) ?? ''))
+    const lue = geree || livres.some((p) => p.tables.lit.includes(t) && emploie(p.slug, t)) || livres.some((p) => p.tables.ecrit.includes(t) && emploie(p.slug, t))
+    const ecrite = geree || livres.some((p) => p.tables.ecrit.includes(t) && emploie(p.slug, t) && ecritQuelqueChose(p.slug))
     if (!lue || !ecrite) defauts.push({ table: t, lue, ecrite })
   }
   return defauts
@@ -112,19 +124,21 @@ export async function boucleEcrans(o: {
 
   // ── LE PLAN. Sans écran lu, une ligne par table (gestion) et un accueil : déterministe, et dit.
   const ecransLus = o.lecture.ecrans.length > 0 ? o.lecture.ecrans : ['accueil', ...o.entites.map((e) => nomTable(e))]
-  const plan = await planifierEcrans(o.appelerLeger, { ecrans: ecransLus, roles: o.lecture.roles }, o.entites, o.demande)
+  const plan = await planifierEcrans(o.appelerLeger, { ecrans: ecransLus, roles: o.lecture.roles, parcours: o.lecture.parcours }, o.entites, o.demande)
   const planFinal: Plan = o.lecture.ecrans.length > 0 ? plan : { ...plan, refuses: [{ quoi: 'lecture', motif: 'aucun écran lu : un écran par table, en gestion, plus un accueil' }, ...plan.refuses] }
 
   // ── LES ÉCRANS, QUATRE À LA FOIS.
+  // Les écrans de Deribfy (accueil, langue, gestion) ne partent PAS au modèle : ils sont écrits ici.
+  const parDeribfy = (ecran: PlanEcran): EcranEcrit => ({ nom: ecran.nom, slug: ecran.slug, resultat: 'ok', fichier: sourceEcranDeribfy(ecran, planFinal, o.entites), tentatives: [], ms: 0, jetons: { entree: 0, sortie: 0, reflexion: 0 }, reproches: [], dernierTexte: null, origine: 'deribfy' })
   const ecrans = await enParallele(
-    planFinal.ecrans.map((ecran) => () => ecrireEcran({ ecran, plan: planFinal, entites: o.entites, devise, nom: o.nom, roles: o.lecture.roles, style: o.style, appeler: o.appelerEcran, juger })),
+    planFinal.ecrans.map((ecran) => async () => (ecran.origine === 'deribfy' ? parDeribfy(ecran) : ecrireEcran({ ecran, plan: planFinal, entites: o.entites, devise, nom: o.nom, roles: o.lecture.roles, style: o.style, appeler: o.appelerEcran, juger, contraintes: o.lecture.contraintes }))),
     o.parallelisme ?? PARALLELISME,
   )
   const tours: Tour[] = ecrans.flatMap((e) => e.tentatives.map((t) => ({ rang: t.rang, fichiers: 1, ok: t.reproches.length === 0, ...(t.reproches.length === 0 ? {} : { motif: `[${e.nom}] ${t.reproches.join('\n\n')}` }), ms: t.ms, tronquee: t.tronquee })))
 
   // ── L'ASSEMBLAGE : squelette + bibliothèque + écrans livrés, « à compléter » pour les autres.
   const bibliotheque = fichiersSysteme(devise)
-  const carte = new Map<string, string>([...fichiersSquelette({ plan: planFinal, entites: o.entites, nom: o.nom, roles: o.lecture.roles, style: o.style }), ...bibliotheque])
+  const carte = new Map<string, string>([...fichiersSquelette({ plan: planFinal, entites: o.entites, nom: o.nom, roles: o.lecture.roles, style: o.style, langues: o.lecture.contraintes?.langues }), ...bibliotheque])
   for (const e of ecrans) {
     const p = planFinal.ecrans.find((x) => x.slug === e.slug)
     if (p === undefined) continue
@@ -137,7 +151,12 @@ export async function boucleEcrans(o: {
   }
 
   // ── LES JUGES GLOBAUX, sur l'application entière.
-  const accueil = await juger(v.code)
+  // Le juge d'exécution sur l'accueil porte aussi le JUGE D'EXPÉRIENCE de l'application
+  // entière (3c-2) : dans le simulateur, faute de Chromium dans la fonction — la preuve,
+  // elle, le rejoue dans Chromium sur la page servie.
+  const langues = (o.lecture.contraintes?.langues ?? []).map((c) => ({ code: c, dir: (c === 'ar' || c === 'he' || c === 'fa' || c === 'ur' ? 'rtl' : 'ltr') as 'ltr' | 'rtl', libelles: [] }))
+  const argsXp = { ecrans: planFinal.ecrans.map((x) => ({ nom: x.nom, slug: x.slug, role: x.role === ROLE_VISITEUR ? '' : x.role })), langues, parcours: planFinal.parcours ?? [], mode: 'application', attenteMs: 120, controlesMax: 300 }
+  const accueil = await juger(v.code, { experience: { script: SCRIPT_EXPERIENCE, args: argsXp } })
   const gestion = planFinal.ecrans.some((e) => e.navigation === 'gestion') ? await juger(v.code, { adresse: ADRESSE_GESTION }) : null
   const execution = fusionExecution(accueil, gestion)
   const carteModele = new Map([...carte].filter(([c]) => !c.startsWith('systeme/') && c !== 'index.tsx'))
@@ -161,6 +180,7 @@ export async function boucleEcrans(o: {
     refusEntites: [],
     ecrans,
     plan: planFinal,
+    experience: accueil.experience ?? null,
   }
 }
 

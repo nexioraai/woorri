@@ -242,6 +242,207 @@ export function messageDErreur(e: unknown): string { return message(e) }
 `
 }
 
+/** Les langues connues : nom natif et sens d'écriture. Une langue lue absente d'ici garde son code comme nom. */
+export const LANGUES_CONNUES: Readonly<Record<string, { readonly nom: string; readonly dir: 'ltr' | 'rtl' }>> = {
+  fr: { nom: 'Français', dir: 'ltr' }, en: { nom: 'English', dir: 'ltr' }, ar: { nom: 'العربية', dir: 'rtl' },
+  es: { nom: 'Español', dir: 'ltr' }, pt: { nom: 'Português', dir: 'ltr' }, de: { nom: 'Deutsch', dir: 'ltr' },
+  it: { nom: 'Italiano', dir: 'ltr' }, sw: { nom: 'Kiswahili', dir: 'ltr' }, ha: { nom: 'Hausa', dir: 'ltr' },
+  wo: { nom: 'Wolof', dir: 'ltr' }, tr: { nom: 'Türkçe', dir: 'ltr' }, ru: { nom: 'Русский', dir: 'ltr' },
+  zh: { nom: '中文', dir: 'ltr' }, he: { nom: 'עברית', dir: 'rtl' }, fa: { nom: 'فارسی', dir: 'rtl' }, ur: { nom: 'اردو', dir: 'rtl' },
+}
+
+/** Les textes du SQUELETTE, par langue. Une langue sans traduction prend l'anglais. */
+const TEXTES: Record<string, Record<string, string>> = {
+  fr: { accueil: 'Accueil', compte: 'Compte', quiEtesVous: 'Qui êtes-vous ?', reserve: 'Cet écran est réservé au rôle « {r} ».', choisirRole: 'Choisissez votre rôle pour continuer.', entrerComme: 'Entrer comme {r}', seDeconnecter: 'Se déconnecter', connecteComme: 'Connecté comme {r}', retourAccueil: 'Retour à l’accueil', inexistant: 'Cet écran n’existe pas', revenir: 'Revenez à l’accueil.', courriel: 'Courriel', motDePasse: 'Mot de passe', langue: 'Langue', aucunRole: 'Aucun rôle n’est défini', vosEcrans: 'Que voulez-vous faire ?', choisirMonRole: 'Choisir mon rôle', espaceGestion: 'Espace de gestion', choisirLangue: 'Choisissez votre langue', continuer: 'Continuer' },
+  en: { accueil: 'Home', compte: 'Account', quiEtesVous: 'Who are you?', reserve: 'This screen is for the « {r} » role.', choisirRole: 'Choose your role to continue.', entrerComme: 'Continue as {r}', seDeconnecter: 'Sign out', connecteComme: 'Signed in as {r}', retourAccueil: 'Back to home', inexistant: 'This screen does not exist', revenir: 'Go back home.', courriel: 'Email', motDePasse: 'Password', langue: 'Language', aucunRole: 'No role is defined', vosEcrans: 'What would you like to do?', choisirMonRole: 'Choose my role', espaceGestion: 'Management', choisirLangue: 'Choose your language', continuer: 'Continue' },
+  ar: { accueil: 'الرئيسية', compte: 'الحساب', quiEtesVous: 'من أنت؟', reserve: 'هذه الشاشة مخصصة لدور « {r} ».', choisirRole: 'اختر دورك للمتابعة.', entrerComme: 'الدخول بصفة {r}', seDeconnecter: 'تسجيل الخروج', connecteComme: 'متصل بصفة {r}', retourAccueil: 'العودة إلى الرئيسية', inexistant: 'هذه الشاشة غير موجودة', revenir: 'عد إلى الرئيسية.', courriel: 'البريد الإلكتروني', motDePasse: 'كلمة المرور', langue: 'اللغة', aucunRole: 'لا يوجد أي دور', vosEcrans: 'ماذا تريد أن تفعل؟', choisirMonRole: 'اختيار دوري', espaceGestion: 'الإدارة', choisirLangue: 'اختر لغتك', continuer: 'متابعة' },
+}
+
+/** `systeme/langue.ts` — la langue courante, le sens d'écriture, les textes du squelette. */
+export function sourceLangue(langues: readonly string[]): string {
+  const lues = (langues.length > 0 ? langues : ['fr']).map((c) => ({ code: c, nom: LANGUES_CONNUES[c]?.nom ?? c.toUpperCase(), dir: LANGUES_CONNUES[c]?.dir ?? 'ltr' }))
+  const textes: Record<string, Record<string, string>> = {}
+  for (const l of lues) textes[l.code] = TEXTES[l.code] ?? TEXTES.en!
+  return `/** LANGUE — émise par Deribfy : la langue courante, dir et lang sur la racine, les textes du squelette. Ne pas réécrire. */
+import { useEtat, lire, ecrire, surChangement } from './etat'
+
+export type Langue = { readonly code: string; readonly nom: string; readonly dir: 'ltr' | 'rtl' }
+/** Les langues LUES dans le cahier — aucune autre. */
+export const LANGUES: readonly Langue[] = ${j(lues)}
+const TEXTES: Record<string, Record<string, string>> = ${j(textes)}
+const DEFAUT = LANGUES[0]!.code
+
+function appliquer(code: string): void {
+  const l = LANGUES.find((x) => x.code === code) ?? LANGUES[0]!
+  try { document.documentElement.lang = l.code; document.documentElement.dir = l.dir } catch { /* hors navigateur */ }
+}
+appliquer(lire<string>('langue', DEFAUT))
+surChangement(() => { appliquer(lire<string>('langue', DEFAUT)) })
+
+export function useLangue(): string { return useEtat<string>('langue', DEFAUT)[0] }
+export function choisirLangue(code: string): void {
+  if (!LANGUES.some((l) => l.code === code)) return
+  ecrire('langue', code)
+}
+/** Un texte du squelette dans la langue courante ; {r} est remplacé. */
+export function t(cle: string, code: string, r = ''): string {
+  return ((TEXTES[code] ?? TEXTES[DEFAUT] ?? {})[cle] ?? cle).replace('{r}', r)
+}
+`
+}
+
+/** `systeme/gestion.tsx` — la gestion d'une table : lister, ajouter, modifier, retirer. */
+export const SOURCE_GESTION = `/** GESTION — émise par Deribfy. Une table : lister, ajouter, modifier, retirer. Ne pas réécrire. */
+import React, { useState } from 'react'
+import { useTable } from './base'
+import { Bouton, EtatVide, EnTeteDeSection } from './ui'
+
+export type Champ = { readonly nom: string; readonly libelle: string; readonly type: string; readonly requis: boolean }
+type Ligne = { id: string } & Record<string, unknown>
+
+const vide = (champs: readonly Champ[]) => Object.fromEntries(champs.map((c) => [c.nom, c.type === 'boolean' ? false : '']))
+
+export function GestionTable({ table, titre, champs, journal = false }: { table: string; titre: string; champs: readonly Champ[]; journal?: boolean }) {
+  const t = useTable<Ligne>(table)
+  const [valeurs, poserValeurs] = useState<Record<string, unknown>>(() => vide(champs))
+  const [enEdition, poserEnEdition] = useState<string | null>(null)
+  const [message, poserMessage] = useState<string | null>(null)
+  const convertir = (c: Champ, v: unknown) => (c.type === 'number' ? (v === '' ? null : Number(v)) : c.type === 'boolean' ? Boolean(v) : v === '' ? null : String(v))
+  const valider = async () => {
+    const manquants = champs.filter((c) => c.requis && c.type !== 'boolean' && String(valeurs[c.nom] ?? '').trim() === '').map((c) => c.libelle)
+    if (manquants.length > 0) { poserMessage('Remplissez : ' + manquants.join(', ')); return }
+    const ligne = Object.fromEntries(champs.map((c) => [c.nom, convertir(c, valeurs[c.nom])]))
+    if (enEdition === null) {
+      const r = await t.ajouter(ligne as Omit<Ligne, 'id'>)
+      poserMessage(r === null ? 'L’ajout a échoué.' : 'Ajouté.')
+    } else {
+      const ok = await t.modifier(enEdition, ligne)
+      poserMessage(ok ? 'Modifié.' : 'La modification a échoué.')
+      poserEnEdition(null)
+    }
+    poserValeurs(vide(champs))
+  }
+  return (
+    <section style={{ display: 'grid', gap: 16 }}>
+      <EnTeteDeSection titre={titre} description={String(t.lignes.length) + ' enregistrement(s)'} />
+      {t.erreur !== null && <p role="alert" style={{ color: 'var(--destructive)' }}>{t.erreur}</p>}
+      <form onSubmit={(ev) => { ev.preventDefault(); void valider() }} style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+        {champs.map((c) => (
+          <label key={c.nom} style={{ display: 'grid', gap: 4, fontSize: 'var(--text-sm)' }}>
+            <span>{c.libelle}{c.requis ? ' *' : ''}</span>
+            {c.type === 'boolean'
+              ? <input type="checkbox" checked={Boolean(valeurs[c.nom])} onChange={(ev) => { poserValeurs({ ...valeurs, [c.nom]: ev.target.checked }) }} />
+              : <input type={c.type === 'number' ? 'number' : c.type === 'date' ? 'date' : 'text'} value={String(valeurs[c.nom] ?? '')} onChange={(ev) => { poserValeurs({ ...valeurs, [c.nom]: ev.target.value }) }}
+                  style={{ padding: 8, borderRadius: 'var(--radius-md)', border: '1px solid var(--input)' }} />}
+          </label>
+        ))}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'end' }}>
+          <Bouton type="submit" texte={enEdition === null ? 'Ajouter' : 'Enregistrer les modifications'} />
+          {enEdition !== null && <Bouton genre="secondaire" texte="Annuler la modification" surClic={() => { poserEnEdition(null); poserValeurs(vide(champs)); poserMessage('Modification annulée.') }} />}
+        </div>
+      </form>
+      {message !== null && <p role="status">{message}</p>}
+      {t.chargement ? <p>Chargement…</p> : t.lignes.length === 0 ? <EtatVide message={'Aucun enregistrement dans « ' + titre + ' »'} detail="Ajoutez le premier avec le formulaire." /> : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--text-sm)' }}>
+            <thead><tr>{champs.map((c) => <th key={c.nom} style={{ textAlign: 'left', padding: 6, borderBottom: '1px solid var(--border)' }}>{c.libelle}</th>)}<th /></tr></thead>
+            <tbody>{t.lignes.map((l) => (
+              <tr key={l.id}>
+                {champs.map((c) => <td key={c.nom} style={{ padding: 6, borderBottom: '1px solid var(--border)' }}>{String(l[c.nom] ?? '')}</td>)}
+                <td style={{ padding: 6, whiteSpace: 'nowrap' }}>
+                  {!journal && <Bouton genre="discret" texte="Modifier" surClic={() => { poserEnEdition(l.id); poserValeurs(Object.fromEntries(champs.map((c) => [c.nom, l[c.nom] ?? '']))); poserMessage('Modification de la ligne ' + l.id + '.') }} />}
+                  {!journal && <Bouton genre="discret" texte="Retirer" surClic={() => { void t.supprimer(l.id).then((ok) => { poserMessage(ok ? 'Retiré.' : 'Le retrait a échoué.') }) }} />}
+                </td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  )
+}
+`
+
+const libelleDe = (nom: string) => { const s = nom.replace(/_/gu, ' '); return s.charAt(0).toUpperCase() + s.slice(1) }
+
+/** Les écrans que DERIBFY écrit : accueil, choix de langue, gestion d'une table. */
+export function sourceEcranDeribfy(ecran: PlanEcran, plan: Plan, entites: readonly EntiteDeclaree[]): string {
+  if (ecran.gere !== undefined) {
+    const e = entites.find((x) => x.name === ecran.gere)
+    const champs = (e?.fields ?? []).map((f) => ({ nom: nomColonne(f), libelle: libelleDe(f.name), type: f.type, requis: f.required }))
+    return `/** GESTION — ${ecran.nom}, écrit par Deribfy depuis la table déclarée. */
+import React from 'react'
+import { GestionTable } from '../systeme/gestion'
+import type { Session } from '../systeme/types'
+
+export default function Ecran(_p: { session: Session }) {
+  return <GestionTable table={${j(e === undefined ? ecran.gere : nomTable(e))}} titre={${j(libelleDe(ecran.gere))}} champs={${j(champs)}} journal={${String(e?.appendOnly === true)}} />
+}
+`
+  }
+  if (EST_LANGUE_ECRAN.test(ecran.nom)) {
+    const i = plan.ecrans.findIndex((x) => x.slug === ecran.slug)
+    const suivant = plan.ecrans.slice(i + 1).find((x) => x.navigation === 'public' && x.role === ROLE_VISITEUR && x.origine === undefined)?.slug ?? plan.ecrans.find((x) => /^accueil/u.test(x.slug))?.slug ?? 'compte'
+    return `/** CHOIX DE LANGUE — écrit par Deribfy depuis les langues lues. */
+import React from 'react'
+import { LANGUES, choisirLangue, t, useLangue } from '../systeme/langue'
+import { naviguer } from '../systeme/navigation'
+import { Bouton, EnTeteDeSection } from '../systeme/ui'
+import type { Session } from '../systeme/types'
+
+export default function Ecran(_p: { session: Session }) {
+  const l = useLangue()
+  return (
+    <section style={{ padding: 16, display: 'grid', gap: 12, maxWidth: 560 }}>
+      <EnTeteDeSection titre={t('choisirLangue', l)} />
+      {LANGUES.map((x) => (
+        <button key={x.code} type="button" data-langue={x.code} aria-pressed={x.code === l} onClick={() => { choisirLangue(x.code) }}
+          style={{ padding: '14px 16px', textAlign: 'start', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: x.code === l ? 'var(--accent)' : 'var(--card)', color: 'var(--foreground)', fontWeight: x.code === l ? 700 : 400 }}>
+          {x.nom}
+        </button>
+      ))}
+      <Bouton texte={t('continuer', l)} surClic={() => { naviguer(${j(suivant)}) }} />
+    </section>
+  )
+}
+`
+  }
+  // L'ACCUEIL : la liste des écrans de la personne, depuis le plan.
+  return `/** ACCUEIL — écrit par Deribfy depuis le plan. Il ne peut pas être « à compléter ». */
+import React from 'react'
+import { ECRANS, NOM_APPLICATION, naviguer, SLUG_COMPTE } from '../systeme/navigation'
+import { t, useLangue } from '../systeme/langue'
+import { EnTeteDeSection } from '../systeme/ui'
+import { ROLE_VISITEUR } from '../systeme/types'
+import type { Session } from '../systeme/types'
+
+const premiereMajuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+export default function Ecran({ session }: { session: Session }) {
+  const l = useLangue()
+  const publics = ECRANS.filter((e) => e.slug !== ${j(ecran.slug)} && e.navigation === 'public' && (e.role === ROLE_VISITEUR || e.role === session.role))
+  const gestion = ECRANS.find((e) => e.navigation === 'gestion' && e.role === session.role)
+  const carte = (slug: string, texte: string) => (
+    <a key={slug} href={'#' + slug} onClick={(ev) => { ev.preventDefault(); naviguer(slug) }}
+      style={{ display: 'block', padding: 16, borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--foreground)', textDecoration: 'none', fontWeight: 600 }}>
+      {texte}
+    </a>
+  )
+  return (
+    <section style={{ padding: 16, display: 'grid', gap: 12 }}>
+      <EnTeteDeSection titre={NOM_APPLICATION} description={t('vosEcrans', l)} />
+      <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+        {publics.map((e) => carte(e.slug, premiereMajuscule(e.nom)))}
+        {gestion !== undefined && carte(gestion.slug, t('espaceGestion', l))}
+        {session.role === ROLE_VISITEUR && carte(SLUG_COMPTE, t('choisirMonRole', l))}
+      </div>
+    </section>
+  )
+}
+`
+}
+const EST_LANGUE_ECRAN = /langue/iu
+
 /** Un écran du plan tel que la navigation le connaît. */
 export type EcranNav = { readonly nom: string; readonly slug: string; readonly role: string; readonly navigation: 'public' | 'gestion'; readonly tables: readonly string[] }
 
@@ -257,6 +458,7 @@ import { Bouton, EtatVide, Icone, EnTeteDeSection } from './ui'
 import { connecter, deconnecter, useSession } from './etat'
 import { base, enBase } from './base'
 import { ROLE_VISITEUR } from './types'
+import { LANGUES, choisirLangue, t, useLangue } from './langue'
 
 export type Ecran = { readonly nom: string; readonly slug: string; readonly role: string; readonly navigation: 'public' | 'gestion'; readonly tables: readonly string[] }
 /** LE PLAN : chaque écran lu dans le cahier, avec son rôle et sa navigation. */
@@ -322,13 +524,24 @@ const lien = (slug: string, texte: string, actif: boolean) => (
 /** LA BARRE DU BAS : Accueil, les écrans publics de ce rôle, le compte. */
 export function BarreDuBas({ slugCourant }: { slugCourant: string }) {
   const session = useSession()
-  const publics = ecransPour(session.role, 'public')
+  const l = useLangue()
   const accueil = premierPublic()
+  // Accueil + Compte, et le choix de langue quand le cahier en lit plusieurs. Les autres écrans
+  // s'ouvrent depuis l'accueil, écrit par Deribfy depuis le plan.
   return (
-    <nav aria-label="Navigation" style={{ position: 'sticky', bottom: 0, display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: 2, padding: '6px 8px', background: 'var(--card)', borderTop: '1px solid var(--border)' }}>
-      {accueil !== undefined && lien(accueil.slug, 'Accueil', slugCourant === accueil.slug)}
-      {publics.filter((e) => e.slug !== accueil?.slug).map((e) => lien(e.slug, e.nom.charAt(0).toUpperCase() + e.nom.slice(1), slugCourant === e.slug))}
-      {lien(SLUG_COMPTE, session.role === ROLE_VISITEUR ? 'Compte' : 'Compte · ' + session.role, slugCourant === SLUG_COMPTE)}
+    <nav aria-label="Navigation" style={{ position: 'sticky', bottom: 0, display: 'flex', justifyContent: 'space-around', alignItems: 'center', flexWrap: 'wrap', gap: 2, padding: '6px 8px', background: 'var(--card)', borderTop: '1px solid var(--border)' }}>
+      {accueil !== undefined && lien(accueil.slug, t('accueil', l), slugCourant === accueil.slug)}
+      {lien(SLUG_COMPTE, session.role === ROLE_VISITEUR ? t('compte', l) : t('compte', l) + ' · ' + session.role, slugCourant === SLUG_COMPTE)}
+      {LANGUES.length > 1 && (
+        <span role="group" aria-label={t('langue', l)} style={{ display: 'flex', gap: 2 }}>
+          {LANGUES.map((x) => (
+            <button key={x.code} type="button" data-langue={x.code} aria-pressed={x.code === l} aria-label={x.nom} onClick={() => { choisirLangue(x.code) }}
+              style={{ padding: '6px 8px', border: 'none', background: 'none', fontSize: 'var(--text-xs)', fontWeight: x.code === l ? 700 : 400, color: x.code === l ? 'var(--primary)' : 'var(--muted-foreground)' }}>
+              {x.code.toUpperCase()}
+            </button>
+          ))}
+        </span>
+      )}
     </nav>
   )
 }
@@ -336,6 +549,7 @@ export function BarreDuBas({ slugCourant }: { slugCourant: string }) {
 /** LE COMPTE : qui est là. Dans l'aperçu on choisit son rôle ; en base on se connecte d'abord. */
 export function Compte({ attendu }: { attendu?: string }) {
   const session = useSession()
+  const l = useLangue()
   const [courriel, poserCourriel] = useState('')
   const [motDePasse, poserMotDePasse] = useState('')
   const [erreur, poserErreur] = useState<string | null>(null)
@@ -353,25 +567,25 @@ export function Compte({ attendu }: { attendu?: string }) {
   if (session.role !== ROLE_VISITEUR) {
     return (
       <section style={{ padding: 16, display: 'grid', gap: 12 }}>
-        <EnTeteDeSection titre="Compte" description={'Connecté comme ' + session.role + (session.utilisateur ? ' (' + session.utilisateur + ')' : '')} />
-        <Bouton texte="Se déconnecter" genre="secondaire" surClic={() => { deconnecter(); naviguer(premierPublic()?.slug ?? SLUG_COMPTE) }} />
+        <EnTeteDeSection titre={t('compte', l)} description={t('connecteComme', l, session.role) + (session.utilisateur ? ' (' + session.utilisateur + ')' : '')} />
+        <Bouton texte={t('seDeconnecter', l)} genre="secondaire" surClic={() => { deconnecter(); naviguer(premierPublic()?.slug ?? SLUG_COMPTE) }} />
       </section>
     )
   }
   return (
-    <section style={{ padding: 16, display: 'grid', gap: 12 }}>
-      <EnTeteDeSection titre="Qui êtes-vous ?" description={attendu ? 'Cet écran est réservé au rôle « ' + attendu + ' ».' : 'Choisissez votre rôle pour continuer.'} />
+    <section data-deribfy="garde" style={{ padding: 16, display: 'grid', gap: 12 }}>
+      <EnTeteDeSection titre={t('quiEtesVous', l)} description={attendu ? t('reserve', l, attendu) : t('choisirRole', l)} />
       {enBase && (
         <form onSubmit={(ev) => { ev.preventDefault() }} style={{ display: 'grid', gap: 8 }}>
-          <label style={{ display: 'grid', gap: 4 }}><span>Courriel</span><input type="email" value={courriel} onChange={(ev) => { poserCourriel(ev.target.value) }} style={{ padding: 10, borderRadius: 'var(--radius-md)', border: '1px solid var(--input)' }} /></label>
-          <label style={{ display: 'grid', gap: 4 }}><span>Mot de passe</span><input type="password" value={motDePasse} onChange={(ev) => { poserMotDePasse(ev.target.value) }} style={{ padding: 10, borderRadius: 'var(--radius-md)', border: '1px solid var(--input)' }} /></label>
+          <label style={{ display: 'grid', gap: 4 }}><span>{t('courriel', l)}</span><input type="email" value={courriel} onChange={(ev) => { poserCourriel(ev.target.value) }} style={{ padding: 10, borderRadius: 'var(--radius-md)', border: '1px solid var(--input)' }} /></label>
+          <label style={{ display: 'grid', gap: 4 }}><span>{t('motDePasse', l)}</span><input type="password" value={motDePasse} onChange={(ev) => { poserMotDePasse(ev.target.value) }} style={{ padding: 10, borderRadius: 'var(--radius-md)', border: '1px solid var(--input)' }} /></label>
         </form>
       )}
       {erreur !== null && <p role="alert" style={{ color: 'var(--destructive)' }}>{erreur}</p>}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {ROLES.map((r) => <Bouton key={r} texte={'Entrer comme ' + r} genre={attendu === r ? 'primaire' : 'secondaire'} surClic={() => { void entrer(r) }} />)}
+        {ROLES.map((r) => <span key={r} data-role={r}><Bouton texte={t('entrerComme', l, r)} genre={attendu === r ? 'primaire' : 'secondaire'} surClic={() => { void entrer(r) }} /></span>)}
       </div>
-      {ROLES.length === 0 && <EtatVide icone="document" message="Aucun rôle n'est défini" detail="Le cahier ne nomme aucun rôle : tous les écrans sont publics." />}
+      {ROLES.length === 0 && <EtatVide icone="document" message={t('aucunRole', l)} detail="Le cahier ne nomme aucun rôle : tous les écrans sont publics." />}
       <Icone nom="document" taille={0} />
     </section>
   )
@@ -390,6 +604,7 @@ import { useSession, deconnecter } from './etat'
 import { BarreDuBas, Compte, ECRANS, NOM_APPLICATION, SLUG_COMPTE, ecransPour, naviguer, useSlugCourant } from './navigation'
 import { ROLE_VISITEUR } from './types'
 import type { Session } from './types'
+import { t, useLangue } from './langue'
 ${imports}
 
 type Composant = (props: { session: Session }) => React.ReactElement | null
@@ -400,12 +615,13 @@ ${table}
 export function Application() {
   const session = useSession()
   const slug = useSlugCourant()
+  const l = useLangue()
   if (slug === SLUG_COMPTE) {
     return <><main style={{ minHeight: '80vh' }}><Compte /></main><BarreDuBas slugCourant={slug} /></>
   }
   const ecran = ECRANS.find((e) => e.slug === slug)
   if (ecran === undefined) {
-    return <><main style={{ minHeight: '80vh' }}><EtatVide message="Cet écran n'existe pas" detail="Revenez à l'accueil." /></main><BarreDuBas slugCourant={slug} /></>
+    return <><main style={{ minHeight: '80vh' }}><EtatVide message={t('inexistant', l)} detail={t('revenir', l)} /></main><BarreDuBas slugCourant={slug} /></>
   }
   // ── LA GARDE DE RÔLE : un écran réservé s'ouvre quand on est ce rôle ; sinon, le compte.
   if (ecran.role !== ROLE_VISITEUR && session.role !== ecran.role) {
@@ -420,7 +636,7 @@ export function Application() {
         titre={ecran.nom.charAt(0).toUpperCase() + ecran.nom.slice(1)} utilisateur={session.utilisateur ?? session.role}
         surDeconnexion={() => { deconnecter(); naviguer(SLUG_COMPTE) }}>
         {contenu}
-        <p style={{ marginTop: 24 }}><a href="#" onClick={(ev) => { ev.preventDefault(); naviguer(ECRANS.find((e) => e.navigation === 'public')?.slug ?? SLUG_COMPTE) }} style={{ color: 'var(--muted-foreground)' }}>Retour à l'accueil</a></p>
+        <p style={{ marginTop: 24 }}><a href="#" onClick={(ev) => { ev.preventDefault(); naviguer(ECRANS.find((e) => /^accueil/.test(e.slug))?.slug ?? ECRANS.find((e) => e.navigation === 'public')?.slug ?? SLUG_COMPTE) }} style={{ color: 'var(--muted-foreground)' }}>{t('retourAccueil', l)}</a></p>
       </CoqueGestion>
     )
   }
@@ -497,6 +713,8 @@ export function fichiersSquelette(o: {
   readonly style?: string | null
   /** Pour juger UN écran seul : la session est déjà celle de son rôle. */
   readonly sessionInitiale?: { readonly role: string }
+  /** Les langues lues (codes ISO) ; la première est celle par défaut. */
+  readonly langues?: readonly string[]
 }): Map<string, string> {
   const carte = new Map<string, string>()
   carte.set('index.tsx', SOURCE_INDEX)
@@ -505,6 +723,8 @@ export function fichiersSquelette(o: {
   carte.set('systeme/base.ts', sourceBase())
   carte.set('systeme/navigation.tsx', sourceNavigation(o.plan, o.roles, o.nom))
   carte.set('systeme/application.tsx', sourceApplication(o.plan, o.style ?? null))
-  for (const e of o.plan.ecrans) carte.set(`ecrans/${e.slug}.tsx`, sourceACompleter(e, []))
+  carte.set('systeme/langue.ts', sourceLangue(o.langues ?? []))
+  carte.set('systeme/gestion.tsx', SOURCE_GESTION)
+  for (const e of o.plan.ecrans) carte.set(`ecrans/${e.slug}.tsx`, e.origine === 'deribfy' ? sourceEcranDeribfy(e, o.plan, o.entites) : sourceACompleter(e, []))
   return carte
 }

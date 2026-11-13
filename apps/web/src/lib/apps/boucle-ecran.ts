@@ -25,13 +25,14 @@
  */
 import { assembler } from './bac-a-sable'
 import { fichiersSysteme } from './bibliotheque-ui'
-import { consigneEcran } from './consigne-ecran'
+import { consigneEcran, type ContraintesFermees } from './consigne-ecran'
+import { SCRIPT_EXPERIENCE, reprocheExperience } from './juge-experience'
 import { importsDe, importsInterdits, lireFichiers, PAQUETS_PROPOSES } from './ecriture-directe'
 import type { EntiteDeclaree } from './entites-declarees'
 import { jugerContrat, reprocheContrat } from './juge-contrat'
 import { jugerDevise, marqueRecommandee } from './juge-devise'
 import { jugerExecution } from './juge-execution'
-import { jugerJetons } from './juge-jetons'
+import { jugerJetons, plusProche } from './juge-jetons'
 import { ROLE_VISITEUR, type Plan, type PlanEcran } from './plan-ecrans'
 import { fichiersSquelette } from './squelette'
 
@@ -59,6 +60,8 @@ export type EcranEcrit = {
   readonly reproches: readonly string[]
   /** Le brut du dernier essai quand l'écran a échoué : sans lui, impossible de dire si le modèle écrit mal ou si le lecteur lit mal. */
   readonly dernierTexte: string | null
+  /** `deribfy` : écrit par Deribfy (accueil, langue, gestion), aucun appel au modèle. */
+  readonly origine?: 'deribfy'
 }
 
 const INTERDITS: readonly { readonly motif: RegExp; readonly quoi: string }[] = [
@@ -95,7 +98,7 @@ export function reprochesStatiques(
   if (jetons.length > 0) {
     reproches.push(
       'DES JETONS QUI N’EXISTENT PAS — l’écran MOURRAIT au démarrage :\n' +
-        jetons.slice(0, 15).map((d) => `- ${d.reference} — ce qui existe : ${d.connus.slice(0, 40).join(', ')}`).join('\n') +
+        jetons.slice(0, 15).map((d) => { const p = plusProche(d.reference.replace(/^[a-z]+:/u, ''), d.connus); return `- ${d.reference}${p === null ? '' : ` → écris plutôt « ${p} »`} — ce qui existe : ${d.connus.slice(0, 60).join(', ')}` }).join('\n') +
         '\nEmploie EXACTEMENT les noms fournis, aucun autre.',
     )
   }
@@ -111,6 +114,42 @@ export function reprochesStatiques(
     }
   }
   return reproches
+}
+
+/** Langues reconnues dans un écran : nom (natif ou français) → code. */
+const NOMS_DE_LANGUES: readonly (readonly [RegExp, string])[] = [
+  [/\b(?:fran[çc]ais|french)\b/iu, 'fr'], [/\b(?:english|anglais)\b/iu, 'en'], [/(?:العربية|\barabe\b|\barabic\b)/iu, 'ar'],
+  [/\b(?:espa[ñn]ol|espagnol|spanish)\b/iu, 'es'], [/\b(?:portugu[êe]s|portugais)\b/iu, 'pt'], [/\b(?:deutsch|allemand)\b/iu, 'de'],
+  [/\b(?:italiano|italien)\b/iu, 'it'], [/\b(?:kiswahili|swahili)\b/iu, 'sw'], [/\bhausa\b/iu, 'ha'], [/\bwolof\b/iu, 'wo'],
+  [/\b(?:t[üu]rk[çc]e|turc)\b/iu, 'tr'], [/(?:русский|\brusse\b)/iu, 'ru'], [/(?:中文|\bchinois\b)/iu, 'zh'], [/\bsango\b/iu, 'sg'], [/\blingala\b/iu, 'ln'],
+]
+/** Moyens de paiement reconnus. */
+const MOYENS_CONNUS: readonly string[] = ['Orange Money', 'Airtel Money', 'MTN Mobile Money', 'MoMo', 'Moov Money', 'Wave', 'M-Pesa', 'PayPal', 'Stripe', 'Visa', 'Mastercard', 'Apple Pay', 'Google Pay', 'Western Union', 'MoneyGram', 'Flooz', 'Tigo Cash']
+/** Pays reconnus (les plus probables dans les cahiers servis). */
+const PAYS_CONNUS: readonly string[] = ['Tchad', 'Cameroun', 'Nigeria', 'Niger', 'Sénégal', 'Mali', 'Burkina Faso', "Côte d'Ivoire", 'Gabon', 'Congo', 'Centrafrique', 'Soudan', 'Libye', 'Égypte', 'Maroc', 'Algérie', 'Tunisie', 'Kenya', 'Ghana', 'Bénin', 'Togo', 'Guinée', 'Rwanda', 'Ouganda', 'Éthiopie', 'Arabie saoudite', 'Émirats arabes unis', 'Dubaï', 'Turquie', 'Chine', 'Inde', 'France', 'Belgique', 'Suisse', 'Canada', 'États-Unis', 'Royaume-Uni', 'Allemagne', 'Espagne', 'Italie']
+const aplatiC = (x: string) => x.normalize('NFD').replace(/[̀-ͯ]/gu, '').toLowerCase()
+
+/**
+ * LES CONTRAINTES FERMÉES, vérifiées dans le texte de l'écran (3c-2, correction 3).
+ * Cas réel : « Kiswahili » proposé dans 94cf0489, que le cahier Hayine ne nomme
+ * pas. Une liste lue VIDE ne refuse rien (le cahier n'a rien fermé) — sauf les
+ * langues, dont la liste par défaut est le français seul.
+ */
+export function reprochesContraintes(contenu: string, c: ContraintesFermees | undefined): string[] {
+  if (c === undefined) return []
+  const sansImports = contenu.replace(/^\s*import\s.*$/gmu, '')
+  const hors: string[] = []
+  const langues = c.langues.length > 0 ? c.langues : ['fr']
+  for (const [motif, code] of NOMS_DE_LANGUES) if (motif.test(sansImports) && !langues.includes(code)) hors.push(`langue « ${motif.exec(sansImports)![0]} » (lues : ${langues.join(', ')})`)
+  if (c.moyensPaiement.length > 0) {
+    const lus = c.moyensPaiement.map(aplatiC)
+    for (const m of MOYENS_CONNUS) if (aplatiC(sansImports).includes(aplatiC(m)) && !lus.some((l) => l.includes(aplatiC(m)) || aplatiC(m).includes(l))) hors.push(`moyen de paiement « ${m} » (lus : ${c.moyensPaiement.join(', ')})`)
+  }
+  if (c.pays.length > 0) {
+    const lus = c.pays.map(aplatiC)
+    for (const p of PAYS_CONNUS) if (new RegExp(`\\b${aplatiC(p).replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}\\b`, 'u').test(aplatiC(sansImports)) && !lus.some((l) => l.includes(aplatiC(p)) || aplatiC(p).includes(l))) hors.push(`pays « ${p} » (lus : ${c.pays.join(', ')})`)
+  }
+  return hors.length === 0 ? [] : [`DES VALEURS QUE LE CAHIER NE NOMME PAS — ce sont des contraintes FERMÉES :\n${hors.map((h) => `- ${h}`).join('\n')}\nN’emploie que les valeurs lues dans le cahier.`]
 }
 
 /** Le reproche du montage — null quand l'écran se monte sans erreur ni contrôle muet. */
@@ -144,6 +183,8 @@ export async function ecrireEcran(o: {
   readonly roles: readonly string[]
   readonly style?: string | null
   readonly appeler: AppelEcran
+  /** Les contraintes fermées lues dans le cahier (3c-2). */
+  readonly contraintes?: ContraintesFermees
   /** Remplaçable pour les tests ; par défaut le juge d'exécution réel. */
   readonly juger?: typeof jugerExecution
   readonly tentativesMax?: number
@@ -151,9 +192,9 @@ export async function ecrireEcran(o: {
   const debutTotal = Date.now()
   const { ecran } = o
   const chemin = `ecrans/${ecran.slug}.tsx`
-  const { system, user } = consigneEcran(ecran, o.plan, o.entites, o.devise)
+  const { system, user } = consigneEcran(ecran, o.plan, o.entites, o.devise, o.contraintes)
   const bibliotheque = fichiersSysteme(o.devise)
-  const squelette = fichiersSquelette({ plan: o.plan, entites: o.entites, nom: o.nom, roles: o.roles, style: o.style, sessionInitiale: { role: ecran.role === ROLE_VISITEUR ? ROLE_VISITEUR : ecran.role } })
+  const squelette = fichiersSquelette({ plan: o.plan, entites: o.entites, nom: o.nom, roles: o.roles, style: o.style, sessionInitiale: { role: ecran.role === ROLE_VISITEUR ? ROLE_VISITEUR : ecran.role }, langues: o.contraintes?.langues })
   const systeme = new Map<string, string>([...bibliotheque, ...[...squelette].filter(([c]) => c.startsWith('systeme/'))])
   const juger = o.juger ?? jugerExecution
   const max = o.tentativesMax ?? TENTATIVES_ECRAN
@@ -179,15 +220,24 @@ export async function ecrireEcran(o: {
     } else {
       if (fichier.chemin !== chemin) reproches.push(`LE FICHIER S'APPELLE \`${chemin}\`, pas \`${fichier.chemin}\`.`)
       reproches.push(...reprochesStatiques(ecran.slug, fichier.contenu, systeme, o.devise))
+      reproches.push(...reprochesContraintes(fichier.contenu, o.contraintes))
       if (reproches.length === 0) {
         const carte = new Map<string, string>([...squelette, ...bibliotheque])
         carte.set(chemin, fichier.contenu)
         const v = await assembler(carte)
         if (!v.ok) reproches.push(`La construction a échoué :\n${v.erreur}`)
         else {
-          const verdict = await juger(v.code, { adresse: `#${ecran.slug}` })
+          // LE JUGE D'EXPÉRIENCE, MODE ÉCRAN (3c-2) : chaque contrôle de cet écran mène
+          // à un écran du plan ou change visiblement quelque chose.
+          const experience = { script: SCRIPT_EXPERIENCE, args: { ecrans: o.plan.ecrans.map((x) => ({ nom: x.nom, slug: x.slug, role: x.role === ROLE_VISITEUR ? '' : x.role })), langues: [], parcours: [], mode: 'ecran', slug: ecran.slug, attenteMs: 120, controlesMax: 25 } }
+          const verdict = await juger(v.code, { adresse: `#${ecran.slug}`, experience })
           const quoi = reprocheDeMontage(verdict, ecran.nom)
           if (quoi !== null) reproches.push(quoi)
+          const xp = verdict.experience
+          if (quoi === null && xp !== undefined && xp !== null && xp.erreur === undefined && xp.refus.length > 0) {
+            const r = reprocheExperience({ aTourne: true, motif: null, refus: xp.refus, ecransOuverts: 1, controlesEssayes: 0, partiel: false, langues: [], parcours: null, ms: 0 })
+            if (r !== null) reproches.push(r)
+          }
         }
       }
     }

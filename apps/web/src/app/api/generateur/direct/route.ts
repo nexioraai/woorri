@@ -546,7 +546,7 @@ export async function POST(req: Request) {
       // les rôles, les questions ouvertes — revalidés par `lectureAEnregistrer`.
       // (Le modèle ne déclare plus de table en route : les entités sont celles
       // du cahier, revalidées par la même grammaire que la lecture.)
-      lecture: { ecrans: lectureBrief.ecrans, roles: lectureBrief.roles, questionsOuvertes: lectureBrief.questionsOuvertes },
+      lecture: { ecrans: lectureBrief.ecrans, roles: lectureBrief.roles, questionsOuvertes: lectureBrief.questionsOuvertes, parcours: lectureBrief.parcours, contraintes: { langues: lectureBrief.langues, devises: lectureBrief.devises, moyensPaiement: lectureBrief.moyensPaiement, pays: lectureBrief.pays } },
       nom: nom ?? TITRE_SANS_NOM,
       appelerEcran,
       appelerLeger,
@@ -816,9 +816,12 @@ export async function POST(req: Request) {
       deploiement,
       tours: resultat.tours,
       // ── 3c : écran par écran, et le plan qui les a tenus.
-      ecrans: resultat.ecrans.map((e) => ({ nom: e.nom, slug: e.slug, resultat: e.resultat, tentatives: e.tentatives.length, ms: e.ms, jetons: e.jetons, reproches: e.reproches.map((r) => r.slice(0, 400)), dernierTexte: e.dernierTexte })),
+      ecrans: resultat.ecrans.map((e) => ({ nom: e.nom, slug: e.slug, resultat: e.resultat, tentatives: e.tentatives.length, ms: e.ms, jetons: e.jetons, reproches: e.reproches.map((r) => r.slice(0, 400)), dernierTexte: e.dernierTexte, origine: e.origine ?? 'modele' })),
       plan: { refuses: resultat.plan.refuses, ecrans: resultat.plan.ecrans.map((e) => ({ nom: e.nom, slug: e.slug, role: e.role, navigation: e.navigation, tables: e.tables })) },
       reflexion,
+      // 3c-2 : le juge d'expérience (simulateur) et le parcours planifié.
+      experience: resultat.ok ? resultat.experience : null,
+      parcours: resultat.plan.parcours ?? [],
       // EP-297 : les deux juges accompagnent toute œuvre acceptée. Sans eux,
       // « livrée » redevient un mot sans mesure — le défaut fondateur.
       jetons: resultat.ok ? resultat.jetons : null,

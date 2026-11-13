@@ -83,21 +83,24 @@ describe('3c · brique 6 · l’orchestrateur', () => {
     const r = await boucleEcrans({ demande: 'Hayine : avis des clients.', configuration: { currency: 'XAF' }, entites: ENTITES, lecture: LECTURE_2, nom: 'Hayine', appelerEcran: appeler, appelerLeger: async () => PLAN_2, juger })
     expect(r.ok, r.ok ? '' : r.motif).toBe(true)
     if (!r.ok) return
-    expect(r.ecrans.map((e) => `${e.slug}:${e.resultat}:${String(e.tentatives.length)}`)).toEqual(['accueil:ok:1', 'avis:a_completer:2'])
+    // 3c-2 : l'accueil et la gestion de chaque table sont écrits par Deribfy — zéro appel.
+    expect(r.ecrans.map((e) => `${e.slug}:${e.resultat}:${String(e.tentatives.length)}`)).toEqual(['accueil:ok:0', 'avis:a_completer:2', 'gestion-reservation:ok:0', 'gestion-avis:ok:0'])
+    expect(appels.filter((s) => s === 'accueil')).toHaveLength(0)
     expect(appels.filter((s) => s === 'avis')).toHaveLength(2)
     expect(r.ecrans[1]!.reproches.join('\n')).toMatch(motifTexte('INTERDIT DANS UN ÉCRAN'))
     expect(r.ecrans[1]!.dernierTexte).toContain('fetch(')
     expect(r.fichiers.get('ecrans/avis.tsx')).toMatch(motifTexte('À compléter : avis'))
-    expect(r.fichiers.get('ecrans/accueil.tsx')).toMatch(motifTexte('Bienvenue chez Hayine'))
-    expect(r.fichiers.get('PERIMETRE.md')).toMatch(motifTexte('Écrans livrés : 1 / 2.'))
+    expect(r.fichiers.get('ecrans/accueil.tsx')).toMatch(motifTexte('écrit par Deribfy depuis le plan'))
+    expect(r.fichiers.get('PERIMETRE.md')).toMatch(motifTexte('Écrans livrés : 3 / 4.'))
     expect(r.fichiers.get('PERIMETRE.md')).toMatch(motifTexte('- avis (visiteur, public, tables : avis) : À COMPLÉTER'))
     expect(r.fichiers.get('PERIMETRE.md')).toMatch(motifTexte('Tarif à fixer'))
-    expect(r.tours.map((t) => t.ok)).toEqual([true, false, false])
+    expect(r.tours.map((t) => t.ok)).toEqual([false, false])
     // L'assemblage de l'ensemble est RÉEL : un paquet sans export, qui porte l'écran livré et le placeholder.
     expect(r.code.length).toBeGreaterThan(400_000)
     expect(r.code.split('\n').filter((l) => /^export\b/u.test(l))).toEqual([])
     expect(r.jetons).toEqual([])
-    expect(r.persistance).toEqual([{ table: 'reservation', lue: false, ecrite: false }, { table: 'avis', lue: false, ecrite: false }])
+    // La gestion de Deribfy lit ET écrit chaque table : plus aucune table orpheline.
+    expect(r.persistance).toEqual([])
   }, 60_000)
 
   it('② la persistance est structurelle', () => {
@@ -136,9 +139,10 @@ describe('3c · brique 6 · l’orchestrateur', () => {
       jugerFaces: async () => ({ aTourne: true, motif: null, defauts: [] }) as never,
     })
     expect(consignes[0]).toMatch(motifTexte('accueil · reservation · avis'))
-    expect(r.plan.ecrans.map((e) => e.nom)).toEqual(['accueil', 'reservation', 'avis'])
+    expect(r.plan.ecrans.filter((e) => e.gere === undefined).map((e) => e.nom)).toEqual(['accueil', 'reservation', 'avis'])
     expect(r.plan.refuses[0]).toMatchObject({ quoi: 'lecture' })
-    expect(r.ecrans.every((e) => e.resultat === 'a_completer')).toBe(true)
+    expect(r.ecrans.filter((e) => e.origine === undefined).every((e) => e.resultat === 'a_completer')).toBe(true)
+    expect(r.ecrans.filter((e) => e.origine === 'deribfy').map((e) => e.slug)).toEqual(['accueil', 'gestion-reservation', 'gestion-avis'])
   }, 180_000)
 
   it('⑤ la route direct appelle boucleEcrans, plus boucleEcriture, et écrit écrans, plan et réflexion dans la ligne', () => {
@@ -146,7 +150,7 @@ describe('3c · brique 6 · l’orchestrateur', () => {
     expect(src).toMatch(motifTexte('resultat = await boucleEcrans({'))
     expect(src).not.toMatch(/\bboucleEcriture\(/u)
     expect(src).toMatch(motifTexte("{ reflexion: false, maxJetons: MAX_JETONS_ECRAN }"))
-    expect(src).toMatch(motifTexte('lecture: { ecrans: lectureBrief.ecrans, roles: lectureBrief.roles, questionsOuvertes: lectureBrief.questionsOuvertes }'))
+    expect(src).toMatch(motifTexte('lecture: { ecrans: lectureBrief.ecrans, roles: lectureBrief.roles, questionsOuvertes: lectureBrief.questionsOuvertes, parcours: lectureBrief.parcours, contraintes: {'))
     expect(src).toMatch(motifTexte('ecrans: resultat.ecrans.map('))
     expect(src).toMatch(motifTexte('plan: { refuses: resultat.plan.refuses,'))
     expect(src).toMatch(/^\s*reflexion,$/mu)

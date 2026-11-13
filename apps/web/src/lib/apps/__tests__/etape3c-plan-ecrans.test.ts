@@ -31,11 +31,12 @@ describe('3c · brique 1 · le plan d’écrans', () => {
       { nom: 'réservations', role: 'Particulier', navigation: 'public', lit: ['reservation'], ecrit: ['reservation'], extrait: 'Le particulier consulte ses réservations et leur statut.' },
       { nom: 'tableau de bord secret', role: 'Administrateur', navigation: 'gestion', lit: [], ecrit: [], extrait: '' },
     ] }, LECTURE, ENTITES, CAHIER)
-    expect(p.ecrans.map((e) => e.nom)).toEqual(LECTURE.ecrans)
+    // Les écrans LUS, dans l'ordre ; Deribfy y ajoute par construction la gestion de chaque table (⑨).
+    expect(p.ecrans.filter((e) => e.gere === undefined).map((e) => e.nom)).toEqual(LECTURE.ecrans)
     expect(p.refuses.map((r) => r.quoi)).toEqual(expect.arrayContaining(['écran « tableau de bord secret »', 'écran « accueil »', 'écran « récapitulatif/paiement »', 'écran « confirmation »']))
     expect(p.refuses.find((r) => r.quoi === 'écran « tableau de bord secret »')?.motif).toMatch(/hors lecture/u)
     const omis = p.ecrans.find((e) => e.nom === 'accueil')!
-    expect(omis).toMatchObject({ role: 'visiteur', navigation: 'public', tables: { lit: [], ecrit: [] }, extrait: '' })
+    expect(omis).toMatchObject({ role: 'visiteur', navigation: 'public', tables: { lit: [], ecrit: [] }, extrait: '', origine: 'deribfy' })
     const reservations = p.ecrans.find((e) => e.nom === 'réservations')!
     expect(reservations).toMatchObject({ role: 'Particulier', navigation: 'public', tables: { lit: ['reservation'], ecrit: ['reservation'] } })
     expect(reservations.extrait).toBe('Le particulier consulte ses réservations et leur statut.')
@@ -76,13 +77,14 @@ describe('3c · brique 1 · le plan d’écrans', () => {
     expect(slugDe('abonnement IA')).toBe('abonnement-ia')
     expect(slugDe('  ')).toBe('ecran')
     const p = validerPlan(null, { ecrans: ['Réglages', 'réglages', 'reglages'], roles: [] }, ENTITES, CAHIER)
-    expect(p.ecrans.map((e) => e.slug)).toEqual(['reglages', 'reglages-2', 'reglages-3'])
+    expect(p.ecrans.filter((e) => e.gere === undefined).map((e) => e.slug)).toEqual(['accueil', 'reglages', 'reglages-2', 'reglages-3'])
   })
 
   it('⑥ un plan illisible donne quand même une ligne par écran lu, et le dit', () => {
     const p = validerPlan(lireJsonDuPlan('désolé, je ne peux pas'), LECTURE, ENTITES, CAHIER)
-    expect(p.ecrans).toHaveLength(4)
-    expect(p.ecrans.every((e) => e.role === 'visiteur' && e.extrait === '')).toBe(true)
+    const lus = p.ecrans.filter((e) => e.gere === undefined)
+    expect(lus).toHaveLength(4)
+    expect(lus.every((e) => e.role === 'visiteur' && e.extrait === '')).toBe(true)
     expect(p.refuses[0]).toMatchObject({ quoi: 'plan' })
     expect(lireJsonDuPlan('voici : {"ECRANS": []} merci')).toEqual({ ECRANS: [] })
     expect(lireJsonDuPlan('{"ECRANS": [')).toBeNull()
@@ -107,7 +109,29 @@ describe('3c · brique 1 · le plan d’écrans', () => {
     expect(recus).toHaveLength(1)
     expect(recus[0]!.texte).toBe(CAHIER)
     expect(recus[0]!.system).toContain('réservations')
-    expect(p.ecrans[0]).toMatchObject({ nom: 'accueil', slug: 'accueil', role: 'visiteur', tables: { lit: ['reservation'], ecrit: [] } })
-    expect(p.ecrans).toHaveLength(4)
+    // L'accueil est à Deribfy : le plan du modèle n'y met pas de table.
+    expect(p.ecrans[0]).toMatchObject({ nom: 'accueil', slug: 'accueil', role: 'visiteur', tables: { lit: [], ecrit: [] }, origine: 'deribfy' })
+    expect(p.ecrans.filter((e) => e.gere === undefined)).toHaveLength(4)
+  })
+
+  // 3c-2 · CORRECTION 2 — CE QUE DERIBFY ÉCRIT PAR CONSTRUCTION.
+  it('⑨ par construction : l’accueil et la langue à Deribfy, une gestion par table au rôle de gestion lu, le parcours en slugs', () => {
+    const p = validerPlan({ ECRANS: [
+      { nom: 'démarrage/langue', role: 'Particulier' },
+      { nom: 'réservations', role: 'Particulier', lit: ['reservation'], ecrit: ['reservation'] },
+    ] }, { ecrans: ['démarrage/langue', 'réservations', 'récapitulatif/paiement', 'confirmation'], roles: ['Particulier', 'Administrateur'], parcours: ['réservations', 'récapitulatif/paiement', 'confirmation', 'écran inconnu'] }, ENTITES, CAHIER)
+    expect(p.ecrans[0]).toMatchObject({ nom: 'accueil', role: 'visiteur', origine: 'deribfy' })
+    expect(p.ecrans.find((e) => e.nom === 'démarrage/langue')).toMatchObject({ role: 'visiteur', origine: 'deribfy' })
+    expect(p.ecrans.find((e) => e.nom === 'réservations')?.origine).toBeUndefined()
+    const gestion = p.ecrans.filter((e) => e.gere !== undefined)
+    expect(gestion.map((e) => [e.slug, e.role, e.navigation, e.tables.ecrit.join()])).toEqual([
+      ['gestion-reservation', 'Administrateur', 'gestion', 'reservation'],
+      ['gestion-paiement', 'Administrateur', 'gestion', 'paiement'],
+    ])
+    expect(p.parcours).toEqual(['reservations', 'recapitulatif-paiement', 'confirmation'])
+    // Sans rôle de gestion lu : le premier rôle lu, et c'est consigné.
+    const q = validerPlan(null, { ecrans: ['accueil'], roles: ['Parent'] }, ENTITES, CAHIER)
+    expect(q.ecrans.filter((e) => e.gere !== undefined).every((e) => e.role === 'Parent')).toBe(true)
+    expect(q.refuses.some((r) => r.quoi === 'gestion')).toBe(true)
   })
 })

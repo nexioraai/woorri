@@ -192,3 +192,36 @@ export function jugerJetons(
   }
   return defauts
 }
+
+/**
+ * LE NOM VALIDE LE PLUS PROCHE d'un nom inventé (3c-2, correction 1) : le
+ * reproche ne dit plus seulement « ça n'existe pas », il dit quoi écrire.
+ * Distance d'édition sur les noms normalisés (préfixes `--`, `Espace.`, casse
+ * et accents retirés), plus un bonus quand l'un contient l'autre.
+ */
+export function plusProche(invente: string, connus: readonly string[]): string | null {
+  const net = (x: string) =>
+    x.replace(/^var\(|\)$/gu, '').replace(/^--/u, '').replace(/^[A-Za-z]+[.:]/u, '').normalize('NFD').replace(/[\u0300-\u036f]/gu, '').toLowerCase().replace(/[^a-z0-9]/gu, '')
+  // Les noms qu'un modèle francophone invente le plus (mesuré sur 94cf0489) :
+  // traduits avant la distance, sinon « rayon » tombe sur « card ».
+  if (/^var\(--(?:espace|space|gap|marge|padding)/iu.test(invente)) return 'un nombre de ESPACE (jeton : ESPACE.s, ESPACE.m…), pas une variable'
+  const SYNONYMES: Record<string, string> = { rayon: 'radius', fond: 'background', danger: 'destructive', erreur: 'destructive', bordure: 'border', primaire: 'primary', secondaire: 'secondary', texte: 'text', taille: 'text', petit: 'sm', petite: 'sm', grand: 'lg', grande: 'lg', succes: 'success', alerte: 'warning', attention: 'warning', sourdine: 'muted', discret: 'muted', chargement: 'horloge', attente: 'horloge', info: 'document', information: 'document', notifications: 'message', notification: 'message', confirmation: 'valide', verifier: 'valide', langue: 'reglages', search: 'recherche' }
+  const traduit = invente.replace(/[A-Za-zÀ-ÿ]+/gu, (m) => SYNONYMES[m.normalize('NFD').replace(/[\u0300-\u036f]/gu, '').toLowerCase()] ?? m)
+  const a = net(traduit)
+  if (a === '' || connus.length === 0) return null
+  const distance = (x: string, y: string): number => {
+    const d = Array.from({ length: x.length + 1 }, (_, i) => [i, ...Array<number>(y.length).fill(0)])
+    for (let j = 1; j <= y.length; j += 1) d[0]![j] = j
+    for (let i = 1; i <= x.length; i += 1) for (let j = 1; j <= y.length; j += 1) d[i]![j] = Math.min(d[i - 1]![j]! + 1, d[i]![j - 1]! + 1, d[i - 1]![j - 1]! + (x[i - 1] === y[j - 1] ? 0 : 1))
+    return d[x.length]![y.length]!
+  }
+  let meilleur: string | null = null
+  let score = Number.POSITIVE_INFINITY
+  for (const c of connus) {
+    const b = net(c)
+    if (b === '') continue
+    const s = distance(a, b) - (a.includes(b) || b.includes(a) ? Math.min(a.length, b.length) / 2 : 0)
+    if (s < score) { score = s; meilleur = c }
+  }
+  return meilleur
+}

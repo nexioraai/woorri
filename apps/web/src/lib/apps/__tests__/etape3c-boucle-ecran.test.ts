@@ -143,4 +143,14 @@ describe('3c · brique 5 · la boucle d’un écran', () => {
     expect(corps[1]).not.toHaveProperty('thinking')
     expect(corps[1]!.max_tokens).toBe(65_536)
   })
+
+  // 3c-2 · le juge d'expérience, mode écran, DANS LE SIMULATEUR de la boucle.
+  it('⑦ un bouton qui ne fait rien est refusé dans la boucle : « ne change rien à l’écran »', async () => {
+    const MORT = "=== ecrans/reservations.tsx ===\nimport React from 'react'\nimport { Bouton } from '../systeme/ui'\nexport default function Ecran() { return <section><h1>Mes réservations</h1><Bouton texte=\"Rechercher\" surClic={() => {}} /></section> }"
+    const { appeler } = appeleur([MORT])
+    const e = await ecrireEcran({ ecran: RESERVATIONS, plan: PLAN, entites: ENTITES, devise: 'XAF', nom: 'Hayine', roles: LECTURE.roles, appeler, tentativesMax: 1 })
+    expect(e.resultat).toBe('a_completer')
+    expect(e.reproches.join('\n')).toMatch(/N.A PAS DE SENS À L.USAGE[\s\S]*« Rechercher » ne change rien à l’écran/u)
+  }, 60_000)
 })
+

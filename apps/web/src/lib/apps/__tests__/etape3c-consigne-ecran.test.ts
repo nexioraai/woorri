@@ -45,8 +45,13 @@ describe('3c · brique 4 · la consigne d’un écran', () => {
     expect(c.system).toContain(CONTRAT_ECRAN)
     expect(c.system).toContain(r)
     // Mesuré : contrat 2 066 + réglages 1 196 = system 3 263 ; fiche 412 à 1 259 selon l'écran.
-    // Bornes à la mesure plus une marge étroite.
-    expect(c.system.length).toBeLessThan(3600)
+    // 3c-2 : + le vocabulaire exact (jetons, icônes, variables CSS) généré par code —
+    // 94cf0489 : 19 refus sur 30 étaient des noms que la consigne n'enseignait pas.
+    // Mesuré : 4 633. Bornes à la mesure plus une marge étroite.
+    expect(c.system.length).toBeLessThan(4800)
+    expect(c.system).toMatch(motifTexte('--radius-md'))
+    expect(c.system).toMatch(motifTexte('ESPACE : xs, s, m, l, xl, xxl'))
+    expect(c.system).toMatch(motifTexte('horloge'))
     expect(c.user.length).toBeLessThan(2500)
   })
 

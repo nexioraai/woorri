@@ -40,7 +40,7 @@ function armerLeVerrouReseau() {
   })
 }
 
-const [, , cheminBundle, cheminSortie, attenteMs, adresse] = process.argv
+const [, , cheminBundle, cheminSortie, attenteMs, adresse, cheminExperience] = process.argv
 
 // ── L'ADRESSE DE DÉPART (2026-11-12). Sans elle, on n'ouvrait QUE l'accueil
 // public — et l'espace de gestion (#gestion), qu'aucun lien public n'atteint,
@@ -350,6 +350,21 @@ if (racineNav !== null) {
   ecransDistincts = ecransVus.size
 }
 
+// ── LE JUGE D'EXPÉRIENCE, MODE ÉCRAN (3c-2) : le même script que dans Chromium,
+// ici dans le simulateur — chaque contrôle de l'écran mène à un écran du plan
+// ou change visiblement quelque chose. Facultatif : un fichier d'arguments.
+let experience = null
+if (typeof cheminExperience === 'string' && cheminExperience !== '') {
+  try {
+    const { readFileSync: lireXp } = await import('node:fs')
+    const { script, args } = JSON.parse(lireXp(cheminExperience, 'utf8'))
+    // eslint-disable-next-line no-new-func
+    experience = await (new Function('return ' + script)())(args)
+  } catch (e) {
+    experience = { erreur: String((e && e.message) || e).slice(0, 200) }
+  }
+}
+
 const racine = document.getElementById('racine')
 const rendu = racine?.innerHTML ?? ''
 const texte = (racine?.textContent ?? '').replace(/\s+/gu, ' ').trim()
@@ -367,6 +382,7 @@ writeFileSync(
     ecransDistincts: ecransDistincts,
     controlesMuets: muets.slice(0, 12),
     ecrans: [...ecransOuverts.values()].map((e) => ({ texte: e.texte, exerce: e.exerce })),
+    experience,
   }),
 )
 process.exit(0)
