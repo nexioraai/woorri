@@ -18,7 +18,7 @@ const lire = (chemin: string) => readFileSync(join(__dirname, '..', '..', '..', 
 
 describe('le résultat de la lecture du brief est enregistré', () => {
   it('① une valeur douteuse ne devient jamais un statut', () => {
-    const VIDES = { roles: [], ecrans: [], questionsOuvertes: [] }
+    const VIDES = { coutUsd: null, jetonsEntree: null, jetonsSortie: null, parTranche: [], roles: [], ecrans: [], questionsOuvertes: [] }
     expect(lectureAEnregistrer(undefined, 0)).toEqual({ resultat: 'non_transmise', tablesLues: null, tablesRecues: 0, source: 'absente', tentatives: null, tranches: null, tranchesEchouees: null, signesLus: null, ...VIDES })
     expect(lectureAEnregistrer({ resultat: 'parfait' }, 2).resultat).toBe('non_transmise')
     expect(lectureAEnregistrer('reussie', 2).resultat).toBe('non_transmise')
@@ -26,8 +26,24 @@ describe('le résultat de la lecture du brief est enregistré', () => {
       .toEqual({ resultat: 'json_casse', tablesLues: 0, tablesRecues: 0, source: 'client', tentatives: null, tranches: null, tranchesEchouees: null, signesLus: null, ...VIDES })
     expect(lectureAEnregistrer({ resultat: 'tronquee', tables: 0, tentatives: 2 }, 0).tentatives).toBe(2)
     // Les listes voyagent bornées et dédoublonnées ; une valeur qui n'est pas une chaîne est ignorée.
-    const e = lectureAEnregistrer({ resultat: 'reussie', tables: 2, tentatives: 4, tranches: 3, tranchesEchouees: 0, signesLus: 28_000, roles: ['gestionnaire', 'Gestionnaire', 7], ecrans: ['Accueil', ' Accueil ', 'Commandes'], questionsOuvertes: ['Tarification à préciser'] }, 2)
-    expect(e).toMatchObject({ tranches: 3, tranchesEchouees: 0, signesLus: 28_000, roles: ['gestionnaire'], ecrans: ['Accueil', 'Commandes'], questionsOuvertes: ['Tarification à préciser'] })
+    const e = lectureAEnregistrer({ resultat: 'reussie', tables: 2, tentatives: 4, tranches: 3, tranchesEchouees: 0, signesLus: 28_000, coutUsd: 0.0041237, jetons: { entree: 12_400, sortie: 1_530 }, roles: ['gestionnaire', 'Gestionnaire', 7], ecrans: ['Accueil', ' Accueil ', 'Commandes'], questionsOuvertes: ['Tarification à préciser'] }, 2)
+    expect(e).toMatchObject({ tranches: 3, tranchesEchouees: 0, signesLus: 28_000, coutUsd: 0.004124, jetonsEntree: 12_400, jetonsSortie: 1_530, roles: ['gestionnaire'], ecrans: ['Accueil', 'Commandes'], questionsOuvertes: ['Tarification à préciser'] })
+    // Le coût est MESURÉ ou absent — jamais un texte, un négatif ou un infini déguisé en nombre.
+    expect(lectureAEnregistrer({ resultat: 'reussie', tables: 1, coutUsd: 'environ 0,005 $' }, 1).coutUsd).toBeNull()
+    expect(lectureAEnregistrer({ resultat: 'reussie', tables: 1, coutUsd: -1 }, 1).coutUsd).toBeNull()
+    expect(lectureAEnregistrer({ resultat: 'reussie', tables: 1, coutUsd: Number.POSITIVE_INFINITY, jetons: 'beaucoup' }, 1)).toMatchObject({ coutUsd: null, jetonsEntree: null, jetonsSortie: null })
+    expect(lectureAEnregistrer({ resultat: 'reussie', tables: 1, coutUsd: 0 }, 1).coutUsd).toBe(0)
+    // Le détail par tranche voyage revalidé : une entrée sans signes, sans tentatives ou au résultat inconnu est écartée.
+    const t = lectureAEnregistrer({ resultat: 'reussie', tables: 2, parTranche: [
+      { signes: 22_866, tentatives: 1, resultat: 'reussie', tables: 6, nom: null, nomRefuse: 'Plateforme internationale de réservation et IA', ecrans: 16, roles: 4, questionsOuvertes: 8 },
+      { signes: 20_658, tentatives: 2, resultat: 'reussie', tables: 7, nom: 'Plateforme numérique CPA-Tchad', nomRefuse: null, ecrans: 11, roles: 11, questionsOuvertes: 10 },
+      { signes: 'beaucoup', tentatives: 1, resultat: 'reussie' },
+      { signes: 10, tentatives: 2, resultat: 'parfaite' },
+      'pas une tranche',
+    ] }, 2).parTranche
+    expect(t).toHaveLength(2)
+    expect(t[0]).toEqual({ signes: 22_866, tentatives: 1, resultat: 'reussie', tables: 6, nom: null, nomRefuse: 'Plateforme internationale de réservation et IA', ecrans: 16, roles: 4, questionsOuvertes: 8 })
+    expect(t[1]!.nom).toBe('Plateforme numérique CPA-Tchad')
     // Le nombre de tables REÇUES est celui que la route a compté, jamais celui qu'on lui dit.
     expect(lectureAEnregistrer({ resultat: 'reussie', tables: 99 }, 3).tablesRecues).toBe(3)
     expect(lectureAEnregistrer({ resultat: 'reussie', tables: -1 }, 0).tablesLues).toBeNull()

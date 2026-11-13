@@ -17,6 +17,13 @@
  * garde-fou est un fusible anti-abus côté serveur, de l'ordre du méga-octet,
  * invisible en usage normal.
  *
+ * ── LE COÛT DE LA LECTURE EST MESURÉ, JAMAIS ESTIMÉ (G30, 2026-11-13).
+ * La preuve `9cc16d10` a dû écrire « lecture : ordre de 0,005 $ — estimation,
+ * pas mesure » : rien n'enregistrait ce que la lecture avait coûté. La route
+ * `lire-brief` compte désormais les jetons de CHAQUE appel (tranches et
+ * reprises comprises) et les tarife à l'heure de l'appel, comme la route de
+ * génération ; le montant voyage avec le résultat et s'écrit dans la ligne.
+ *
  * ── CE QUE LA ROUTE PEUT CROIRE, ET CE QU'ELLE NE PEUT PAS.
  * Le résultat vient du NAVIGATEUR : c'est une DÉCLARATION, et la ligne le dit
  * (`source: 'client'`). Le nombre de tables REÇUES, lui, est compté par la
@@ -37,6 +44,24 @@ export const TAILLE_TRANCHE = 24_000
  */
 export const FUSIBLE_SIGNES = 1_000_000
 
+/**
+ * CE QU'UNE TRANCHE A DONNÉ, pour que la ligne dise d'où vient chaque chose.
+ * Mesuré (tir de la découpe, 2026-11-13) : le nom retenu venait de la 2ᵉ
+ * tranche, et rien ne disait ce que la 1ʳᵉ avait proposé ni pourquoi c'était
+ * refusé. `nomRefuse` garde le nom que la validation a écarté (80 signes).
+ */
+export type TrancheLue = {
+  readonly signes: number
+  readonly tentatives: number
+  readonly resultat: 'reussie' | 'illisible' | 'tronquee' | 'json_casse'
+  readonly tables: number
+  readonly nom: string | null
+  readonly nomRefuse: string | null
+  readonly ecrans: number
+  readonly roles: number
+  readonly questionsOuvertes: number
+}
+
 /** Rendu par `lire-brief`, transmis tel quel par le client. */
 export type LectureBrief = {
   readonly resultat: ResultatLecture
@@ -50,6 +75,12 @@ export type LectureBrief = {
   readonly tranchesEchouees: number
   /** Signes effectivement soumis au modèle : la longueur entière du cahier. */
   readonly signesLus: number
+  /** Ce que la lecture a coûté, en dollars, sur l'usage RENDU par le modèle et au tarif de l'heure — jamais une estimation. */
+  readonly coutUsd: number
+  /** Jetons consommés, toutes tranches et reprises comprises (entrée = lus + relus en cache). */
+  readonly jetons: { readonly entree: number; readonly sortie: number }
+  /** Tranche par tranche, dans l'ordre de lecture. */
+  readonly parTranche: readonly TrancheLue[]
   readonly roles: readonly string[]
   readonly ecrans: readonly string[]
   /** Ce que le cahier lui-même laisse à décider — pas d'affichage encore (étape intention). */
@@ -67,12 +98,19 @@ export type LectureBriefEnregistree = {
   readonly tranches: number | null
   readonly tranchesEchouees: number | null
   readonly signesLus: number | null
+  /** Déclaré par le navigateur, revalidé (un nombre fini, positif ou nul) ; `null` sinon. */
+  readonly coutUsd: number | null
+  readonly jetonsEntree: number | null
+  readonly jetonsSortie: number | null
+  /** Revalidée entrée par entrée, bornée à 50 tranches. */
+  readonly parTranche: readonly TrancheLue[]
   readonly roles: readonly string[]
   readonly ecrans: readonly string[]
   readonly questionsOuvertes: readonly string[]
 }
 
-const BORNES = { roles: 20, ecrans: 60, questionsOuvertes: 30, signes: 200 } as const
+const BORNES = { roles: 20, ecrans: 60, questionsOuvertes: 30, signes: 200, tranches: 50, nom: 80 } as const
+const RESULTATS_TRANCHE = ['reussie', 'illisible', 'tronquee', 'json_casse'] as const
 
 /** Une liste de chaînes telle que le navigateur la prétend : bornée, jamais crue. */
 function listeDeChaines(brut: unknown, max: number): readonly string[] {
@@ -91,6 +129,33 @@ function listeDeChaines(brut: unknown, max: number): readonly string[] {
   return res
 }
 const entierOuNull = (x: unknown) => (typeof x === 'number' && Number.isInteger(x) && x >= 0 ? x : null)
+/** Un montant tel que le navigateur le prétend : fini, positif ou nul, six décimales — ou rien. */
+const montantOuNull = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) && x >= 0 ? Number(x.toFixed(6)) : null)
+const chaineOuNull = (x: unknown, max: number) => (typeof x === 'string' && x.trim() !== '' ? x.trim().slice(0, max) : null)
+
+/** Les tranches telles que le navigateur les prétend : chaque entrée revalidée, les douteuses écartées. */
+function tranchesLues(brut: unknown): readonly TrancheLue[] {
+  if (!Array.isArray(brut)) return []
+  const res: TrancheLue[] = []
+  for (const x of brut.slice(0, BORNES.tranches)) {
+    if (typeof x !== 'object' || x === null) continue
+    const o = x as Record<string, unknown>
+    const signes = entierOuNull(o.signes)
+    const tentatives = entierOuNull(o.tentatives)
+    const resultat = typeof o.resultat === 'string' && (RESULTATS_TRANCHE as readonly string[]).includes(o.resultat) ? (o.resultat as TrancheLue['resultat']) : null
+    if (signes === null || tentatives === null || resultat === null) continue
+    res.push({
+      signes, tentatives, resultat,
+      tables: entierOuNull(o.tables) ?? 0,
+      nom: chaineOuNull(o.nom, BORNES.nom),
+      nomRefuse: chaineOuNull(o.nomRefuse, BORNES.nom),
+      ecrans: entierOuNull(o.ecrans) ?? 0,
+      roles: entierOuNull(o.roles) ?? 0,
+      questionsOuvertes: entierOuNull(o.questionsOuvertes) ?? 0,
+    })
+  }
+  return res
+}
 
 /**
  * Revalide ce que le navigateur prétend, et compose la ligne à écrire.
@@ -105,8 +170,9 @@ export function lectureAEnregistrer(brut: unknown, tablesRecues: number): Lectur
   const o = typeof brut === 'object' && brut !== null ? (brut as Record<string, unknown>) : null
   const resultat = o?.resultat
   if (o === null || typeof resultat !== 'string' || !(RESULTATS_LECTURE as readonly string[]).includes(resultat)) {
-    return { resultat: 'non_transmise', tablesLues: null, tablesRecues, source: 'absente', tentatives: null, tranches: null, tranchesEchouees: null, signesLus: null, roles: [], ecrans: [], questionsOuvertes: [] }
+    return { resultat: 'non_transmise', tablesLues: null, tablesRecues, source: 'absente', tentatives: null, tranches: null, tranchesEchouees: null, signesLus: null, coutUsd: null, jetonsEntree: null, jetonsSortie: null, parTranche: [], roles: [], ecrans: [], questionsOuvertes: [] }
   }
+  const jetons = typeof o.jetons === 'object' && o.jetons !== null ? (o.jetons as Record<string, unknown>) : {}
   return {
     resultat: resultat as ResultatLecture,
     tablesLues: entierOuNull(o.tables),
@@ -116,6 +182,10 @@ export function lectureAEnregistrer(brut: unknown, tablesRecues: number): Lectur
     tranches: entierOuNull(o.tranches),
     tranchesEchouees: entierOuNull(o.tranchesEchouees),
     signesLus: entierOuNull(o.signesLus),
+    coutUsd: montantOuNull(o.coutUsd),
+    jetonsEntree: entierOuNull(jetons.entree),
+    jetonsSortie: entierOuNull(jetons.sortie),
+    parTranche: tranchesLues(o.parTranche),
     roles: listeDeChaines(o.roles, BORNES.roles),
     ecrans: listeDeChaines(o.ecrans, BORNES.ecrans),
     questionsOuvertes: listeDeChaines(o.questionsOuvertes, BORNES.questionsOuvertes),
@@ -182,6 +252,8 @@ export type EntiteBrute = { readonly name?: unknown; readonly id?: unknown; read
 export type LecturePartielle = {
   readonly deduites: Readonly<Record<string, string>>
   readonly nomProduit?: { readonly nom: string; readonly citation?: string; readonly dansLeDocument: boolean }
+  /** Le nom que le modèle a proposé et que la validation a ÉCARTÉ — gardé pour la ligne, ignoré par la fusion. */
+  readonly nomRefuse?: string
   readonly entites: readonly EntiteBrute[]
   readonly questionsIA: readonly { readonly code: string; readonly texte: string; readonly choix: readonly string[] }[]
   readonly roles: readonly string[]

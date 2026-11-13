@@ -30,12 +30,13 @@
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { racineDepot } from '@/lib/apps/racine'
-import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
+import { clientIA, FOURNISSEUR, MODELE_LEGER } from '@/lib/ia/client'
+import { CONFIGS, tarifDe } from '@/lib/apps/fournisseur'
 import { nomProduitValide } from '@/lib/apps/nom-produit'
 import { projectAirSchema } from '@deribfy/air-schema'
 import { lireEntites } from '@/lib/apps/entites-declarees'
 import { CONSIGNE } from '@/lib/apps/consigne-lire-brief'
-import { decouperEnTranches, fusionnerLectures, FUSIBLE_SIGNES, type LectureBrief, type LecturePartielle } from '@/lib/apps/lecture-brief'
+import { decouperEnTranches, fusionnerLectures, FUSIBLE_SIGNES, type LectureBrief, type LecturePartielle, type TrancheLue } from '@/lib/apps/lecture-brief'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -75,13 +76,14 @@ export async function POST(req: Request) {
   const corps = (await req.json().catch(() => null)) as { demande?: unknown } | null
   const demande = typeof corps?.demande === 'string' ? corps.demande.trim() : ''
   // Un texte vide n'a rien à dire. On ne paie pas pour l'apprendre.
+  const RIEN_LU = { coutUsd: 0, jetons: { entree: 0, sortie: 0 }, parTranche: [] } as const
   if (demande === '') {
-    return NextResponse.json({ deduites: {}, coutUsd: 0, lecture: { resultat: 'demande_vide', tables: 0, tentatives: 0, tranches: 0, tranchesEchouees: 0, signesLus: 0, roles: [], ecrans: [], questionsOuvertes: [] } satisfies LectureBrief })
+    return NextResponse.json({ deduites: {}, coutUsd: 0, lecture: { resultat: 'demande_vide', tables: 0, tentatives: 0, tranches: 0, tranchesEchouees: 0, signesLus: 0, ...RIEN_LU, roles: [], ecrans: [], questionsOuvertes: [] } satisfies LectureBrief })
   }
   // ── LE FUSIBLE ANTI-ABUS — invisible en usage normal, jamais dans l'interface.
   if (demande.length > FUSIBLE_SIGNES) {
     return NextResponse.json(
-      { error: 'Texte trop volumineux pour ce service.', deduites: {}, lecture: { resultat: 'erreur', tables: 0, tentatives: 0, tranches: 0, tranchesEchouees: 0, signesLus: demande.length, roles: [], ecrans: [], questionsOuvertes: [] } satisfies LectureBrief },
+      { error: 'Texte trop volumineux pour ce service.', deduites: {}, lecture: { resultat: 'erreur', tables: 0, tentatives: 0, tranches: 0, tranchesEchouees: 0, signesLus: demande.length, ...RIEN_LU, roles: [], ecrans: [], questionsOuvertes: [] } satisfies LectureBrief },
       { status: 413, headers: { 'Cache-Control': 'no-store' } },
     )
   }
@@ -89,6 +91,17 @@ export async function POST(req: Request) {
   // ── LE RÉSULTAT DE LA LECTURE VOYAGE DANS TOUTES LES BRANCHES (M6, étape 1).
   // Voir lib/apps/lecture-brief.ts.
   let tentatives = 0
+  // ── LE COÛT EST COMPTÉ SUR L'USAGE RENDU, APPEL PAR APPEL (G30, 2026-11-13).
+  //
+  // La ligne `9cc16d10` n'avait que « estimation, pas mesure » pour sa
+  // lecture. Chaque appel ajoute ses jetons ici ; le tarif est celui de
+  // l'heure de la lecture, comme pour la génération (fournisseur.ts).
+  const jetons = { entree: 0, cache: 0, sortie: 0 }
+  const coutDeLaLecture = (): number => {
+    const t = tarifDe(CONFIGS[FOURNISSEUR].prixLeger, new Date())
+    return Number(((jetons.entree * t.entree + jetons.cache * t.entreeCache + jetons.sortie * t.sortie) / 1e6).toFixed(6))
+  }
+  const jetonsLus = () => ({ entree: jetons.entree + jetons.cache, sortie: jetons.sortie })
   const tranches = decouperEnTranches(demande)
   try {
     const { QUESTIONS_DE_CONFIGURATION } = (await import(
@@ -125,6 +138,10 @@ export async function POST(req: Request) {
         system: CONSIGNE,
         messages: [{ role: 'user', content: texte }],
       })
+      const u = (r.usage ?? {}) as { input_tokens?: number | null; output_tokens?: number | null; cache_read_input_tokens?: number | null }
+      jetons.entree += u.input_tokens ?? 0
+      jetons.cache += u.cache_read_input_tokens ?? 0
+      jetons.sortie += u.output_tokens ?? 0
       const tronquee = r.stop_reason === 'max_tokens'
       const brut = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
       const d = brut.indexOf('{')
@@ -174,6 +191,7 @@ export async function POST(req: Request) {
         }
       }
       let nomProduit: LecturePartielle['nomProduit']
+      let nomRefuse: string | undefined
       const nomBrut = lu.NOM_PRODUIT
       if (typeof nomBrut === 'string') {
         const verdict = nomProduitValide(nomBrut)
@@ -181,11 +199,16 @@ export async function POST(req: Request) {
           const citBrut = typeof lu.NOM_CITATION === 'string' ? lu.NOM_CITATION.trim().slice(0, 80) : ''
           const citTrouvee = citBrut !== '' && brief.includes(aplati(citBrut))
           nomProduit = { nom: verdict.nom, ...(citTrouvee ? { citation: citBrut } : {}), dansLeDocument: brief.includes(aplati(verdict.nom)) }
+        } else if (nomBrut.trim() !== '') {
+          // Le nom écarté est GARDÉ pour la ligne : savoir ce que la tranche a
+          // proposé vaut mieux qu'un `null` muet (tir de la découpe, 2026-11-13).
+          nomRefuse = nomBrut.trim().slice(0, 80)
         }
       }
       return {
         deduites,
         ...(nomProduit === undefined ? {} : { nomProduit }),
+        ...(nomRefuse === undefined ? {} : { nomRefuse }),
         entites: Array.isArray(lu.ENTITES) ? (lu.ENTITES as LecturePartielle['entites']) : [],
         questionsIA,
         roles: chaines(lu.ROLES, 12),
@@ -195,17 +218,26 @@ export async function POST(req: Request) {
     }
 
     const parties: LecturePartielle[] = []
+    const parTranche: TrancheLue[] = []
     let tranchesEchouees = 0
     let premierEchec: 'illisible' | 'tronquee' | 'json_casse' | null = null
     for (const tranche of tranches) {
+      const avant = tentatives
       let lecture = await lireUneFois(tranche)
       if (lecture.resultat !== 'reussie') lecture = await lireUneFois(tranche)
       if (lecture.resultat !== 'reussie') {
         tranchesEchouees += 1
         if (premierEchec === null) premierEchec = lecture.resultat
+        parTranche.push({ signes: tranche.length, tentatives: tentatives - avant, resultat: lecture.resultat, tables: 0, nom: null, nomRefuse: null, ecrans: 0, roles: 0, questionsOuvertes: 0 })
         continue
       }
-      parties.push(extraire(lecture.lu))
+      const p = extraire(lecture.lu)
+      parties.push(p)
+      parTranche.push({
+        signes: tranche.length, tentatives: tentatives - avant, resultat: 'reussie', tables: p.entites.length,
+        nom: p.nomProduit?.nom ?? null, nomRefuse: p.nomRefuse ?? null,
+        ecrans: p.ecrans.length, roles: p.roles.length, questionsOuvertes: p.questionsOuvertes.length,
+      })
     }
     const fusion = fusionnerLectures(parties)
     const schemaEntite = projectAirSchema.shape.entities.element
@@ -218,6 +250,9 @@ export async function POST(req: Request) {
       tranches: tranches.length,
       tranchesEchouees,
       signesLus: demande.length,
+      coutUsd: coutDeLaLecture(),
+      jetons: jetonsLus(),
+      parTranche,
       roles: fusion.roles,
       ecrans: fusion.ecrans,
       questionsOuvertes: fusion.questionsOuvertes,
@@ -235,6 +270,7 @@ export async function POST(req: Request) {
       ...(premierEchec === null ? {} : { illisible: true, motif: premierEchec === 'tronquee' ? 'La lecture du brief a ete coupee avant la fin : la limite de longueur est atteinte.' : 'La lecture du brief n a rien rendu d exploitable.' }),
     })
   } catch {
-    return NextResponse.json({ deduites: {}, lecture: { resultat: 'erreur', tables: 0, tentatives, tranches: tranches.length, tranchesEchouees: tranches.length, signesLus: demande.length, roles: [], ecrans: [], questionsOuvertes: [] } satisfies LectureBrief })
+    // Ce qui a été dépensé avant l'erreur est dit quand même : une panne ne rend pas la lecture gratuite.
+    return NextResponse.json({ deduites: {}, lecture: { resultat: 'erreur', tables: 0, tentatives, tranches: tranches.length, tranchesEchouees: tranches.length, signesLus: demande.length, coutUsd: coutDeLaLecture(), jetons: jetonsLus(), parTranche: [], roles: [], ecrans: [], questionsOuvertes: [] } satisfies LectureBrief })
   }
 }
