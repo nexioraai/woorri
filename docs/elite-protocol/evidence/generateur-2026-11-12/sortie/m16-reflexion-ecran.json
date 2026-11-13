@@ -1,0 +1,44 @@
+{
+ "quand": "2026-11-13T15:27:30.187Z",
+ "modele": "deepseek-v4-pro",
+ "tarif": {
+  "entree": 0.66,
+  "sortie": 1.98,
+  "entreeCache": 0.022
+ },
+ "consigneSignes": 2806,
+ "specSignes": 1259,
+ "depenseUsd": 0.02533,
+ "mesures": [
+  {
+   "variante": "A-defaut",
+   "ms": 102611,
+   "finish": "stop",
+   "jetons": {
+    "entree": 1227,
+    "sortie": 9703,
+    "reflexion": 8125
+   },
+   "partReflexion": 0.837,
+   "signesReflexion": 32615,
+   "signesTexte": 6037,
+   "formeTenue": true,
+   "usd": 0.02002
+  },
+  {
+   "variante": "B-thinking-disabled",
+   "ms": 18024,
+   "finish": "stop",
+   "jetons": {
+    "entree": 1148,
+    "sortie": 2300,
+    "reflexion": null
+   },
+   "partReflexion": null,
+   "signesReflexion": 0,
+   "signesTexte": 8622,
+   "formeTenue": true,
+   "usd": 0.00531
+  }
+ ]
+}
