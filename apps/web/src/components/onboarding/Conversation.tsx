@@ -22,7 +22,6 @@
 // DEPLACEMENT, pas un redessin. Un cliquet verifie que les deux fichiers
 // passent bien par ici au lieu de redeclarer leurs propres bulles.
 // ============================================================
-import { SIGNES_LUS } from '@/lib/apps/lecture-brief';
 import { ArrowUp, Monitor, Paperclip, Smartphone, Tablet } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
@@ -287,19 +286,18 @@ export function Attente({ libelle }: { libelle?: ReactNode } = {}) {
 }
 
 /**
- * LE CHAMP NE TRONQUE JAMAIS EN SILENCE (G30, 2026-11-13).
+ * LE CHAMP NE TRONQUE JAMAIS, ET NE COMPTE JAMAIS (G30, 2026-11-13).
  *
  * MESURÉ : quatre lignes de génération portaient une `demande` de 1 000 signes
  * exactement pour des cahiers de 1 900 à 2 600 — un maxLength de 1000 sur ce
  * <textarea> coupait le COLLAGE sans un mot, et le bouton « Application »
  * emportait le texte déjà coupé. Il n'y a plus de maxLength : le texte collé
- * est le texte envoyé. Une seule borne EXPLICITE, celle de la lecture du
- * cahier (`SIGNES_LUS` = 24 000, la part lue pour déduire tables, devise et
- * nom) : un compteur à partir de 80 %, un message au-delà — la génération,
- * elle, lit tout.
+ * est le texte envoyé. Et AUCUNE limite n'est visible — ni compteur, ni
+ * message : un client qui apporte un cahier de deux cents pages est le
+ * meilleur client possible, il ne doit jamais lire qu'il a trop écrit. La
+ * lecture se fait par tranches (lib/apps/lecture-brief.ts) ; le seul garde-fou
+ * est un fusible anti-abus côté serveur, invisible en usage normal.
  */
-const SEUIL_COMPTEUR = Math.floor(SIGNES_LUS * 0.8)
-const nombre = (n: number) => n.toLocaleString('fr-FR').replace(/[\u202f\u00a0]/gu, ' ')
 
 /** Le composeur : la zone de saisie et sa fleche ronde. Un seul des deux
  *  chemins pouvait l'avoir « presque » pareil — c'est ce qui se voyait. */
@@ -391,16 +389,6 @@ export function Composeur({
           <ArrowUp size={22} strokeWidth={2.5} className="text-[#FA5D1E]" />
         </button>
       </div>
-      {valeur.length >= SEUIL_COMPTEUR && (
-        <div className="mt-2 px-2 text-xs text-slate-400 text-right" aria-live="polite">
-          {nombre(valeur.length)} / {nombre(SIGNES_LUS)} signes
-        </div>
-      )}
-      {valeur.length > SIGNES_LUS && (
-        <p role="alert" className="mt-2 px-2 text-xs text-amber-300/80">
-          Votre texte fait {nombre(valeur.length)} signes. La lecture du cahier (tables, devise, nom) s’arrête à {nombre(SIGNES_LUS)} signes : au-delà, elle n’en tient pas compte — raccourcissez-le si ces éléments comptent.
-        </p>
-      )}
       {note !== undefined && <div className="mt-2 px-2 text-xs text-slate-400">{note}</div>}
     </div>
   );

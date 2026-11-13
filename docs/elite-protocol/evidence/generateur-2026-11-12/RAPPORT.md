@@ -995,3 +995,25 @@ propriétaire ; la variance des tables (2 à 8 à cahier identique) devient **M1
 | DOM (étape 2) | lecture `reussie` → **aucun** mot sur la lecture à l'écran | — |
 
 Rouge-puis-vert exécuté geste par geste, restauration vérifiée par `cmp` contre les versions 2b.
+
+---
+
+# G30 — AUCUNE LIMITE VISIBLE, LECTURE PAR TRANCHES, QUESTIONS OUVERTES (2026-11-13)
+
+Mesuré : quatre lignes (`f29323f6`, `4b8b1d20`, `c4522e43`, `a13f8f9f`) à **1 000 signes exactement**
+pour des cahiers de 1 900 à 2 600 — `maxLength={1000}` par défaut du composeur commun, hérité par
+l'accueil (`OnboardingChat.tsx:918-926` sans `longueurMax`), coupait le collage sans un mot. Et la lecture
+du brief coupait à 24 000 signes (`entreeCoupee`), muet pour la personne.
+
+**Décision du propriétaire** : aucune limite visible (ni compteur, ni message) ; fusible anti-abus serveur
+seulement ; lecture par tranches fusionnées ; questions ouvertes extraites et enregistrées.
+
+| chantier | ce qui change | cliquet de comportement | rouge quand on annule |
+|---|---|---|---|
+| saisie | `Composeur` : plus de `maxLength`, aucun compteur, aucun message ; l'écran Application ne passe plus `LONGUEUR_AVEC_DOCUMENT` ; test-or réépinglé sur l'absence de `maxLength` | composeur rendu : attribut `maxlength` absent, 2 600 / 30 000 / 20 000 collés → gardés et envoyés, aucun `[role=alert]`, aucun mot de limite, envoi actif ; accueil rendu de bout en bout : 2 600 collés, pastille « Application », `direct.demande` = 2 600 | `maxLength={1000}` remis → 4 rouges (attribut) ; un compteur remis → 3 rouges (texte de limite) |
+| fusible | `FUSIBLE_SIGNES = 1 000 000` : 413 sur `lire-brief` (résultat `erreur` nommé) et sur `direct`, avant tout appel au modèle | route ⑦ : 1 000 001 signes → 413, 0 appel | — |
+| lecture par tranches | `TAILLE_TRANCHE = 24 000` n'est plus une borne : `decouperEnTranches` (frontières de paragraphes, puis lignes, phrases, signes) ; chaque tranche lue par le même appel (réflexion coupée, reprise unique) ; `fusionnerLectures` (tables dédoublonnées par nom, champs unis, rôles/écrans/questions unis, nom et réglages de la première tranche) ; la ligne porte `tranches`, `tentatives`, `signesLus`, `tranchesEchouees` | route ⑤ : 3 tranches, 2ᵉ tronquée une fois → **4 appels**, `reussie`, `tranches: 3`, `signesLus` entier, 2 tables (champs `nom`+`telephone`, `prix`+`date`), rôles/écrans/questions unis ; ⑥ : tranches aux frontières de paragraphes, recollées = le cahier ; fonctions pures ①ter ①quater | une seule tranche lue → ⑤ ⑥ rouges (1 appel au lieu de 4 / 3) ; dédoublonnage retiré → ①quater et ⑤ rouges |
+| questions ouvertes | consigne : `ROLES`, `ECRANS`, `QUESTIONS_OUVERTES`, « ce texte peut être une tranche » ; la route les fusionne et les rend ; `lecture` les porte ; la ligne les enregistre (bornés, dédoublonnés) | route ⑤ (fusion), ① enregistrement borné, ①quinquies (ancres de consigne) | — |
+
+Suite complète : 481 fichiers / 6284 tests · lint 960/960 · TypeScript propre. Tout rouge-puis-vert vérifié
+par `cmp` contre les versions G30. Pas d'affichage des questions ouvertes (étape intention).
