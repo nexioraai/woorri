@@ -100,6 +100,31 @@ const CONNUS = [
       'route avec l’assembleur et le juge RÉELS : c’est elle qui a attrapé la panne du ' +
       '2026-11-01. Mesuré : 1 777 ms sur ce portable.',
   },
+  {
+    motif: /generateur\/direct\/__tests__\/route\.test[\s\S]*UN ÉCRAN ÉCHOUÉ DEUX FOIS/u,
+    plafond: 3500,
+    raison:
+      'ATTENTE, 3c-2 : deux processus du juge réels (écran puis application) qui portent ' +
+      'le juge d’expérience — 120 ms d’attente armée après chaque clic, pour laisser React ' +
+      'rendre. Le temps est dominé par ces attentes et le démarrage de Node, pas par un ' +
+      'calcul. Mesuré : 2 067 ms.',
+  },
+  {
+    motif: /etape3c-boucle-ecran[\s\S]*un bouton qui ne fait rien est refusé dans la boucle/u,
+    plafond: 3500,
+    raison:
+      'ATTENTE, 3c-2 : un processus du juge réel et le juge d’expérience en mode écran, ' +
+      'dont chaque clic attend 120 ms le rendu. C’est la seule épreuve que le script tourne ' +
+      'DANS le simulateur de la boucle. Mesuré : 2 244 ms.',
+  },
+  {
+    motif: /etape3c-orchestrateur[\s\S]*un écran livré, un échoué ×2/u,
+    plafond: 3500,
+    raison:
+      '3c-2 : l’assemblage RÉEL de l’application entière (squelette, bibliothèque, quatre ' +
+      'écrans dont trois de Deribfy) par rolldown, ~830 Ko. Le juge y est simulé ; ' +
+      'l’assemblage est ce que le test prouve. Mesuré : 2 173 ms.',
+  },
 ]
 
 if (!existsSync(RAPPORT)) {
