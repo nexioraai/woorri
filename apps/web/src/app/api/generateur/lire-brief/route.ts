@@ -75,90 +75,98 @@ export async function POST(req: Request) {
   const corps = (await req.json().catch(() => null)) as { demande?: unknown } | null
   const demande = typeof corps?.demande === 'string' ? corps.demande.trim() : ''
   // Un texte vide n'a rien à dire. On ne paie pas pour l'apprendre.
-  if (demande === '') return NextResponse.json({ deduites: {}, coutUsd: 0, lecture: { resultat: 'demande_vide', entreeCoupee: false, tables: 0 } satisfies LectureBrief })
+  if (demande === '') return NextResponse.json({ deduites: {}, coutUsd: 0, lecture: { resultat: 'demande_vide', entreeCoupee: false, tables: 0, tentatives: 0 } satisfies LectureBrief })
 
   // ── LE STATUT DE LA LECTURE VOYAGE DANS TOUTES LES BRANCHES (M6, 2026-11-12) :
   // 34 générations sur 34 sans trace de ce résultat ; un JSON cassé tombait
   // dans le `catch` et rendait `{ deduites: {} }`, indiscernable de « rien à
   // déduire ». Voir lib/apps/lecture-brief.ts.
   const entreeCoupee = demande.length > SIGNES_LUS
-  let tronqueeEnSortie = false
+  let tentatives = 0
   try {
     const { QUESTIONS_DE_CONFIGURATION } = (await import(
       /* webpackIgnore: true */ `${racineDepot()}/benchmarks/air-emission/elicitation.mjs`
     )) as { QUESTIONS_DE_CONFIGURATION: Record<string, { choix?: { valeur: string }[] }> }
 
-    const r = await clientIA().messages.create({
-      model: MODELE_LEGER,
-      // ── 8 000, ET 400 FAISAIT EXACTEMENT CE QUE CETTE ROUTE DOIT EMPECHER.
-      //
-      // MESURE LE 2026-10-30, contre l'API reellement servie :
-      //
-      //     max_tokens=400   → blocs [thinking] SEUL, texte VIDE
-      //     max_tokens=4000  → blocs [thinking, text], 831 caracteres
-      //
-      // Ce fournisseur rend DEUX blocs et facture la reflexion sur
-      // `max_tokens`. A 400, tout le budget part a reflechir et il ne reste
-      // RIEN pour repondre. `brut` vaut "", `indexOf('{')` vaut -1, et la
-      // route rendait `{}` — en silence.
-      //
-      // Le proprietaire a donc joint un cahier des charges de douze pages et
-      // s'est vu demander « Que fait votre application avec l'argent ? ». La
-      // route ecrite POUR eviter cette question la provoquait.
-      //
-      // 400 etait calibre sur un modele qui ne reflechissait pas. Un brief
-      // COURT demande deja 962 jetons de sortie ; douze pages en demandent
-      // plus. 8 000 laisse la marge et reste sous le seuil de 21 312 au-dela
-      // duquel le SDK exige le flux.
-      max_tokens: 8000,
-      system: CONSIGNE,
-      // Le brief est borné : au-delà, on lit le début, qui porte l'intention.
-      messages: [{ role: 'user', content: demande.slice(0, SIGNES_LUS) }],
-    })
-    tronqueeEnSortie = r.stop_reason === 'max_tokens'
-
-    const brut = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
-    const d = brut.indexOf('{')
-    const f = brut.lastIndexOf('}')
-    if (d === -1 || f <= d) {
-      // ── « RIEN DEDUIT » ET « PAS PU LIRE » NE SONT PAS LA MEME CHOSE.
-      //
-      // C'est le defaut PROFOND, celui qui a rendu le precedent invisible.
-      // Cette route rendait `{}` dans les DEUX cas : un brief muet et une
-      // lecture ratee produisaient la meme reponse. L'ecran posait donc
-      // toutes ses questions, et personne ne pouvait savoir pourquoi.
-      //
-      // Elle le DIT maintenant, et distingue la TRONCATURE du reste : meme
-      // lecon que sur l'autre moteur, ou « Expected } but found EOF » se
-      // lisait « mauvais code » alors que c'etait une coupure.
+    // ── UNE LECTURE SANS RÉFLEXION, ET UNE REPRISE UNIQUE (2b, 2026-11-13).
+    //
+    // MESURÉ (M10, cahier de 1 709 signes, limite 8 000) : en mode réflexion,
+    // 2 rejeux sur 3 étaient COUPÉS — 28 000 signes de réflexion, texte
+    // tronqué au milieu de la liste des tables, 0 table. Le point d'accès
+    // ignore `budget_tokens` : la réflexion ne se borne pas, elle se coupe.
+    // MESURÉ (M11) : `thinking.disabled` honoré 3/3, reussie 3/3, ~1 500
+    // jetons de sortie (5× sous la limite), 6 s, 0,001 $ — contre 1/3 reussie
+    // en mode réflexion. Cette lecture est une transcription structurée du
+    // cahier, pas un raisonnement : la réflexion n'y apportait que la coupe.
+    //
+    // Puis UNE reprise, une seule, si le résultat n'est pas `reussie` — et
+    // si elle échoue, le résultat part quand même, NOMMÉ : le client
+    // l'affiche (noteDeLecture), la ligne le porte (étape 1).
+    const lireUneFois = async (): Promise<
+      | { resultat: 'reussie'; lu: Record<string, unknown> }
+      | { resultat: 'illisible' | 'tronquee' | 'json_casse' }
+    > => {
+      tentatives += 1
+      const r = await clientIA().messages.create({
+        model: MODELE_LEGER,
+        // ── 8 000, ET 400 FAISAIT EXACTEMENT CE QUE CETTE ROUTE DOIT EMPECHER.
+        //
+        // MESURE LE 2026-10-30, contre l'API reellement servie :
+        //
+        //     max_tokens=400   → blocs [thinking] SEUL, texte VIDE
+        //     max_tokens=4000  → blocs [thinking, text], 831 caracteres
+        //
+        // Ce fournisseur rend DEUX blocs et facture la reflexion sur
+        // `max_tokens`. A 400, tout le budget part a reflechir et il ne reste
+        // RIEN pour repondre. `brut` vaut "", `indexOf('{')` vaut -1, et la
+        // route rendait `{}` — en silence.
+        //
+        // Le proprietaire a donc joint un cahier des charges de douze pages et
+        // s'est vu demander « Que fait votre application avec l'argent ? ». La
+        // route ecrite POUR eviter cette question la provoquait.
+        //
+        // 400 etait calibre sur un modele qui ne reflechissait pas. Un brief
+        // COURT demande deja 962 jetons de sortie ; douze pages en demandent
+        // plus. 8 000 laisse la marge et reste sous le seuil de 21 312 au-dela
+        // duquel le SDK exige le flux.
+        max_tokens: 8000,
+        thinking: { type: 'disabled' },
+        system: CONSIGNE,
+        messages: [{ role: 'user', content: demande.slice(0, SIGNES_LUS) }],
+      })
       const tronquee = r.stop_reason === 'max_tokens'
-      console.warn('[lire-brief] reponse illisible', {
-        stop_reason: r.stop_reason,
-        blocs: r.content.map((b) => b.type),
-        caracteres: brut.length,
-      })
+      const brut = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
+      const d = brut.indexOf('{')
+      const f = brut.lastIndexOf('}')
+      if (d === -1 || f <= d) {
+        console.warn('[lire-brief] reponse illisible', {
+          stop_reason: r.stop_reason,
+          blocs: r.content.map((b) => b.type),
+          caracteres: brut.length,
+          tentative: tentatives,
+        })
+        return { resultat: tronquee ? 'tronquee' : 'illisible' }
+      }
+      try {
+        return { resultat: 'reussie', lu: JSON.parse(brut.slice(d, f + 1)) as Record<string, unknown> }
+      } catch {
+        return { resultat: tronquee ? 'tronquee' : 'json_casse' }
+      }
+    }
+    let lecture = await lireUneFois()
+    if (lecture.resultat !== 'reussie') lecture = await lireUneFois()
+    if (lecture.resultat !== 'reussie') {
       return NextResponse.json({
         deduites: {},
-        lecture: { resultat: tronquee ? 'tronquee' : 'illisible', entreeCoupee, tables: 0 } satisfies LectureBrief,
+        lecture: { resultat: lecture.resultat, entreeCoupee, tables: 0, tentatives } satisfies LectureBrief,
         illisible: true,
-        motif: tronquee
-          ? 'La lecture du brief a ete coupee avant la fin : la limite de longueur est atteinte.'
-          : 'La lecture du brief n a rien rendu d exploitable.',
+        motif:
+          lecture.resultat === 'tronquee'
+            ? 'La lecture du brief a ete coupee avant la fin : la limite de longueur est atteinte.'
+            : 'La lecture du brief n a rien rendu d exploitable.',
       })
     }
-    let lu: Record<string, unknown>
-    try {
-      lu = JSON.parse(brut.slice(d, f + 1)) as Record<string, unknown>
-    } catch {
-      // Même réponse qu'avant (le `catch` général rendait `{ deduites: {} }`),
-      // mais NOMMÉE : un JSON coupé par la limite est une troncature.
-      return NextResponse.json({
-        deduites: {},
-        lecture: { resultat: tronqueeEnSortie ? 'tronquee' : 'json_casse', entreeCoupee, tables: 0 } satisfies LectureBrief,
-      })
-    }
-
-    // ── LE FILTRE. La table décide, jamais le modèle.
+    const lu = lecture.lu
     const deduites: Record<string, string> = {}
     for (const [code, valeur] of Object.entries(lu)) {
       const q = QUESTIONS_DE_CONFIGURATION[code]
@@ -259,10 +267,10 @@ export async function POST(req: Request) {
       // laquelle ni pourquoi.
       entites: declarees.entites,
       entitesRefusees: declarees.refus,
-      lecture: { resultat: 'reussie', entreeCoupee, tables: declarees.entites.length } satisfies LectureBrief,
+      lecture: { resultat: 'reussie', entreeCoupee, tables: declarees.entites.length, tentatives } satisfies LectureBrief,
     })
   } catch {
     // UNE LECTURE RATÉE NE BLOQUE RIEN : on retombe sur le questionnaire.
-    return NextResponse.json({ deduites: {}, lecture: { resultat: 'erreur', entreeCoupee, tables: 0 } satisfies LectureBrief })
+    return NextResponse.json({ deduites: {}, lecture: { resultat: 'erreur', entreeCoupee, tables: 0, tentatives } satisfies LectureBrief })
   }
 }

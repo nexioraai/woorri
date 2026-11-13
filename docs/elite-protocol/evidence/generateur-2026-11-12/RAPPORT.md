@@ -963,3 +963,35 @@ aucun chemin du code n'efface l'indicateur sans retirer la bulle ni afficher d'a
 `finally → setEnCours(false)` ; échec → `rendreLaMain` + `setAvis`). Candidats non mesurés : remontage du
 composant, réponse close avant la fin par un intermédiaire, bulle vue dans l'accueil et non dans l'écran
 Application. Noté, non reconstruit.
+
+---
+
+# ÉTAPE 2b — LECTURE DU BRIEF : RÉFLEXION COUPÉE, REPRISE UNIQUE, JAMAIS SILENCIEUSE (2026-11-13)
+
+Justifiée par M10 (réflexion de 28 000 signes, texte coupé au milieu des tables, 2 rejeux sur 3) et M11
+(`thinking.disabled` honoré 3/3, `reussie` 3/3, ~1 500 jetons, 6 s, 0,001 $). Variante A retenue par le
+propriétaire ; la variance des tables (2 à 8 à cahier identique) devient **M13**, après l'étape 3.
+
+**Code** (diff exact dans le rapport de session) :
+- `lire-brief/route.ts` : l'appel au modèle porte `thinking: { type: 'disabled' }` ; une fonction
+  `lireUneFois()` rend `reussie` (avec le JSON) ou `illisible | tronquee | json_casse` ; **une reprise,
+  une seule**, si le premier résultat n'est pas `reussie` ; si la reprise échoue, la réponse part
+  **nommée** (`lecture.resultat`, `tentatives: 2`) — jamais convertie en « rien à déduire ».
+- `lib/apps/lecture-brief.ts` : `tentatives` (1 ou 2) voyage et s'enregistre ; `noteDeLecture()` rend le
+  mot visible par résultat (`''` quand la lecture aboutit).
+- `ConversationApplication.tsx` : état `noteLecture`, posé par la lecture du cahier à chaque demande,
+  rendu sous le composeur (`role="status"`) — ni `avis` (effacé par `construire`), ni un tour de
+  conversation (`retirerDernierEcho` ne regarde que le dernier). **Signaler, pas bloquer.**
+
+**Cliquets de comportement** (la route est appelée avec un modèle simulé ; le composant est rendu en DOM) :
+
+| cliquet | ce qu'il juge | rouge quand on annule |
+|---|---|---|
+| route ① | tout appel porte `thinking: { type: 'disabled' }`, jamais `enabled` | la ligne `thinking` : `expected undefined to deeply equal { type: 'disabled' }` |
+| route ② | tronquée puis valide → `reussie`, `tentatives: 2`, 2 appels | la reprise : `called 2 times, but got 1` |
+| route ③ | tronquée deux fois → **2 appels, pas 3**, `tronquee`, `tentatives: 2`, `deduites: {}` | la reprise : `called 2 times, but got 1` |
+| route ④ | valide du premier coup → 1 appel, `tentatives: 1`, `nomProduit` rendu | — |
+| DOM 2b | lecture `tronquee` → `[role=status]` affiche « Lecture du cahier incomplète : … (2 tentatives) » **et** le corps de `direct` part avec `lectureBrief: { resultat: 'tronquee', tentatives: 2 }`, `entites: []` | `setNoteLecture(…)` : `expected '' to match /Lecture du cahier incomplète/` |
+| DOM (étape 2) | lecture `reussie` → **aucun** mot sur la lecture à l'écran | — |
+
+Rouge-puis-vert exécuté geste par geste, restauration vérifiée par `cmp` contre les versions 2b.

@@ -11,21 +11,35 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { lectureAEnregistrer, RESULTATS_LECTURE } from '../lecture-brief'
+import { lectureAEnregistrer, noteDeLecture, RESULTATS_LECTURE } from '../lecture-brief'
 import { motifTexte } from './motif-texte'
 
 const lire = (chemin: string) => readFileSync(join(__dirname, '..', '..', '..', chemin), 'utf8')
 
 describe('le résultat de la lecture du brief est enregistré', () => {
   it('① une valeur douteuse ne devient jamais un statut', () => {
-    expect(lectureAEnregistrer(undefined, 0)).toEqual({ resultat: 'non_transmise', entreeCoupee: null, tablesLues: null, tablesRecues: 0, source: 'absente' })
+    expect(lectureAEnregistrer(undefined, 0)).toEqual({ resultat: 'non_transmise', entreeCoupee: null, tablesLues: null, tablesRecues: 0, source: 'absente', tentatives: null })
     expect(lectureAEnregistrer({ resultat: 'parfait' }, 2).resultat).toBe('non_transmise')
     expect(lectureAEnregistrer('reussie', 2).resultat).toBe('non_transmise')
     expect(lectureAEnregistrer({ resultat: 'json_casse', entreeCoupee: true, tables: 0 }, 0))
-      .toEqual({ resultat: 'json_casse', entreeCoupee: true, tablesLues: 0, tablesRecues: 0, source: 'client' })
+      .toEqual({ resultat: 'json_casse', entreeCoupee: true, tablesLues: 0, tablesRecues: 0, source: 'client', tentatives: null })
+    expect(lectureAEnregistrer({ resultat: 'tronquee', entreeCoupee: false, tables: 0, tentatives: 2 }, 0).tentatives).toBe(2)
     // Le nombre de tables REÇUES est celui que la route a compté, jamais celui qu'on lui dit.
     expect(lectureAEnregistrer({ resultat: 'reussie', entreeCoupee: false, tables: 99 }, 3).tablesRecues).toBe(3)
     expect(lectureAEnregistrer({ resultat: 'reussie', tables: -1 }, 0).tablesLues).toBeNull()
+  })
+
+  // 2b (2026-11-13) — jamais silencieux : le mot visible, par résultat.
+  it('①bis la lecture qui n’aboutit pas a un mot visible ; celle qui aboutit n’en a pas', () => {
+    expect(noteDeLecture(undefined)).toBe('')
+    expect(noteDeLecture({ resultat: 'reussie', tentatives: 1 })).toBe('')
+    expect(noteDeLecture({ resultat: 'demande_vide' })).toBe('')
+    // Ancres en motifTexte (EP-364) : la phrase, pas un regex à la main.
+    expect(noteDeLecture({ resultat: 'tronquee', tentatives: 2 })).toMatch(motifTexte('Lecture du cahier incomplète : la réponse a été coupée avant la fin (2 tentatives).'))
+    expect(noteDeLecture({ resultat: 'json_casse', tentatives: 2 })).toMatch(motifTexte('Lecture du cahier incomplète : rien d’exploitable n’a pu être lu (2 tentatives).'))
+    expect(noteDeLecture({ resultat: 'illisible' })).toMatch(motifTexte('Lecture du cahier incomplète'))
+    expect(noteDeLecture({ resultat: 'erreur' })).toMatch(motifTexte('Lecture du cahier impossible'))
+    for (const r of ['tronquee', 'json_casse', 'illisible', 'erreur']) expect(noteDeLecture({ resultat: r })).toMatch(motifTexte('sans les tables déduites'))
   })
 
   it('② lire-brief nomme son résultat dans toutes ses branches', () => {
@@ -42,7 +56,9 @@ describe('le résultat de la lecture du brief est enregistré', () => {
       }
       return src.slice(m.index)
     })
-    expect(reponses.length).toBeGreaterThan(4)
+    // Quatre sorties depuis 2b (demande vide · échec après la reprise · succès · erreur) ;
+    // c'était cinq avant, les branches illisible et JSON cassé étant fusionnées.
+    expect(reponses.length).toBeGreaterThanOrEqual(4)
     for (const r of reponses) expect(r, `réponse sans statut : ${r.slice(0, 80)}`).toContain('lecture')
   })
 

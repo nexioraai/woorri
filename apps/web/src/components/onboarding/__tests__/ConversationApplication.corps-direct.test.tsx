@@ -73,5 +73,43 @@ describe('étape 2 — le corps envoyé à /api/generateur/direct (comportement)
     expect((corps.direct as { entites: unknown[] }).entites).toEqual([TABLE])
     // Et l'ordre des appels est celui du chemin vivant : lecture, pré-vol, génération.
     expect(corps.appels.map((u) => u.split('/').pop())).toEqual(['lire-brief', 'avant', 'direct'])
+    // 2b : une lecture qui aboutit n'affiche AUCUN mot sur la lecture.
+    expect(document.body.textContent).not.toContain('Lecture du cahier')
+  })
+
+  // ÉTAPE 2b (2026-11-13) — JAMAIS SILENCIEUX : la lecture du cahier qui n'aboutit
+  // pas après la reprise est DITE à l'écran, et la génération part quand même,
+  // le résultat nommé dans son corps. Signaler, pas bloquer.
+  it('2b · une lecture tronquée est affichée avant que la génération parte, et voyage nommée', async () => {
+    const corps: { direct?: Record<string, unknown> } = {}
+    globalThis.fetch = vi.fn(async (entree: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(entree)
+      if (url.endsWith('/api/generateur/lire-brief')) {
+        return reponse({ deduites: {}, lecture: { resultat: 'tronquee', entreeCoupee: false, tables: 0, tentatives: 2 }, illisible: true })
+      }
+      if (url.endsWith('/api/generateur/avant')) return reponse({ questions: [], configuration: { currency: 'XAF' }, complet: true })
+      if (url.endsWith('/api/generateur/direct')) {
+        corps.direct = JSON.parse(String(init?.body)) as Record<string, unknown>
+        return reponse({ ok: false, error: 'fin du test' })
+      }
+      throw new Error(`appel réseau inattendu : ${url}`)
+    }) as typeof fetch
+
+    const React = await import('react')
+    const { createRoot } = await import('react-dom/client')
+    const { default: ConversationApplication } = await import('../ConversationApplication')
+    const racine = document.createElement('div')
+    document.body.appendChild(racine)
+    await React.act(async () => {
+      createRoot(racine).render(React.createElement(ConversationApplication, { demandeInitiale: DEMANDE + ' (2b)', onRetour: () => undefined }))
+    })
+    await vi.waitFor(() => { expect(corps.direct).toBeDefined() }, { timeout: 8000 })
+
+    // VISIBLE : le mot est à l'écran, avec le nombre de tentatives.
+    const statut = [...document.querySelectorAll('[role="status"]')].map((e) => e.textContent ?? '').join(' ')
+    expect(statut).toMatch(/Lecture du cahier incomplète : la réponse a été coupée avant la fin \(2 tentatives\)/u)
+    expect(statut).toContain('sans les tables déduites')
+    // ET NOMMÉ : la génération est partie, son corps porte la coupe.
+    expect(corps.direct).toMatchObject({ lectureBrief: { resultat: 'tronquee', tentatives: 2 }, entites: [], configuration: { currency: 'XAF' } })
   })
 })

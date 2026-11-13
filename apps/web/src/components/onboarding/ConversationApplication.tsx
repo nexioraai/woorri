@@ -67,7 +67,7 @@ import {
   resumeEntites,
   type EntiteDeclaree,
 } from '@/lib/apps/entites-declarees';
-import type { LectureBrief } from '@/lib/apps/lecture-brief';
+import { noteDeLecture, type LectureBrief } from '@/lib/apps/lecture-brief';
 
 // ETAGE 4 — le drapeau : OFF (defaut), l'UX synchrone ci-dessous reste SEULE
 // au monde ; le chemin async n'existe qu'arme consciemment. L'ecran ne fait
@@ -221,6 +221,12 @@ export default function ConversationApplication({
   const [entitesRefusees, setEntitesRefusees] = useState<{ quoi: string; motif: string }[]>([]);
   const [questionAvant, setQuestionAvant] = useState<QuestionAvant | null>(null);
   const [configuration, setConfiguration] = useState<Configuration>({});
+  // ── LA LECTURE DU CAHIER N'EST JAMAIS SILENCIEUSE (2b, 2026-11-13).
+  // Posée par `deduireConfiguration` à chaque demande ('' quand elle aboutit),
+  // rendue sous le composeur — PAS `avis`, que `construire` efface au départ,
+  // ni un tour de conversation, que `retirerDernierEcho` ne saurait plus
+  // retirer sur échec. Affichage seul : la vérité voyage dans `lecture`.
+  const [noteLecture, setNoteLecture] = useState('');
   const [autreChose, setAutreChose] = useState('');
   /** La demande d'origine, gardee pendant le pre-vol : le brief n'est compose
    *  qu'une fois toutes les reponses obtenues. */
@@ -748,6 +754,7 @@ export default function ConversationApplication({
       // au moment de l'appel VOYAGE ; l'état ne sert plus qu'à
       // l'affichage. »
       const lues = dl.entites ?? [];
+      setNoteLecture(noteDeLecture(dl.lecture));
       return {
         config: c.currency === undefined ? { ...c, currency: DEVISE_PAR_DEFAUT } : c,
         entites: lues,
@@ -760,6 +767,7 @@ export default function ConversationApplication({
         nom: typeof dl.nomProduit?.nom === 'string' ? dl.nomProduit.nom : undefined,
       };
     } catch {
+      setNoteLecture(noteDeLecture({ resultat: 'erreur' }));
       return { config: { currency: DEVISE_PAR_DEFAUT }, entites: [] };
     }
   };
@@ -2002,6 +2010,9 @@ export default function ConversationApplication({
       </div>
 
       {avis !== '' && <p className="text-sm text-amber-300/80 mt-3 text-center">{avis}</p>}
+      {noteLecture !== '' && (
+        <p role="status" className="text-sm text-amber-300/80 mt-3 text-center">{noteLecture}</p>
+      )}
 
       <Composeur
         valeur={saisie}
