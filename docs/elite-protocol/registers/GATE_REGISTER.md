@@ -93,6 +93,16 @@ et une comparaison d'empreintes a déclaré les deux « identiques » — deux
 `[SENSITIVE]` identiques ne prouvent rien. **Toute copie de secret se prouve
 par un appel réel qui réussit, jamais par comparaison.**
 
+**Décision d'architecture — le juge d'exécution exécute LA PAGE TELLE QUE SERVIE (2026-11-13, étape 4).**
+Mesuré (M9, M12) : le juge monte le paquet NU sous Node — `process` y existe (`44ca6bbe`
+« démarre » puis plante au navigateur), un `export` d'entrée y est légal (`4b8b1d20` « démarre,
+6 écrans », `SyntaxError` au navigateur), et `DERIBFY_BASE` n'y est pas injecté (`f29323f6`
+« ne se monte pas » à tort, s'affiche au navigateur). Le juge doit charger `pageAutonome(…)`
+— enveloppe `try{}` et base injectée comprises — dans **Chromium**, comme l'atelier
+(outillage : `evidence/generateur-2026-11-12/m12-navigateur.mjs`). C'est l'**étape 4**, avant
+G25/G26/G29, qui restent en complément statique gratuit. Implémentation après l'étape 3.
+Le fait annexe « `import ws from "ws"` survit ×2 » se mesure à l'étape 4, pas avant.
+
 **Note d'architecture — la boucle de trois tours (non implémentée, « pas
 maintenant »).** M1 mesure que **27 transitions sur 48 (56 %)** gardent
 uniquement les mêmes classes d'erreur : la boucle redemande la même chose au
