@@ -30,12 +30,13 @@
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { racineDepot } from '@/lib/apps/racine'
-import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
+import { clientIA, FOURNISSEUR, MODELE_LEGER } from '@/lib/ia/client'
+import { CONFIGS, tarifDe } from '@/lib/apps/fournisseur'
 import { nomProduitValide } from '@/lib/apps/nom-produit'
 import { projectAirSchema } from '@deribfy/air-schema'
 import { lireEntites } from '@/lib/apps/entites-declarees'
 import { CONSIGNE } from '@/lib/apps/consigne-lire-brief'
-import { SIGNES_LUS, type LectureBrief } from '@/lib/apps/lecture-brief'
+import { decouperEnTranches, fusionnerLectures, FUSIBLE_SIGNES, type LectureBrief, type LecturePartielle, type TrancheLue } from '@/lib/apps/lecture-brief'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -75,20 +76,39 @@ export async function POST(req: Request) {
   const corps = (await req.json().catch(() => null)) as { demande?: unknown } | null
   const demande = typeof corps?.demande === 'string' ? corps.demande.trim() : ''
   // Un texte vide n'a rien à dire. On ne paie pas pour l'apprendre.
-  if (demande === '') return NextResponse.json({ deduites: {}, coutUsd: 0, lecture: { resultat: 'demande_vide', entreeCoupee: false, tables: 0, tentatives: 0 } satisfies LectureBrief })
+  const RIEN_LU = { coutUsd: 0, jetons: { entree: 0, sortie: 0 }, parTranche: [] } as const
+  if (demande === '') {
+    return NextResponse.json({ deduites: {}, coutUsd: 0, lecture: { resultat: 'demande_vide', tables: 0, tentatives: 0, tranches: 0, tranchesEchouees: 0, signesLus: 0, ...RIEN_LU, roles: [], ecrans: [], questionsOuvertes: [] } satisfies LectureBrief })
+  }
+  // ── LE FUSIBLE ANTI-ABUS — invisible en usage normal, jamais dans l'interface.
+  if (demande.length > FUSIBLE_SIGNES) {
+    return NextResponse.json(
+      { error: 'Texte trop volumineux pour ce service.', deduites: {}, lecture: { resultat: 'erreur', tables: 0, tentatives: 0, tranches: 0, tranchesEchouees: 0, signesLus: demande.length, ...RIEN_LU, roles: [], ecrans: [], questionsOuvertes: [] } satisfies LectureBrief },
+      { status: 413, headers: { 'Cache-Control': 'no-store' } },
+    )
+  }
 
-  // ── LE STATUT DE LA LECTURE VOYAGE DANS TOUTES LES BRANCHES (M6, 2026-11-12) :
-  // 34 générations sur 34 sans trace de ce résultat ; un JSON cassé tombait
-  // dans le `catch` et rendait `{ deduites: {} }`, indiscernable de « rien à
-  // déduire ». Voir lib/apps/lecture-brief.ts.
-  const entreeCoupee = demande.length > SIGNES_LUS
+  // ── LE RÉSULTAT DE LA LECTURE VOYAGE DANS TOUTES LES BRANCHES (M6, étape 1).
+  // Voir lib/apps/lecture-brief.ts.
   let tentatives = 0
+  // ── LE COÛT EST COMPTÉ SUR L'USAGE RENDU, APPEL PAR APPEL (G30, 2026-11-13).
+  //
+  // La ligne `9cc16d10` n'avait que « estimation, pas mesure » pour sa
+  // lecture. Chaque appel ajoute ses jetons ici ; le tarif est celui de
+  // l'heure de la lecture, comme pour la génération (fournisseur.ts).
+  const jetons = { entree: 0, cache: 0, sortie: 0 }
+  const coutDeLaLecture = (): number => {
+    const t = tarifDe(CONFIGS[FOURNISSEUR].prixLeger, new Date())
+    return Number(((jetons.entree * t.entree + jetons.cache * t.entreeCache + jetons.sortie * t.sortie) / 1e6).toFixed(6))
+  }
+  const jetonsLus = () => ({ entree: jetons.entree + jetons.cache, sortie: jetons.sortie })
+  const tranches = decouperEnTranches(demande)
   try {
     const { QUESTIONS_DE_CONFIGURATION } = (await import(
       /* webpackIgnore: true */ `${racineDepot()}/benchmarks/air-emission/elicitation.mjs`
     )) as { QUESTIONS_DE_CONFIGURATION: Record<string, { choix?: { valeur: string }[] }> }
 
-    // ── UNE LECTURE SANS RÉFLEXION, ET UNE REPRISE UNIQUE (2b, 2026-11-13).
+    // ── UNE LECTURE SANS RÉFLEXION, ET UNE REPRISE UNIQUE PAR TRANCHE (2b).
     //
     // MESURÉ (M10, cahier de 1 709 signes, limite 8 000) : en mode réflexion,
     // 2 rejeux sur 3 étaient COUPÉS — 28 000 signes de réflexion, texte
@@ -99,41 +119,29 @@ export async function POST(req: Request) {
     // en mode réflexion. Cette lecture est une transcription structurée du
     // cahier, pas un raisonnement : la réflexion n'y apportait que la coupe.
     //
-    // Puis UNE reprise, une seule, si le résultat n'est pas `reussie` — et
-    // si elle échoue, le résultat part quand même, NOMMÉ : le client
-    // l'affiche (noteDeLecture), la ligne le porte (étape 1).
-    const lireUneFois = async (): Promise<
+    // ── PAR TRANCHES, SANS BORNE (G30 élargi, 2026-11-13). La lecture coupait
+    // à 24 000 signes, en silence. Désormais chaque tranche (frontières de
+    // paragraphes) est lue par ce même appel, avec sa reprise unique, puis les
+    // lectures sont FUSIONNÉES (lib/apps/lecture-brief.ts › fusionnerLectures).
+    const lireUneFois = async (texte: string): Promise<
       | { resultat: 'reussie'; lu: Record<string, unknown> }
       | { resultat: 'illisible' | 'tronquee' | 'json_casse' }
     > => {
       tentatives += 1
       const r = await clientIA().messages.create({
         model: MODELE_LEGER,
-        // ── 8 000, ET 400 FAISAIT EXACTEMENT CE QUE CETTE ROUTE DOIT EMPECHER.
-        //
-        // MESURE LE 2026-10-30, contre l'API reellement servie :
-        //
-        //     max_tokens=400   → blocs [thinking] SEUL, texte VIDE
-        //     max_tokens=4000  → blocs [thinking, text], 831 caracteres
-        //
-        // Ce fournisseur rend DEUX blocs et facture la reflexion sur
-        // `max_tokens`. A 400, tout le budget part a reflechir et il ne reste
-        // RIEN pour repondre. `brut` vaut "", `indexOf('{')` vaut -1, et la
-        // route rendait `{}` — en silence.
-        //
-        // Le proprietaire a donc joint un cahier des charges de douze pages et
-        // s'est vu demander « Que fait votre application avec l'argent ? ». La
-        // route ecrite POUR eviter cette question la provoquait.
-        //
-        // 400 etait calibre sur un modele qui ne reflechissait pas. Un brief
-        // COURT demande deja 962 jetons de sortie ; douze pages en demandent
-        // plus. 8 000 laisse la marge et reste sous le seuil de 21 312 au-dela
-        // duquel le SDK exige le flux.
+        // ── 8 000 : mesuré le 2026-10-30, 400 laissait la réflexion manger
+        // tout le budget et rendait un texte VIDE. Sans réflexion (2b), un
+        // tranche de 24 000 signes rend ~1 500 à 2 500 jetons : la marge est large.
         max_tokens: 8000,
         thinking: { type: 'disabled' },
         system: CONSIGNE,
-        messages: [{ role: 'user', content: demande.slice(0, SIGNES_LUS) }],
+        messages: [{ role: 'user', content: texte }],
       })
+      const u = (r.usage ?? {}) as { input_tokens?: number | null; output_tokens?: number | null; cache_read_input_tokens?: number | null }
+      jetons.entree += u.input_tokens ?? 0
+      jetons.cache += u.cache_read_input_tokens ?? 0
+      jetons.sortie += u.output_tokens ?? 0
       const tronquee = r.stop_reason === 'max_tokens'
       const brut = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
       const d = brut.indexOf('{')
@@ -153,124 +161,116 @@ export async function POST(req: Request) {
         return { resultat: tronquee ? 'tronquee' : 'json_casse' }
       }
     }
-    let lecture = await lireUneFois()
-    if (lecture.resultat !== 'reussie') lecture = await lireUneFois()
-    if (lecture.resultat !== 'reussie') {
-      return NextResponse.json({
-        deduites: {},
-        lecture: { resultat: lecture.resultat, entreeCoupee, tables: 0, tentatives } satisfies LectureBrief,
-        illisible: true,
-        motif:
-          lecture.resultat === 'tronquee'
-            ? 'La lecture du brief a ete coupee avant la fin : la limite de longueur est atteinte.'
-            : 'La lecture du brief n a rien rendu d exploitable.',
-      })
-    }
-    const lu = lecture.lu
-    const deduites: Record<string, string> = {}
-    for (const [code, valeur] of Object.entries(lu)) {
-      const q = QUESTIONS_DE_CONFIGURATION[code]
-      if (q === undefined) continue
-      if (typeof valeur !== 'string' || valeur.trim() === '') continue
-      if (q.choix !== undefined && !q.choix.some((c) => c.valeur === valeur)) continue
-      deduites[code] = valeur
-    }
-    // ── LES QUESTIONS DU MODÈLE, BORNÉES (2026-11-03).
-    //
-    // DEMANDE DU PROPRIÉTAIRE, après une capture : quelqu'un qui veut lire
-    // son compteur SNE s'est vu demander ce que son application « fait
-    // avec l'argent ». La table des questions ne connaît pas son métier —
-    // elle ne connaît que ses propres rubriques.
-    //
-    // Le modèle, lui, LIT la demande. On lui laisse donc poser ce qui
-    // manque VRAIMENT.
-    //
-    // ── ET ON LE BORNE, parce qu'un champ libre venu d'un modèle finit à
-    //    l'écran de quelqu'un.
-    //
-    // Trois questions au plus, quatre choix au plus, longueurs coupées. Ce
-    // ne sont pas des précautions de style : c'est du texte qui sera rendu
-    // dans une page, et dont la longueur n'est garantie par personne.
-    const questionsIA: { code: string; texte: string; choix: string[] }[] = []
-    if (Array.isArray(lu.QUESTIONS)) {
-      for (const [n, brute] of (lu.QUESTIONS as unknown[]).slice(0, 3).entries()) {
-        if (typeof brute !== 'object' || brute === null) continue
-        const o = brute as { texte?: unknown; choix?: unknown }
-        const texte = typeof o.texte === 'string' ? o.texte.trim().slice(0, 200) : ''
-        if (texte === '') continue
-        const choix = Array.isArray(o.choix)
-          ? o.choix
-              .filter((c): c is string => typeof c === 'string' && c.trim() !== '')
-              .slice(0, 4)
-              .map((c) => c.trim().slice(0, 80))
-          : []
-        // UNE QUESTION SANS CHOIX RESTE UNE QUESTION : la personne répond
-        // en texte libre. On ne la jette pas pour si peu.
-        questionsIA.push({ code: `IA_${String(n)}`, texte, choix })
-      }
-    }
 
-    // ── LES DONNÉES DÉCLARÉES, JUGÉES PAR LE CONTRAT LUI-MÊME.
-    //
-    // `entitySchema` vit dans le paquet AIR ; on lui soumet chaque entité
-    // plutôt que de réécrire sa grammaire ici. Deux grammaires auraient
-    // divergé, et c'est la nôtre qui aurait eu tort — la sienne est celle
-    // que le compilateur applique.
-    //
-    // MESURÉ le 2026-11-02 : `{ id, name, fields:[{ id, name, type,
-    // required }] }` est accepté. C'est exactement la forme demandée au
-    // modèle, donc ce qu'il rend de bonne foi passe.
-    const schemaEntite = projectAirSchema.shape.entities.element
-    const declarees = lireEntites(lu.ENTITES, (e) => schemaEntite.safeParse(e).success)
-
-    // ── LE NOM DU PRODUIT, ET SA CITATION EST VERIFIEE, PAS CRUE.
-    //
-    // Le reste de cette route filtre contre la table : « la table decide,
-    // jamais le modele ». Le nom n'a pas de table -- c'est du texte libre, et
-    // c'est la seule chose ici que le modele peut inventer. Deux gardes :
-    //
-    //   · `nomProduitValide` refuse nos propres remplissages (EP-309) : un
-    //     « Application » rendu par le modele est ecarte comme s'il venait
-    //     d'un ecran.
-    //   · LA CITATION EST CHERCHEE DANS LE BRIEF. Le modele dit ou il a lu le
-    //     nom ; on VERIFIE que ce passage existe, accents et casse aplatis.
-    //     S'il n'existe pas, la citation tombe et le nom passe en
-    //     « propose » -- il n'est pas refuse pour autant : un nom invente est
-    //     legitime quand le document n'en porte aucun. Ce qui serait
-    //     illegitime, c'est de faire croire qu'on l'a lu.
-    //
-    // Meme discipline que `dansLeDocument` dans extraction-exigences :
-    // demander au modele « l'as-tu invente ? » serait lui demander de se
-    // juger.
     const aplati = (t: string) => t.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/\s+/gu, ' ')
     const brief = aplati(demande)
-    let nomProduit: { nom: string; citation?: string; dansLeDocument: boolean } | undefined
-    const nomBrut = lu.NOM_PRODUIT
-    if (typeof nomBrut === 'string') {
-      const verdict = nomProduitValide(nomBrut)
-      if (verdict.ok) {
-        const citBrut = typeof lu.NOM_CITATION === 'string' ? lu.NOM_CITATION.trim().slice(0, 80) : ''
-        const citTrouvee = citBrut !== '' && brief.includes(aplati(citBrut))
-        nomProduit = {
-          nom: verdict.nom,
-          ...(citTrouvee ? { citation: citBrut } : {}),
-          dansLeDocument: brief.includes(aplati(verdict.nom)),
+    const chaines = (brut: unknown, max: number): string[] =>
+      Array.isArray(brut) ? brut.filter((x): x is string => typeof x === 'string' && x.trim() !== '').map((x) => x.trim().slice(0, 200)).slice(0, max) : []
+
+    /** Ce qu'UNE tranche lue donne, avant fusion — la même lecture qu'avant, par tranche. */
+    const extraire = (lu: Record<string, unknown>): LecturePartielle => {
+      const deduites: Record<string, string> = {}
+      for (const [code, valeur] of Object.entries(lu)) {
+        const q = QUESTIONS_DE_CONFIGURATION[code]
+        if (q === undefined) continue
+        if (typeof valeur !== 'string' || valeur.trim() === '') continue
+        if (q.choix !== undefined && !q.choix.some((c) => c.valeur === valeur)) continue
+        deduites[code] = valeur
+      }
+      const questionsIA: { code: string; texte: string; choix: string[] }[] = []
+      if (Array.isArray(lu.QUESTIONS)) {
+        for (const [n, brute] of (lu.QUESTIONS as unknown[]).slice(0, 3).entries()) {
+          if (typeof brute !== 'object' || brute === null) continue
+          const o = brute as { texte?: unknown; choix?: unknown }
+          const texte = typeof o.texte === 'string' ? o.texte.trim().slice(0, 200) : ''
+          if (texte === '') continue
+          const choix = Array.isArray(o.choix)
+            ? o.choix.filter((c): c is string => typeof c === 'string' && c.trim() !== '').slice(0, 4).map((c) => c.trim().slice(0, 80))
+            : []
+          questionsIA.push({ code: `IA_${String(n)}`, texte, choix })
         }
       }
+      let nomProduit: LecturePartielle['nomProduit']
+      let nomRefuse: string | undefined
+      const nomBrut = lu.NOM_PRODUIT
+      if (typeof nomBrut === 'string') {
+        const verdict = nomProduitValide(nomBrut)
+        if (verdict.ok) {
+          const citBrut = typeof lu.NOM_CITATION === 'string' ? lu.NOM_CITATION.trim().slice(0, 80) : ''
+          const citTrouvee = citBrut !== '' && brief.includes(aplati(citBrut))
+          nomProduit = { nom: verdict.nom, ...(citTrouvee ? { citation: citBrut } : {}), dansLeDocument: brief.includes(aplati(verdict.nom)) }
+        } else if (nomBrut.trim() !== '') {
+          // Le nom écarté est GARDÉ pour la ligne : savoir ce que la tranche a
+          // proposé vaut mieux qu'un `null` muet (tir de la découpe, 2026-11-13).
+          nomRefuse = nomBrut.trim().slice(0, 80)
+        }
+      }
+      return {
+        deduites,
+        ...(nomProduit === undefined ? {} : { nomProduit }),
+        ...(nomRefuse === undefined ? {} : { nomRefuse }),
+        entites: Array.isArray(lu.ENTITES) ? (lu.ENTITES as LecturePartielle['entites']) : [],
+        questionsIA,
+        roles: chaines(lu.ROLES, 12),
+        ecrans: chaines(lu.ECRANS, 40),
+        questionsOuvertes: chaines(lu.QUESTIONS_OUVERTES, 20),
+      }
+    }
+
+    const parties: LecturePartielle[] = []
+    const parTranche: TrancheLue[] = []
+    let tranchesEchouees = 0
+    let premierEchec: 'illisible' | 'tronquee' | 'json_casse' | null = null
+    for (const tranche of tranches) {
+      const avant = tentatives
+      let lecture = await lireUneFois(tranche)
+      if (lecture.resultat !== 'reussie') lecture = await lireUneFois(tranche)
+      if (lecture.resultat !== 'reussie') {
+        tranchesEchouees += 1
+        if (premierEchec === null) premierEchec = lecture.resultat
+        parTranche.push({ signes: tranche.length, tentatives: tentatives - avant, resultat: lecture.resultat, tables: 0, nom: null, nomRefuse: null, ecrans: 0, roles: 0, questionsOuvertes: 0 })
+        continue
+      }
+      const p = extraire(lecture.lu)
+      parties.push(p)
+      parTranche.push({
+        signes: tranche.length, tentatives: tentatives - avant, resultat: 'reussie', tables: p.entites.length,
+        nom: p.nomProduit?.nom ?? null, nomRefuse: p.nomRefuse ?? null,
+        ecrans: p.ecrans.length, roles: p.roles.length, questionsOuvertes: p.questionsOuvertes.length,
+      })
+    }
+    const fusion = fusionnerLectures(parties)
+    const schemaEntite = projectAirSchema.shape.entities.element
+    const declarees = lireEntites(fusion.entites, (e) => schemaEntite.safeParse(e).success)
+    const lecture: LectureBrief = {
+      // Une seule tranche qui n'aboutit pas, et le résultat le DIT — jamais converti en « reussie ».
+      resultat: premierEchec ?? 'reussie',
+      tables: declarees.entites.length,
+      tentatives,
+      tranches: tranches.length,
+      tranchesEchouees,
+      signesLus: demande.length,
+      coutUsd: coutDeLaLecture(),
+      jetons: jetonsLus(),
+      parTranche,
+      roles: fusion.roles,
+      ecrans: fusion.ecrans,
+      questionsOuvertes: fusion.questionsOuvertes,
     }
     return NextResponse.json({
-      questionsIA,
-      deduites,
-      ...(nomProduit === undefined ? {} : { nomProduit }),
-      // LES REFUS VOYAGENT AVEC LES ENTITÉS. Un refus muet produirait une
-      // application à qui il manque une table, sans que personne sache
-      // laquelle ni pourquoi.
+      questionsIA: fusion.questionsIA,
+      deduites: fusion.deduites,
+      ...(fusion.nomProduit === undefined ? {} : { nomProduit: fusion.nomProduit }),
       entites: declarees.entites,
       entitesRefusees: declarees.refus,
-      lecture: { resultat: 'reussie', entreeCoupee, tables: declarees.entites.length, tentatives } satisfies LectureBrief,
+      roles: fusion.roles,
+      ecrans: fusion.ecrans,
+      questionsOuvertes: fusion.questionsOuvertes,
+      lecture,
+      ...(premierEchec === null ? {} : { illisible: true, motif: premierEchec === 'tronquee' ? 'La lecture du brief a ete coupee avant la fin : la limite de longueur est atteinte.' : 'La lecture du brief n a rien rendu d exploitable.' }),
     })
   } catch {
-    // UNE LECTURE RATÉE NE BLOQUE RIEN : on retombe sur le questionnaire.
-    return NextResponse.json({ deduites: {}, lecture: { resultat: 'erreur', entreeCoupee, tables: 0, tentatives } satisfies LectureBrief })
+    // Ce qui a été dépensé avant l'erreur est dit quand même : une panne ne rend pas la lecture gratuite.
+    return NextResponse.json({ deduites: {}, lecture: { resultat: 'erreur', tables: 0, tentatives, tranches: tranches.length, tranchesEchouees: tranches.length, signesLus: demande.length, coutUsd: coutDeLaLecture(), jetons: jetonsLus(), parTranche: [], roles: [], ecrans: [], questionsOuvertes: [] } satisfies LectureBrief })
   }
 }

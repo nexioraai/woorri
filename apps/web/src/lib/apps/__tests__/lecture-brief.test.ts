@@ -11,21 +11,41 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { lectureAEnregistrer, noteDeLecture, RESULTATS_LECTURE } from '../lecture-brief'
+import { decouperEnTranches, fusionnerLectures, lectureAEnregistrer, noteDeLecture, FUSIBLE_SIGNES, RESULTATS_LECTURE, TAILLE_TRANCHE } from '../lecture-brief'
 import { motifTexte } from './motif-texte'
 
 const lire = (chemin: string) => readFileSync(join(__dirname, '..', '..', '..', chemin), 'utf8')
 
 describe('le résultat de la lecture du brief est enregistré', () => {
   it('① une valeur douteuse ne devient jamais un statut', () => {
-    expect(lectureAEnregistrer(undefined, 0)).toEqual({ resultat: 'non_transmise', entreeCoupee: null, tablesLues: null, tablesRecues: 0, source: 'absente', tentatives: null })
+    const VIDES = { coutUsd: null, jetonsEntree: null, jetonsSortie: null, parTranche: [], roles: [], ecrans: [], questionsOuvertes: [] }
+    expect(lectureAEnregistrer(undefined, 0)).toEqual({ resultat: 'non_transmise', tablesLues: null, tablesRecues: 0, source: 'absente', tentatives: null, tranches: null, tranchesEchouees: null, signesLus: null, ...VIDES })
     expect(lectureAEnregistrer({ resultat: 'parfait' }, 2).resultat).toBe('non_transmise')
     expect(lectureAEnregistrer('reussie', 2).resultat).toBe('non_transmise')
-    expect(lectureAEnregistrer({ resultat: 'json_casse', entreeCoupee: true, tables: 0 }, 0))
-      .toEqual({ resultat: 'json_casse', entreeCoupee: true, tablesLues: 0, tablesRecues: 0, source: 'client', tentatives: null })
-    expect(lectureAEnregistrer({ resultat: 'tronquee', entreeCoupee: false, tables: 0, tentatives: 2 }, 0).tentatives).toBe(2)
+    expect(lectureAEnregistrer({ resultat: 'json_casse', tables: 0 }, 0))
+      .toEqual({ resultat: 'json_casse', tablesLues: 0, tablesRecues: 0, source: 'client', tentatives: null, tranches: null, tranchesEchouees: null, signesLus: null, ...VIDES })
+    expect(lectureAEnregistrer({ resultat: 'tronquee', tables: 0, tentatives: 2 }, 0).tentatives).toBe(2)
+    // Les listes voyagent bornées et dédoublonnées ; une valeur qui n'est pas une chaîne est ignorée.
+    const e = lectureAEnregistrer({ resultat: 'reussie', tables: 2, tentatives: 4, tranches: 3, tranchesEchouees: 0, signesLus: 28_000, coutUsd: 0.0041237, jetons: { entree: 12_400, sortie: 1_530 }, roles: ['gestionnaire', 'Gestionnaire', 7], ecrans: ['Accueil', ' Accueil ', 'Commandes'], questionsOuvertes: ['Tarification à préciser'] }, 2)
+    expect(e).toMatchObject({ tranches: 3, tranchesEchouees: 0, signesLus: 28_000, coutUsd: 0.004124, jetonsEntree: 12_400, jetonsSortie: 1_530, roles: ['gestionnaire'], ecrans: ['Accueil', 'Commandes'], questionsOuvertes: ['Tarification à préciser'] })
+    // Le coût est MESURÉ ou absent — jamais un texte, un négatif ou un infini déguisé en nombre.
+    expect(lectureAEnregistrer({ resultat: 'reussie', tables: 1, coutUsd: 'environ 0,005 $' }, 1).coutUsd).toBeNull()
+    expect(lectureAEnregistrer({ resultat: 'reussie', tables: 1, coutUsd: -1 }, 1).coutUsd).toBeNull()
+    expect(lectureAEnregistrer({ resultat: 'reussie', tables: 1, coutUsd: Number.POSITIVE_INFINITY, jetons: 'beaucoup' }, 1)).toMatchObject({ coutUsd: null, jetonsEntree: null, jetonsSortie: null })
+    expect(lectureAEnregistrer({ resultat: 'reussie', tables: 1, coutUsd: 0 }, 1).coutUsd).toBe(0)
+    // Le détail par tranche voyage revalidé : une entrée sans signes, sans tentatives ou au résultat inconnu est écartée.
+    const t = lectureAEnregistrer({ resultat: 'reussie', tables: 2, parTranche: [
+      { signes: 22_866, tentatives: 1, resultat: 'reussie', tables: 6, nom: null, nomRefuse: 'Plateforme internationale de réservation et IA', ecrans: 16, roles: 4, questionsOuvertes: 8 },
+      { signes: 20_658, tentatives: 2, resultat: 'reussie', tables: 7, nom: 'Plateforme numérique CPA-Tchad', nomRefuse: null, ecrans: 11, roles: 11, questionsOuvertes: 10 },
+      { signes: 'beaucoup', tentatives: 1, resultat: 'reussie' },
+      { signes: 10, tentatives: 2, resultat: 'parfaite' },
+      'pas une tranche',
+    ] }, 2).parTranche
+    expect(t).toHaveLength(2)
+    expect(t[0]).toEqual({ signes: 22_866, tentatives: 1, resultat: 'reussie', tables: 6, nom: null, nomRefuse: 'Plateforme internationale de réservation et IA', ecrans: 16, roles: 4, questionsOuvertes: 8 })
+    expect(t[1]!.nom).toBe('Plateforme numérique CPA-Tchad')
     // Le nombre de tables REÇUES est celui que la route a compté, jamais celui qu'on lui dit.
-    expect(lectureAEnregistrer({ resultat: 'reussie', entreeCoupee: false, tables: 99 }, 3).tablesRecues).toBe(3)
+    expect(lectureAEnregistrer({ resultat: 'reussie', tables: 99 }, 3).tablesRecues).toBe(3)
     expect(lectureAEnregistrer({ resultat: 'reussie', tables: -1 }, 0).tablesLues).toBeNull()
   })
 
@@ -40,6 +60,49 @@ describe('le résultat de la lecture du brief est enregistré', () => {
     expect(noteDeLecture({ resultat: 'illisible' })).toMatch(motifTexte('Lecture du cahier incomplète'))
     expect(noteDeLecture({ resultat: 'erreur' })).toMatch(motifTexte('Lecture du cahier impossible'))
     for (const r of ['tronquee', 'json_casse', 'illisible', 'erreur']) expect(noteDeLecture({ resultat: r })).toMatch(motifTexte('sans les tables déduites'))
+  })
+
+  // G30 élargi (2026-11-13) — par tranches, sans borne de lecture.
+  it('①ter la découpe suit les paragraphes, ne perd rien, et ne borne rien', () => {
+    expect(decouperEnTranches('')).toEqual([])
+    expect(decouperEnTranches('  un seul paragraphe  ')).toEqual(['un seul paragraphe'])
+    const p = (n: number, c: string) => `${c}`.repeat(n)
+    // Trois paragraphes qui ne tiennent pas à trois dans une tranche : coupés ENTRE eux, jamais dedans.
+    const t = decouperEnTranches([p(60, 'a'), p(50, 'b'), p(40, 'c')].join('\n\n'), 120)
+    expect(t).toEqual([`${p(60, 'a')}\n\n${p(50, 'b')}`, p(40, 'c')])
+    // Un paragraphe plus long qu'une tranche se coupe aux lignes, puis aux phrases, puis au signe.
+    expect(decouperEnTranches(`${p(70, 'x')}\n${p(70, 'y')}`, 100)).toEqual([p(70, 'x'), p(70, 'y')])
+    expect(decouperEnTranches(`Une phrase. ${p(90, 'z')}`, 100)).toEqual(['Une phrase.', p(90, 'z')])
+    expect(decouperEnTranches(p(250, 'w'), 100)).toEqual([p(100, 'w'), p(100, 'w'), p(50, 'w')])
+    // Un cahier de deux cents pages est entièrement lu : rien n'est borné.
+    const long = Array.from({ length: 400 }, (_, i) => `Paragraphe ${String(i)} ${p(900, 'm')}`).join('\n\n')
+    const tr = decouperEnTranches(long)
+    expect(tr.length).toBeGreaterThan(10)
+    for (const x of tr) expect(x.length).toBeLessThanOrEqual(TAILLE_TRANCHE)
+    expect(tr.join('\n\n')).toBe(long)
+    expect(FUSIBLE_SIGNES).toBeGreaterThan(long.length)
+  })
+
+  it('①quater la fusion dédoublonne les tables par nom, unit les champs, garde le premier nom', () => {
+    const f = fusionnerLectures([
+      { deduites: { ARGENT_DANS_APP: 'aucun' }, nomProduit: { nom: 'Hayine', dansLeDocument: true }, entites: [{ id: 'ent_membre', name: 'membre', fields: [{ id: 'fld_nom', name: 'nom', type: 'text', required: true }] }], questionsIA: [{ code: 'IA_0', texte: 'q1', choix: [] }], roles: ['membre'], ecrans: ['Accueil'], questionsOuvertes: ['Fournisseurs à nommer'] },
+      { deduites: { ARGENT_DANS_APP: 'paiements', MARCHE_VISE: 'Tchad' }, nomProduit: { nom: 'Autre', dansLeDocument: false }, entites: [{ id: 'ent_membre2', name: 'Membre', fields: [{ id: 'fld_nom2', name: 'Nom', type: 'text', required: false }, { id: 'fld_tel', name: 'telephone', type: 'text', required: false }] }, { id: 'ent_cotisation', name: 'cotisation', fields: [] }], questionsIA: [{ code: 'IA_0', texte: 'q2', choix: [] }, { code: 'IA_1', texte: 'q3', choix: [] }, { code: 'IA_2', texte: 'q4', choix: [] }], roles: ['Membre', 'trésorier'], ecrans: ['accueil', 'Cotisations'], questionsOuvertes: ['fournisseurs à nommer', 'Tarif à fixer'] },
+    ])
+    expect(f.deduites).toEqual({ ARGENT_DANS_APP: 'aucun', MARCHE_VISE: 'Tchad' })
+    expect(f.nomProduit?.nom).toBe('Hayine')
+    expect(f.entites.map((e) => e.name)).toEqual(['membre', 'cotisation'])
+    expect((f.entites[0]!.fields as { name: string }[]).map((x) => x.name)).toEqual(['nom', 'telephone'])
+    expect(f.questionsIA.map((q) => q.texte)).toEqual(['q1', 'q2', 'q3'])
+    expect(f.roles).toEqual(['membre', 'trésorier'])
+    expect(f.ecrans).toEqual(['Accueil', 'Cotisations'])
+    expect(f.questionsOuvertes).toEqual(['Fournisseurs à nommer', 'Tarif à fixer'])
+  })
+
+  it('①quinquies la consigne demande rôles, écrans et questions ouvertes, et sait qu’elle lit une tranche', () => {
+    const consigne = lire('lib/apps/consigne-lire-brief.ts')
+    for (const cle of ['ROLES', 'ECRANS', 'QUESTIONS_OUVERTES']) expect(consigne, `la consigne ne demande plus ${cle}`).toMatch(motifTexte(`${cle} :`))
+    expect(consigne).toMatch(motifTexte('CE TEXTE PEUT ÊTRE UNE TRANCHE'))
+    expect(consigne).toMatch(motifTexte('décisions restant à préciser'))
   })
 
   it('② lire-brief nomme son résultat dans toutes ses branches', () => {

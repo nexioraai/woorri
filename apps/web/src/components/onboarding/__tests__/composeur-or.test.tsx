@@ -21,8 +21,12 @@ const PROPS = {
 describe("test-or — le Composeur des modes n'a pas le droit de bouger", () => {
   it('rendu nu : le markup épinglé', () => {
     const html = renderToStaticMarkup(<Composeur {...PROPS} />)
-    // La borne historique fait partie du contrat visuel : 1000 caractères.
-    expect(html).toContain('maxLength="1000"')
+    // G30 (2026-11-13) : la borne historique de 1000 TRONQUAIT un collage sans
+    // un mot (mesuré : quatre lignes à 1 000 signes exactement). Le contrat
+    // épinglé devient l'absence de toute troncature muette : aucun maxLength.
+    expect(html).not.toContain('maxLength=')
+    // Et pour un texte court, aucun compteur ni message ne s'ajoute au rendu.
+    expect(html).not.toMatch(/signes/u)
     expect(html).toContain('placeholder="Décrivez votre activité…"')
     expect(html).toContain('aria-label="Votre demande"')
     expect(html).toContain('rounded-[24px] pl-6 pr-16 py-4')

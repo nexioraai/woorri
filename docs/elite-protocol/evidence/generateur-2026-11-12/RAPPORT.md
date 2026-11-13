@@ -995,3 +995,98 @@ propriétaire ; la variance des tables (2 à 8 à cahier identique) devient **M1
 | DOM (étape 2) | lecture `reussie` → **aucun** mot sur la lecture à l'écran | — |
 
 Rouge-puis-vert exécuté geste par geste, restauration vérifiée par `cmp` contre les versions 2b.
+
+---
+
+# G30 — AUCUNE LIMITE VISIBLE, LECTURE PAR TRANCHES, QUESTIONS OUVERTES (2026-11-13)
+
+Mesuré : quatre lignes (`f29323f6`, `4b8b1d20`, `c4522e43`, `a13f8f9f`) à **1 000 signes exactement**
+pour des cahiers de 1 900 à 2 600 — `maxLength={1000}` par défaut du composeur commun, hérité par
+l'accueil (`OnboardingChat.tsx:918-926` sans `longueurMax`), coupait le collage sans un mot. Et la lecture
+du brief coupait à 24 000 signes (`entreeCoupee`), muet pour la personne.
+
+**Décision du propriétaire** : aucune limite visible (ni compteur, ni message) ; fusible anti-abus serveur
+seulement ; lecture par tranches fusionnées ; questions ouvertes extraites et enregistrées.
+
+| chantier | ce qui change | cliquet de comportement | rouge quand on annule |
+|---|---|---|---|
+| saisie | `Composeur` : plus de `maxLength`, aucun compteur, aucun message ; l'écran Application ne passe plus `LONGUEUR_AVEC_DOCUMENT` ; test-or réépinglé sur l'absence de `maxLength` | composeur rendu : attribut `maxlength` absent, 2 600 / 30 000 / 20 000 collés → gardés et envoyés, aucun `[role=alert]`, aucun mot de limite, envoi actif ; accueil rendu de bout en bout : 2 600 collés, pastille « Application », `direct.demande` = 2 600 | `maxLength={1000}` remis → 4 rouges (attribut) ; un compteur remis → 3 rouges (texte de limite) |
+| fusible | `FUSIBLE_SIGNES = 1 000 000` : 413 sur `lire-brief` (résultat `erreur` nommé) et sur `direct`, avant tout appel au modèle | route ⑦ : 1 000 001 signes → 413, 0 appel | — |
+| lecture par tranches | `TAILLE_TRANCHE = 24 000` n'est plus une borne : `decouperEnTranches` (frontières de paragraphes, puis lignes, phrases, signes) ; chaque tranche lue par le même appel (réflexion coupée, reprise unique) ; `fusionnerLectures` (tables dédoublonnées par nom, champs unis, rôles/écrans/questions unis, nom et réglages de la première tranche) ; la ligne porte `tranches`, `tentatives`, `signesLus`, `tranchesEchouees` | route ⑤ : 3 tranches, 2ᵉ tronquée une fois → **4 appels**, `reussie`, `tranches: 3`, `signesLus` entier, 2 tables (champs `nom`+`telephone`, `prix`+`date`), rôles/écrans/questions unis ; ⑥ : tranches aux frontières de paragraphes, recollées = le cahier ; fonctions pures ①ter ①quater | une seule tranche lue → ⑤ ⑥ rouges (1 appel au lieu de 4 / 3) ; dédoublonnage retiré → ①quater et ⑤ rouges |
+| questions ouvertes | consigne : `ROLES`, `ECRANS`, `QUESTIONS_OUVERTES`, « ce texte peut être une tranche » ; la route les fusionne et les rend ; `lecture` les porte ; la ligne les enregistre (bornés, dédoublonnés) | route ⑤ (fusion), ① enregistrement borné, ①quinquies (ancres de consigne) | — |
+
+Suite complète : 481 fichiers / 6284 tests · lint 960/960 · TypeScript propre. Tout rouge-puis-vert vérifié
+par `cmp` contre les versions G30. Pas d'affichage des questions ouvertes (étape intention).
+
+---
+
+# G30 — PREUVE (2026-11-13)
+
+## 1. Prévisualisation `5voh6qvy3` (commit `d5302fd4`) : ligne `9cc16d10` — cahier Hayine déposé en PDF
+
+**Ligne de test à retirer : `9cc16d10-40f9-4c01-8ad6-6a8e6082758e`.** Aucun marqueur `[TEST-G30]` dans la
+demande : le dépôt d'un PDF **remplace** le composeur (`ConversationApplication.tsx:2054`, `setSaisie(r.texte)`) ;
+le texte reçu est, au signe près, le cahier Hayine d'octobre (sha256 `9ee1ca865053`, 22 866 signes — pas
+~28 000). Identification : `deploiement.commit = d5302fd` (branche `g30-cahier-long`, preview) + journal de
+requêtes Vercel (`lire-brief` 12:55:37Z → `avant` 12:55:46Z → `direct` 12:55:46Z, ligne 13:04:23Z, 514 s).
+Brut : `brut/g30/9cc16d10.json.gz` (ligne), `brut/g30/9cc16d10-fichiers.json.gz` (9 fichiers livrés).
+
+| attendu | mesuré | |
+|---|---|---|
+| longueur lue = envoyée | `signesLus 22 866` = `demande.length 22 866` | ✓ |
+| tranches ≥ 2 | **1** — 22 866 < `TAILLE_TRANCHE` 24 000 : une tranche par construction, découpe **non exercée** | ✗ → tir §3 |
+| reussie | `reussie`, 1 tentative, 0 tranche échouée | ✓ |
+| tables ≥ octobre | 6 lues / 6 reçues ; octobre : `tables: null` ×3 (M3), rejeu M5 : 0 — **première mesure** | INCONNU |
+| questionsOuvertes ≠ ∅ | 8 | ✓ |
+| 16 écrans de la section 10 | **16/16**, même ordre (« agent IA et aide » lu en deux écrans, à raison) | ✓ |
+| configuration / nom | `{ XAF, nom_produit: Hayine, encaissement: paiements }` · `nom: Hayine` | ✓ |
+| coût | génération 0,1571 $ ; lecture **non enregistrée** → §2 | — |
+
+Hors périmètre, consigné sans correction : tours `1:refus` (« supabaseUrl is required » — juge Node sans
+`DERIBFY_BASE`, G29), `2:refus` (contrôles sans nom, 6 tables ni lues ni écrites), `3:ok` **par la règle du
+dernier tour** (`boucle-directe.ts:685`) ; `persistance` finale 6/6 ni lue ni écrite ; `couverture.taux 0,41`,
+4 exigences centrales absentes (multilingue, agent IA, recherche, administration) ; `execution.ecransDistincts 1`.
+→ Registre : « la génération ignore la lecture » (étape 3c).
+
+## 2. Correction : le coût de la lecture est MESURÉ dans la ligne, et le détail par tranche aussi
+
+`lire-brief/route.ts` additionne l'usage rendu par **chaque** appel (entrée, cache, sortie) et le tarife à
+l'heure de la lecture (`tarifDe(CONFIGS[FOURNISSEUR].prixLeger, now)`, comme `direct`) ; `lecture` porte
+`coutUsd`, `jetons { entree, sortie }` et `parTranche[] { signes, tentatives, resultat, tables, nom, nomRefuse,
+ecrans, roles, questionsOuvertes }` ; `lectureAEnregistrer` revalide tout (montant fini ≥ 0, tranches bornées à
+50, nom ≤ 80 signes). Le nom qu'une tranche a proposé et que la validation (2 à 40 signes) a écarté est **gardé**
+(`nomRefuse`) : c'est ce qui manquait pour lire l'essai 1 du tir.
+
+| cliquet | juge | rouge quand on annule |
+|---|---|---|
+| route ⑧ | heure fixée (12:00Z) ; appels 1 000+8 000 puis 800+400 (+200 cache) → `jetons { 2000, 8400 }`, `coutUsd` = formule au tarif de l'heure | usage non compté → `{ entree: 0, sortie: 0 }` |
+| route ⑤ | 4 appels → `jetons` ×4 ; `parTranche` = `[1, reussie, 1, 'Atelier Mariam', null, 2] · [2, reussie, 2, null, 'Plateforme internationale de réservation et IA', 2] · [1, reussie, 1, null, null, 3]`, signes = contenus des appels 0, 1, 3 | usage non compté → rouge ; `parTranche: []` → rouge |
+| route ③ | tranche échouée → `parTranche = [{ tentatives: 2, resultat: 'tronquee', tables: 0, … }]` | `parTranche: []` → rouge |
+| route ⑦ | fusible → `coutUsd 0`, `jetons 0/0` | — |
+| ① | revalidation : texte / négatif / infini → `null` ; entrées de tranche douteuses écartées | — |
+
+## 3. Tir de la découpe — `src/tirs/lecture-par-tranches.tir.ts` (la ROUTE, le vrai DeepSeek, deux cahiers réels)
+
+Le cahier « école » du propriétaire n'existe en base qu'à 1 000 signes (coupé par l'ancien `maxLength`) et
+22 866 + 1 000 < 24 000 : **second cahier = CPA** (institution, 20 658 signes, sha256 `88fc434f0e76`, instantané
+M5), déclaré avant de dépenser. Plafond 0,05 $ ; pire cas calculé avant l'appel : 0,026 $ (hors pointe).
+
+| | essai 1 — 13:31Z | essai 2 — 13:36Z |
+|---|---|---|
+| signes envoyés / lus | 43 526 / 43 526 | 43 526 / 43 526 |
+| tranches · tentatives | 2 (22 866 + 20 658 ; coupe au paragraphe) · 2 | 2 (**23 757 + 19 767** : le 1ᵉʳ paragraphe de la CPA tient dans la 1ʳᵉ tranche) · 2 |
+| résultat | reussie | reussie |
+| coût mesuré | **0,003467 $** (14 924 entrée · 4 337 sortie) | **0,002540 $** (14 924 · 4 046) |
+| tables · doublons | 12 · 0 | 12 · 0 |
+| écrans Hayine retrouvés | 16/16 | 16/16 |
+| nom | **« Plateforme numérique CPA-Tchad »** (2ᵉ tranche ; la 1ʳᵉ n'a rendu aucun nom valide — pas de détail par tranche alors) | **« Hayine »** (1ʳᵉ tranche : nom Hayine, 7 tables, 16 écrans, 4 rôles, 8 questions) |
+| questions ouvertes · rôles | 18 · 15 | 24 · 13 |
+| durée | 16,2 s | 15,4 s |
+
+Dépense totale **0,006 $** (plafond 0,05 $). Sorties : `sortie/g30-decoupe-essai1.json`, `sortie/g30-decoupe.json` ;
+brut : `brut/g30/decoupe-reponse-essai1.json.gz`, `brut/g30/decoupe-reponse.json.gz`. **Variance mesurée** :
+1 essai sur 2, la 1ʳᵉ tranche (texte identique) ne rend pas de nom valide — famille M13.
+
+**Limite mesurée, consignée** : `lire-brief` a `maxDuration = 60` s et une tranche prend ≈ 8 s → ≈ 7 tranches
+(≈ 170 000 signes) avant la coupure de la passerelle ; et cette coupure serait **muette** côté client
+(`rl.json().catch(() => ({}))` → `noteDeLecture(undefined)` = `''`). Défaut à part, au registre.

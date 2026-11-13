@@ -41,7 +41,7 @@ import {
 } from '@deribfy/compiler'
 import { projectAirSchema } from '@deribfy/air-schema'
 import { lireEntites } from '@/lib/apps/entites-declarees'
-import { lectureAEnregistrer } from '@/lib/apps/lecture-brief'
+import { FUSIBLE_SIGNES, lectureAEnregistrer } from '@/lib/apps/lecture-brief'
 import { deploiementQuiSert } from '@/lib/apps/deploiement'
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
@@ -393,6 +393,12 @@ export async function POST(req: Request) {
     nomExistant = typeof lu.data.nom === 'string' ? lu.data.nom : null
   }
   if (demande === '') return NextResponse.json({ error: 'demande requise' }, { status: 400 })
+  // ── LE FUSIBLE ANTI-ABUS (G30, 2026-11-13) — de l'ordre du méga-octet,
+  // invisible en usage normal, jamais dans l'interface. Un cahier de deux
+  // cents pages passe ; un corps de plusieurs méga-octets ne part pas au modèle.
+  if (demande.length > FUSIBLE_SIGNES) {
+    return NextResponse.json({ error: 'Texte trop volumineux pour ce service.' }, { status: 413, headers: { 'Cache-Control': 'no-store' } })
+  }
 
   // ── LE NOM EST FACULTATIF. IL A ÉTÉ OBLIGATOIRE, ET ÇA A CASSÉ LA
   // PRODUCTION (2026-11-01).

@@ -285,6 +285,20 @@ export function Attente({ libelle }: { libelle?: ReactNode } = {}) {
   );
 }
 
+/**
+ * LE CHAMP NE TRONQUE JAMAIS, ET NE COMPTE JAMAIS (G30, 2026-11-13).
+ *
+ * MESURÉ : quatre lignes de génération portaient une `demande` de 1 000 signes
+ * exactement pour des cahiers de 1 900 à 2 600 — un maxLength de 1000 sur ce
+ * <textarea> coupait le COLLAGE sans un mot, et le bouton « Application »
+ * emportait le texte déjà coupé. Il n'y a plus de maxLength : le texte collé
+ * est le texte envoyé. Et AUCUNE limite n'est visible — ni compteur, ni
+ * message : un client qui apporte un cahier de deux cents pages est le
+ * meilleur client possible, il ne doit jamais lire qu'il a trop écrit. La
+ * lecture se fait par tranches (lib/apps/lecture-brief.ts) ; le seul garde-fou
+ * est un fusible anti-abus côté serveur, invisible en usage normal.
+ */
+
 /** Le composeur : la zone de saisie et sa fleche ronde. Un seul des deux
  *  chemins pouvait l'avoir « presque » pareil — c'est ce qui se voyait. */
 export function Composeur({
@@ -296,7 +310,6 @@ export function Composeur({
   bloque = false,
   etiquette,
   joindre,
-  longueurMax = 1000,
   note,
 }: {
   valeur: string;
@@ -317,10 +330,6 @@ export function Composeur({
    * d'avant (test-or epingle). Meme discipline que l'Escalier.
    */
   joindre?: (fichier: File) => void;
-  /** La borne de saisie. 1000 par defaut — celle des trois modes, inchangee.
-   *  Un cahier des charges entier exige davantage, et seul le chemin
-   *  application le demande. */
-  longueurMax?: number;
   /** Ce qu'on DIT sous le champ : le cout estime, ou le refus d'un format,
    *  ou un PDF scanne. Jamais une injection muette. */
   note?: ReactNode;
@@ -345,7 +354,6 @@ export function Composeur({
           }}
           placeholder={invite}
           aria-label={etiquette}
-          maxLength={longueurMax}
           disabled={bloque}
           rows={1}
           className={`w-full bg-black/40 border border-white/10 rounded-[24px] ${joindre !== undefined ? 'pl-14' : 'pl-6'} pr-16 py-4 text-white text-[15px] placeholder-slate-500 resize-none focus:outline-none transition shadow-xl min-h-[56px] max-h-40`}

@@ -48,7 +48,6 @@ import { moteurChoisi } from '@/lib/apps/interrupteur-moteur';
 import {
   formatDuFichier,
   raisonDuRefus,
-  LONGUEUR_AVEC_DOCUMENT,
   MESSAGE_SCAN,
 } from '@/lib/apps/document-joint';
 import { publierAvecAccord } from '@/components/apps/accordLecturePublique';
@@ -2025,7 +2024,6 @@ export default function ConversationApplication({
         desactive={enCours || saisie.trim() === ''}
         bloque={travail !== ''}
         etiquette="Décrivez l’application que vous voulez"
-        longueurMax={LONGUEUR_AVEC_DOCUMENT}
         note={noteJoint === '' ? undefined : noteJoint}
         joindre={(fichier) => {
           void (async () => {
