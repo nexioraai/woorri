@@ -645,7 +645,7 @@
             {
              "faire": "submit",
              "table": "medicament",
-             "mode": "supprimer"
+             "ecriture": "supprimer"
             }
            ]
           }
@@ -2007,7 +2007,7 @@
         {
          "faire": "submit",
          "table": "calculs",
-         "mode": "supprimer"
+         "ecriture": "supprimer"
         }
        ]
       }

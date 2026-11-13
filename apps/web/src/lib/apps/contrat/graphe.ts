@@ -143,18 +143,18 @@ function ecranTetrade(r: RoutePlan, t: TableLue, journal: boolean): O {
       ...cols.map((c) => ({ composant: 'Valeur', libelle: lisible(c), donnee: d(`ligne.${c}`) })),
       ...(journal ? [] : [
         bouton('Modifier', [nav(`${base}-editer`)]),
-        bouton('Supprimer', [{ faire: 'submit', table: t.nom, mode: 'supprimer' }, nav(`${base}-liste`)], 'danger'),
+        bouton('Supprimer', [{ faire: 'submit', table: t.nom, ecriture: 'supprimer' }, nav(`${base}-liste`)], 'danger'),
       ]),
       bouton('Retour', [nav(`${base}-liste`)]),
     ] }
     case 'creer': return { ...commun, etat: cols.map((c) => ({ nom: c, nature: 'texte' })), corps: [
       ...cols.map((c) => ({ composant: 'Champ', libelle: lisible(c), donnee: d(`etat.${c}`), nature: 'texte' })),
-      bouton('Enregistrer', [{ faire: 'submit', table: t.nom, mode: 'creer', valeurs: cols.map((c) => ({ champ: c, depuis: d(`etat.${c}`) })) }, nav(`${base}-liste`)], 'principal'),
+      bouton('Enregistrer', [{ faire: 'submit', table: t.nom, ecriture: 'creer', valeurs: cols.map((c) => ({ champ: c, depuis: d(`etat.${c}`) })) }, nav(`${base}-liste`)], 'principal'),
       bouton('Retour', [nav(`${base}-liste`)]),
     ] }
     case 'editer': return { ...commun, corps: [
       ...cols.map((c) => ({ composant: 'Champ', libelle: lisible(c), donnee: d(`ligne.${c}`), nature: 'texte' })),
-      bouton('Enregistrer', [{ faire: 'submit', table: t.nom, mode: 'modifier', valeurs: cols.map((c) => ({ champ: c, depuis: d(`ligne.${c}`) })) }, nav(`${base}-detail`)], 'principal'),
+      bouton('Enregistrer', [{ faire: 'submit', table: t.nom, ecriture: 'modifier', valeurs: cols.map((c) => ({ champ: c, depuis: d(`ligne.${c}`) })) }, nav(`${base}-detail`)], 'principal'),
       bouton('Retour', [nav(`${base}-detail`)]),
     ] }
   }

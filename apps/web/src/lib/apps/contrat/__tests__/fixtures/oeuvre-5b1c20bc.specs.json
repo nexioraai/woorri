@@ -386,7 +386,6 @@
             {
              "faire": "submit",
              "table": "compte",
-             "mode": "creer",
              "valeurs": [
               {
                "champ": "nom",
@@ -422,7 +421,8 @@
                "champ": "verifie",
                "depuis": false
               }
-             ]
+             ],
+             "ecriture": "creer"
             },
             {
              "faire": "navigate",
@@ -896,7 +896,7 @@
               {
                "faire": "submit",
                "table": "abonnement_ia",
-               "mode": "supprimer"
+               "ecriture": "supprimer"
               }
              ]
             }
@@ -912,7 +912,6 @@
           {
            "faire": "submit",
            "table": "abonnement_ia",
-           "mode": "creer",
            "valeurs": [
             {
              "champ": "compte",
@@ -928,7 +927,8 @@
              "champ": "credits_utilises",
              "depuis": 0
             }
-           ]
+           ],
+           "ecriture": "creer"
           }
          ]
         }
@@ -1083,7 +1083,6 @@
           {
            "faire": "submit",
            "table": "reservation",
-           "mode": "creer",
            "valeurs": [
             {
              "champ": "offre_id",
@@ -1113,7 +1112,8 @@
               "$data": "parcours.offre.devise_origine"
              }
             }
-           ]
+           ],
+           "ecriture": "creer"
           },
           {
            "faire": "navigate",
@@ -1725,7 +1725,6 @@
           {
            "faire": "submit",
            "table": "offre",
-           "mode": "creer",
            "valeurs": [
             {
              "champ": "fournisseur",
@@ -1757,7 +1756,8 @@
               "$data": "etat.disponible"
              }
             }
-           ]
+           ],
+           "ecriture": "creer"
           }
          ]
         }
@@ -1812,7 +1812,7 @@
             {
              "faire": "submit",
              "table": "offre",
-             "mode": "supprimer"
+             "ecriture": "supprimer"
             }
            ]
           }

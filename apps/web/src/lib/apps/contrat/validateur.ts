@@ -497,8 +497,8 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
           const connue = t !== null && tables.has(t)
           if (t !== null && !connue) c.noter('TABLE_INCONNUE', `${ca}.table`, `${dire(t)} n’est pas une table déclarée`, lePlusProche(t, [...tables.keys()]))
           // Modifier ou supprimer, c'est UNE ligne : il faut une ligne courante. Mesuré (A1, écran 9).
-          if ((a.mode === 'modifier' || a.mode === 'supprimer') && portee === null) {
-            c.noter('SUBMIT_SANS_LIGNE', `${ca}.mode`, `${String(a.mode)} hors d’une ligne courante : on ne sait pas quelle ligne (dans le modèle de Lignes, ou sur un écran de tétrade detail / editer)`, null)
+          if ((a.ecriture === 'modifier' || a.ecriture === 'supprimer') && portee === null) {
+            c.noter('SUBMIT_SANS_LIGNE', `${ca}.ecriture`, `${String(a.ecriture)} hors d’une ligne courante : on ne sait pas quelle ligne (dans le modèle de Lignes, ou sur un écran de tétrade detail / editer)`, null)
           }
           tableau(a.valeurs).forEach((v, j) => {
             if (!estObjet(v)) return

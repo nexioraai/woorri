@@ -234,10 +234,6 @@ const LECTEURS_TRANSITIFS: Record<string, string> = {
   // Ce fichier ne lit `sites.mode` NULLE PART : il parle à
   // `/api/sites/[slug]/mon-compte` et `/offres`, et n'en reçoit aucun mode.
   'src/app/sites/[slug]/appels-offres/Postuler.tsx': 'homonyme HTML — `inputMode="decimal"` donne le clavier numérique sur téléphone ; le composant ne lit jamais `sites.mode`.',
-  // V2 « assembler » (2026-11-14) — HOMONYME DU CONTRAT DES ÉCRANS : l'action
-  // `submit(table, mode)` porte le vocabulaire fixé par le propriétaire
-  // (creer / modifier / supprimer). Ce n'est pas un mot à moi : je ne le renomme pas.
-  'src/lib/apps/contrat/validateur.ts': 'homonyme — `mode` y est le mode d’ÉCRITURE de l’action submit (« creer », « modifier », « supprimer ») ; le validateur ne lit jamais `sites.mode`.',
 
   // — le registre lui-même —
   'src/lib/architecture/domainRegistry.ts': 'porte les MOTIFS de détection ; il décrit les frontières, il n’en franchit aucune.',
@@ -303,11 +299,7 @@ const LECTEURS_TRANSITIFS: Record<string, string> = {
 // Et ce n'est PAS un affaiblissement : le fichier declare ne lit `sites.mode`
 // nulle part. La raison ecrite le dit, et le test « les HOMONYMES ne sont
 // jamais des decideurs » le verifie independamment.
-// V2 « assembler » (2026-11-14) — RELÈVEMENT DÉLIBÉRÉ : 22 -> 23, pour UNE
-// entrée, l'homonyme `mode` de l'action submit du contrat des écrans (son
-// vocabulaire est celui du propriétaire). Le renommer reste possible : c'est
-// la décision du propriétaire, pas la mienne.
-const PLAFOND_ALLOWLIST = 23
+const PLAFOND_ALLOWLIST = 22
 
 const TOUS = fichiersSource(SRC)
 const rel = (p: string) => relative(RACINE, p).split(sep).join('/')

@@ -81,7 +81,7 @@ export function genererConsigne(): string {
   s.push('RÈGLES :')
   s.push('  - aucune langue, devise, moyen de paiement ni pays que la lecture du cahier ne nomme ;')
   s.push('  - aucun montant écrit dans un texte, aucune mention de démonstration ; un mot de passe ne se lit ni ne s’écrit dans une table ;')
-  s.push(`  - un visiteur ne lit que les tables publiques ; ${q('submit')} en mode ${q('modifier')} ou ${q('supprimer')} se fait sur une ligne courante ;`)
+  s.push(`  - un visiteur ne lit que les tables publiques ; ${q('submit')} en ${q('ecriture')} ${q('modifier')} ou ${q('supprimer')} se fait sur une ligne courante ;`)
   s.push(`  - un ${q('Bouton')} porte au moins un effet, et cet effet change ce que l’écran montre ou mène ailleurs ;`)
   s.push(`  - un ${q('Champ')} sert : sa donnée est lue par un filtre, une écriture ou un affichage ;`)
   s.push(`  - on écrit une table par ${q('submit')}, jamais par ${q('setState')} ;`)

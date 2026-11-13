@@ -52,19 +52,19 @@ function tetrade(table: string, colonnes: readonly string[], journal: boolean): 
     ...colonnes.map((c) => ({ composant: 'Valeur', libelle: t(`${table}.${c}`), donnee: d(`ligne.${c}`) })),
     ...(journal ? [] : [
       bouton(`${table}.modifier`, [nav(`${table}-editer`)]),
-      bouton(`${table}.supprimer`, [{ faire: 'submit', table, mode: 'supprimer' }, nav(`${table}-liste`)], { genre: 'danger' }),
+      bouton(`${table}.supprimer`, [{ faire: 'submit', table, ecriture: 'supprimer' }, nav(`${table}-liste`)], { genre: 'danger' }),
     ]),
     bouton('commun.retour', [nav(`${table}-liste`)], { genre: 'secondaire' }),
   ], { tetrade: { table, vue: 'detail' } })
   if (journal) return [liste, detail]
   const creer = ecran(`${table}-creer`, 'Administrateur', [
     ...colonnes.map((c) => ({ composant: 'Champ', libelle: t(`${table}.${c}`), donnee: d(`etat.${c}`), nature: 'texte', requis: true })),
-    bouton(`${table}.enregistrer`, [{ faire: 'submit', table, mode: 'creer', valeurs: colonnes.map((c) => ({ champ: c, depuis: d(`etat.${c}`) })) }, nav(`${table}-liste`)], { genre: 'principal' }),
+    bouton(`${table}.enregistrer`, [{ faire: 'submit', table, ecriture: 'creer', valeurs: colonnes.map((c) => ({ champ: c, depuis: d(`etat.${c}`) })) }, nav(`${table}-liste`)], { genre: 'principal' }),
     bouton('commun.retour', [nav(`${table}-liste`)], { genre: 'secondaire' }),
   ], { tetrade: { table, vue: 'creer' }, etat: colonnes.map((c) => ({ nom: c, nature: 'texte' })) })
   const editer = ecran(`${table}-editer`, 'Administrateur', [
     ...colonnes.map((c) => ({ composant: 'Champ', libelle: t(`${table}.${c}`), donnee: d(`ligne.${c}`), nature: 'texte' })),
-    bouton(`${table}.enregistrer`, [{ faire: 'submit', table, mode: 'modifier', valeurs: colonnes.map((c) => ({ champ: c, depuis: d(`ligne.${c}`) })) }, nav(`${table}-detail`)], { genre: 'principal' }),
+    bouton(`${table}.enregistrer`, [{ faire: 'submit', table, ecriture: 'modifier', valeurs: colonnes.map((c) => ({ champ: c, depuis: d(`ligne.${c}`) })) }, nav(`${table}-detail`)], { genre: 'principal' }),
     bouton('commun.retour', [nav(`${table}-detail`)], { genre: 'secondaire' }),
   ], { tetrade: { table, vue: 'editer' } })
   return [liste, detail, creer, editer]
@@ -137,7 +137,7 @@ export function base(): O {
       { composant: 'Phrase', texte: t('paiement.moyen') },
       { composant: 'Champ', libelle: t('paiement.chambre'), donnee: d('etat.chambre'), nature: 'texte', requis: true },
       bouton('paiement.payer', [
-        { faire: 'submit', table: 'reservation', mode: 'creer', valeurs: [
+        { faire: 'submit', table: 'reservation', ecriture: 'creer', valeurs: [
           { champ: 'chambre', depuis: d('etat.chambre') }, { champ: 'montant', depuis: d('parcours.offre.prix') }, { champ: 'statut', depuis: 'payee' },
         ] },
         nav('confirmation'),
@@ -223,7 +223,7 @@ export function cas(): Cas[] {
   for (const k of ['route', 'acces', 'titre', 'corps']) m('PROP_MANQUANTE', `écran sans ${k}`, (s) => { delete ecranDe(s, 'aide')[k] })
   m('PROP_MANQUANTE', 'navigate sans route', (s) => { delete actions(s, 'navigate')[3]!.route })
   m('PROP_MANQUANTE', 'submit sans table', (s) => { delete actions(s, 'submit')[0]!.table })
-  m('PROP_MANQUANTE', 'submit sans mode', (s) => { delete actions(s, 'submit')[1]!.mode })
+  m('PROP_MANQUANTE', 'submit sans écriture', (s) => { delete actions(s, 'submit')[1]!.ecriture })
   m('PROP_MANQUANTE', 'setState sans valeur', (s) => { delete actions(s, 'setState')[0]!.valeur })
   m('PROP_MANQUANTE', 'emit sans événement', (s) => { delete actions(s, 'emit')[0]!.evenement })
   m('PROP_MANQUANTE', 'choisirLangue sans valeur', (s) => { delete actions(s, 'emit')[1]!.valeur })
@@ -236,8 +236,8 @@ export function cas(): Cas[] {
     ['Champ', 'nature', 'select', 2], ['Titre', 'niveau', 'h1', 0], ['Titre', 'niveau', '1', 0], ['Message', 'nature', 'empty', 0],
   ]
   for (const [c, p, v, i] of variantes) m('VARIANTE_INCONNUE', `${c}.${p} = ${v}`, (s) => { de(s, c, i)[p] = v })
-  m('VARIANTE_INCONNUE', 'submit mode create', (s) => { actions(s, 'submit')[0]!.mode = 'create' })
-  m('VARIANTE_INCONNUE', 'submit mode delete', (s) => { actions(s, 'submit')[2]!.mode = 'delete' })
+  m('VARIANTE_INCONNUE', 'submit écriture create', (s) => { actions(s, 'submit')[0]!.ecriture = 'create' })
+  m('VARIANTE_INCONNUE', 'submit écriture delete', (s) => { actions(s, 'submit')[2]!.ecriture = 'delete' })
   const jetons: [string, string, string][] = [
     ['Pile', 'espace', 'var(--espace-m)'], ['Pile', 'espace', '--space-m'], ['Pile', 'espace', 'JETONS.ESPACE.m'], ['Pile', 'espace', '16px'], ['Pile', 'espace', '2rem'],
     ['Pile', 'espace', 'md'], ['Encart', 'espace', 'lg'], ['Encart', 'rayon', 'var(--radius-md)'], ['Encart', 'rayon', 'rounded'], ['Encart', 'fond', '#ff0000'],
@@ -354,9 +354,9 @@ export function cas(): Cas[] {
   m('DONNEE_PRIVEE_EXPOSEE', 'réservations listées au visiteur', (s) => { (ecranDe(s, 'accueil').corps as O[]).push({ composant: 'Lignes', donnee: d('table.reservation'), vide: 'Aucune', modele: [{ composant: 'Valeur', donnee: d('ligne.chambre') }] }) })
   m('DONNEE_PRIVEE_EXPOSEE', 'réservation en cours montrée au visiteur', (s) => { (ecranDe(s, 'detail').corps as O[]).push({ composant: 'Valeur', donnee: d('parcours.reservation.chambre') }) })
   m('DONNEE_PRIVEE_EXPOSEE', 'journal listé au visiteur', (s) => { (ecranDe(s, 'compte').corps as O[]).push({ composant: 'Lignes', donnee: d('table.journal'), vide: 'Rien', modele: [{ composant: 'Valeur', donnee: d('ligne.action') }] }) })
-  m('SUBMIT_SANS_LIGNE', 'modifier hors ligne', (s) => { actions(s, 'submit')[0]!.mode = 'modifier' })
-  m('SUBMIT_SANS_LIGNE', 'supprimer depuis l’accueil', (s) => { (ecranDe(s, 'accueil').corps as O[]).push(bouton('accueil.vider', [{ faire: 'submit', table: 'offre', mode: 'supprimer' }])) })
-  m('SUBMIT_SANS_LIGNE', 'modifier depuis la confirmation', (s) => { (ecranDe(s, 'confirmation').corps as O[]).push(bouton('confirmation.modifier', [{ faire: 'submit', table: 'reservation', mode: 'modifier', valeurs: [champ('statut', 'annulee')] }])) })
+  m('SUBMIT_SANS_LIGNE', 'modifier hors ligne', (s) => { actions(s, 'submit')[0]!.ecriture = 'modifier' })
+  m('SUBMIT_SANS_LIGNE', 'supprimer depuis l’accueil', (s) => { (ecranDe(s, 'accueil').corps as O[]).push(bouton('accueil.vider', [{ faire: 'submit', table: 'offre', ecriture: 'supprimer' }])) })
+  m('SUBMIT_SANS_LIGNE', 'modifier depuis la confirmation', (s) => { (ecranDe(s, 'confirmation').corps as O[]).push(bouton('confirmation.modifier', [{ faire: 'submit', table: 'reservation', ecriture: 'modifier', valeurs: [champ('statut', 'annulee')] }])) })
   m('MENTION_DEMO', 'version de démonstration', (s) => { phrase(s, 'aide').texte = 'Version de démonstration' })
   m('MENTION_DEMO', 'données de démo', (s) => { phrase(s, 'contact').texte = 'Données de démo' })
   m('MENTION_DEMO', 'traduction « Demo »', (s) => { ((en(s).textes as O[])[2]!).texte = 'Demo version' }, false)

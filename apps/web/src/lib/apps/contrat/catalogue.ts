@@ -214,7 +214,7 @@ export const ACTIONS = {
   } },
   submit: { aide: 'écrit dans une table (le squelette s’en charge)', args: {
     table: p({ g: 'table' }, true, 'une table déclarée'),
-    mode: p(variante('creer', 'modifier', 'supprimer'), true, 'l’écriture'),
+    ecriture: p(variante('creer', 'modifier', 'supprimer'), true, 'créer une ligne, modifier ou supprimer la ligne courante'),
     valeurs: p({ g: 'ecritures' }, false, 'chaque colonne écrite et d’où vient sa valeur'),
   } },
   emit: { aide: 'déclenche un événement du squelette', args: {

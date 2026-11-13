@@ -1348,7 +1348,6 @@
             {
              "faire": "submit",
              "table": "parent",
-             "mode": "creer",
              "valeurs": [
               {
                "champ": "nom",
@@ -1362,7 +1361,8 @@
                 "$data": "etat.telephone"
                }
               }
-             ]
+             ],
+             "ecriture": "creer"
             },
             {
              "faire": "setState",
@@ -1527,7 +1527,6 @@
                 {
                  "faire": "submit",
                  "table": "absence",
-                 "mode": "modifier",
                  "valeurs": [
                   {
                    "champ": "justifie",
@@ -1539,7 +1538,8 @@
                     "$data": "etat.justification"
                    }
                   }
-                 ]
+                 ],
+                 "ecriture": "modifier"
                 }
                ],
                "siNon": {
@@ -4253,7 +4253,6 @@
               {
                "faire": "submit",
                "table": "membre",
-               "mode": "creer",
                "valeurs": [
                 {
                  "champ": "nom",
@@ -4273,7 +4272,8 @@
                   "$data": "etat.m_date"
                  }
                 }
-               ]
+               ],
+               "ecriture": "creer"
               }
              ],
              "siNon": {
@@ -4287,7 +4287,6 @@
               {
                "faire": "submit",
                "table": "membre",
-               "mode": "modifier",
                "valeurs": [
                 {
                  "champ": "nom",
@@ -4307,7 +4306,8 @@
                   "$data": "etat.m_date"
                  }
                 }
-               ]
+               ],
+               "ecriture": "modifier"
               }
              ],
              "si": {
@@ -4387,7 +4387,7 @@
               {
                "faire": "submit",
                "table": "membre",
-               "mode": "supprimer"
+               "ecriture": "supprimer"
               }
              ]
             }
@@ -4472,7 +4472,6 @@
               {
                "faire": "submit",
                "table": "annonce",
-               "mode": "creer",
                "valeurs": [
                 {
                  "champ": "titre",
@@ -4492,7 +4491,8 @@
                   "$data": "etat.a_date"
                  }
                 }
-               ]
+               ],
+               "ecriture": "creer"
               }
              ],
              "siNon": {
@@ -4506,7 +4506,6 @@
               {
                "faire": "submit",
                "table": "annonce",
-               "mode": "modifier",
                "valeurs": [
                 {
                  "champ": "titre",
@@ -4526,7 +4525,8 @@
                   "$data": "etat.a_date"
                  }
                 }
-               ]
+               ],
+               "ecriture": "modifier"
               }
              ],
              "si": {
@@ -4606,7 +4606,7 @@
               {
                "faire": "submit",
                "table": "annonce",
-               "mode": "supprimer"
+               "ecriture": "supprimer"
               }
              ]
             }
@@ -5244,7 +5244,6 @@
             {
              "faire": "submit",
              "table": "calculs",
-             "mode": "creer",
              "valeurs": [
               {
                "champ": "consommation",
@@ -5252,7 +5251,8 @@
                 "$data": "etat.consommation"
                }
               }
-             ]
+             ],
+             "ecriture": "creer"
             },
             {
              "faire": "setState",
@@ -5525,7 +5525,6 @@
             {
              "faire": "submit",
              "table": "releve",
-             "mode": "creer",
              "valeurs": [
               {
                "champ": "type",
@@ -5545,7 +5544,8 @@
                 "$data": "etat.index"
                }
               }
-             ]
+             ],
+             "ecriture": "creer"
             }
            ],
            "icone": "ajouter"
@@ -5845,7 +5845,6 @@
           {
            "faire": "submit",
            "table": "lecture",
-           "mode": "creer",
            "valeurs": [
             {
              "champ": "index_precedent",
@@ -5865,7 +5864,8 @@
               "$data": "etat.tarif"
              }
             }
-           ]
+           ],
+           "ecriture": "creer"
           },
           {
            "faire": "setState",
