@@ -22,21 +22,24 @@
  * débordement, un contraste. Il juge des règles, pas un écran.
  */
 import {
-  ACTIONS, COMPOSANTS, EVENEMENTS, FAIRE, ICONES, JETONS, MOTIF, NATURES_ETAT, PROPS_COMMUNES, PROPS_ECRAN, PROPS_SPEC,
-  ROUTES_SOCLE, SOURCES, SchemaFragment, SchemaSpec, VUES_TETRADE, type DefProp, type Genre,
+  ACTIONS, CHAMPS_DE_CHARGE, CHARGES, COMPOSANTS, EVENEMENTS, FAIRE, ICONES, JETONS, MOTIF, NATURES_ETAT, PROPS_COMMUNES, PROPS_ECRAN,
+  PROPS_SPEC, ROUTES_SOCLE, SOURCES, SchemaFragment, SchemaSpec, VUES_TETRADE, chargeConforme, type DefProp, type Genre,
 } from './catalogue'
+import { textesDe } from './textes'
 import { horsLecture, languesPermises, type Lecture } from './contraintes'
 import { lePlusProche, normaliser } from './proche'
 
 export const CLASSES = {
   // ── couche 1 : la forme
   TYPE_INVALIDE: 1, PROP_INCONNUE: 1, ATTRIBUT_DOM: 1, PROP_MANQUANTE: 1, COMPOSANT_INCONNU: 1, FORMULAIRE_NATIF: 1,
-  VARIANTE_INCONNUE: 1, JETON_INCONNU: 1, ICONE_INCONNUE: 1, TEXTE_LITTERAL: 1, CLE_INVALIDE: 1, LIAISON_HORS_CONTRAT: 1,
-  ACTION_INCONNUE: 1, ACTION_MANQUANTE: 1, EVENEMENT_INCONNU: 1, VALEUR_INVALIDE: 1, HTML_DANS_TEXTE: 1,
+  VARIANTE_INCONNUE: 1, JETON_INCONNU: 1, ICONE_INCONNUE: 1, LIAISON_HORS_CONTRAT: 1,
+  ACTION_INCONNUE: 1, ACTION_MANQUANTE: 1, EVENEMENT_INCONNU: 1, VALEUR_INVALIDE: 1, HTML_DANS_TEXTE: 1, CHARGE_INVALIDE: 1,
   // ── couche 2 : le contexte lu
   TABLE_INCONNUE: 2, CHAMP_INCONNU: 2, ROLE_INCONNU: 2, LANGUE_HORS_LECTURE: 2, DEVISE_HORS_LECTURE: 2,
   PAIEMENT_HORS_LECTURE: 2, PAYS_HORS_LECTURE: 2, TRADUCTION_MANQUANTE: 2, ETAT_INCONNU: 2, ECRITURE_HORS_ETAT: 2,
   ACTION_SANS_EFFET: 2, CHAMP_SANS_EFFET: 2, LIAISON_HORS_PORTEE: 2,
+  // ── couche 2 : quatre défauts du jeu aveugle (A1) qui reviennent au contrat
+  COLONNE_SECRETE: 2, DONNEE_PRIVEE_EXPOSEE: 2, SUBMIT_SANS_LIGNE: 2, MENTION_DEMO: 2, MONTANT_EN_DUR: 2,
   // ── couche 2 : le graphe
   ROUTE_SANS_ECRAN: 2, ROUTE_DOUBLE: 2, ROUTE_HORS_PLAN: 2, ECRAN_SANS_ENTREE: 2, ECRAN_SANS_SORTIE: 2,
   TETRADE_INCOMPLETE: 2, COMPTE_INCOMPLET: 2, BARRE_HORS_BORNES: 2, PARCOURS_ROMPU: 2,
@@ -51,7 +54,11 @@ export type Refus = {
   readonly proche: string | null
 }
 
-export type TableLue = { readonly nom: string; readonly colonnes: readonly string[]; readonly journal?: boolean }
+/**
+ * Une table telle que la lecture la déclare. `publique` vient de
+ * `lecturePublique` (entites-declarees) : ABSENT ⇒ PRIVÉE, l'oubli va vers le sûr.
+ */
+export type TableLue = { readonly nom: string; readonly colonnes: readonly string[]; readonly journal?: boolean; readonly publique?: boolean }
 export type Contexte = Lecture & {
   readonly routes: readonly string[]
   readonly roles: readonly string[]
@@ -128,11 +135,14 @@ function cles(c: Collecte, x: Record<string, unknown>, chemin: string, permis: r
 }
 
 function texte(c: Collecte, x: unknown, chemin: string) {
-  if (typeof x === 'string') { c.noter('TEXTE_LITTERAL', chemin, `${dire(x)} écrit en dur : un texte est une clé { "$t": … } traduite dans chaque langue lue`, null); return }
-  if (!estObjet(x)) { c.noter('TYPE_INVALIDE', chemin, `un texte s’écrit { "$t": "<clé>" }, pas ${dire(x)}`, null); return }
-  if (!cles(c, x, chemin, ['$t'], ['$t'], 'un texte')) return
-  if (typeof x.$t !== 'string') { c.noter('TYPE_INVALIDE', `${chemin}.$t`, 'la clé est une chaîne', null); return }
-  if (!MOTIF.cle.test(x.$t)) c.noter('CLE_INVALIDE', `${chemin}.$t`, `${dire(x.$t)} n’est pas une clé (minuscules, points : « recherche.titre »)`, null)
+  if (typeof x === 'string') {
+    if (/<\/?[a-zA-Z!]/u.test(x)) c.noter('HTML_DANS_TEXTE', chemin, `${dire(x.slice(0, 40))} : du HTML dans un texte`, null)
+    else if (!MOTIF.texte.test(x)) c.noter('VALEUR_INVALIDE', chemin, 'un texte non vide, sans chevrons, 600 signes au plus', null)
+    return
+  }
+  // La clé d'un texte est à Deribfy : le modèle n'en écrit jamais.
+  if (estObjet(x) && '$t' in x) { c.noter('TYPE_INVALIDE', chemin, 'un texte s’écrit en clair, dans la langue principale : la clé est fabriquée par Deribfy', null); return }
+  c.noter('TYPE_INVALIDE', chemin, `un texte s’écrit en clair, pas ${dire(x)}`, null)
 }
 
 function liaison(c: Collecte, x: unknown, chemin: string) {
@@ -227,6 +237,16 @@ function genre(c: Collecte, g: Genre, x: unknown, chemin: string, prop: string) 
     case 'codeLangue':
       if (typeof x !== 'string' || !MOTIF.langue.test(x)) c.noter('VALEUR_INVALIDE', chemin, `${dire(x)} n’est pas un code de langue`, null)
       return
+    case 'charge':
+      if (!Array.isArray(x)) return c.noter('TYPE_INVALIDE', chemin, 'une charge est une liste de { champ, depuis }', null)
+      x.forEach((o, i) => {
+        const ch = `${chemin}[${String(i)}]`
+        if (!estObjet(o)) return c.noter('TYPE_INVALIDE', ch, '{ champ, depuis } attendu', null)
+        if (!cles(c, o, ch, ['champ', 'depuis'], ['champ', 'depuis'], 'un champ de charge')) return
+        if (typeof o.champ !== 'string' || !CHAMPS_DE_CHARGE.includes(o.champ)) c.noter('CHARGE_INVALIDE', `${ch}.champ`, `${dire(o.champ)} n’est pas un champ de charge (${CHAMPS_DE_CHARGE.join(', ')})`, typeof o.champ === 'string' ? lePlusProche(o.champ, CHAMPS_DE_CHARGE) : null)
+        liaison(c, o.depuis, `${ch}.depuis`)
+      })
+      return
   }
 }
 
@@ -251,6 +271,13 @@ function action(c: Collecte, x: unknown, chemin: string) {
     genre(c, d.genre, x[arg], `${chemin}.${arg}`, arg)
   }
   if (f === 'emit' && x.evenement === 'choisirLangue' && !('valeur' in x)) c.noter('PROP_MANQUANTE', `${chemin}.valeur`, 'choisirLangue dit laquelle : « valeur » (un code de langue lue)', null)
+  if (f === 'emit' && typeof x.evenement === 'string' && (EVENEMENTS as readonly string[]).includes(x.evenement)) {
+    const charge = Array.isArray(x.charge) ? x.charge.filter(estObjet).map((o) => ({ champ: String(o.champ) })) : undefined
+    if ((x.charge === undefined || Array.isArray(x.charge)) && !chargeConforme(x.evenement, charge)) {
+      const attendu = Object.entries(CHARGES[x.evenement] ?? {}).map(([k, r]) => `${k}${r === 'requis' ? '' : ' (facultatif)'}`)
+      c.noter('CHARGE_INVALIDE', `${chemin}.charge`, `${x.evenement} porte ${attendu.length > 0 ? `exactement : ${attendu.join(', ')}` : 'aucune charge'}`, null)
+    }
+  }
 }
 
 const FORMULAIRE = /^(form|formulaire|formular|<form>?)$/iu
@@ -260,11 +287,18 @@ function noeud(c: Collecte, x: unknown, chemin: string) {
   if (!('composant' in x)) return c.noter('PROP_MANQUANTE', `${chemin}.composant`, 'un composant se nomme : « composant »', null)
   const nom = x.composant
   if (typeof nom !== 'string') return c.noter('TYPE_INVALIDE', `${chemin}.composant`, 'le nom d’un composant est une chaîne', null)
+  // Un composant refusé ne cache pas ses enfants : mesuré (A1, écran 20), le Bouton
+  // « libellé » d'un formulaire refusé n'était jamais jugé.
+  const enfantsDuRefuse = () => { if (Array.isArray(x.enfants)) x.enfants.forEach((n, i) => { noeud(c, n, `${chemin}.enfants[${String(i)}]`) }) }
   if (FORMULAIRE.test(nom)) {
-    return c.noter('FORMULAIRE_NATIF', `${chemin}.composant`, `${dire(nom)} : aucun formulaire natif — l’aperçu bloque leur envoi ; on écrit avec un Bouton dont l’effet est submit`, 'Bouton')
+    c.noter('FORMULAIRE_NATIF', `${chemin}.composant`, `${dire(nom)} : aucun formulaire natif — l’aperçu bloque leur envoi ; on écrit avec un Bouton dont l’effet est submit`, 'Bouton')
+    return enfantsDuRefuse()
   }
   const def = COMPOSANTS[nom]
-  if (def === undefined) return c.noter('COMPOSANT_INCONNU', `${chemin}.composant`, `${dire(nom)} n’est pas un composant du catalogue`, lePlusProche(nom, Object.keys(COMPOSANTS)))
+  if (def === undefined) {
+    c.noter('COMPOSANT_INCONNU', `${chemin}.composant`, `${dire(nom)} n’est pas un composant du catalogue`, nom.startsWith('#') ? null : lePlusProche(nom, Object.keys(COMPOSANTS)))
+    return enfantsDuRefuse()
+  }
   const props = { ...def.props, ...PROPS_COMMUNES }
   const requis = Object.entries(props).filter(([k, d]) => d.requis && !(nom === 'Bouton' && k === 'effets')).map(([k]) => k)
   cles(c, x, chemin, ['composant', ...Object.keys(props)], requis, nom)
@@ -316,7 +350,8 @@ function traductions(c: Collecte, x: unknown, chemin: string) {
       const cj = `${ch}.textes[${String(j)}]`
       if (!estObjet(e)) return c.noter('TYPE_INVALIDE', cj, '{ cle, texte } attendu', null)
       if (!cles(c, e, cj, ['cle', 'texte'], ['cle', 'texte'], 'un texte traduit')) return
-      if (typeof e.cle !== 'string' || !MOTIF.cle.test(e.cle)) c.noter('CLE_INVALIDE', `${cj}.cle`, `${dire(e.cle)} n’est pas une clé`, null)
+      // Les clés des traductions sont FABRIQUÉES par Deribfy ; une clé hors grammaire est une erreur de Deribfy.
+      if (typeof e.cle !== 'string' || !MOTIF.cle.test(e.cle)) c.noter('VALEUR_INVALIDE', `${cj}.cle`, `${dire(e.cle)} n’est pas une clé fabriquée par Deribfy`, null)
       if (typeof e.texte !== 'string') c.noter('TYPE_INVALIDE', `${cj}.texte`, 'un texte est une chaîne', null)
       else if (/<\/?[a-zA-Z!]/u.test(e.texte)) c.noter('HTML_DANS_TEXTE', `${cj}.texte`, `${dire(e.texte.slice(0, 40))} : du HTML dans un texte`, null)
       else if (!MOTIF.traduction.test(e.texte)) c.noter('VALEUR_INVALIDE', `${cj}.texte`, 'un texte sans chevrons, 600 signes au plus', null)
@@ -328,7 +363,7 @@ function coucheUn(brut: unknown, forme: 'spec' | 'fragment'): Refus[] {
   const c = new Collecte()
   if (!estObjet(brut)) { c.noter('TYPE_INVALIDE', '', 'la spec est un objet JSON', null); return c.refus }
   if (forme === 'spec') {
-    cles(c, brut, '', Object.keys(PROPS_SPEC), Object.keys(PROPS_SPEC), 'la spec')
+    cles(c, brut, '', Object.keys(PROPS_SPEC), ['ecrans', 'barre'], 'la spec')
     if ('ecrans' in brut) {
       if (!Array.isArray(brut.ecrans)) c.noter('TYPE_INVALIDE', 'ecrans', 'ecrans est une liste', null)
       else if (brut.ecrans.length === 0) c.noter('VALEUR_INVALIDE', 'ecrans', 'aucun écran', null)
@@ -339,7 +374,7 @@ function coucheUn(brut: unknown, forme: 'spec' | 'fragment'): Refus[] {
       else brut.barre.forEach((r, i) => { genre(c, { g: 'route' }, r, `barre[${String(i)}]`, 'route') })
     }
   } else {
-    cles(c, brut, '', ['ecran', 'traductions'], ['ecran', 'traductions'], 'un fragment')
+    cles(c, brut, '', ['ecran', 'traductions'], ['ecran'], 'un fragment')
     if ('ecran' in brut) ecran(c, brut.ecran, 'ecran')
   }
   if ('traductions' in brut) traductions(c, brut.traductions, 'traductions')
@@ -356,6 +391,33 @@ type Lu = {
 }
 
 const tableau = (x: unknown): unknown[] => (Array.isArray(x) ? x : [])
+
+/**
+ * UNE COLONNE SECRÈTE n'a rien à faire dans un écran : le mot de passe appartient
+ * à la connexion (le squelette), jamais à une table qu'on lit ou écrit.
+ * Mesuré (A1, écran 10) : une table « utilisateur » à mot_de_passe en clair.
+ */
+export const COLONNE_SECRETE = /^(mot_?de_?passe|motdepasse|password|passwd|pwd|mdp|secret|hash_?mdp|code_?pin|pin)$/iu
+
+/**
+ * UNE MENTION DE DÉMONSTRATION dans une application livrée : mesuré (A1, écrans
+ * 6, 14, 15, 17) — « Démonstration », « (démo) », « (démonstration) ».
+ */
+const DEMO = /(?<![\p{L}])(d[ée]mo|d[ée]monstration|demonstration)(?![\p{L}])/iu
+
+/**
+ * UN MONTANT ÉCRIT EN DUR : un prix vient des données (`format: montant`),
+ * jamais d'un texte. Mesuré (A1, écran 6) : un catalogue aux prix inventés.
+ */
+const MONTANT = /\d[\d\s.,]*\s?(?:FCFA|F\s?CFA|XAF|XOF|€|\$|£|francs?\b|F\b)|(?:€|\$|£)\s?\d/u
+
+function scanTexte(c: Collecte, texte: string, chemin: string, ctx: Contexte) {
+  for (const h of horsLecture(texte, ctx)) c.noter(h.classe, chemin, `${dire(h.nom)} : la lecture du cahier ne le nomme pas`, null)
+  const demo = DEMO.exec(texte)
+  if (demo !== null) c.noter('MENTION_DEMO', chemin, `« ${demo[0]} » : une application livrée ne s’annonce pas en démonstration`, null)
+  const montant = MONTANT.exec(texte)
+  if (montant !== null) c.noter('MONTANT_EN_DUR', chemin, `« ${montant[0].trim()} » : un montant vient des données (Valeur, format montant), pas d’un texte`, null)
+}
 const chaine = (x: unknown): string | null => (typeof x === 'string' ? x : null)
 const donnee = (x: unknown): string | null => (estObjet(x) && typeof x.$data === 'string' ? x.$data : null)
 
@@ -380,16 +442,33 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
     if (typeof v !== 'string') return
     for (const h of horsLecture(v, ctx)) c.noter(h.classe, ch, `${dire(h.nom)} : la lecture du cahier ne le nomme pas`, null)
   }
+  const secrete = (col: string | undefined, ch: string): boolean => {
+    if (col === undefined || !COLONNE_SECRETE.test(col)) return false
+    c.noter('COLONNE_SECRETE', ch, `${dire(col)} : un secret ne se lit ni ne s’écrit dans un écran — la connexion le porte (emit connexion)`, null)
+    return true
+  }
+  // Un VISITEUR ne lit qu'une table déclarée publique (lecturePublique ; absent ⇒ privée).
+  const privee = (t: string, ch: string) => {
+    if (acces !== 'visiteur') return
+    const lue = tables.get(t)
+    if (lue !== undefined && lue.publique !== true) c.noter('DONNEE_PRIVEE_EXPOSEE', ch, `l’écran est ouvert au visiteur et lit ${dire(t)}, table privée (non déclarée publique)`, null)
+  }
   const verifierLiaison = (v: string | null, ch: string, portee: string | null, role: 'visible' | 'lecteur' | 'champ' | 'aucun') => {
     if (v === null) return
     const [source, a, b] = v.split('.')
-    if (source === 'table' && a !== undefined && !tables.has(a)) c.noter('TABLE_INCONNUE', ch, `${dire(a)} n’est pas une table déclarée`, lePlusProche(a, [...tables.keys()]))
+    if (source === 'table' && a !== undefined) {
+      if (!tables.has(a)) c.noter('TABLE_INCONNUE', ch, `${dire(a)} n’est pas une table déclarée`, lePlusProche(a, [...tables.keys()]))
+      else privee(a, ch)
+    }
     if (source === 'parcours' && a !== undefined) {
       if (!tables.has(a)) c.noter('TABLE_INCONNUE', ch, `${dire(a)} n’est pas une table déclarée`, lePlusProche(a, [...tables.keys()]))
+      else if (secrete(b, ch)) { /* noté */ }
       else if (b !== undefined && !colonnes(a).includes(b)) c.noter('CHAMP_INCONNU', ch, `${dire(b)} n’est pas une colonne de ${a}`, lePlusProche(b, colonnes(a)))
+      else privee(a, ch)
     }
     if (source === 'ligne' && a !== undefined && portee !== INCONNUE) {
-      if (portee === null) c.noter('LIAISON_HORS_PORTEE', ch, `${dire(v)} : aucune ligne courante ici (hors d’un modèle de Lignes ou d’un écran de tétrade detail / editer)`, null)
+      if (secrete(a, ch)) { /* noté */ }
+      else if (portee === null) c.noter('LIAISON_HORS_PORTEE', ch, `${dire(v)} : aucune ligne courante ici (hors d’un modèle de Lignes ou d’un écran de tétrade detail / editer)`, null)
       else if (!colonnes(portee).includes(a)) c.noter('CHAMP_INCONNU', ch, `${dire(a)} n’est pas une colonne de ${portee}`, lePlusProche(a, colonnes(portee)))
     }
     if (source === 'etat' && a !== undefined) {
@@ -417,11 +496,16 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
           const t = chaine(a.table)
           const connue = t !== null && tables.has(t)
           if (t !== null && !connue) c.noter('TABLE_INCONNUE', `${ca}.table`, `${dire(t)} n’est pas une table déclarée`, lePlusProche(t, [...tables.keys()]))
+          // Modifier ou supprimer, c'est UNE ligne : il faut une ligne courante. Mesuré (A1, écran 9).
+          if ((a.mode === 'modifier' || a.mode === 'supprimer') && portee === null) {
+            c.noter('SUBMIT_SANS_LIGNE', `${ca}.mode`, `${String(a.mode)} hors d’une ligne courante : on ne sait pas quelle ligne (dans le modèle de Lignes, ou sur un écran de tétrade detail / editer)`, null)
+          }
           tableau(a.valeurs).forEach((v, j) => {
             if (!estObjet(v)) return
             const cv = `${ca}.valeurs[${String(j)}]`
             const champ = chaine(v.champ)
-            if (connue && champ !== null && !colonnes(t).includes(champ)) c.noter('CHAMP_INCONNU', `${cv}.champ`, `${dire(champ)} n’est pas une colonne de ${t}`, lePlusProche(champ, colonnes(t)))
+            if (secrete(champ ?? undefined, `${cv}.champ`)) { /* noté */ }
+            else if (connue && champ !== null && !colonnes(t).includes(champ)) c.noter('CHAMP_INCONNU', `${cv}.champ`, `${dire(champ)} n’est pas une colonne de ${t}`, lePlusProche(champ, colonnes(t)))
             if (estObjet(v.depuis)) verifierLiaison(donnee(v.depuis), `${cv}.depuis`, portee, 'lecteur')
             else scanLitteral(v.depuis, `${cv}.depuis`)
           })
@@ -430,6 +514,7 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
         case 'emit': {
           const ev = chaine(a.evenement)
           if (ev !== null) lu.emis.add(ev)
+          tableau(a.charge).forEach((x, j) => { if (estObjet(x)) verifierLiaison(donnee(x.depuis), `${ca}.charge[${String(j)}].depuis`, portee, 'lecteur') })
           if (ev === 'choisirLangue') {
             const code = chaine(a.valeur)
             if (code !== null && !languesPermises(ctx).includes(code)) c.noter('LANGUE_HORS_LECTURE', `${ca}.valeur`, `${dire(code)} : langues lues ${languesPermises(ctx).join(', ')}`, lePlusProche(code, languesPermises(ctx)))
@@ -455,13 +540,10 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
 
   const parcourir = (n: unknown, ch: string, portee: string | null) => {
     if (!estObjet(n)) return
-    for (const [k, v] of Object.entries(n)) {
-      if (estObjet(v) && typeof v.$t === 'string') lu.cles.add(v.$t)
-      if (k === 'choix') tableau(v).forEach((o, i) => { if (estObjet(o)) { if (estObjet(o.libelle) && typeof o.libelle.$t === 'string') lu.cles.add(o.libelle.$t); scanLitteral(o.valeur, `${ch}.choix[${String(i)}].valeur`) } })
-    }
+    tableau(n.choix).forEach((o, i) => { if (estObjet(o)) scanLitteral(o.valeur, `${ch}.choix[${String(i)}].valeur`) })
     verifierLiaison(donnee(n.si), `${ch}.si`, portee, 'visible')
     verifierLiaison(donnee(n.siNon), `${ch}.siNon`, portee, 'visible')
-    const libelle = estObjet(n.libelle) && typeof n.libelle.$t === 'string' ? n.libelle.$t : String(n.composant)
+    const libelle = typeof n.libelle === 'string' ? n.libelle : String(n.composant)
     switch (n.composant) {
       case 'Valeur':
       case 'Illustration':
@@ -482,7 +564,8 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
         tableau(n.filtre).forEach((f, i) => {
           if (!estObjet(f)) return
           const champ = chaine(f.champ)
-          if (t !== null && t !== INCONNUE && champ !== null && !colonnes(t).includes(champ)) c.noter('CHAMP_INCONNU', `${ch}.filtre[${String(i)}].champ`, `${dire(champ)} n’est pas une colonne de ${t}`, lePlusProche(champ, colonnes(t)))
+          if (secrete(champ ?? undefined, `${ch}.filtre[${String(i)}].champ`)) { /* noté */ }
+          else if (t !== null && t !== INCONNUE && champ !== null && !colonnes(t).includes(champ)) c.noter('CHAMP_INCONNU', `${ch}.filtre[${String(i)}].champ`, `${dire(champ)} n’est pas une colonne de ${t}`, lePlusProche(champ, colonnes(t)))
           verifierLiaison(donnee(f.egal), `${ch}.filtre[${String(i)}].egal`, portee, 'visible')
         })
         tableau(n.modele).forEach((m, i) => { parcourir(m, `${ch}.modele[${String(i)}]`, t) })
@@ -494,7 +577,11 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
     tableau(n.enfants).forEach((m, i) => { parcourir(m, `${ch}.enfants[${String(i)}]`, portee) })
   }
 
-  if (estObjet(e.titre) && typeof e.titre.$t === 'string') lu.cles.add(e.titre.$t)
+  // ── LES TEXTES : en clair ; leurs clés sont fabriquées par Deribfy (textes.ts).
+  for (const t of textesDe(e)) {
+    lu.cles.add(t.cle)
+    scanTexte(c, t.texte, `${chemin}.${t.chemin}`, ctx)
+  }
   const vue = tetrade !== null ? chaine(tetrade.vue) : null
   const porteeEcran = tableTetrade !== null && tables.has(tableTetrade) && (vue === 'detail' || vue === 'editer') ? tableTetrade : null
   tableau(e.corps).forEach((n, i) => { parcourir(n, `${chemin}.corps[${String(i)}]`, porteeEcran) })
@@ -510,8 +597,14 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
   return lu
 }
 
+/**
+ * LES TRADUCTIONS : la langue principale est celle des textes écrits en clair
+ * (la première langue lue) ; chaque autre langue lue doit porter chaque clé
+ * fabriquée par Deribfy.
+ */
 function contexteTraductions(c: Collecte, tr: unknown, cles: Set<string>, ctx: Contexte) {
   const permises = languesPermises(ctx)
+  const principale = permises[0]!
   const parLangue = new Map<string, Map<string, string>>()
   tableau(tr).forEach((t, i) => {
     if (!estObjet(t)) return
@@ -525,10 +618,10 @@ function contexteTraductions(c: Collecte, tr: unknown, cles: Set<string>, ctx: C
       const cle = chaine(e.cle)
       const tx = chaine(e.texte)
       if (cle !== null && tx !== null) m.set(cle, tx)
-      if (tx !== null) for (const h of horsLecture(tx, ctx)) c.noter(h.classe, `traductions[${String(i)}].textes[${String(j)}].texte`, `${dire(h.nom)} : la lecture du cahier ne le nomme pas`, null)
+      if (tx !== null) scanTexte(c, tx, `traductions[${String(i)}].textes[${String(j)}].texte`, ctx)
     })
   })
-  for (const l of permises) {
+  for (const l of permises.filter((x) => x !== principale)) {
     const m = parLangue.get(l)
     const manquantes = [...cles].filter((k) => m?.get(k) === undefined || m.get(k)!.trim() === '')
     if (manquantes.length > 0) c.noter('TRADUCTION_MANQUANTE', `traductions.${l}`, `${l} : ${String(manquantes.length)} clé(s) sans texte (${manquantes.slice(0, 4).join(', ')}${manquantes.length > 4 ? '…' : ''})`, null)

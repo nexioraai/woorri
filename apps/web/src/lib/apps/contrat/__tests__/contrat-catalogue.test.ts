@@ -111,7 +111,7 @@ describe('étape 1 · le catalogue', () => {
   it('⑤ aucun formulaire natif : absent du catalogue, refusé par sa classe', () => {
     expect(Object.keys(COMPOSANTS).filter((n) => /form/iu.test(n))).toEqual([])
     for (const nom of ['form', 'Form', 'Formulaire']) {
-      const v = validerFragment({ ecran: { route: 'detail', acces: 'visiteur', titre: { $t: 'a.b' }, corps: [{ composant: nom, enfants: [] }] }, traductions: [] }, CTX)
+      const v = validerFragment({ ecran: { route: 'detail', acces: 'visiteur', titre: 'Détail', corps: [{ composant: nom, enfants: [] }] } }, CTX)
       expect(v.refus.map((r) => r.classe)).toEqual(['FORMULAIRE_NATIF'])
       expect(v.refus[0]!.proche).toBe('Bouton')
     }

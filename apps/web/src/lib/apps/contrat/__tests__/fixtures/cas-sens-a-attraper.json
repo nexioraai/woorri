@@ -1,0 +1,3024 @@
+{
+ "note": "CAS RÉELS À ATTRAPER PAR LES JUGES D’EXPÉRIENCE, DE RENDU ET DE SENS — pas par le validateur de schéma. (1) Les 30 défauts injectés au bloc A2-ii (2026-11-13) dans les écrans aveugles acceptés 7, 17, 23, convertis au format V2. « vuParLeContratV2 » : les classes que le contrat V2 lève EN PLUS de l’écran de base — une prise de côté, pas un but. (2) Les défauts du jeu aveugle A1 que le contrat ne verra pas, avec leur couche.",
+ "injections": [
+  {
+   "i": 1,
+   "base": 7,
+   "oeuvre": "f1b753a6",
+   "defaut": "mauvaise colonne : « Stock » affiche le prix",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "public",
+     "acces": "visiteur",
+     "titre": "Pharmacie",
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Pharmacie de N'Djamena",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Médicaments disponibles et horaires d'ouverture"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Médicaments disponibles",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.medicament"
+       },
+       "vide": "Aucun médicament disponible",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Catégorie",
+           "donnee": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Emplacement",
+           "donnee": {
+            "$data": "ligne.emplacement"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Expire le",
+           "donnee": {
+            "$data": "ligne.date_expiration"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.prix"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Horaires d'ouverture",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.horaire"
+       },
+       "vide": "Horaires non renseignés",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.jour"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.ouverture"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.fermeture"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 2,
+   "base": 7,
+   "oeuvre": "f1b753a6",
+   "defaut": "un stock en boîtes formaté comme de l’argent",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "public",
+     "acces": "visiteur",
+     "titre": "Pharmacie",
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Pharmacie de N'Djamena",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Médicaments disponibles et horaires d'ouverture"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Médicaments disponibles",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.medicament"
+       },
+       "vide": "Aucun médicament disponible",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Catégorie",
+           "donnee": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Emplacement",
+           "donnee": {
+            "$data": "ligne.emplacement"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Expire le",
+           "donnee": {
+            "$data": "ligne.date_expiration"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           },
+           "format": "montant"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Horaires d'ouverture",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.horaire"
+       },
+       "vide": "Horaires non renseignés",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.jour"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.ouverture"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.fermeture"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 3,
+   "base": 7,
+   "oeuvre": "f1b753a6",
+   "defaut": "un nom de médicament formaté comme une date",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "public",
+     "acces": "visiteur",
+     "titre": "Pharmacie",
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Pharmacie de N'Djamena",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Médicaments disponibles et horaires d'ouverture"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Médicaments disponibles",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.medicament"
+       },
+       "vide": "Aucun médicament disponible",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Catégorie",
+           "donnee": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Emplacement",
+           "donnee": {
+            "$data": "ligne.emplacement"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Expire le",
+           "donnee": {
+            "$data": "ligne.date_expiration"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           },
+           "format": "date"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Horaires d'ouverture",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.horaire"
+       },
+       "vide": "Horaires non renseignés",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.jour"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.ouverture"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.fermeture"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 4,
+   "base": 7,
+   "oeuvre": "f1b753a6",
+   "defaut": "le libellé ment : « Supprimer » ne fait que revenir à l’accueil",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "public",
+     "acces": "visiteur",
+     "titre": "Pharmacie",
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Pharmacie de N'Djamena",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Médicaments disponibles et horaires d'ouverture"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Médicaments disponibles",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.medicament"
+       },
+       "vide": "Aucun médicament disponible",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Catégorie",
+           "donnee": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Emplacement",
+           "donnee": {
+            "$data": "ligne.emplacement"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Expire le",
+           "donnee": {
+            "$data": "ligne.date_expiration"
+           },
+           "format": "date"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Horaires d'ouverture",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.horaire"
+       },
+       "vide": "Horaires non renseignés",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.jour"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.ouverture"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.fermeture"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Bouton",
+       "libelle": "Supprimer",
+       "effets": [
+        {
+         "faire": "navigate",
+         "route": "accueil"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 5,
+   "base": 7,
+   "oeuvre": "f1b753a6",
+   "defaut": "suppression d’un médicament offerte au visiteur, sans confirmation",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "public",
+     "acces": "visiteur",
+     "titre": "Pharmacie",
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Pharmacie de N'Djamena",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Médicaments disponibles et horaires d'ouverture"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Médicaments disponibles",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.medicament"
+       },
+       "vide": "Aucun médicament disponible",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Catégorie",
+           "donnee": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Emplacement",
+           "donnee": {
+            "$data": "ligne.emplacement"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Expire le",
+           "donnee": {
+            "$data": "ligne.date_expiration"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Retirer",
+           "genre": "danger",
+           "effets": [
+            {
+             "faire": "submit",
+             "table": "medicament",
+             "mode": "supprimer"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Horaires d'ouverture",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.horaire"
+       },
+       "vide": "Horaires non renseignés",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.jour"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.ouverture"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.fermeture"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 6,
+   "base": 7,
+   "oeuvre": "f1b753a6",
+   "defaut": "numéro de téléphone factice écrit en dur",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "public",
+     "acces": "visiteur",
+     "titre": "Pharmacie",
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Pharmacie de N'Djamena",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Médicaments disponibles et horaires d'ouverture"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Médicaments disponibles",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.medicament"
+       },
+       "vide": "Aucun médicament disponible",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Catégorie",
+           "donnee": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Emplacement",
+           "donnee": {
+            "$data": "ligne.emplacement"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Expire le",
+           "donnee": {
+            "$data": "ligne.date_expiration"
+           },
+           "format": "date"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Horaires d'ouverture",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.horaire"
+       },
+       "vide": "Horaires non renseignés",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.jour"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.ouverture"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.fermeture"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Tél : +235 00 00 00 00"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 7,
+   "base": 7,
+   "oeuvre": "f1b753a6",
+   "defaut": "message d’erreur affiché en permanence",
+   "couche": "experience",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "public",
+     "acces": "visiteur",
+     "titre": "Pharmacie",
+     "corps": [
+      {
+       "composant": "Message",
+       "nature": "erreur",
+       "texte": "Erreur de chargement"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Pharmacie de N'Djamena",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Médicaments disponibles et horaires d'ouverture"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Médicaments disponibles",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.medicament"
+       },
+       "vide": "Aucun médicament disponible",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Catégorie",
+           "donnee": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Emplacement",
+           "donnee": {
+            "$data": "ligne.emplacement"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Expire le",
+           "donnee": {
+            "$data": "ligne.date_expiration"
+           },
+           "format": "date"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Horaires d'ouverture",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.horaire"
+       },
+       "vide": "Horaires non renseignés",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.jour"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.ouverture"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.fermeture"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 8,
+   "base": 7,
+   "oeuvre": "f1b753a6",
+   "defaut": "texte de remplissage « Lorem ipsum »",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "public",
+     "acces": "visiteur",
+     "titre": "Pharmacie",
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Pharmacie de N'Djamena",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Médicaments disponibles et horaires d'ouverture"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Médicaments disponibles",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.medicament"
+       },
+       "vide": "Aucun médicament disponible",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Catégorie",
+           "donnee": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Emplacement",
+           "donnee": {
+            "$data": "ligne.emplacement"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Expire le",
+           "donnee": {
+            "$data": "ligne.date_expiration"
+           },
+           "format": "date"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Horaires d'ouverture",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.horaire"
+       },
+       "vide": "Horaires non renseignés",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.jour"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.ouverture"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.fermeture"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Lorem ipsum dolor sit amet"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 9,
+   "base": 7,
+   "oeuvre": "f1b753a6",
+   "defaut": "titre en anglais dans les textes français",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "public",
+     "acces": "visiteur",
+     "titre": "Pharmacie",
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Pharmacie de N'Djamena",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Médicaments disponibles et horaires d'ouverture"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Médicaments disponibles",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.medicament"
+       },
+       "vide": "Aucun médicament disponible",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Catégorie",
+           "donnee": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Emplacement",
+           "donnee": {
+            "$data": "ligne.emplacement"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Expire le",
+           "donnee": {
+            "$data": "ligne.date_expiration"
+           },
+           "format": "date"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Horaires d'ouverture",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.horaire"
+       },
+       "vide": "Horaires non renseignés",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.jour"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.ouverture"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.fermeture"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Available medicines"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 10,
+   "base": 7,
+   "oeuvre": "f1b753a6",
+   "defaut": "deux boutons « principal » sur le même écran",
+   "couche": "rendu",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "public",
+     "acces": "visiteur",
+     "titre": "Pharmacie",
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Pharmacie de N'Djamena",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Médicaments disponibles et horaires d'ouverture"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Médicaments disponibles",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.medicament"
+       },
+       "vide": "Aucun médicament disponible",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Catégorie",
+           "donnee": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Emplacement",
+           "donnee": {
+            "$data": "ligne.emplacement"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Expire le",
+           "donnee": {
+            "$data": "ligne.date_expiration"
+           },
+           "format": "date"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Horaires d'ouverture",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.horaire"
+       },
+       "vide": "Horaires non renseignés",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.jour"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.ouverture"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.fermeture"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Bouton",
+       "libelle": "Commander",
+       "genre": "principal",
+       "effets": [
+        {
+         "faire": "navigate",
+         "route": "gestion"
+        }
+       ]
+      },
+      {
+       "composant": "Bouton",
+       "libelle": "Réserver",
+       "genre": "principal",
+       "effets": [
+        {
+         "faire": "navigate",
+         "route": "gestion"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 11,
+   "base": 17,
+   "oeuvre": "60bf2c40",
+   "defaut": "mauvaise colonne : « Consommation » affiche le montant",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des calculs",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des calculs",
+       "niveau": "page"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Vos simulations de facture SNE enregistrées."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.calculs"
+       },
+       "vide": "Aucun historique",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant_total"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Montant TTC"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Consommation",
+           "donnee": {
+            "$data": "ligne.montant_total"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Enregistrez un calcul depuis l'écran « Calcul » pour le retrouver ici."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 12,
+   "base": 17,
+   "oeuvre": "60bf2c40",
+   "defaut": "« Retour » mène aux mentions légales",
+   "couche": "experience",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des calculs",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des calculs",
+       "niveau": "page"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Vos simulations de facture SNE enregistrées."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.calculs"
+       },
+       "vide": "Aucun historique",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant_total"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Montant TTC"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Enregistrez un calcul depuis l'écran « Calcul » pour le retrouver ici."
+      },
+      {
+       "composant": "Bouton",
+       "libelle": "Retour",
+       "effets": [
+        {
+         "faire": "navigate",
+         "route": "legal"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 13,
+   "base": 17,
+   "oeuvre": "60bf2c40",
+   "defaut": "« Ouvrir le détail » ramène sur le même écran",
+   "couche": "experience",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des calculs",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des calculs",
+       "niveau": "page"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Vos simulations de facture SNE enregistrées."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.calculs"
+       },
+       "vide": "Aucun historique",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant_total"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Montant TTC"
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Ouvrir le détail",
+           "effets": [
+            {
+             "faire": "navigate",
+             "route": "historique"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Enregistrez un calcul depuis l'écran « Calcul » pour le retrouver ici."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 14,
+   "base": 17,
+   "oeuvre": "60bf2c40",
+   "defaut": "indicateur de chargement affiché en permanence",
+   "couche": "experience",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des calculs",
+     "corps": [
+      {
+       "composant": "Message",
+       "nature": "chargement",
+       "texte": "Chargement…"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Historique des calculs",
+       "niveau": "page"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Vos simulations de facture SNE enregistrées."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.calculs"
+       },
+       "vide": "Aucun historique",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant_total"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Montant TTC"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Enregistrez un calcul depuis l'écran « Calcul » pour le retrouver ici."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 15,
+   "base": 17,
+   "oeuvre": "60bf2c40",
+   "defaut": "une date formatée comme de l’argent",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des calculs",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des calculs",
+       "niveau": "page"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Vos simulations de facture SNE enregistrées."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.calculs"
+       },
+       "vide": "Aucun historique",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant_total"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Montant TTC"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "montant"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Enregistrez un calcul depuis l'écran « Calcul » pour le retrouver ici."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 16,
+   "base": 17,
+   "oeuvre": "60bf2c40",
+   "defaut": "pastille verte « succès » pour un échec",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des calculs",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des calculs",
+       "niveau": "page"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Vos simulations de facture SNE enregistrées."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.calculs"
+       },
+       "vide": "Aucun historique",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant_total"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Montant TTC"
+          },
+          {
+           "composant": "Pastille",
+           "texte": "Échec",
+           "ton": "succes"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Enregistrez un calcul depuis l'écran « Calcul » pour le retrouver ici."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 17,
+   "base": 17,
+   "oeuvre": "60bf2c40",
+   "defaut": "champ de recherche masqué comme un mot de passe",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des calculs",
+     "corps": [
+      {
+       "composant": "Champ",
+       "libelle": "Rechercher une consommation",
+       "donnee": {
+        "$data": "etat.q"
+       },
+       "nature": "secret"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Historique des calculs",
+       "niveau": "page"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Vos simulations de facture SNE enregistrées."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.calculs"
+       },
+       "vide": "Aucun historique",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant_total"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Montant TTC"
+          }
+         ]
+        }
+       ],
+       "filtre": [
+        {
+         "champ": "consommation",
+         "egal": {
+          "$data": "etat.q"
+         }
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Enregistrez un calcul depuis l'écran « Calcul » pour le retrouver ici."
+      }
+     ],
+     "etat": [
+      {
+       "nom": "q",
+       "nature": "texte"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 18,
+   "base": 17,
+   "oeuvre": "60bf2c40",
+   "defaut": "« Effacer l’historique » supprime sans dire quelle ligne ni demander confirmation",
+   "couche": "semantique",
+   "vuParLeContratV2": [
+    "SUBMIT_SANS_LIGNE"
+   ],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des calculs",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des calculs",
+       "niveau": "page"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Vos simulations de facture SNE enregistrées."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.calculs"
+       },
+       "vide": "Aucun historique",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant_total"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Montant TTC"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Enregistrez un calcul depuis l'écran « Calcul » pour le retrouver ici."
+      },
+      {
+       "composant": "Bouton",
+       "libelle": "Effacer l’historique",
+       "genre": "danger",
+       "effets": [
+        {
+         "faire": "submit",
+         "table": "calculs",
+         "mode": "supprimer"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 19,
+   "base": 17,
+   "oeuvre": "60bf2c40",
+   "defaut": "l’état vide dit « Chargement… »",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des calculs",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des calculs",
+       "niveau": "page"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Vos simulations de facture SNE enregistrées."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.calculs"
+       },
+       "vide": "Chargement…",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant_total"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Montant TTC"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Enregistrez un calcul depuis l'écran « Calcul » pour le retrouver ici."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 20,
+   "base": 17,
+   "oeuvre": "60bf2c40",
+   "defaut": "« Imprimer » déconnecte l’utilisateur",
+   "couche": "experience",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des calculs",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des calculs",
+       "niveau": "page"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Vos simulations de facture SNE enregistrées."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.calculs"
+       },
+       "vide": "Aucun historique",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant_total"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Montant TTC"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Enregistrez un calcul depuis l'écran « Calcul » pour le retrouver ici."
+      },
+      {
+       "composant": "Bouton",
+       "libelle": "Imprimer",
+       "effets": [
+        {
+         "faire": "emit",
+         "evenement": "deconnexion"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 21,
+   "base": 23,
+   "oeuvre": "8a2735f0",
+   "defaut": "« Index précédent » affiche l’index actuel",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des relevés",
+       "niveau": "page"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.lecture"
+       },
+       "vide": "Aucun relevé enregistré pour le moment.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_precedent"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Index précédent",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 22,
+   "base": 23,
+   "oeuvre": "8a2735f0",
+   "defaut": "un montant affiché comme un nombre, sans devise",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des relevés",
+       "niveau": "page"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.lecture"
+       },
+       "vide": "Aucun relevé enregistré pour le moment.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_precedent"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant"
+           },
+           "format": "nombre"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 23,
+   "base": 23,
+   "oeuvre": "8a2735f0",
+   "defaut": "des kWh formatés comme de l’argent",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des relevés",
+       "niveau": "page"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.lecture"
+       },
+       "vide": "Aucun relevé enregistré pour le moment.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_precedent"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "montant"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 24,
+   "base": 23,
+   "oeuvre": "8a2735f0",
+   "defaut": "aveu de données factices dans l’écran livré",
+   "couche": "semantique",
+   "vuParLeContratV2": [
+    "MENTION_DEMO"
+   ],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des relevés",
+       "niveau": "page"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.lecture"
+       },
+       "vide": "Aucun relevé enregistré pour le moment.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_precedent"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant"
+           },
+           "format": "montant"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Données de démonstration"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 25,
+   "base": 23,
+   "oeuvre": "8a2735f0",
+   "defaut": "« Payer maintenant » ne fait que partager",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des relevés",
+       "niveau": "page"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.lecture"
+       },
+       "vide": "Aucun relevé enregistré pour le moment.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_precedent"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant"
+           },
+           "format": "montant"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Bouton",
+       "libelle": "Payer maintenant",
+       "effets": [
+        {
+         "faire": "emit",
+         "evenement": "partager"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 26,
+   "base": 23,
+   "oeuvre": "8a2735f0",
+   "defaut": "deux titres de page",
+   "couche": "rendu",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des relevés",
+       "niveau": "page"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.lecture"
+       },
+       "vide": "Aucun relevé enregistré pour le moment.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_precedent"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant"
+           },
+           "format": "montant"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Mes relevés",
+       "niveau": "page"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 27,
+   "base": 23,
+   "oeuvre": "8a2735f0",
+   "defaut": "filtre absurde : le montant égal au rôle de la session",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des relevés",
+       "niveau": "page"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.lecture"
+       },
+       "vide": "Aucun relevé enregistré pour le moment.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_precedent"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant"
+           },
+           "format": "montant"
+          }
+         ]
+        }
+       ],
+       "filtre": [
+        {
+         "champ": "montant",
+         "egal": {
+          "$data": "session.role"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 28,
+   "base": 23,
+   "oeuvre": "8a2735f0",
+   "defaut": "une image tirée de la colonne date",
+   "couche": "rendu",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des relevés",
+       "niveau": "page"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.lecture"
+       },
+       "vide": "Aucun relevé enregistré pour le moment.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_precedent"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Illustration",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "alternative": "Photo du compteur"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 29,
+   "base": 23,
+   "oeuvre": "8a2735f0",
+   "defaut": "bouton « danger » pour une action anodine",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des relevés",
+       "niveau": "page"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.lecture"
+       },
+       "vide": "Aucun relevé enregistré pour le moment.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_precedent"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant"
+           },
+           "format": "montant"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Bouton",
+       "libelle": "Actualiser",
+       "genre": "danger",
+       "effets": [
+        {
+         "faire": "emit",
+         "evenement": "rafraichir"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "i": 30,
+   "base": 23,
+   "oeuvre": "8a2735f0",
+   "defaut": "fausse confirmation « Paiement confirmé » affichée en permanence",
+   "couche": "semantique",
+   "vuParLeContratV2": [],
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Message",
+       "nature": "succes",
+       "texte": "Paiement confirmé"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Historique des relevés",
+       "niveau": "page"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.lecture"
+       },
+       "vide": "Aucun relevé enregistré pour le moment.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_precedent"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant"
+           },
+           "format": "montant"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "aveugleHorsContrat": [
+  {
+   "n": 2,
+   "defaut": "notes reliées à l’élève par le NOM, absences par l’id : jointure incohérente",
+   "couche": "semantique",
+   "note": "contrat, le jour où la lecture déclarera les relations"
+  },
+  {
+   "n": 2,
+   "defaut": "parent_id comparé au téléphone du parent connecté",
+   "couche": "semantique",
+   "note": null
+  },
+  {
+   "n": 4,
+   "defaut": "disponibilité par boutique remplacée par « contactez la boutique » en dur",
+   "couche": "semantique",
+   "note": null
+  },
+  {
+   "n": 4,
+   "defaut": "réservation, devis, appel demandés par le cahier : absents de la page",
+   "couche": "graphe",
+   "note": "les routes et actions lues (V2) mènent à ces écrans"
+  },
+  {
+   "n": 6,
+   "defaut": "catalogue codé en dur (au-delà des prix)",
+   "couche": "semantique",
+   "note": "les prix : MONTANT_EN_DUR (contrat V2)"
+  },
+  {
+   "n": 8,
+   "defaut": "icône « alerte » devant un stock normal",
+   "couche": "semantique",
+   "note": null
+  },
+  {
+   "n": 10,
+   "defaut": "icône « alerte » sur « Se déconnecter »",
+   "couche": "semantique",
+   "note": null
+  },
+  {
+   "n": 14,
+   "defaut": "index en kWh formaté comme de l’argent",
+   "couche": "semantique",
+   "note": "contrat, le jour où la lecture typera les montants"
+  },
+  {
+   "n": 15,
+   "defaut": "index en kWh formaté comme de l’argent",
+   "couche": "semantique",
+   "note": "contrat, le jour où la lecture typera les montants"
+  },
+  {
+   "n": 17,
+   "defaut": "l’état vide renvoie à l’écran « Calcul » sans lien pour y aller",
+   "couche": "experience",
+   "note": null
+  },
+  {
+   "n": 22,
+   "defaut": "tarif au kWh laissé à la saisie au lieu du barème SNE",
+   "couche": "semantique",
+   "note": null
+  },
+  {
+   "n": 24,
+   "defaut": "titre en capitales",
+   "couche": "rendu",
+   "note": null
+  }
+ ]
+}

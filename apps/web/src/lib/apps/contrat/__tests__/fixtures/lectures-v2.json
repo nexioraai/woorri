@@ -1,0 +1,468 @@
+{
+ "note": "V2 — preuve à 0 $ : graphe dérivé AVANT tout appel au modèle. « lectures » : lectures réellement enregistrées. « sansLecture » : aucune lecture n’existe ; tables tirées du code, AUCUN écran lu — ce n’est pas une lecture.",
+ "lectures": {
+  "5b1c20bc": {
+   "source": "lecture enregistrée de la génération 5b1c20bc (2026-11-13T20:14 UTC) ; tables lues dans systeme/types.ts de l’œuvre livrée",
+   "lecture": {
+    "ecrans": [
+     "démarrage/langue",
+     "inscription/connexion",
+     "vérification",
+     "accueil",
+     "recherche",
+     "résultats",
+     "détail",
+     "récapitulatif/paiement",
+     "confirmation",
+     "réservations",
+     "documents",
+     "notifications",
+     "profil",
+     "abonnement IA",
+     "agent IA",
+     "aide"
+    ],
+    "roles": [
+     "Particulier",
+     "Agence",
+     "Entreprise",
+     "Administrateur"
+    ],
+    "parcours": [
+     "accueil",
+     "recherche",
+     "résultats",
+     "détail",
+     "récapitulatif/paiement",
+     "confirmation"
+    ],
+    "langues": [
+     "fr",
+     "en",
+     "ar"
+    ],
+    "devises": [],
+    "moyensPaiement": [],
+    "pays": []
+   },
+   "tables": [
+    {
+     "nom": "compte",
+     "colonnes": [
+      "nom",
+      "email",
+      "telephone",
+      "type",
+      "langue",
+      "verifie"
+     ]
+    },
+    {
+     "nom": "fournisseur",
+     "colonnes": [
+      "nom",
+      "capacites",
+      "actif",
+      "etat"
+     ]
+    },
+    {
+     "nom": "offre",
+     "colonnes": [
+      "fournisseur",
+      "categorie",
+      "prix_origine",
+      "devise_origine",
+      "disponible"
+     ]
+    },
+    {
+     "nom": "reservation",
+     "colonnes": [
+      "compte",
+      "offre",
+      "statut",
+      "date",
+      "montant_total",
+      "devise_debitee"
+     ]
+    },
+    {
+     "nom": "paiement",
+     "colonnes": [
+      "reservation",
+      "statut",
+      "montant",
+      "devise",
+      "prestataire",
+      "reference"
+     ]
+    },
+    {
+     "nom": "abonnement_ia",
+     "colonnes": [
+      "compte",
+      "debut",
+      "fin",
+      "quota",
+      "credits_utilises"
+     ]
+    },
+    {
+     "nom": "journal_audit",
+     "colonnes": [
+      "compte",
+      "action",
+      "horodatage"
+     ]
+    }
+   ]
+  },
+  "94cf0489": {
+   "source": "lecture enregistrée de la génération 94cf0489 (2026-11-13T16:49 UTC) ; tables lues dans systeme/types.ts de l’œuvre livrée",
+   "lecture": {
+    "ecrans": [
+     "démarrage/langue",
+     "inscription/connexion",
+     "vérification",
+     "accueil",
+     "recherche",
+     "résultats",
+     "détail",
+     "récapitulatif/paiement",
+     "confirmation",
+     "réservations",
+     "documents",
+     "notifications",
+     "profil",
+     "abonnement IA",
+     "agent IA",
+     "aide"
+    ],
+    "roles": [
+     "particulier",
+     "agence",
+     "entreprise",
+     "administrateur"
+    ]
+   },
+   "tables": [
+    {
+     "nom": "compte",
+     "colonnes": [
+      "nom",
+      "email",
+      "telephone",
+      "type_compte",
+      "langue",
+      "verifie"
+     ]
+    },
+    {
+     "nom": "fournisseur",
+     "colonnes": [
+      "nom",
+      "categorie",
+      "actif",
+      "capacites"
+     ]
+    },
+    {
+     "nom": "offre",
+     "colonnes": [
+      "fournisseur",
+      "categorie",
+      "prix_origine",
+      "devise_origine",
+      "conditions"
+     ]
+    },
+    {
+     "nom": "reservation",
+     "colonnes": [
+      "compte",
+      "offre",
+      "statut",
+      "montant_origine",
+      "devise_origine",
+      "date_creation"
+     ]
+    },
+    {
+     "nom": "paiement",
+     "colonnes": [
+      "reservation",
+      "montant",
+      "devise",
+      "statut",
+      "reference_externe"
+     ]
+    },
+    {
+     "nom": "abonnement_ia",
+     "colonnes": [
+      "compte",
+      "debut",
+      "fin",
+      "credit",
+      "actif"
+     ]
+    },
+    {
+     "nom": "evenement_audit",
+     "colonnes": [
+      "compte",
+      "action",
+      "details",
+      "date"
+     ]
+    }
+   ]
+  }
+ },
+ "sansLecture": {
+  "ecole-a13f8f9f": {
+   "source": "AUCUNE lecture exploitable (la ligne ne garde que des compteurs) ; tables tirées du code de l’œuvre (composants/donnees.tsx), colonnes lues dans ses écrans",
+   "tables": [
+    {
+     "nom": "annonce",
+     "colonnes": [
+      "titre",
+      "date",
+      "contenu"
+     ]
+    },
+    {
+     "nom": "emploi_du_temps",
+     "colonnes": [
+      "classe",
+      "jour",
+      "heure",
+      "matiere"
+     ]
+    },
+    {
+     "nom": "examen",
+     "colonnes": [
+      "classe",
+      "matiere",
+      "date"
+     ]
+    },
+    {
+     "nom": "eleve",
+     "colonnes": [
+      "nom",
+      "classe",
+      "enseignant_principal",
+      "parent_id"
+     ]
+    },
+    {
+     "nom": "note",
+     "colonnes": [
+      "eleve",
+      "matiere",
+      "trimestre",
+      "valeur"
+     ]
+    },
+    {
+     "nom": "absence",
+     "colonnes": [
+      "eleve_id",
+      "date",
+      "type",
+      "motif",
+      "justifie",
+      "justification_message"
+     ]
+    },
+    {
+     "nom": "versement",
+     "colonnes": [
+      "eleve",
+      "montant"
+     ]
+    },
+    {
+     "nom": "frais",
+     "colonnes": [
+      "eleve_id",
+      "montant_total",
+      "prochaine_echeance"
+     ]
+    },
+    {
+     "nom": "parent",
+     "colonnes": [
+      "nom",
+      "telephone"
+     ]
+    }
+   ]
+  },
+  "pieces-c4522e43": {
+   "source": "AUCUNE lecture exploitable ; tables tirées du code de l’œuvre (composants/Gestion.tsx)",
+   "tables": [
+    {
+     "nom": "piece",
+     "colonnes": [
+      "reference",
+      "nom",
+      "modele_vehicule",
+      "etat",
+      "prix",
+      "photo"
+     ]
+    },
+    {
+     "nom": "boutique",
+     "colonnes": [
+      "nom",
+      "emplacement",
+      "telephone"
+     ]
+    },
+    {
+     "nom": "stock",
+     "colonnes": [
+      "piece",
+      "boutique",
+      "quantite"
+     ]
+    },
+    {
+     "nom": "reservation",
+     "colonnes": [
+      "piece",
+      "client_nom",
+      "telephone",
+      "acompte",
+      "date_retrait",
+      "statut"
+     ]
+    },
+    {
+     "nom": "devis",
+     "colonnes": [
+      "description",
+      "modele_vehicule",
+      "photo",
+      "telephone",
+      "statut"
+     ]
+    },
+    {
+     "nom": "commande_importation",
+     "colonnes": [
+      "reference",
+      "client_nom",
+      "statut",
+      "date_commande"
+     ]
+    },
+    {
+     "nom": "utilisateur",
+     "colonnes": [
+      "nom",
+      "role",
+      "boutique"
+     ]
+    }
+   ]
+  },
+  "cpa-fa0ede2c": {
+   "source": "AUCUNE lecture (2026-11-01, avant la lecture) ; tables tirées de composants/types.ts de l’œuvre",
+   "tables": [
+    {
+     "nom": "produit",
+     "colonnes": [
+      "designation",
+      "reference",
+      "categorie",
+      "forme",
+      "conditionnement",
+      "prix",
+      "disponible",
+      "alerte"
+     ]
+    },
+    {
+     "nom": "appel_offre",
+     "colonnes": [
+      "reference",
+      "objet",
+      "categorie",
+      "datePublication",
+      "dateLimite",
+      "statut",
+      "contact",
+      "documents"
+     ]
+    },
+    {
+     "nom": "client",
+     "colonnes": [
+      "nom",
+      "type",
+      "zone",
+      "statut",
+      "contact",
+      "responsables"
+     ]
+    },
+    {
+     "nom": "fournisseur",
+     "colonnes": [
+      "nom",
+      "origine",
+      "categorie",
+      "statut",
+      "contact",
+      "produits"
+     ]
+    },
+    {
+     "nom": "demande",
+     "colonnes": [
+      "reference",
+      "type",
+      "objet",
+      "priorite",
+      "statut",
+      "date"
+     ]
+    },
+    {
+     "nom": "actualite",
+     "colonnes": [
+      "titre",
+      "date",
+      "contenu",
+      "categorie"
+     ]
+    },
+    {
+     "nom": "utilisateur",
+     "colonnes": [
+      "nom",
+      "email",
+      "role",
+      "statut",
+      "derniereConnexion"
+     ]
+    },
+    {
+     "nom": "journal_audit",
+     "colonnes": [
+      "action",
+      "auteur",
+      "date",
+      "details"
+     ]
+    }
+   ]
+  }
+ }
+}

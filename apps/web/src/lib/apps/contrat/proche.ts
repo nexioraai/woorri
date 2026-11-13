@@ -46,6 +46,22 @@ const SYNONYMES: Readonly<Record<string, readonly string[]>> = {
   enregistrer: ['submit'], ajouter: ['submit', 'ajouter'], save: ['submit'], envoyer: ['submit'], poser: ['setState'], set: ['setState'],
   recharger: ['rafraichir', 'emit'], reload: ['rafraichir', 'emit'], refresh: ['rafraichir', 'emit'],
   logout: ['deconnexion'], sedeconnecter: ['deconnexion'], login: ['connexion'], seconnecter: ['connexion'], share: ['partager'],
+  // A3 (2026-11-13) : les six réparables du jeu de mesure
+  '1': ['page'], '2': ['section'], '3': ['encart'], windowlocation: ['navigate'], appeler: ['contacter'], telephoner: ['contacter'],
+}
+
+/** Les échelles des jetons, en pixels : une valeur brute (`16px`, `2rem`) va au pas le plus proche. */
+const ECHELLES: readonly Readonly<Record<string, number>>[] = [
+  { aucun: 0, xs: 4, s: 8, m: 16, l: 24, xl: 32 },
+  { legende: 12, corps: 14, sousTitre: 18, titre: 24, grandTitre: 32 },
+]
+function auPasLePlusProche(brut: string, connus: readonly string[]): string | null {
+  const m = /^(\d+(?:\.\d+)?)(px|rem)$/u.exec(brut.trim())
+  if (m === null) return null
+  const px = Number(m[1]) * (m[2] === 'rem' ? 16 : 1)
+  const echelle = ECHELLES.find((e) => Object.keys(e).every((k) => connus.includes(k)))
+  if (echelle === undefined) return null
+  return Object.entries(echelle).sort((a, b) => Math.abs(a[1] - px) - Math.abs(b[1] - px))[0]![0]
 }
 
 export const normaliser = (x: string): string =>
@@ -64,6 +80,10 @@ function distance(x: string, y: string): number {
 
 export function lePlusProche(invente: string, connus: readonly string[]): string | null {
   if (connus.length === 0) return null
+  // Une couleur brute n'a pas de « plus proche » honnête : refus sec (A3).
+  if (/^\s*(#[0-9a-f]{3,8}|rgba?\(|hsla?\()/iu.test(invente)) return null
+  const pas = auPasLePlusProche(invente, connus)
+  if (pas !== null) return pas
   const brut = invente.replace(/^var\(|\)$/gu, '').replace(/^-+/u, '')
   const segments = brut.split(/[.\-_:/ ]+/u).filter((s) => s !== '')
   // Le nom entier d'abord, puis ses segments dans l'ordre : « offre_id » → « offre », « var(--espace-m) » → « m ».

@@ -1,24 +1,24 @@
-// ÉTAPE 1 · LES ŒUVRES MESURÉES, TRADUITES À LA MAIN EN SPECS.
+// ÉTAPE 1 · LES ŒUVRES MESURÉES, TRADUITES À LA MAIN EN SPECS (format V2 : textes en clair).
 //
 // 94cf0489 et 5b1c20bc restent intactes : leurs écrans sont RÉÉCRITS en specs
 // du contrat dans des fixtures qui disent leur source et ce qui n'a pas
 // d'équivalent (« portee »). Le validateur doit :
 //   ① refuser EXACTEMENT les défauts mesurés — Kiswahili, var(--space-*),
 //      JETONS.ESPACE.*, boutons sans effet, window.location, « Ajouter » en
-//      formulaire natif, cartes de l'accueil en dur, colonnes inventées — et
-//      les traductions manquantes (un seul écran du modèle sur ~30 était en
-//      fr/en/ar) ; rien d'autre ;
+//      formulaire natif, cartes de l'accueil non traduites, colonnes inventées —
+//      et les traductions manquantes ; rien d'autre ;
 //   ② arrêté à la première couche, ne rendre que la couche 1 quand elle refuse ;
 //   ③ ne plus refuser ce que l'ancien juge refusait à tort : les types
 //      (Reservation, Paiement, Session) deviennent des liaisons acceptées ;
 //   ④ ACCEPTER chaque écran une fois ses défauts mesurés — et seulement eux —
 //      retirés. Ces témoins corrigés sont des copies de test, pas l'œuvre ;
 //      les traductions qu'ils ajoutent sont des marqueurs « [en] … », pas des
-//      traductions.
+//      traductions (une vraie traduction témoin : bloc B, B3).
 // Rouge-puis-vert : la détection des langues hors lecture retirée → ① rouge.
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { textesDe } from '../textes'
 import { validerFragment, type Contexte } from '../validateur'
 
 type O = Record<string, unknown>
@@ -28,16 +28,14 @@ const A = lire('94cf0489')
 const B = lire('5b1c20bc')
 const classes = (v: { refus: readonly { classe: string }[] }) => [...new Set(v.refus.map((r) => r.classe))].sort()
 
-/** Ajoute en/ar à partir du français : des MARQUEURS de test, pas des traductions. */
+/** Complète en et ar sur les clés de Deribfy : des MARQUEURS de test, pas des traductions. */
 function marquer(f: O): O {
-  const tr = f.traductions as O[]
-  const fr = tr.find((x) => x.langue === 'fr')!
-  const autres = ['en', 'ar'].map((langue) => {
-    const ex = tr.find((x) => x.langue === langue)
-    const deja = new Set(((ex?.textes as O[] | undefined) ?? []).map((t) => t.cle))
-    return { langue, textes: [...((ex?.textes as O[] | undefined) ?? []), ...(fr.textes as O[]).filter((t) => !deja.has(t.cle)).map((t) => ({ cle: t.cle, texte: `[${langue}] ${String(t.texte)}` }))] }
-  })
-  return { ...f, traductions: [fr, ...autres] }
+  const tr = (f.traductions as O[] | undefined) ?? []
+  const textes = textesDe(f.ecran)
+  return { ...f, traductions: ['en', 'ar'].map((langue) => {
+    const deja = new Map((((tr.find((x) => x.langue === langue)?.textes) as O[] | undefined) ?? []).map((x) => [String(x.cle), String(x.texte)]))
+    return { langue, textes: textes.map((t) => ({ cle: t.cle, texte: deja.get(t.cle) ?? `[${langue}] ${t.texte}` })) }
+  }) }
 }
 const copie = (f: O) => structuredClone(f) as O & { ecran: O }
 function parcourir(x: unknown, f: (o: O) => void) {
@@ -57,22 +55,16 @@ describe('étape 1 · les œuvres mesurées, en specs', () => {
     const refus = (lot: typeof A, ecran: string) => validerFragment(fixture(lot, ecran).fragment, lot.contexte, { complet: true }).refus
       .map((r) => ({ classe: r.classe, chemin: r.chemin, proche: r.proche }))
     const de = (lot: typeof A, ecran: string, classe: string) => refus(lot, ecran).filter((r) => r.classe === classe)
-    // « Kiswahili » : le 7ᵉ texte français de l'écran de langue.
-    expect(de(A, 'demarrage-langue', 'LANGUE_HORS_LECTURE')).toEqual([{ classe: 'LANGUE_HORS_LECTURE', chemin: 'traductions[0].textes[6].texte', proche: null }])
-    // var(--space-m / -l / -s) → m, l, s.
+    // « Kiswahili » : le libellé du 4ᵉ bouton de l'encart des langues.
+    expect(de(A, 'demarrage-langue', 'LANGUE_HORS_LECTURE')).toEqual([{ classe: 'LANGUE_HORS_LECTURE', chemin: 'ecran.corps[3].enfants[3].libelle', proche: null }])
     expect(de(B, 'confirmation', 'JETON_INCONNU').map((r) => r.proche)).toEqual(['m', 'l', 's'])
-    // JETONS.ESPACE.s → s ; JETONS.ESPACE.m → m.
     expect(de(B, 'recherche', 'JETON_INCONNU').map((r) => r.proche)).toEqual(['s'])
     expect(de(B, 'abonnement-ia', 'JETON_INCONNU').map((r) => r.proche)).toEqual(['m'])
-    // window.location.reload → une action hors vocabulaire, la plus proche : emit.
     expect(de(B, 'abonnement-ia', 'ACTION_INCONNUE').map((r) => r.proche)).toEqual(['emit'])
-    // Les trois boutons de langue de l'inscription, rien d'autre.
     expect(de(B, 'inscription-connexion', 'ACTION_SANS_EFFET')).toHaveLength(3)
-    // « Ajouter » en formulaire natif → un Bouton dont l'effet est submit.
     expect(de(B, 'gestion-offre', 'FORMULAIRE_NATIF').map((r) => r.proche)).toEqual(['Bouton'])
-    // L'accueil : le nom de l'application deux fois, puis les quinze cartes du plan.
-    expect(de(B, 'accueil', 'TEXTE_LITTERAL')).toHaveLength(17)
-    // Le détail « sain » : quatre colonnes inventées, chacune avec son nom réel quand il existe.
+    // L'accueil : ses textes ne sont ni en anglais ni en arabe — le constat du propriétaire.
+    expect(de(B, 'accueil', 'TRADUCTION_MANQUANTE').map((r) => r.chemin)).toEqual(['traductions.en', 'traductions.ar'])
     expect(de(B, 'detail', 'CHAMP_INCONNU').map((r) => r.proche)).toEqual(['offre', 'id', 'montant_total', 'devise_debitee'])
   })
 
@@ -90,15 +82,14 @@ describe('étape 1 · les œuvres mesurées, en specs', () => {
   })
 
   it('④ chaque écran est accepté une fois ses défauts mesurés retirés', () => {
+    const versLangue = (o: O) => { const ef = o.effets as O[] | undefined; if (ef?.[0]?.faire === 'setState' && /langue/iu.test(String(ef[0].chemin))) o.effets = [{ faire: 'emit', evenement: 'choisirLangue', valeur: ef[0].valeur }] }
     const corrige: [typeof A, string, (f: O & { ecran: O }) => void][] = [
       [A, 'demarrage-langue', (f) => {
-        parcourir(f.ecran, (o) => { const ef = o.effets as O[] | undefined; if (ef?.[0]?.faire === 'setState') o.effets = [{ faire: 'emit', evenement: 'choisirLangue', valeur: ef[0].valeur }] })
-        const enfants = ((f.ecran.corps as O[])[3]!.enfants as O[])
-        enfants.splice(3, 1)
-        ;(f.traductions as O[])[0]!.textes = (((f.traductions as O[])[0]!.textes) as O[]).filter((t) => t.cle !== 'langue.sw')
+        parcourir(f.ecran, versLangue)
+        ;((f.ecran.corps as O[])[3]!.enfants as O[]).splice(3, 1)
       }],
       [A, 'resultats', () => undefined],
-      [B, 'inscription-connexion', (f) => { parcourir(f.ecran, (o) => { const ef = o.effets as O[] | undefined; if (ef?.[0]?.chemin === 'etat.langueCourante') o.effets = [{ faire: 'emit', evenement: 'choisirLangue', valeur: ef[0].valeur }] }) }],
+      [B, 'inscription-connexion', (f) => { parcourir(f.ecran, versLangue) }],
       [B, 'recherche', (f) => {
         parcourir(f.ecran, (o) => { if (o.espace === 'JETONS.ESPACE.s') o.espace = 's' })
         const pile = (((f.ecran.corps as O[])[2]!.enfants as O[])[0]!)
@@ -108,19 +99,14 @@ describe('étape 1 · les œuvres mesurées, en specs', () => {
       [B, 'confirmation', (f) => {
         parcourir(f.ecran, (o) => { if (typeof o.espace === 'string' && o.espace.startsWith('var(')) o.espace = /space-(\w)/u.exec(o.espace)![1] })
         const enc = ((f.ecran.corps as O[])[0]!.enfants as O[])[1]!
-        enc.enfants = (enc.enfants as O[]).filter((n) => !(n.texte as O | undefined)?.$t?.toString().endsWith('.devise'))
-        ;(f.traductions as O[])[0]!.textes = (((f.traductions as O[])[0]!.textes) as O[]).filter((t) => t.cle !== 'confirmation.devise')
+        enc.enfants = (enc.enfants as O[]).filter((n) => n.texte !== 'XAF')
       }],
       [B, 'abonnement-ia', (f) => { parcourir(f.ecran, (o) => { if (o.espace === 'JETONS.ESPACE.m') o.espace = 'm'; if ((o.effets as O[] | undefined)?.[0]?.faire === 'recharger') o.effets = [{ faire: 'emit', evenement: 'rafraichir' }] }) }],
       [B, 'detail', (f) => {
         const renomme: Record<string, string> = { offre_id: 'offre', utilisateur_id: 'compte', montant: 'montant_total', devise: 'devise_debitee' }
         parcourir(f.ecran, (o) => { if (typeof o.champ === 'string' && renomme[o.champ] !== undefined) o.champ = renomme[o.champ] })
       }],
-      [B, 'accueil', (f) => {
-        let n = 0
-        parcourir(f.ecran, (o) => { if (o.texte === 'Hayine' || (typeof o.texte === 'string' && o.composant === 'Phrase')) { const cle = `plan.ecran${String((n += 1))}`; ((f.traductions as O[])[0]!.textes as O[]).push({ cle, texte: o.texte as string }); o.texte = { $t: cle } } })
-        f.ecran.titre = { $t: 'plan.ecran1' }
-      }],
+      [B, 'accueil', () => undefined],
       [B, 'gestion-offre', (f) => { (f.ecran.corps as O[])[1]!.composant = 'Pile' }],
     ]
     for (const [lot, ecran, corriger] of corrige) {

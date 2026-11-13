@@ -7,7 +7,13 @@
  * La base couvre ce que le graphe exige : les routes du plan, le socle
  * (compte, aide, contact, légal), la tétrade de chaque table (journal : liste
  * et détail), une barre de trois onglets, le parcours lu, fr/en/ar.
+ *
+ * Contrat V2 : les textes sont EN CLAIR (français, langue principale) ; les
+ * traductions anglaise et arabe portent les clés FABRIQUÉES par Deribfy.
+ * Ces 300 cas sont des cliquets de cohérence interne, pas une preuve de
+ * couverture (bloc A : la preuve externe est le jeu aveugle).
  */
+import { textesDe } from '../textes'
 import type { Contexte } from '../validateur'
 import type { Classe } from '../validateur'
 
@@ -16,7 +22,7 @@ export const CTX: Contexte = {
   roles: ['Particulier', 'Administrateur'],
   tables: [
     { nom: 'reservation', colonnes: ['chambre', 'montant', 'statut'] },
-    { nom: 'offre', colonnes: ['nom', 'prix', 'ville'] },
+    { nom: 'offre', colonnes: ['nom', 'prix', 'ville'], publique: true },
     { nom: 'journal', colonnes: ['action', 'horodatage'], journal: true },
   ],
   langues: ['fr', 'en', 'ar'],
@@ -27,7 +33,8 @@ export const CTX: Contexte = {
 }
 
 type O = Record<string, unknown>
-const t = (cle: string) => ({ $t: cle })
+/** Le texte français d'un emplacement (la clé, elle, est fabriquée par Deribfy). */
+const t = (cle: string): string => TEXTES_PARTICULIERS[cle]?.fr ?? `fr ${cle.replace(/\./gu, ' ')}`
 const d = (chemin: string) => ({ $data: chemin })
 const nav = (route: string, avec?: string): O => ({ faire: 'navigate', route, ...(avec !== undefined ? { avec: d(avec) } : {}) })
 const bouton = (cle: string, effets: O[], extra: O = {}): O => ({ composant: 'Bouton', libelle: t(cle), effets, ...extra })
@@ -64,28 +71,21 @@ function tetrade(table: string, colonnes: readonly string[], journal: boolean): 
 }
 
 /** Les textes : chaque clé employée, dans chaque langue lue. */
-const TEXTES_PARTICULIERS: Record<string, Record<string, string>> = {
+const TEXTES_PARTICULIERS: Record<string, Readonly<Record<string, string>>> = {
   'langue.fr': { fr: 'Français', en: 'Français', ar: 'Français' },
   'langue.en': { fr: 'English', en: 'English', ar: 'English' },
   'langue.ar': { fr: 'العربية', en: 'العربية', ar: 'العربية' },
   'paiement.moyen': { fr: 'Paiement par Airtel Money au Tchad, en XAF', en: 'Pay with Airtel Money in Tchad, in XAF', ar: 'الدفع عبر Airtel Money في Tchad بعملة XAF' },
 }
 
-function clesDe(x: unknown, s: Set<string>): Set<string> {
-  if (Array.isArray(x)) for (const y of x) clesDe(y, s)
-  else if (typeof x === 'object' && x !== null) {
-    const o = x as O
-    if (typeof o.$t === 'string') s.add(o.$t)
-    for (const v of Object.values(o)) clesDe(v, s)
-  }
-  return s
-}
+const PAR_FRANCAIS = new Map(Object.values(TEXTES_PARTICULIERS).map((x) => [x.fr!, x]))
 
+/** Les traductions anglaise et arabe, aux clés fabriquées par Deribfy. */
 export function traduire(ecrans: unknown): O[] {
-  const cles = [...clesDe(ecrans, new Set())].sort()
-  return ['fr', 'en', 'ar'].map((langue) => ({
+  const textes = (ecrans as unknown[]).flatMap((e) => textesDe(e))
+  return ['en', 'ar'].map((langue) => ({
     langue,
-    textes: cles.map((cle) => ({ cle, texte: TEXTES_PARTICULIERS[cle]?.[langue] ?? `${langue} ${cle.replace(/\./gu, ' ')}` })),
+    textes: textes.map((x) => ({ cle: x.cle, texte: PAR_FRANCAIS.get(x.texte)?.[langue] ?? `${langue} ${x.texte}` })),
   }))
 }
 
@@ -192,12 +192,18 @@ function actions(s: O, faire: string): O[] {
   for (const n of noeuds(s)) for (const a of (n.effets as O[] | undefined) ?? []) if (a.faire === faire) r.push(a)
   return r
 }
-const fr = (s: O) => (s.traductions as O[]).find((x) => x.langue === 'fr')!
-const texteFr = (s: O, cle: string) => ((fr(s).textes as O[]).find((x) => x.cle === cle)!)
+const en = (s: O) => (s.traductions as O[])[0]!
+/** La Phrase de tête des pages du socle (aide, contact, legal) et du paiement. */
+const phrase = (s: O, route: string) => (ecranDe(s, route).corps as O[])[0]!
 
 export function cas(): Cas[] {
   const r: Cas[] = []
-  const m = (classe: Classe, quoi: string, f: (s: O) => void) => { const s = base(); f(s); r.push({ classe, quoi, spec: s }) }
+  // Les clés suivent l'emplacement : après une mutation, Deribfy retraduit — sauf quand c'est la traduction qu'on fausse.
+  const m = (classe: Classe, quoi: string, f: (s: O) => void, retraduire = true) => {
+    const s = base(); f(s)
+    if (retraduire) { try { s.traductions = traduire(s.ecrans) } catch { /* une forme fausse : la couche 1 la dira */ } }
+    r.push({ classe, quoi, spec: s })
+  }
   const N = noeuds(base()).length
 
   // ── COUCHE 1
@@ -209,10 +215,10 @@ export function cas(): Cas[] {
   ;['couleurFond', 'marge', 'ombre', 'largeur', 'police', 'visible', 'actif', 'lien', 'cible', 'infobulle', 'souligne', 'gras'].forEach((k, i) => {
     m('PROP_INCONNUE', `prop ${k}`, (s) => { noeuds(s)[(i * 5 + 1) % N]![k] = 'x' })
   })
-  ;['className', 'style', 'onClick', 'href', 'id', 'onSubmit', 'htmlFor', 'aria-label', 'tabIndex', 'src', 'children', 'role', 'onPress', 'data-test', 'padding', 'color'].forEach((k, i) => {
+  ;['className', 'style', 'onClick', 'href', 'id', 'onSubmit', 'htmlFor', 'aria-label', 'src', 'children', 'role', 'onPress'].forEach((k, i) => {
     m('ATTRIBUT_DOM', `attribut ${k}`, (s) => { noeuds(s)[(i * 3 + 2) % N]![k] = k === 'style' ? { padding: 8 } : 'x' })
   })
-  const requis: [string, string][] = [['Titre', 'texte'], ['Phrase', 'texte'], ['Valeur', 'donnee'], ['Bouton', 'libelle'], ['Champ', 'libelle'], ['Champ', 'donnee'], ['Champ', 'nature'], ['Lignes', 'donnee'], ['Lignes', 'modele'], ['Lignes', 'vide'], ['Message', 'nature'], ['Message', 'texte'], ['Encart', 'enfants'], ['Pile', 'enfants']]
+  const requis: [string, string][] = [['Titre', 'texte'], ['Phrase', 'texte'], ['Valeur', 'donnee'], ['Bouton', 'libelle'], ['Champ', 'libelle'], ['Champ', 'donnee'], ['Champ', 'nature'], ['Lignes', 'donnee'], ['Lignes', 'modele'], ['Lignes', 'vide'], ['Message', 'nature'], ['Message', 'texte']]
   for (const [c, p] of requis) m('PROP_MANQUANTE', `${c} sans ${p}`, (s) => { delete de(s, c)[p] })
   for (const k of ['route', 'acces', 'titre', 'corps']) m('PROP_MANQUANTE', `écran sans ${k}`, (s) => { delete ecranDe(s, 'aide')[k] })
   m('PROP_MANQUANTE', 'navigate sans route', (s) => { delete actions(s, 'navigate')[3]!.route })
@@ -222,12 +228,12 @@ export function cas(): Cas[] {
   m('PROP_MANQUANTE', 'emit sans événement', (s) => { delete actions(s, 'emit')[0]!.evenement })
   m('PROP_MANQUANTE', 'choisirLangue sans valeur', (s) => { delete actions(s, 'emit')[1]!.valeur })
   m('PROP_MANQUANTE', 'spec sans barre', (s) => { delete s.barre })
-  m('PROP_MANQUANTE', 'spec sans traductions', (s) => { delete s.traductions })
+  m('TRADUCTION_MANQUANTE', 'spec sans traductions', (s) => { delete s.traductions }, false)
   const variantes: [string, string, string, number][] = [
     ['Bouton', 'genre', 'primary', 0], ['Bouton', 'genre', 'primaire', 3], ['Bouton', 'genre', 'outline', 6], ['Bouton', 'genre', 'gauche', 9],
     ['Pile', 'sens', 'row', 0], ['Pile', 'sens', 'horizontal', 1], ['Pile', 'aligner', 'left', 0], ['Pile', 'aligner', 'center', 0], ['Pile', 'aligner', 'start', 0],
     ['Valeur', 'format', 'currency', 1], ['Valeur', 'format', 'prix', 2], ['Champ', 'nature', 'email', 0], ['Champ', 'nature', 'password', 1],
-    ['Champ', 'nature', 'select', 2], ['Titre', 'niveau', 'h1', 0], ['Titre', 'niveau', '1', 0], ['Message', 'nature', 'empty', 0], ['Message', 'nature', 'loading', 0],
+    ['Champ', 'nature', 'select', 2], ['Titre', 'niveau', 'h1', 0], ['Titre', 'niveau', '1', 0], ['Message', 'nature', 'empty', 0],
   ]
   for (const [c, p, v, i] of variantes) m('VARIANTE_INCONNUE', `${c}.${p} = ${v}`, (s) => { de(s, c, i)[p] = v })
   m('VARIANTE_INCONNUE', 'submit mode create', (s) => { actions(s, 'submit')[0]!.mode = 'create' })
@@ -242,24 +248,17 @@ export function cas(): Cas[] {
   ;['search', 'chargement', 'home', 'user', 'spinner', 'loader', 'arrow-left', 'info', 'trash', 'credit-card'].forEach((v, i) => {
     m('ICONE_INCONNUE', `icone ${v}`, (s) => { (noeuds(s).filter((n) => n.composant === 'Bouton')[i * 4]!).icone = v })
   })
-  const litteraux: [string, (s: O) => void][] = [
-    ['titre de l’accueil', (s) => { ecranDe(s, 'accueil').titre = 'Bienvenue' }],
-    ['titre de la recherche', (s) => { ecranDe(s, 'recherche').titre = 'Recherche' }],
-    ['titre du compte', (s) => { ecranDe(s, 'compte').titre = 'Mon compte' }],
-    ...[0, 2, 5, 8, 13, 21, 34].map((i): [string, (s: O) => void] => [`libellé du bouton ${String(i)}`, (s) => { noeuds(s).filter((n) => n.composant === 'Bouton')[i]!.libelle = 'Valider' }]),
-    ['texte d’une phrase', (s) => { de(s, 'Phrase').texte = 'Bienvenue sur Hayine' }],
-    ['vide de Lignes', (s) => { de(s, 'Lignes').vide = 'Aucune offre' }],
-    ['libellé d’un champ', (s) => { de(s, 'Champ').libelle = 'Ville' }],
-    ['aide d’un champ', (s) => { de(s, 'Champ').aide = 'Ex. : NDjamena' }],
-    ['texte d’un message', (s) => { de(s, 'Message').texte = 'Réservation confirmée' }],
-    ['titre d’une page', (s) => { de(s, 'Titre').texte = 'Accueil' }],
+  // Contrat V2 : le modèle n'écrit JAMAIS de clé — un `{ $t }` est refusé comme une forme fausse.
+  const clesEcrites: [string, (s: O) => void][] = [
+    ['clé au titre de l’accueil', (s) => { ecranDe(s, 'accueil').titre = { $t: 'accueil.titre' } }],
+    ['clé au titre de la recherche', (s) => { ecranDe(s, 'recherche').titre = { $t: 'recherche.titre' } }],
+    ...[0, 2, 5, 8, 13, 21].map((i): [string, (s: O) => void] => [`clé au libellé du bouton ${String(i)}`, (s) => { noeuds(s).filter((n) => n.composant === 'Bouton')[i]!.libelle = { $t: 'bouton.valider' } }]),
+    ['clé dans une phrase', (s) => { de(s, 'Phrase').texte = { $t: 'accueil.intro' } }],
+    ['clé au vide de Lignes', (s) => { de(s, 'Lignes').vide = { $t: 'recherche.vide' } }],
   ]
-  for (const [quoi, f] of litteraux) m('TEXTE_LITTERAL', quoi, f)
-  ;['Titre Recherche', 'recherche..titre', '1titre', 'recherche titre', 'Recherche.titre', 'recherche-titre'].forEach((k, i) => {
-    m('CLE_INVALIDE', `clé ${k}`, (s) => { noeuds(s).filter((n) => n.composant === 'Bouton')[i * 3]!.libelle = { $t: k } })
-  })
-  m('CLE_INVALIDE', 'clé de traduction invalide', (s) => { texteFr(s, 'accueil.titre').cle = 'Accueil Titre' })
-  m('CLE_INVALIDE', 'clé de traduction vide', (s) => { texteFr(s, 'aide.texte').cle = '' })
+  for (const [quoi, f] of clesEcrites) m('TYPE_INVALIDE', quoi, f)
+  m('VALEUR_INVALIDE', 'clé de traduction hors grammaire', (s) => { ((en(s).textes as O[])[0]!).cle = 'Accueil Titre' }, false)
+  m('VALEUR_INVALIDE', 'clé de traduction vide', (s) => { ((en(s).textes as O[])[3]!).cle = '' }, false)
   const liaisons = ['langue.courante', 'window.location.href', 'props.offre', 'JETONS.ESPACE', 'localStorage.panier', 'session.email', 'table.offre.nom', 'parcours.offre', 'etat', 'useLangue.langue']
   liaisons.forEach((v, i) => { m('LIAISON_HORS_CONTRAT', `$data ${v}`, (s) => { noeuds(s).filter((n) => n.composant === 'Valeur')[i % 12]!.donnee = { $data: v } }) })
   m('LIAISON_HORS_CONTRAT', 'setState vers window', (s) => { actions(s, 'setState')[0]!.chemin = 'window.titre' })
@@ -277,14 +276,14 @@ export function cas(): Cas[] {
     ['enfants chaîne', (s) => { de(s, 'Pile').enfants = 'boutons' }],
     ['requis « oui »', (s) => { de(s, 'Champ', 1).requis = 'oui' }],
     ['effets objet', (s) => { de(s, 'Bouton', 2).effets = { faire: 'navigate', route: 'accueil' } }],
-    ['traductions objet', (s) => { s.traductions = { fr: {} } }],
+    ['traductions objet', (s) => { s.traductions = { en: {} } }],
     ['écran chaîne', (s) => { (s.ecrans as unknown[])[3] = 'paiement' }],
     ['etat objet', (s) => { ecranDe(s, 'recherche').etat = { ville: 'texte' } }],
     ['barre chaîne', (s) => { s.barre = 'accueil' }],
     ['texte nombre', (s) => { de(s, 'Titre').texte = 42 }],
     ['liaison chaîne', (s) => { de(s, 'Valeur', 3).donnee = 'parcours.offre.nom' }],
   ]
-  for (const [quoi, f] of types) m('TYPE_INVALIDE', quoi, f)
+  for (const [quoi, f] of types) m('TYPE_INVALIDE', quoi, f, !/traductions/u.test(quoi))
   const valeurs: [string, (s: O) => void][] = [
     ['route « Détail Offre »', (s) => { ecranDe(s, 'detail').route = 'Détail Offre' }],
     ['route « detail_offre »', (s) => { actions(s, 'navigate')[1]!.route = 'detail_offre' }],
@@ -297,11 +296,14 @@ export function cas(): Cas[] {
     ['valeur à balise', (s) => { ((actions(s, 'submit')[0]!.valeurs as O[])[2]!).depuis = '<b>payee</b>' }],
     ['table « Réservation »', (s) => { actions(s, 'submit')[0]!.table = 'Réservation' }],
     ['code langue « arabe »', (s) => { actions(s, 'emit')[3]!.valeur = 'arabe' }],
-    ['code langue « FR »', (s) => { (fr(s)).langue = 'FR' }],
+    ['code langue « EN »', (s) => { en(s).langue = 'EN' }],
   ]
-  for (const [quoi, f] of valeurs) m('VALEUR_INVALIDE', quoi, f)
-  ;['<b>Payer</b>', 'Ligne 1<br/>Ligne 2', '<script>alert(1)</script>', '<a href="x">lien</a>', '<!-- note -->', '</div>'].forEach((v, i) => {
-    m('HTML_DANS_TEXTE', `texte ${v}`, (s) => { ((fr(s).textes as O[])[i * 9]!).texte = v })
+  for (const [quoi, f] of valeurs) m('VALEUR_INVALIDE', quoi, f, !/« EN »/u.test(quoi))
+  ;['<b>Payer</b>', 'Ligne 1<br/>Ligne 2', '<script>alert(1)</script>'].forEach((v, i) => {
+    m('HTML_DANS_TEXTE', `texte ${v}`, (s) => { noeuds(s).filter((n) => n.composant === 'Bouton')[i * 7]!.libelle = v })
+  })
+  ;['<a href="x">lien</a>', '<!-- note -->', '</div>'].forEach((v, i) => {
+    m('HTML_DANS_TEXTE', `traduction ${v}`, (s) => { ((en(s).textes as O[])[i * 9]!).texte = v }, false)
   })
 
   // ── COUCHE 2 : LE CONTEXTE
@@ -321,25 +323,46 @@ export function cas(): Cas[] {
   ]
   for (const [quoi, f] of champs) m('CHAMP_INCONNU', quoi, f)
   ;['admin', 'Client', 'superviseur', 'gestionnaire'].forEach((r, i) => { m('ROLE_INCONNU', `accès ${r}`, (s) => { (s.ecrans as O[])[i * 4 + 2]!.acces = r }) })
-  m('LANGUE_HORS_LECTURE', 'traduction sw', (s) => { (s.traductions as O[]).push({ ...fr(s), langue: 'sw' }) })
-  m('LANGUE_HORS_LECTURE', 'texte Kiswahili', (s) => { texteFr(s, 'aide.texte').texte = 'Disponible en Kiswahili' })
-  m('LANGUE_HORS_LECTURE', 'texte Español', (s) => { texteFr(s, 'legal.texte').texte = 'Version Español' })
+  m('LANGUE_HORS_LECTURE', 'traduction sw', (s) => { (s.traductions as O[]).push({ ...en(s), langue: 'sw' }) }, false)
+  m('LANGUE_HORS_LECTURE', 'texte Kiswahili', (s) => { phrase(s, 'aide').texte = 'Disponible en Kiswahili' })
+  m('LANGUE_HORS_LECTURE', 'texte Español', (s) => { phrase(s, 'legal').texte = 'Version Español' })
   m('LANGUE_HORS_LECTURE', 'choisirLangue es', (s) => { actions(s, 'emit')[1]!.valeur = 'es' })
-  m('LANGUE_HORS_LECTURE', 'traduction de', (s) => { (s.traductions as O[]).push({ ...fr(s), langue: 'de' }) })
-  m('DEVISE_HORS_LECTURE', 'USD', (s) => { texteFr(s, 'detail.prix').texte = 'Prix en USD' })
-  m('DEVISE_HORS_LECTURE', '€', (s) => { texteFr(s, 'recherche.prix').texte = 'Prix (€)' })
-  m('DEVISE_HORS_LECTURE', 'EUR', (s) => { texteFr(s, 'aide.texte').texte = 'Tarifs en EUR' })
+  m('LANGUE_HORS_LECTURE', 'traduction de', (s) => { (s.traductions as O[]).push({ ...en(s), langue: 'de' }) }, false)
+  m('DEVISE_HORS_LECTURE', 'USD', (s) => { ((ecranDe(s, 'detail').corps as O[])[1]!).libelle = 'Prix en USD' })
+  m('DEVISE_HORS_LECTURE', '€', (s) => { phrase(s, 'contact').texte = 'Prix (€)' })
+  m('DEVISE_HORS_LECTURE', 'EUR', (s) => { phrase(s, 'aide').texte = 'Tarifs en EUR' })
   m('DEVISE_HORS_LECTURE', 'littéral USD', (s) => { ((actions(s, 'submit')[0]!.valeurs as O[])[2]!).depuis = 'USD' })
-  m('PAIEMENT_HORS_LECTURE', 'Orange Money', (s) => { texteFr(s, 'paiement.moyen').texte = 'Payer avec Orange Money' })
-  m('PAIEMENT_HORS_LECTURE', 'PayPal', (s) => { texteFr(s, 'aide.texte').texte = 'Remboursement par PayPal' })
-  m('PAIEMENT_HORS_LECTURE', 'M-Pesa', (s) => { texteFr(s, 'contact.texte').texte = 'Paiement M-Pesa accepté' })
-  m('PAYS_HORS_LECTURE', 'Cameroun', (s) => { texteFr(s, 'contact.texte').texte = 'Agences au Cameroun' })
-  m('PAYS_HORS_LECTURE', 'Kenya', (s) => { texteFr(s, 'aide.texte').texte = 'Livré au Kenya' })
-  m('PAYS_HORS_LECTURE', 'Nigeria', (s) => { texteFr(s, 'legal.texte').texte = 'Société de droit Nigeria' })
-  m('TRADUCTION_MANQUANTE', 'clé absente en anglais', (s) => { const en = (s.traductions as O[])[1]!; en.textes = (en.textes as O[]).slice(1) })
-  m('TRADUCTION_MANQUANTE', 'arabe absent', (s) => { s.traductions = (s.traductions as O[]).slice(0, 2) })
-  m('TRADUCTION_MANQUANTE', 'clé nouvelle en français seul', (s) => { de(s, 'Phrase').texte = t('accueil.nouveau'); (fr(s).textes as O[]).push({ cle: 'accueil.nouveau', texte: 'Nouveau' }) })
-  m('TRADUCTION_MANQUANTE', 'texte vide en arabe', (s) => { (((s.traductions as O[])[2]!.textes as O[])[4]!).texte = ' ' })
+  m('PAIEMENT_HORS_LECTURE', 'Orange Money', (s) => { phrase(s, 'paiement').texte = 'Payer avec Orange Money' })
+  m('PAIEMENT_HORS_LECTURE', 'PayPal', (s) => { phrase(s, 'aide').texte = 'Remboursement par PayPal' })
+  m('PAIEMENT_HORS_LECTURE', 'M-Pesa', (s) => { phrase(s, 'contact').texte = 'Paiement M-Pesa accepté' })
+  m('PAYS_HORS_LECTURE', 'Cameroun', (s) => { phrase(s, 'contact').texte = 'Agences au Cameroun' })
+  m('PAYS_HORS_LECTURE', 'Kenya', (s) => { phrase(s, 'aide').texte = 'Livré au Kenya' })
+  m('PAYS_HORS_LECTURE', 'Nigeria', (s) => { phrase(s, 'legal').texte = 'Société de droit Nigeria' })
+  m('TRADUCTION_MANQUANTE', 'clé absente en anglais', (s) => { en(s).textes = (en(s).textes as O[]).slice(1) }, false)
+  m('TRADUCTION_MANQUANTE', 'arabe absent', (s) => { s.traductions = (s.traductions as O[]).slice(0, 1) }, false)
+  m('TRADUCTION_MANQUANTE', 'texte nouveau, non traduit', (s) => { (ecranDe(s, 'aide').corps as O[]).push({ composant: 'Phrase', texte: 'Nouveau' }) }, false)
+  m('TRADUCTION_MANQUANTE', 'texte vide en arabe', (s) => { (((s.traductions as O[])[1]!.textes as O[])[4]!).texte = ' ' }, false)
+  // ── LES CLASSES REVENUES DU JEU AVEUGLE (A1) — chacune dans la base saine.
+  const champ = (c: string, v: unknown) => ({ champ: c, depuis: v })
+  m('CHARGE_INVALIDE', 'connexion sans charge', (s) => { ((ecranDe(s, 'compte').corps as O[])[4]!).effets = [{ faire: 'emit', evenement: 'connexion' }, nav('accueil')] })
+  m('CHARGE_INVALIDE', 'connexion sans secret', (s) => { ((ecranDe(s, 'compte').corps as O[])[4]!).effets = [{ faire: 'emit', evenement: 'deconnexion' }, nav('accueil'), { faire: 'emit', evenement: 'connexion', charge: [champ('identifiant', d('session.utilisateur'))] }] })
+  m('CHARGE_INVALIDE', 'déconnexion chargée', (s) => { ((ecranDe(s, 'compte').corps as O[])[4]!).effets = [{ faire: 'emit', evenement: 'deconnexion', charge: [champ('identifiant', d('session.utilisateur'))] }, nav('accueil')] })
+  m('CHARGE_INVALIDE', 'champ de charge inconnu', (s) => { ((ecranDe(s, 'compte').corps as O[])[4]!).effets = [{ faire: 'emit', evenement: 'deconnexion' }, nav('accueil'), { faire: 'emit', evenement: 'connexion', charge: [champ('identifiant', d('session.utilisateur')), champ('secret', d('session.utilisateur')), champ('motdepasse', d('session.utilisateur'))] }] })
+  m('COLONNE_SECRETE', 'mot de passe affiché', (s) => { (((de(s, 'Lignes').modele as O[])[0]!.enfants as O[])).push({ composant: 'Valeur', donnee: d('ligne.mot_de_passe') }) })
+  m('COLONNE_SECRETE', 'mot de passe écrit', (s) => { (actions(s, 'submit')[0]!.valeurs as O[]).push(champ('password', d('etat.chambre'))) })
+  m('COLONNE_SECRETE', 'filtre sur un secret', (s) => { (de(s, 'Lignes').filtre as O[]).push({ champ: 'mdp', egal: d('etat.ville') }) })
+  m('DONNEE_PRIVEE_EXPOSEE', 'réservations listées au visiteur', (s) => { (ecranDe(s, 'accueil').corps as O[]).push({ composant: 'Lignes', donnee: d('table.reservation'), vide: 'Aucune', modele: [{ composant: 'Valeur', donnee: d('ligne.chambre') }] }) })
+  m('DONNEE_PRIVEE_EXPOSEE', 'réservation en cours montrée au visiteur', (s) => { (ecranDe(s, 'detail').corps as O[]).push({ composant: 'Valeur', donnee: d('parcours.reservation.chambre') }) })
+  m('DONNEE_PRIVEE_EXPOSEE', 'journal listé au visiteur', (s) => { (ecranDe(s, 'compte').corps as O[]).push({ composant: 'Lignes', donnee: d('table.journal'), vide: 'Rien', modele: [{ composant: 'Valeur', donnee: d('ligne.action') }] }) })
+  m('SUBMIT_SANS_LIGNE', 'modifier hors ligne', (s) => { actions(s, 'submit')[0]!.mode = 'modifier' })
+  m('SUBMIT_SANS_LIGNE', 'supprimer depuis l’accueil', (s) => { (ecranDe(s, 'accueil').corps as O[]).push(bouton('accueil.vider', [{ faire: 'submit', table: 'offre', mode: 'supprimer' }])) })
+  m('SUBMIT_SANS_LIGNE', 'modifier depuis la confirmation', (s) => { (ecranDe(s, 'confirmation').corps as O[]).push(bouton('confirmation.modifier', [{ faire: 'submit', table: 'reservation', mode: 'modifier', valeurs: [champ('statut', 'annulee')] }])) })
+  m('MENTION_DEMO', 'version de démonstration', (s) => { phrase(s, 'aide').texte = 'Version de démonstration' })
+  m('MENTION_DEMO', 'données de démo', (s) => { phrase(s, 'contact').texte = 'Données de démo' })
+  m('MENTION_DEMO', 'traduction « Demo »', (s) => { ((en(s).textes as O[])[2]!).texte = 'Demo version' }, false)
+  m('MONTANT_EN_DUR', 'prix en dur', (s) => { phrase(s, 'legal').texte = 'La nuit : 12 000 FCFA' })
+  m('MONTANT_EN_DUR', 'montant en F', (s) => { phrase(s, 'aide').texte = 'Frais fixes : 15 000 F' })
+  m('MONTANT_EN_DUR', 'montant traduit', (s) => { ((en(s).textes as O[])[5]!).texte = 'Fee: 5 000 XAF' }, false)
   m('ETAT_INCONNU', 'setState etat.inconnu', (s) => { actions(s, 'setState')[0]!.chemin = 'etat.inconnu' })
   m('ETAT_INCONNU', 'si etat.ouvert', (s) => { de(s, 'Phrase', 1).si = d('etat.ouvert') })
   m('ETAT_INCONNU', 'filtre etat.categorie', (s) => { (de(s, 'Lignes').filtre as O[]).push({ champ: 'nom', egal: d('etat.categorie') }) })

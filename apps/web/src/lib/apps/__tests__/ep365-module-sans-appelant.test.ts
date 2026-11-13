@@ -84,6 +84,8 @@ const EXEMPTES: Readonly<Record<string, string>> = {
   'lib/apps/contrat/contraintes.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
   'lib/apps/contrat/proche.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
   'lib/apps/contrat/validateur.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
+  'lib/apps/contrat/textes.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
+  'lib/apps/contrat/graphe.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
 }
 
 /** MESURÉ LE 2026-11-06. Cette liste ne grandit jamais. */

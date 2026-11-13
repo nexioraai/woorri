@@ -4,9 +4,9 @@
 //      catalogue apparaît dans la consigne ;
 //   ② rien dans la consigne (entre accents graves) n'est absent du catalogue ;
 //   ③ la consigne ne nomme aucun attribut du web, même en prose ;
-//   ④ elle est bornée (mesurée : 8 177 signes ; 3c-2 en faisait 4 633 — elle
-//      porte désormais tout le vocabulaire, et le prix d'entrée se paie une fois
-//      par écran) ;
+//   ④ elle est bornée (mesurée : 8 177 signes à l'étape 1, 8 728 en V2 — la charge
+//      de connexion et quatre règles revenues du jeu aveugle ; 3c-2 en faisait
+//      4 633 — le prix d'entrée se paie une fois par écran) ;
 //   ⑤ elle est la seule consigne du contrat : aucun texte de consigne écrit à
 //      la main ne vit dans le dossier du contrat.
 // Rouge-puis-vert : la ligne des icônes retirée du générateur → ① rouge ;
@@ -31,13 +31,13 @@ describe('étape 1 · la consigne générée', () => {
   })
 
   it('③ aucun attribut du web, même en prose', () => {
-    for (const mot of ['className', 'style', 'onClick', 'onSubmit', 'href', '<form', 'aria-', 'left', 'right', 'var(--', 'px']) {
+    for (const mot of ['className', 'style', 'onClick', 'onSubmit', 'href', '<form', 'aria-', 'left', 'right', 'var(--', 'px', '$t']) {
       expect(consigne.includes(mot), `la consigne contient « ${mot} »`).toBe(false)
     }
   })
 
   it('④ bornée', () => {
-    expect(consigne.length).toBeLessThan(8600)
+    expect(consigne.length).toBeLessThan(9100)
   })
 
   it('⑤ aucune consigne écrite à la main dans le dossier du contrat', () => {

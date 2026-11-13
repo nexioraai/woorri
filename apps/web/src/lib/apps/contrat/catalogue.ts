@@ -14,8 +14,12 @@
  * Ce que le contrat RETIRE au modèle, et pourquoi (mesures 94cf0489, 5b1c20bc) :
  *   - les valeurs de style : seuls des JETONS nommés, en énumérations, jamais
  *     une valeur (« var(--espace-m) » ×27, « JETONS.ESPACE.m » ×4) ;
- *   - le texte : seulement des clés `$t`, traduites dans chaque langue lue
- *     (un seul écran du modèle sur ~30 était traduit en fr/en/ar) ;
+ *   - la clé d'un texte : le modèle écrit le texte EN CLAIR, dans la langue
+ *     principale ; Deribfy fabrique la clé (déterministe, depuis l'écran et
+ *     l'emplacement — `textes.ts`) et le dictionnaire. Mesuré (A1) : 16 écrans
+ *     sur 24 refusés pour des clés mal formées, qu'aucun défaut ne justifiait ;
+ *   - la connexion : `emit connexion` porte une charge TYPÉE (identifiant,
+ *     secret) — sans elle, un champ de connexion paraissait « sans effet » ;
  *   - les données : seulement des chemins `$data` vers des tables et colonnes
  *     déclarées (le détail « sain » de 5b1c20bc écrivait cinq colonnes absentes) ;
  *   - le comportement : quatre actions, navigate / submit / emit / setState ;
@@ -50,6 +54,21 @@ export const ICONES = [
 /** Les événements que le squelette sait traiter. `choisirLangue` prend un code de langue LUE. */
 export const EVENEMENTS = ['connexion', 'deconnexion', 'choisirLangue', 'rafraichir', 'partager', 'contacter'] as const
 
+/**
+ * LA CHARGE UTILE D'UN ÉVÉNEMENT — typée, fermée.
+ *
+ * La connexion appartient au squelette : l'écran ne parle ni à la base ni au
+ * service d'authentification. Il lui REMET les valeurs saisies par
+ * `emit connexion` et sa charge `{ identifiant, secret }`. Pourquoi `emit` et
+ * pas `submit` : `submit` écrit une table, et la session n'en est pas une ;
+ * le mot de passe ne doit JAMAIS transiter par une écriture de table.
+ * Un événement absent de ce tableau ne porte aucune charge.
+ */
+export const CHARGES: Readonly<Record<string, Readonly<Record<string, 'requis' | 'facultatif'>>>> = {
+  connexion: { identifiant: 'requis', secret: 'requis' },
+}
+export const CHAMPS_DE_CHARGE = [...new Set(Object.values(CHARGES).flatMap((c) => Object.keys(c)))]
+
 /** Les routes que le squelette impose à toute application (le compte et ses trois pages). */
 export const ROUTES_SOCLE = ['accueil', 'compte', 'aide', 'contact', 'legal'] as const
 
@@ -76,6 +95,8 @@ export const MOTIF = {
   langue: /^[a-z]{2,3}$/u,
   litteral: /^[\p{L}\p{N}_ .:@+-]{0,80}$/u,
   traduction: /^[^<>]{0,600}$/u,
+  /** Un texte écrit par le modèle : en clair, non vide, sans balise. */
+  texte: /^(?=[\s\S]*\S)[^<>]{1,600}$/u,
 } as const
 
 // ── LES GENRES DE PROPS.
@@ -96,6 +117,7 @@ export type Genre =
   | { readonly g: 'chemin' }
   | { readonly g: 'donneeOuValeur' }
   | { readonly g: 'codeLangue' }
+  | { readonly g: 'charge' }
 
 export type DefProp = { readonly genre: Genre; readonly requis: boolean; readonly aide: string }
 export type DefComposant = { readonly aide: string; readonly props: Readonly<Record<string, DefProp>> }
@@ -198,6 +220,7 @@ export const ACTIONS = {
   emit: { aide: 'déclenche un événement du squelette', args: {
     evenement: p(variante(...EVENEMENTS), true, 'lequel'),
     valeur: p({ g: 'codeLangue' }, false, 'pour `choisirLangue` : le code d’une langue lue'),
+    charge: p({ g: 'charge' }, false, 'pour `connexion` : `identifiant` et `secret`, chacun depuis une liaison'),
   } },
   setState: { aide: 'change une valeur d’état de l’écran', args: {
     chemin: p({ g: 'chemin' }, true, '`etat.<nom>`'),
@@ -211,25 +234,39 @@ export const FAIRE = Object.keys(ACTIONS) as Faire[]
 export const PROPS_ECRAN = {
   route: 'la route du plan',
   acces: 'le rôle qui l’ouvre, ou `visiteur`',
-  titre: 'le titre ($t)',
+  titre: 'le titre, en clair',
   tetrade: 'facultatif : `{ table, vue }` pour un écran de tétrade',
   etat: 'facultatif : les valeurs d’état, `[{ nom, nature, initial? }]`',
   corps: 'les composants',
 } as const
 export const NATURES_ETAT = ['texte', 'nombre', 'booleen'] as const
+/**
+ * L'application assemblée — PAR DERIBFY, pas par le modèle : les écrans du
+ * modèle, la barre (dérivée du graphe, V2) et les traductions (clés de
+ * Deribfy). Le modèle n'écrit qu'un `Ecran`.
+ */
 export const PROPS_SPEC = {
   ecrans: 'les écrans',
   barre: 'les routes de la barre du bas (3 à 5)',
-  traductions: '`[{ langue, textes: [{ cle, texte }] }]` — chaque clé, dans chaque langue lue',
+  traductions: 'facultatif : les langues lues autres que la principale, `[{ langue, textes: [{ cle, texte }] }]`, aux clés de Deribfy',
 } as const
 
 // ── LE SCHÉMA ZOD, DÉRIVÉ DES TABLES.
-export const Texte = z.strictObject({ $t: z.string().regex(MOTIF.cle) })
+export const Texte = z.string().regex(MOTIF.texte)
 export const Liaison = z.strictObject({ $data: z.string().regex(MOTIF.liaison) })
 const ChaineLitterale = z.string().regex(MOTIF.litteral)
 export const Litteral = z.union([ChaineLitterale, z.number(), z.boolean(), z.null()])
 const Route = z.string().regex(MOTIF.route)
 const Identifiant = z.string().regex(MOTIF.identifiant)
+
+/** Une charge porte exactement les champs de son événement : requis présents, aucun autre, aucun doublon. */
+export function chargeConforme(evenement: string, charge: readonly { champ: string }[] | undefined): boolean {
+  const attendu = CHARGES[evenement] ?? {}
+  const champs = (charge ?? []).map((c) => c.champ)
+  if (new Set(champs).size !== champs.length) return false
+  if (champs.some((c) => !(c in attendu))) return false
+  return Object.entries(attendu).every(([c, r]) => r === 'facultatif' || champs.includes(c))
+}
 
 export type NoeudSpec = { readonly composant: string } & Record<string, unknown>
 
@@ -251,6 +288,7 @@ function schemaGenre(g: Genre): z.ZodType {
     case 'chemin': return z.string().regex(MOTIF.liaison)
     case 'donneeOuValeur': return z.union([Liaison, Litteral])
     case 'codeLangue': return z.string().regex(MOTIF.langue)
+    case 'charge': return z.array(z.strictObject({ champ: z.enum(CHAMPS_DE_CHARGE as [string, ...string[]]), depuis: Liaison }))
   }
 }
 
@@ -262,8 +300,10 @@ export const Action: z.ZodType = z.lazy(() => z.discriminatedUnion('faire', Obje
     forme[arg] = d.requis ? s : s.optional()
   }
   const objet = z.strictObject(forme)
-  // choisirLangue dit LAQUELLE. Zod l'impose ; le schéma JSON ne sait pas l'écrire (limite dite, pas comblée).
-  return faire === 'emit' ? objet.refine((x) => x.evenement !== 'choisirLangue' || x.valeur !== undefined, { message: 'choisirLangue exige valeur' }) : objet
+  // choisirLangue dit LAQUELLE ; une charge est celle de SON événement. Zod l'impose ;
+  // le schéma JSON ne sait pas l'écrire (limite dite, pas comblée).
+  return faire === 'emit' ? objet.refine((x) => x.evenement !== 'choisirLangue' || x.valeur !== undefined, { message: 'choisirLangue exige valeur' })
+    .refine((x) => chargeConforme(String(x.evenement), x.charge as { champ: string }[] | undefined), { message: 'charge non conforme à son événement' }) : objet
 }) as unknown as [z.ZodObject, ...z.ZodObject[]]))
 
 export const Noeud: z.ZodType<NoeudSpec> = z.lazy(() => {
@@ -287,15 +327,16 @@ export const Ecran = z.strictObject({
   corps: z.array(Noeud).min(1),
 })
 
+/** Les traductions des langues lues autres que la principale — clés FABRIQUÉES par Deribfy (`textes.ts`). */
 export const Traductions = z.array(z.strictObject({
   langue: z.string().regex(MOTIF.langue),
   textes: z.array(z.strictObject({ cle: z.string().regex(MOTIF.cle), texte: z.string().regex(MOTIF.traduction) })),
 }))
 
-/** L'application entière (couches 1 et 2). */
-export const SchemaSpec = z.strictObject({ ecrans: z.array(Ecran).min(1), barre: z.array(Route), traductions: Traductions })
-/** Un écran seul, avec ses textes (couche 1 et contrôles de contexte ; pas de graphe). */
-export const SchemaFragment = z.strictObject({ ecran: Ecran, traductions: Traductions })
+/** L'application assemblée par Deribfy (couches 1 et 2). */
+export const SchemaSpec = z.strictObject({ ecrans: z.array(Ecran).min(1), barre: z.array(Route), traductions: Traductions.optional() })
+/** Un écran seul — ce que le modèle écrit —, avec les traductions éventuelles de ses textes. */
+export const SchemaFragment = z.strictObject({ ecran: Ecran, traductions: Traductions.optional() })
 
 export type Spec = z.infer<typeof SchemaSpec>
 export type Fragment = z.infer<typeof SchemaFragment>
@@ -316,10 +357,11 @@ export function schemaJsonDuContrat(): Record<string, unknown> {
  * deux ensembles dans les deux sens.
  */
 export function identifiantsDuCatalogue(): Set<string> {
-  const s = new Set<string>(['composant', 'faire', '$t', '$data', 'visiteur'])
-  for (const k of Object.keys(PROPS_SPEC)) s.add(k)
+  // Ce que le MODÈLE écrit : un écran. L'application, la barre et les traductions sont à Deribfy.
+  const s = new Set<string>(['composant', 'faire', '$data', 'visiteur'])
   for (const k of Object.keys(PROPS_ECRAN)) s.add(k)
-  for (const k of ['table', 'vue', 'nom', 'nature', 'initial', 'langue', 'textes', 'cle', 'texte', 'champ', 'egal', 'depuis', 'valeur', 'libelle']) s.add(k)
+  for (const k of ['table', 'vue', 'nom', 'nature', 'initial', 'champ', 'egal', 'depuis', 'valeur', 'libelle']) s.add(k)
+  for (const [ev, champs] of Object.entries(CHARGES)) { s.add(ev); for (const c of Object.keys(champs)) s.add(c) }
   for (const v of VUES_TETRADE) s.add(v)
   for (const v of NATURES_ETAT) s.add(v)
   for (const r of ROUTES_SOCLE) s.add(r)

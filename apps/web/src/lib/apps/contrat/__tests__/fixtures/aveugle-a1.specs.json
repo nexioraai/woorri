@@ -1,0 +1,6127 @@
+{
+ "note": "Les 24 écrans du jeu aveugle A1 (2026-11-13), traduits à la main AVANT validation (règles R1–R9, A1-regles-traduction.md, empreinte 80820c6b…), convertis au contrat V2 : textes en clair, clés de Deribfy. Mesure A1 rendue à 1f874a6a ; ces fixtures ne la remplacent pas. Contrat V2 (2026-11-14), traductions complétées : connexion des écrans 2, 3, 5, 11, 20 en emit connexion avec charge (règle R6 révisée) ; écran 6 : les fourchettes de prix du catalogue, que l'œuvre affichait et que la traduction A1 avait laissées ; écran 9 : le bouton « Enregistrer » en modification (modifierMembre/modifierAnnonce(id)), fondu en création par la traduction A1.",
+ "contextes": {
+  "a13f8f9f": {
+   "routes": [
+    "ecran-public",
+    "espace-parent",
+    "gestion",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [
+    "gestion"
+   ],
+   "tables": [
+    {
+     "nom": "annonce",
+     "colonnes": [
+      "titre",
+      "date",
+      "contenu"
+     ]
+    },
+    {
+     "nom": "emploi_du_temps",
+     "colonnes": [
+      "classe",
+      "jour",
+      "heure",
+      "matiere"
+     ]
+    },
+    {
+     "nom": "examen",
+     "colonnes": [
+      "classe",
+      "matiere",
+      "date"
+     ]
+    },
+    {
+     "nom": "eleve",
+     "colonnes": [
+      "nom",
+      "classe",
+      "enseignant_principal",
+      "parent_id"
+     ]
+    },
+    {
+     "nom": "note",
+     "colonnes": [
+      "eleve",
+      "matiere",
+      "trimestre",
+      "valeur"
+     ]
+    },
+    {
+     "nom": "absence",
+     "colonnes": [
+      "eleve_id",
+      "date",
+      "type",
+      "motif",
+      "justifie",
+      "justification_message"
+     ]
+    },
+    {
+     "nom": "versement",
+     "colonnes": [
+      "eleve",
+      "montant"
+     ]
+    },
+    {
+     "nom": "frais",
+     "colonnes": [
+      "eleve_id",
+      "montant_total",
+      "prochaine_echeance"
+     ]
+    },
+    {
+     "nom": "parent",
+     "colonnes": [
+      "nom",
+      "telephone"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "c4522e43": {
+   "routes": [
+    "gestion",
+    "page-publique",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [
+    "gestion"
+   ],
+   "tables": [
+    {
+     "nom": "piece",
+     "colonnes": [
+      "reference",
+      "nom",
+      "modele_vehicule",
+      "etat",
+      "prix",
+      "photo"
+     ]
+    },
+    {
+     "nom": "boutique",
+     "colonnes": [
+      "nom",
+      "emplacement",
+      "telephone"
+     ]
+    },
+    {
+     "nom": "stock",
+     "colonnes": [
+      "piece",
+      "boutique",
+      "quantite"
+     ]
+    },
+    {
+     "nom": "reservation",
+     "colonnes": [
+      "piece",
+      "client_nom",
+      "telephone",
+      "acompte",
+      "date_retrait",
+      "statut"
+     ]
+    },
+    {
+     "nom": "devis",
+     "colonnes": [
+      "description",
+      "modele_vehicule",
+      "photo",
+      "telephone",
+      "statut"
+     ]
+    },
+    {
+     "nom": "commande_importation",
+     "colonnes": [
+      "reference",
+      "client_nom",
+      "statut",
+      "date_commande"
+     ]
+    },
+    {
+     "nom": "utilisateur",
+     "colonnes": [
+      "nom",
+      "role",
+      "boutique"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "f29323f6": {
+   "routes": [
+    "gestion",
+    "public",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [
+    "gestion"
+   ],
+   "tables": [
+    {
+     "nom": "piece",
+     "colonnes": [
+      "reference",
+      "nom",
+      "modele",
+      "etat",
+      "prix",
+      "photo"
+     ]
+    },
+    {
+     "nom": "boutique",
+     "colonnes": [
+      "nom",
+      "localisation",
+      "telephone"
+     ]
+    },
+    {
+     "nom": "stock",
+     "colonnes": [
+      "piece",
+      "boutique",
+      "quantite"
+     ]
+    },
+    {
+     "nom": "devis",
+     "colonnes": [
+      "client",
+      "telephone",
+      "modele",
+      "description",
+      "photo",
+      "statut"
+     ]
+    },
+    {
+     "nom": "utilisateur",
+     "colonnes": [
+      "nom",
+      "role",
+      "boutique"
+     ]
+    },
+    {
+     "nom": "commande_importation",
+     "colonnes": [
+      "reference",
+      "date_commande",
+      "statut",
+      "description"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "44ca6bbe": {
+   "routes": [
+    "espace-atelier",
+    "espace-cliente",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [
+    "gestion"
+   ],
+   "tables": [
+    {
+     "nom": "cliente",
+     "colonnes": [
+      "nom",
+      "tour_poitrine",
+      "tour_taille",
+      "tour_hanches",
+      "longueur",
+      "epaules",
+      "manches"
+     ]
+    },
+    {
+     "nom": "commande",
+     "colonnes": [
+      "cliente_id",
+      "modele",
+      "date_promise",
+      "etape",
+      "prix",
+      "created_at"
+     ]
+    },
+    {
+     "nom": "rdv",
+     "colonnes": [
+      "cliente_id",
+      "date",
+      "heure",
+      "motif",
+      "statut"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "f1b753a6": {
+   "routes": [
+    "public",
+    "gestion",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [
+    "gestion"
+   ],
+   "tables": [
+    {
+     "nom": "medicament",
+     "colonnes": [
+      "nom",
+      "prix",
+      "quantite_stock",
+      "categorie",
+      "emplacement",
+      "date_expiration"
+     ]
+    },
+    {
+     "nom": "horaire",
+     "colonnes": [
+      "jour",
+      "ouverture",
+      "fermeture"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "27ba05fb": {
+   "routes": [
+    "public-page",
+    "gestion-page",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [
+    "gestion"
+   ],
+   "tables": [
+    {
+     "nom": "medicament",
+     "colonnes": [
+      "nom",
+      "prix",
+      "quantite_stock",
+      "categorie",
+      "emplacement",
+      "date_expiration"
+     ]
+    },
+    {
+     "nom": "horaire",
+     "colonnes": [
+      "jour",
+      "ouverture",
+      "fermeture"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "97244e75": {
+   "routes": [
+    "gestion",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [
+    "gestion"
+   ],
+   "tables": [
+    {
+     "nom": "membre",
+     "colonnes": [
+      "nom",
+      "telephone",
+      "date_inscription"
+     ]
+    },
+    {
+     "nom": "annonce",
+     "colonnes": [
+      "titre",
+      "contenu",
+      "date_publication"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "35ed32c1": {
+   "routes": [
+    "espace-gestion",
+    "formulaire-connexion",
+    "page-publique",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [
+    "gestion"
+   ],
+   "tables": [
+    {
+     "nom": "membre",
+     "colonnes": [
+      "nom",
+      "telephone",
+      "date_inscription"
+     ]
+    },
+    {
+     "nom": "annonce",
+     "colonnes": [
+      "titre",
+      "contenu",
+      "date_publication",
+      "publiee"
+     ]
+    },
+    {
+     "nom": "utilisateur",
+     "colonnes": [
+      "identifiant",
+      "mot_de_passe"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "ba20655a": {
+   "routes": [
+    "gestion",
+    "public-annonces",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [
+    "gestion"
+   ],
+   "tables": [
+    {
+     "nom": "membre",
+     "colonnes": [
+      "nom",
+      "telephone",
+      "date_inscription"
+     ]
+    },
+    {
+     "nom": "annonce",
+     "colonnes": [
+      "titre",
+      "contenu",
+      "date_publication"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "cec8bddf": {
+   "routes": [
+    "ecran-accueil",
+    "ecran-historique",
+    "ecran-nouveau-releve",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [],
+   "tables": [
+    {
+     "nom": "releve",
+     "colonnes": [
+      "date",
+      "index",
+      "photo"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "60bf2c40": {
+   "routes": [
+    "calcul-facture",
+    "historique",
+    "tarifs",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [],
+   "tables": [
+    {
+     "nom": "calculs",
+     "colonnes": [
+      "date",
+      "consommation",
+      "montant_total",
+      "details"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "0b1f3bb6": {
+   "routes": [
+    "ecran-accueil",
+    "ecran-releves",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [],
+   "tables": [
+    {
+     "nom": "releve",
+     "colonnes": [
+      "type",
+      "date",
+      "index"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "08a20016": {
+   "routes": [
+    "saisie",
+    "connexion",
+    "historique",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [],
+   "tables": [
+    {
+     "nom": "releve",
+     "colonnes": [
+      "date",
+      "index_precedent",
+      "index_actuel",
+      "consommation",
+      "montant"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "8a2735f0": {
+   "routes": [
+    "calculateur-energie",
+    "historique",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [],
+   "tables": [
+    {
+     "nom": "lecture",
+     "colonnes": [
+      "date",
+      "index_precedent",
+      "index_actuel",
+      "consommation",
+      "tarif",
+      "montant"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  },
+  "fa0ede2c": {
+   "routes": [
+    "accueil",
+    "catalogue",
+    "appels",
+    "clients",
+    "fournisseurs",
+    "contact",
+    "recherche",
+    "activites",
+    "connexion",
+    "administration",
+    "accueil",
+    "compte",
+    "aide",
+    "contact",
+    "legal"
+   ],
+   "roles": [
+    "gestion"
+   ],
+   "tables": [
+    {
+     "nom": "produit",
+     "colonnes": [
+      "nom"
+     ]
+    },
+    {
+     "nom": "appel_offre",
+     "colonnes": [
+      "statut"
+     ]
+    },
+    {
+     "nom": "client",
+     "colonnes": [
+      "statut"
+     ]
+    },
+    {
+     "nom": "fournisseur",
+     "colonnes": [
+      "statut"
+     ]
+    },
+    {
+     "nom": "demande",
+     "colonnes": [
+      "statut"
+     ]
+    },
+    {
+     "nom": "actualite",
+     "colonnes": [
+      "titre",
+      "date",
+      "categorie",
+      "contenu"
+     ]
+    }
+   ],
+   "langues": [],
+   "devises": [],
+   "moyensPaiement": [],
+   "pays": []
+  }
+ },
+ "ecrans": [
+  {
+   "n": 1,
+   "oeuvre": "a13f8f9f",
+   "chemin": "composants/EcranPublic.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "ecran-public",
+     "acces": "visiteur",
+     "titre": "La Renaissance",
+     "etat": [
+      {
+       "nom": "voir_accueil",
+       "nature": "booleen",
+       "initial": true
+      },
+      {
+       "nom": "voir_annonces",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_emploi",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_examens",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_contact",
+       "nature": "booleen",
+       "initial": false
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Pile",
+       "sens": "ligne",
+       "enfants": [
+        {
+         "composant": "Bouton",
+         "libelle": "Accueil",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_accueil",
+           "valeur": true
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_annonces",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_emploi",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_examens",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_contact",
+           "valeur": false
+          }
+         ],
+         "icone": "accueil"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Annonces",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_accueil",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_annonces",
+           "valeur": true
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_emploi",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_examens",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_contact",
+           "valeur": false
+          }
+         ],
+         "icone": "message"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Emploi du temps",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_accueil",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_annonces",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_emploi",
+           "valeur": true
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_examens",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_contact",
+           "valeur": false
+          }
+         ],
+         "icone": "calendrier"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Examens",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_accueil",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_annonces",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_emploi",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_examens",
+           "valeur": true
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_contact",
+           "valeur": false
+          }
+         ],
+         "icone": "document"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Contact",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_accueil",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_annonces",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_emploi",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_examens",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_contact",
+           "valeur": true
+          }
+         ],
+         "icone": "utilisateur"
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.voir_accueil"
+       },
+       "enfants": [
+        {
+         "composant": "Phrase",
+         "texte": "Bienvenue",
+         "taille": "legende"
+        },
+        {
+         "composant": "Titre",
+         "texte": "Complexe Scolaire La Renaissance",
+         "niveau": "section"
+        },
+        {
+         "composant": "Phrase",
+         "texte": "Maternelle, primaire et collège à N'Djamena. 620 élèves, 32 enseignants."
+        },
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Phrase",
+           "texte": "Notre école accueille vos enfants de la maternelle au collège. Retrouvez ici les annonces, l'emploi du temps et les examens."
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.voir_annonces"
+       },
+       "enfants": [
+        {
+         "composant": "Phrase",
+         "texte": "Communication",
+         "taille": "legende"
+        },
+        {
+         "composant": "Titre",
+         "texte": "Annonces de l'école",
+         "niveau": "section"
+        },
+        {
+         "composant": "Phrase",
+         "texte": "Réunions, fermetures, événements."
+        },
+        {
+         "composant": "Lignes",
+         "donnee": {
+          "$data": "table.annonce"
+         },
+         "vide": "Aucune annonce",
+         "modele": [
+          {
+           "composant": "Encart",
+           "enfants": [
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.titre"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.date"
+             },
+             "format": "date"
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.contenu"
+             }
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.voir_emploi"
+       },
+       "enfants": [
+        {
+         "composant": "Phrase",
+         "texte": "Organisation",
+         "taille": "legende"
+        },
+        {
+         "composant": "Titre",
+         "texte": "Emploi du temps",
+         "niveau": "section"
+        },
+        {
+         "composant": "Phrase",
+         "texte": "Par classe et par jour."
+        },
+        {
+         "composant": "Lignes",
+         "donnee": {
+          "$data": "table.emploi_du_temps"
+         },
+         "vide": "Aucun cours",
+         "modele": [
+          {
+           "composant": "Encart",
+           "enfants": [
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.classe"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.jour"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.heure"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.matiere"
+             }
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.voir_examens"
+       },
+       "enfants": [
+        {
+         "composant": "Phrase",
+         "texte": "Calendrier",
+         "taille": "legende"
+        },
+        {
+         "composant": "Titre",
+         "texte": "Examens",
+         "niveau": "section"
+        },
+        {
+         "composant": "Phrase",
+         "texte": "Dates des évaluations."
+        },
+        {
+         "composant": "Lignes",
+         "donnee": {
+          "$data": "table.examen"
+         },
+         "vide": "Aucun examen",
+         "modele": [
+          {
+           "composant": "Encart",
+           "enfants": [
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.classe"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.matiere"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.date"
+             }
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.voir_contact"
+       },
+       "enfants": [
+        {
+         "composant": "Phrase",
+         "texte": "Contact",
+         "taille": "legende"
+        },
+        {
+         "composant": "Titre",
+         "texte": "Secrétariat",
+         "niveau": "section"
+        },
+        {
+         "composant": "Phrase",
+         "texte": "Joignez-nous par WhatsApp ou par téléphone."
+        },
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Bouton",
+           "libelle": "Appeler le secrétariat",
+           "effets": [
+            {
+             "faire": "emit",
+             "evenement": "contacter"
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Envoyer un WhatsApp",
+           "effets": [
+            {
+             "faire": "emit",
+             "evenement": "contacter"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 2,
+   "oeuvre": "a13f8f9f",
+   "chemin": "composants/EspaceParent.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "espace-parent",
+     "acces": "visiteur",
+     "titre": "Espace parent",
+     "etat": [
+      {
+       "nom": "connecte",
+       "nature": "booleen"
+      },
+      {
+       "nom": "inscription",
+       "nature": "booleen"
+      },
+      {
+       "nom": "nom",
+       "nature": "texte"
+      },
+      {
+       "nom": "telephone",
+       "nature": "texte"
+      },
+      {
+       "nom": "motDePasse",
+       "nature": "texte"
+      },
+      {
+       "nom": "erreur",
+       "nature": "texte"
+      },
+      {
+       "nom": "justification",
+       "nature": "texte"
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Espace parent",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Connexion ou inscription",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Accédez aux informations de vos enfants."
+      },
+      {
+       "composant": "Message",
+       "nature": "erreur",
+       "texte": "Erreur de connexion",
+       "si": {
+        "$data": "etat.erreur"
+       }
+      },
+      {
+       "composant": "Encart",
+       "siNon": {
+        "$data": "etat.connecte"
+       },
+       "enfants": [
+        {
+         "composant": "Pile",
+         "sens": "ligne",
+         "enfants": [
+          {
+           "composant": "Bouton",
+           "libelle": "Connexion",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.inscription",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Inscription",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.inscription",
+             "valeur": true
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "composant": "Pile",
+         "siNon": {
+          "$data": "etat.inscription"
+         },
+         "enfants": [
+          {
+           "composant": "Champ",
+           "libelle": "Numéro de téléphone",
+           "donnee": {
+            "$data": "etat.telephone"
+           },
+           "nature": "telephone"
+          },
+          {
+           "composant": "Champ",
+           "libelle": "Mot de passe",
+           "donnee": {
+            "$data": "etat.motDePasse"
+           },
+           "nature": "secret"
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Se connecter",
+           "effets": [
+            {
+             "faire": "emit",
+             "evenement": "connexion",
+             "charge": [
+              {
+               "champ": "identifiant",
+               "depuis": {
+                "$data": "etat.telephone"
+               }
+              },
+              {
+               "champ": "secret",
+               "depuis": {
+                "$data": "etat.motDePasse"
+               }
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "composant": "Pile",
+         "si": {
+          "$data": "etat.inscription"
+         },
+         "enfants": [
+          {
+           "composant": "Champ",
+           "libelle": "Nom complet",
+           "donnee": {
+            "$data": "etat.nom"
+           },
+           "nature": "texte"
+          },
+          {
+           "composant": "Champ",
+           "libelle": "Numéro de téléphone",
+           "donnee": {
+            "$data": "etat.telephone"
+           },
+           "nature": "telephone"
+          },
+          {
+           "composant": "Champ",
+           "libelle": "Mot de passe",
+           "donnee": {
+            "$data": "etat.motDePasse"
+           },
+           "nature": "secret"
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "S'inscrire",
+           "effets": [
+            {
+             "faire": "submit",
+             "table": "parent",
+             "mode": "creer",
+             "valeurs": [
+              {
+               "champ": "nom",
+               "depuis": {
+                "$data": "etat.nom"
+               }
+              },
+              {
+               "champ": "telephone",
+               "depuis": {
+                "$data": "etat.telephone"
+               }
+              }
+             ]
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.inscription",
+             "valeur": false
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.connecte"
+       },
+       "enfants": [
+        {
+         "composant": "Bouton",
+         "libelle": "Déconnexion",
+         "effets": [
+          {
+           "faire": "emit",
+           "evenement": "deconnexion"
+          }
+         ]
+        },
+        {
+         "composant": "Lignes",
+         "donnee": {
+          "$data": "table.eleve"
+         },
+         "filtre": [
+          {
+           "champ": "parent_id",
+           "egal": {
+            "$data": "session.utilisateur"
+           }
+          }
+         ],
+         "vide": "Aucun enfant associé",
+         "modele": [
+          {
+           "composant": "Encart",
+           "enfants": [
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.nom"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "libelle": "Classe",
+             "donnee": {
+              "$data": "ligne.classe"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "libelle": "Enseignant",
+             "donnee": {
+              "$data": "ligne.enseignant_principal"
+             }
+            },
+            {
+             "composant": "Titre",
+             "texte": "Notes",
+             "niveau": "encart"
+            },
+            {
+             "composant": "Lignes",
+             "donnee": {
+              "$data": "table.note"
+             },
+             "filtre": [
+              {
+               "champ": "eleve",
+               "egal": {
+                "$data": "ligne.nom"
+               }
+              }
+             ],
+             "vide": "Aucune note enregistrée.",
+             "modele": [
+              {
+               "composant": "Valeur",
+               "donnee": {
+                "$data": "ligne.matiere"
+               }
+              },
+              {
+               "composant": "Valeur",
+               "donnee": {
+                "$data": "ligne.trimestre"
+               }
+              },
+              {
+               "composant": "Valeur",
+               "donnee": {
+                "$data": "ligne.valeur"
+               },
+               "format": "nombre"
+              }
+             ]
+            },
+            {
+             "composant": "Titre",
+             "texte": "Absences et retards",
+             "niveau": "encart"
+            },
+            {
+             "composant": "Lignes",
+             "donnee": {
+              "$data": "table.absence"
+             },
+             "filtre": [
+              {
+               "champ": "eleve_id",
+               "egal": {
+                "$data": "ligne.id"
+               }
+              }
+             ],
+             "vide": "Aucune absence.",
+             "modele": [
+              {
+               "composant": "Valeur",
+               "donnee": {
+                "$data": "ligne.date"
+               },
+               "format": "date"
+              },
+              {
+               "composant": "Valeur",
+               "donnee": {
+                "$data": "ligne.type"
+               }
+              },
+              {
+               "composant": "Valeur",
+               "donnee": {
+                "$data": "ligne.motif"
+               }
+              },
+              {
+               "composant": "Champ",
+               "libelle": "Message de justification",
+               "donnee": {
+                "$data": "etat.justification"
+               },
+               "nature": "texte",
+               "siNon": {
+                "$data": "ligne.justifie"
+               }
+              },
+              {
+               "composant": "Bouton",
+               "libelle": "Envoyer",
+               "effets": [
+                {
+                 "faire": "submit",
+                 "table": "absence",
+                 "mode": "modifier",
+                 "valeurs": [
+                  {
+                   "champ": "justifie",
+                   "depuis": true
+                  },
+                  {
+                   "champ": "justification_message",
+                   "depuis": {
+                    "$data": "etat.justification"
+                   }
+                  }
+                 ]
+                }
+               ],
+               "siNon": {
+                "$data": "ligne.justifie"
+               }
+              }
+             ]
+            },
+            {
+             "composant": "Titre",
+             "texte": "Frais de scolarité",
+             "niveau": "encart"
+            },
+            {
+             "composant": "Lignes",
+             "donnee": {
+              "$data": "table.frais"
+             },
+             "filtre": [
+              {
+               "champ": "eleve_id",
+               "egal": {
+                "$data": "ligne.id"
+               }
+              }
+             ],
+             "vide": "Aucun frais",
+             "modele": [
+              {
+               "composant": "Valeur",
+               "libelle": "Montant total",
+               "donnee": {
+                "$data": "ligne.montant_total"
+               },
+               "format": "montant"
+              },
+              {
+               "composant": "Valeur",
+               "libelle": "Prochaine échéance",
+               "donnee": {
+                "$data": "ligne.prochaine_echeance"
+               },
+               "format": "date"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 3,
+   "oeuvre": "c4522e43",
+   "chemin": "composants/Gestion.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "gestion",
+     "acces": "gestion",
+     "titre": "Logone Pièces Auto",
+     "etat": [
+      {
+       "nom": "connecte",
+       "nature": "booleen"
+      },
+      {
+       "nom": "email",
+       "nature": "texte"
+      },
+      {
+       "nom": "motDePasse",
+       "nature": "texte"
+      },
+      {
+       "nom": "erreurConnexion",
+       "nature": "texte"
+      },
+      {
+       "nom": "voir_accueil",
+       "nature": "booleen",
+       "initial": true
+      },
+      {
+       "nom": "voir_pieces",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_boutiques",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_stock",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_reservations",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_devis",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_commandes",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_utilisateurs",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_reglages",
+       "nature": "booleen",
+       "initial": false
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Encart",
+       "siNon": {
+        "$data": "etat.connecte"
+       },
+       "enfants": [
+        {
+         "composant": "Titre",
+         "texte": "Connexion à l’espace de gestion",
+         "niveau": "page"
+        },
+        {
+         "composant": "Formulaire",
+         "enfants": [
+          {
+           "composant": "Champ",
+           "libelle": "Email",
+           "donnee": {
+            "$data": "etat.email"
+           },
+           "nature": "courriel",
+           "requis": true
+          },
+          {
+           "composant": "Champ",
+           "libelle": "Mot de passe",
+           "donnee": {
+            "$data": "etat.motDePasse"
+           },
+           "nature": "secret",
+           "requis": true
+          },
+          {
+           "composant": "Message",
+           "nature": "erreur",
+           "texte": "Erreur de connexion",
+           "si": {
+            "$data": "etat.erreurConnexion"
+           }
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Se connecter",
+           "effets": [
+            {
+             "faire": "emit",
+             "evenement": "connexion",
+             "charge": [
+              {
+               "champ": "identifiant",
+               "depuis": {
+                "$data": "etat.email"
+               }
+              },
+              {
+               "champ": "secret",
+               "depuis": {
+                "$data": "etat.motDePasse"
+               }
+              }
+             ]
+            }
+           ],
+           "genre": "principal"
+          }
+         ]
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "← Retour à l’accueil",
+         "effets": [
+          {
+           "faire": "navigate",
+           "route": "accueil"
+          }
+         ],
+         "genre": "discret"
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.connecte"
+       },
+       "enfants": [
+        {
+         "composant": "Pile",
+         "sens": "ligne",
+         "enfants": [
+          {
+           "composant": "Bouton",
+           "libelle": "Accueil",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_pieces",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutiques",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reservations",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commandes",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateurs",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Pièces",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_pieces",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutiques",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reservations",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commandes",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateurs",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Boutiques",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_pieces",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutiques",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reservations",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commandes",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateurs",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Stock",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_pieces",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutiques",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reservations",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commandes",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateurs",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Réservations",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_pieces",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutiques",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reservations",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commandes",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateurs",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Devis",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_pieces",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutiques",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reservations",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commandes",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateurs",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Commandes Import",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_pieces",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutiques",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reservations",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commandes",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateurs",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Utilisateurs",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_pieces",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutiques",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reservations",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commandes",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateurs",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Réglages",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_pieces",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutiques",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reservations",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commandes",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateurs",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": true
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Déconnexion",
+         "effets": [
+          {
+           "faire": "emit",
+           "evenement": "deconnexion"
+          },
+          {
+           "faire": "navigate",
+           "route": "accueil"
+          }
+         ]
+        },
+        {
+         "composant": "Pile",
+         "si": {
+          "$data": "etat.voir_accueil"
+         },
+         "enfants": [
+          {
+           "composant": "CarteDeChiffre",
+           "libelle": "Pièces"
+          },
+          {
+           "composant": "CarteDeChiffre",
+           "libelle": "Boutiques"
+          },
+          {
+           "composant": "CarteDeChiffre",
+           "libelle": "Réservations en attente"
+          },
+          {
+           "composant": "CarteDeChiffre",
+           "libelle": "Commandes en cours"
+          },
+          {
+           "composant": "CarteVedette",
+           "libelle": "Valeur du stock"
+          },
+          {
+           "composant": "Courbe",
+           "titre": "Réservations par mois"
+          },
+          {
+           "composant": "Barres",
+           "titre": "Pièces par modèle"
+          },
+          {
+           "composant": "Anneau",
+           "titre": "États des pièces"
+          },
+          {
+           "composant": "Classement",
+           "titre": "Stocks par boutique"
+          },
+          {
+           "composant": "ListeRecente",
+           "titre": "Dernières réservations"
+          }
+         ]
+        },
+        {
+         "composant": "SectionTable",
+         "si": {
+          "$data": "etat.voir_pieces"
+         },
+         "table": "piece"
+        },
+        {
+         "composant": "SectionTable",
+         "si": {
+          "$data": "etat.voir_boutiques"
+         },
+         "table": "boutique"
+        },
+        {
+         "composant": "SectionTable",
+         "si": {
+          "$data": "etat.voir_stock"
+         },
+         "table": "stock"
+        },
+        {
+         "composant": "SectionTable",
+         "si": {
+          "$data": "etat.voir_reservations"
+         },
+         "table": "reservation"
+        },
+        {
+         "composant": "SectionTable",
+         "si": {
+          "$data": "etat.voir_devis"
+         },
+         "table": "devis"
+        },
+        {
+         "composant": "SectionTable",
+         "si": {
+          "$data": "etat.voir_commandes"
+         },
+         "table": "commande_importation"
+        },
+        {
+         "composant": "SectionTable",
+         "si": {
+          "$data": "etat.voir_utilisateurs"
+         },
+         "table": "utilisateur"
+        },
+        {
+         "composant": "ChoixApparence",
+         "si": {
+          "$data": "etat.voir_reglages"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 4,
+   "oeuvre": "c4522e43",
+   "chemin": "composants/PagePublique.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "page-publique",
+     "acces": "visiteur",
+     "titre": "Catalogue",
+     "etat": [
+      {
+       "nom": "recherche",
+       "nature": "texte",
+       "initial": ""
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Catalogue",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Pièces détachées Toyota",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Recherchez par modèle ou nom de pièce"
+      },
+      {
+       "composant": "Pile",
+       "sens": "ligne",
+       "enfants": [
+        {
+         "composant": "Pictogramme",
+         "icone": "recherche",
+         "couleur": "texteDiscret"
+        },
+        {
+         "composant": "Champ",
+         "libelle": "Rechercher...",
+         "donnee": {
+          "$data": "etat.recherche"
+         },
+         "nature": "texte"
+        }
+       ]
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.piece"
+       },
+       "filtre": [
+        {
+         "champ": "nom",
+         "egal": {
+          "$data": "etat.recherche"
+         }
+        }
+       ],
+       "vide": "Aucune pièce ne correspond à votre recherche.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "espace": "m",
+         "enfants": [
+          {
+           "composant": "Illustration",
+           "donnee": {
+            "$data": "ligne.photo"
+           },
+           "alternative": "Photo de la pièce"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Réf",
+           "donnee": {
+            "$data": "ligne.reference"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Modèle",
+           "donnee": {
+            "$data": "ligne.modele_vehicule"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "État",
+           "donnee": {
+            "$data": "ligne.etat"
+           }
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Disponibilité : contactez la boutique"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 5,
+   "oeuvre": "f29323f6",
+   "chemin": "composants/Gestion.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "gestion",
+     "acces": "gestion",
+     "titre": "Logone Pièces Auto",
+     "etat": [
+      {
+       "nom": "connecte",
+       "nature": "booleen"
+      },
+      {
+       "nom": "email",
+       "nature": "texte"
+      },
+      {
+       "nom": "motDePasse",
+       "nature": "texte"
+      },
+      {
+       "nom": "voir_accueil",
+       "nature": "booleen",
+       "initial": true
+      },
+      {
+       "nom": "voir_piece",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_boutique",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_stock",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_devis",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_utilisateur",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_commande_importation",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_reglages",
+       "nature": "booleen",
+       "initial": false
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Encart",
+       "siNon": {
+        "$data": "etat.connecte"
+       },
+       "enfants": [
+        {
+         "composant": "Titre",
+         "texte": "Connexion à la gestion",
+         "niveau": "page"
+        },
+        {
+         "composant": "Champ",
+         "libelle": "Email",
+         "donnee": {
+          "$data": "etat.email"
+         },
+         "nature": "courriel"
+        },
+        {
+         "composant": "Champ",
+         "libelle": "Mot de passe",
+         "donnee": {
+          "$data": "etat.motDePasse"
+         },
+         "nature": "secret"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Se connecter",
+         "effets": [
+          {
+           "faire": "emit",
+           "evenement": "connexion",
+           "charge": [
+            {
+             "champ": "identifiant",
+             "depuis": {
+              "$data": "etat.email"
+             }
+            },
+            {
+             "champ": "secret",
+             "depuis": {
+              "$data": "etat.motDePasse"
+             }
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.connecte"
+       },
+       "enfants": [
+        {
+         "composant": "Pile",
+         "sens": "ligne",
+         "enfants": [
+          {
+           "composant": "Bouton",
+           "libelle": "Accueil",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_piece",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutique",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateur",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commande_importation",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Pièces",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_piece",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutique",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateur",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commande_importation",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Boutiques",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_piece",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutique",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateur",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commande_importation",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Stocks",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_piece",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutique",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateur",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commande_importation",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Devis",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_piece",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutique",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateur",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commande_importation",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Utilisateurs",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_piece",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutique",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateur",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commande_importation",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Commandes import",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_piece",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutique",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateur",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commande_importation",
+             "valeur": true
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": false
+            }
+           ]
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Réglages",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_accueil",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_piece",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_boutique",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_stock",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_devis",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_utilisateur",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_commande_importation",
+             "valeur": false
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.voir_reglages",
+             "valeur": true
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Déconnexion",
+         "effets": [
+          {
+           "faire": "emit",
+           "evenement": "deconnexion"
+          }
+         ]
+        },
+        {
+         "composant": "Pile",
+         "si": {
+          "$data": "etat.voir_accueil"
+         },
+         "enfants": [
+          {
+           "composant": "CarteDeChiffre",
+           "libelle": "Pièces"
+          },
+          {
+           "composant": "CarteDeChiffre",
+           "libelle": "Valeur stock"
+          },
+          {
+           "composant": "CarteDeChiffre",
+           "libelle": "Commandes import"
+          },
+          {
+           "composant": "CarteDeChiffre",
+           "libelle": "Devis en attente"
+          },
+          {
+           "composant": "CarteVedette",
+           "libelle": "Valeur totale du stock"
+          },
+          {
+           "composant": "Anneau",
+           "titre": "État des pièces"
+          },
+          {
+           "composant": "Classement",
+           "titre": "Modèles de véhicules"
+          },
+          {
+           "composant": "Barres",
+           "titre": "Stock par boutique"
+          },
+          {
+           "composant": "Titre",
+           "texte": "Dernières pièces ajoutées",
+           "niveau": "section"
+          },
+          {
+           "composant": "Lignes",
+           "donnee": {
+            "$data": "table.piece"
+           },
+           "vide": "Aucune pièce",
+           "modele": [
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.reference"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.nom"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.prix"
+             },
+             "format": "montant"
+            },
+            {
+             "composant": "Bouton",
+             "libelle": "Voir",
+             "effets": []
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "composant": "GestionTable",
+         "si": {
+          "$data": "etat.voir_piece"
+         },
+         "table": "piece"
+        },
+        {
+         "composant": "GestionTable",
+         "si": {
+          "$data": "etat.voir_boutique"
+         },
+         "table": "boutique"
+        },
+        {
+         "composant": "GestionTable",
+         "si": {
+          "$data": "etat.voir_stock"
+         },
+         "table": "stock"
+        },
+        {
+         "composant": "GestionTable",
+         "si": {
+          "$data": "etat.voir_devis"
+         },
+         "table": "devis"
+        },
+        {
+         "composant": "GestionTable",
+         "si": {
+          "$data": "etat.voir_utilisateur"
+         },
+         "table": "utilisateur"
+        },
+        {
+         "composant": "GestionTable",
+         "si": {
+          "$data": "etat.voir_commande_importation"
+         },
+         "table": "commande_importation"
+        },
+        {
+         "composant": "ChoixApparence",
+         "si": {
+          "$data": "etat.voir_reglages"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 6,
+   "oeuvre": "44ca6bbe",
+   "chemin": "composants/EspaceCliente.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "espace-cliente",
+     "acces": "visiteur",
+     "titre": "Atelier Mariam",
+     "etat": [
+      {
+       "nom": "voir_catalogue",
+       "nature": "booleen",
+       "initial": true
+      },
+      {
+       "nom": "voir_rdv",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_suivi",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_contact",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_historique",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "clienteRdv",
+       "nature": "texte"
+      },
+      {
+       "nom": "date",
+       "nature": "texte"
+      },
+      {
+       "nom": "heure",
+       "nature": "texte"
+      },
+      {
+       "nom": "motif",
+       "nature": "texte"
+      },
+      {
+       "nom": "confirmation",
+       "nature": "booleen"
+      },
+      {
+       "nom": "clienteSuivi",
+       "nature": "texte"
+      },
+      {
+       "nom": "clienteHisto",
+       "nature": "texte"
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Pile",
+       "sens": "ligne",
+       "enfants": [
+        {
+         "composant": "Bouton",
+         "libelle": "Catalogue",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_catalogue",
+           "valeur": true
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_rdv",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_suivi",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_contact",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_historique",
+           "valeur": false
+          }
+         ]
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Rendez-vous",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_catalogue",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_rdv",
+           "valeur": true
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_suivi",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_contact",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_historique",
+           "valeur": false
+          }
+         ]
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Suivi commande",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_catalogue",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_rdv",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_suivi",
+           "valeur": true
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_contact",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_historique",
+           "valeur": false
+          }
+         ]
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Contact",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_catalogue",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_rdv",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_suivi",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_contact",
+           "valeur": true
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_historique",
+           "valeur": false
+          }
+         ]
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Historique",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_catalogue",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_rdv",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_suivi",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_contact",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_historique",
+           "valeur": true
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.voir_catalogue"
+       },
+       "enfants": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Robe wax",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Robe légère en tissu wax, coupe droite ou évasée."
+          },
+          {
+           "composant": "Phrase",
+           "texte": "20 000 FCFA – 35 000 FCFA"
+          }
+         ]
+        },
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Boubou brodé",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Boubou traditionnel brodé, bazin riche."
+          },
+          {
+           "composant": "Phrase",
+           "texte": "40 000 FCFA – 60 000 FCFA"
+          }
+         ]
+        },
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Costume homme",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Costume deux pièces, ajusté sur mesure."
+          },
+          {
+           "composant": "Phrase",
+           "texte": "50 000 FCFA – 80 000 FCFA"
+          }
+         ]
+        },
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Robe de cérémonie",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Robe de soirée ou de cérémonie, satin ou dentelle."
+          },
+          {
+           "composant": "Phrase",
+           "texte": "35 000 FCFA – 100 000 FCFA"
+          }
+         ]
+        },
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Robe enfant",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Robe simple pour enfant, coton ou pagne."
+          },
+          {
+           "composant": "Phrase",
+           "texte": "10 000 FCFA – 20 000 FCFA"
+          }
+         ]
+        },
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Robe sirène",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Robe sirène ajustée, idéale pour les événements."
+          },
+          {
+           "composant": "Phrase",
+           "texte": "45 000 FCFA – 70 000 FCFA"
+          }
+         ]
+        },
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Boubou simple",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Boubou sans broderie, tissu bazin ou coton."
+          },
+          {
+           "composant": "Phrase",
+           "texte": "20 000 FCFA – 40 000 FCFA"
+          }
+         ]
+        },
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Robe de mariée",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Robe de mariée sur mesure, dentelle ou satin."
+          },
+          {
+           "composant": "Phrase",
+           "texte": "80 000 FCFA – 150 000 FCFA"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.voir_rdv"
+       },
+       "enfants": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Prendre rendez-vous",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Message",
+           "nature": "succes",
+           "texte": "Votre demande a été enregistrée. L'atelier vous confirmera par WhatsApp.",
+           "si": {
+            "$data": "etat.confirmation"
+           }
+          },
+          {
+           "composant": "Formulaire",
+           "enfants": [
+            {
+             "composant": "Champ",
+             "libelle": "Choisir votre nom (démo)",
+             "donnee": {
+              "$data": "etat.clienteRdv"
+             },
+             "nature": "choix",
+             "choix": [
+              {
+               "valeur": "demo",
+               "libelle": "Choisir votre nom (démo)"
+              }
+             ],
+             "requis": true
+            },
+            {
+             "composant": "Champ",
+             "libelle": "Date",
+             "donnee": {
+              "$data": "etat.date"
+             },
+             "nature": "date",
+             "requis": true
+            },
+            {
+             "composant": "Champ",
+             "libelle": "Heure",
+             "donnee": {
+              "$data": "etat.heure"
+             },
+             "nature": "texte",
+             "requis": true
+            },
+            {
+             "composant": "Champ",
+             "libelle": "Motif (ex: prise de mesures, essayage...)",
+             "donnee": {
+              "$data": "etat.motif"
+             },
+             "nature": "texte"
+            },
+            {
+             "composant": "Bouton",
+             "libelle": "Envoyer la demande",
+             "effets": [
+              {
+               "faire": "setState",
+               "chemin": "etat.confirmation",
+               "valeur": true
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "composant": "Titre",
+         "texte": "Mes prochains rendez-vous",
+         "niveau": "section"
+        },
+        {
+         "composant": "Lignes",
+         "donnee": {
+          "$data": "table.rdv"
+         },
+         "vide": "Aucun rendez-vous",
+         "modele": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.heure"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.motif"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.statut"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.voir_suivi"
+       },
+       "enfants": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Suivre ma commande",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Champ",
+           "libelle": "Sélectionner mon nom",
+           "donnee": {
+            "$data": "etat.clienteSuivi"
+           },
+           "nature": "choix",
+           "choix": [
+            {
+             "valeur": "demo",
+             "libelle": "Choisir votre nom (démo)"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "composant": "Lignes",
+         "donnee": {
+          "$data": "table.commande"
+         },
+         "filtre": [
+          {
+           "champ": "cliente_id",
+           "egal": {
+            "$data": "etat.clienteSuivi"
+           }
+          }
+         ],
+         "vide": "Aucune commande trouvée pour cette cliente.",
+         "modele": [
+          {
+           "composant": "Encart",
+           "enfants": [
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.modele"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "libelle": "Promis le",
+             "donnee": {
+              "$data": "ligne.date_promise"
+             },
+             "format": "date"
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.etape"
+             },
+             "format": "statut"
+            },
+            {
+             "composant": "Phrase",
+             "texte": "Notification WhatsApp envoyée à chaque changement d'étape (démonstration)."
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.voir_contact"
+       },
+       "enfants": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Contacter l'atelier",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Quartier Moursal, N'Djamena — du lundi au samedi, 8h - 18h"
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "WhatsApp",
+           "effets": [],
+           "genre": "principal"
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Appeler",
+           "effets": [],
+           "genre": "secondaire"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.voir_historique"
+       },
+       "enfants": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Historique de mes commandes et mesures",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Champ",
+           "libelle": "Sélectionner mon nom",
+           "donnee": {
+            "$data": "etat.clienteHisto"
+           },
+           "nature": "choix",
+           "choix": [
+            {
+             "valeur": "demo",
+             "libelle": "Choisir votre nom (démo)"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "composant": "Lignes",
+         "donnee": {
+          "$data": "table.commande"
+         },
+         "filtre": [
+          {
+           "champ": "cliente_id",
+           "egal": {
+            "$data": "etat.clienteHisto"
+           }
+          }
+         ],
+         "vide": "Aucune commande dans l'historique.",
+         "modele": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.modele"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.created_at"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.etape"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          }
+         ]
+        },
+        {
+         "composant": "Lignes",
+         "donnee": {
+          "$data": "table.cliente"
+         },
+         "filtre": [
+          {
+           "champ": "id",
+           "egal": {
+            "$data": "etat.clienteHisto"
+           }
+          }
+         ],
+         "vide": "Aucune mesure",
+         "modele": [
+          {
+           "composant": "Valeur",
+           "libelle": "tour_poitrine",
+           "donnee": {
+            "$data": "ligne.tour_poitrine"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "tour_taille",
+           "donnee": {
+            "$data": "ligne.tour_taille"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "tour_hanches",
+           "donnee": {
+            "$data": "ligne.tour_hanches"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "longueur",
+           "donnee": {
+            "$data": "ligne.longueur"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "epaules",
+           "donnee": {
+            "$data": "ligne.epaules"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "manches",
+           "donnee": {
+            "$data": "ligne.manches"
+           },
+           "format": "nombre"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 7,
+   "oeuvre": "f1b753a6",
+   "chemin": "composants/Public.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "public",
+     "acces": "visiteur",
+     "titre": "Pharmacie",
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Pharmacie de N'Djamena",
+       "niveau": "section"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Médicaments disponibles et horaires d'ouverture"
+      },
+      {
+       "composant": "Titre",
+       "texte": "Médicaments disponibles",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.medicament"
+       },
+       "vide": "Aucun médicament disponible",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Catégorie",
+           "donnee": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Emplacement",
+           "donnee": {
+            "$data": "ligne.emplacement"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Expire le",
+           "donnee": {
+            "$data": "ligne.date_expiration"
+           },
+           "format": "date"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "texte": "Horaires d'ouverture",
+       "niveau": "section"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.horaire"
+       },
+       "vide": "Horaires non renseignés",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.jour"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.ouverture"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.fermeture"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 8,
+   "oeuvre": "27ba05fb",
+   "chemin": "composants/PublicPage.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "public-page",
+     "acces": "visiteur",
+     "titre": "Pharmacie",
+     "corps": [
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "libelle": "Médicaments disponibles",
+       "legende": "Les médicaments actuellement en stock"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.medicament"
+       },
+       "vide": "Aucun médicament disponible",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.nom"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.prix"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Pictogramme",
+           "icone": "alerte"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Stock",
+           "donnee": {
+            "$data": "ligne.quantite_stock"
+           }
+          },
+          {
+           "composant": "Pictogramme",
+           "icone": "calendrier"
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Expire le",
+           "donnee": {
+            "$data": "ligne.date_expiration"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Pastille",
+           "libelle": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "libelle": "Emplacement",
+           "donnee": {
+            "$data": "ligne.emplacement"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Pharmacie",
+       "taille": "legende"
+      },
+      {
+       "composant": "Titre",
+       "libelle": "Horaires d'ouverture",
+       "legende": "Les horaires de la pharmacie"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.horaire"
+       },
+       "vide": "Horaires non renseignés",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.jour"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.ouverture"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.fermeture"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 9,
+   "oeuvre": "97244e75",
+   "chemin": "composants/Gestion.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "gestion",
+     "acces": "gestion",
+     "titre": "Gestion de l'association",
+     "etat": [
+      {
+       "nom": "voir_membres",
+       "nature": "booleen"
+      },
+      {
+       "nom": "m_nom",
+       "nature": "texte"
+      },
+      {
+       "nom": "m_tel",
+       "nature": "texte"
+      },
+      {
+       "nom": "m_date",
+       "nature": "texte"
+      },
+      {
+       "nom": "m_modif",
+       "nature": "texte"
+      },
+      {
+       "nom": "a_titre",
+       "nature": "texte"
+      },
+      {
+       "nom": "a_contenu",
+       "nature": "texte"
+      },
+      {
+       "nom": "a_date",
+       "nature": "texte"
+      },
+      {
+       "nom": "a_modif",
+       "nature": "texte"
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Gestion de l'association",
+       "niveau": "page"
+      },
+      {
+       "composant": "Bouton",
+       "libelle": "Déconnexion",
+       "effets": [
+        {
+         "faire": "emit",
+         "evenement": "deconnexion"
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.voir_membres"
+       },
+       "enfants": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Formulaire",
+           "enfants": [
+            {
+             "composant": "Champ",
+             "libelle": "Nom",
+             "donnee": {
+              "$data": "etat.m_nom"
+             },
+             "nature": "texte",
+             "requis": true
+            },
+            {
+             "composant": "Champ",
+             "libelle": "Téléphone",
+             "donnee": {
+              "$data": "etat.m_tel"
+             },
+             "nature": "telephone",
+             "requis": true
+            },
+            {
+             "composant": "Champ",
+             "libelle": "Date d'inscription",
+             "donnee": {
+              "$data": "etat.m_date"
+             },
+             "nature": "date",
+             "requis": true
+            },
+            {
+             "composant": "Bouton",
+             "libelle": "Annuler",
+             "effets": [
+              {
+               "faire": "setState",
+               "chemin": "etat.m_modif",
+               "valeur": ""
+              },
+              {
+               "faire": "setState",
+               "chemin": "etat.m_nom",
+               "valeur": ""
+              },
+              {
+               "faire": "setState",
+               "chemin": "etat.m_tel",
+               "valeur": ""
+              },
+              {
+               "faire": "setState",
+               "chemin": "etat.m_date",
+               "valeur": ""
+              }
+             ],
+             "si": {
+              "$data": "etat.m_modif"
+             }
+            },
+            {
+             "composant": "Bouton",
+             "libelle": "Ajouter",
+             "effets": [
+              {
+               "faire": "submit",
+               "table": "membre",
+               "mode": "creer",
+               "valeurs": [
+                {
+                 "champ": "nom",
+                 "depuis": {
+                  "$data": "etat.m_nom"
+                 }
+                },
+                {
+                 "champ": "telephone",
+                 "depuis": {
+                  "$data": "etat.m_tel"
+                 }
+                },
+                {
+                 "champ": "date_inscription",
+                 "depuis": {
+                  "$data": "etat.m_date"
+                 }
+                }
+               ]
+              }
+             ],
+             "siNon": {
+              "$data": "etat.m_modif"
+             }
+            },
+            {
+             "composant": "Bouton",
+             "libelle": "Enregistrer",
+             "effets": [
+              {
+               "faire": "submit",
+               "table": "membre",
+               "mode": "modifier",
+               "valeurs": [
+                {
+                 "champ": "nom",
+                 "depuis": {
+                  "$data": "etat.m_nom"
+                 }
+                },
+                {
+                 "champ": "telephone",
+                 "depuis": {
+                  "$data": "etat.m_tel"
+                 }
+                },
+                {
+                 "champ": "date_inscription",
+                 "depuis": {
+                  "$data": "etat.m_date"
+                 }
+                }
+               ]
+              }
+             ],
+             "si": {
+              "$data": "etat.m_modif"
+             }
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "composant": "Lignes",
+         "donnee": {
+          "$data": "table.membre"
+         },
+         "vide": "Aucun enregistrement.",
+         "modele": [
+          {
+           "composant": "Encart",
+           "enfants": [
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.nom"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.telephone"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.date_inscription"
+             }
+            },
+            {
+             "composant": "Bouton",
+             "libelle": "Corriger",
+             "effets": [
+              {
+               "faire": "setState",
+               "chemin": "etat.m_modif",
+               "valeur": {
+                "$data": "ligne.id"
+               }
+              },
+              {
+               "faire": "setState",
+               "chemin": "etat.m_nom",
+               "valeur": {
+                "$data": "ligne.nom"
+               }
+              },
+              {
+               "faire": "setState",
+               "chemin": "etat.m_tel",
+               "valeur": {
+                "$data": "ligne.telephone"
+               }
+              },
+              {
+               "faire": "setState",
+               "chemin": "etat.m_date",
+               "valeur": {
+                "$data": "ligne.date_inscription"
+               }
+              }
+             ]
+            },
+            {
+             "composant": "Bouton",
+             "libelle": "Supprimer",
+             "effets": [
+              {
+               "faire": "submit",
+               "table": "membre",
+               "mode": "supprimer"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "siNon": {
+        "$data": "etat.voir_membres"
+       },
+       "enfants": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Formulaire",
+           "enfants": [
+            {
+             "composant": "Champ",
+             "libelle": "Titre",
+             "donnee": {
+              "$data": "etat.a_titre"
+             },
+             "nature": "texte",
+             "requis": true
+            },
+            {
+             "composant": "Champ",
+             "libelle": "Contenu",
+             "donnee": {
+              "$data": "etat.a_contenu"
+             },
+             "nature": "texte",
+             "requis": true
+            },
+            {
+             "composant": "Champ",
+             "libelle": "Date de publication",
+             "donnee": {
+              "$data": "etat.a_date"
+             },
+             "nature": "date",
+             "requis": true
+            },
+            {
+             "composant": "Bouton",
+             "libelle": "Annuler",
+             "effets": [
+              {
+               "faire": "setState",
+               "chemin": "etat.a_modif",
+               "valeur": ""
+              },
+              {
+               "faire": "setState",
+               "chemin": "etat.a_titre",
+               "valeur": ""
+              },
+              {
+               "faire": "setState",
+               "chemin": "etat.a_contenu",
+               "valeur": ""
+              },
+              {
+               "faire": "setState",
+               "chemin": "etat.a_date",
+               "valeur": ""
+              }
+             ],
+             "si": {
+              "$data": "etat.a_modif"
+             }
+            },
+            {
+             "composant": "Bouton",
+             "libelle": "Ajouter",
+             "effets": [
+              {
+               "faire": "submit",
+               "table": "annonce",
+               "mode": "creer",
+               "valeurs": [
+                {
+                 "champ": "titre",
+                 "depuis": {
+                  "$data": "etat.a_titre"
+                 }
+                },
+                {
+                 "champ": "contenu",
+                 "depuis": {
+                  "$data": "etat.a_contenu"
+                 }
+                },
+                {
+                 "champ": "date_publication",
+                 "depuis": {
+                  "$data": "etat.a_date"
+                 }
+                }
+               ]
+              }
+             ],
+             "siNon": {
+              "$data": "etat.a_modif"
+             }
+            },
+            {
+             "composant": "Bouton",
+             "libelle": "Enregistrer",
+             "effets": [
+              {
+               "faire": "submit",
+               "table": "annonce",
+               "mode": "modifier",
+               "valeurs": [
+                {
+                 "champ": "titre",
+                 "depuis": {
+                  "$data": "etat.a_titre"
+                 }
+                },
+                {
+                 "champ": "contenu",
+                 "depuis": {
+                  "$data": "etat.a_contenu"
+                 }
+                },
+                {
+                 "champ": "date_publication",
+                 "depuis": {
+                  "$data": "etat.a_date"
+                 }
+                }
+               ]
+              }
+             ],
+             "si": {
+              "$data": "etat.a_modif"
+             }
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "composant": "Lignes",
+         "donnee": {
+          "$data": "table.annonce"
+         },
+         "vide": "Aucun enregistrement.",
+         "modele": [
+          {
+           "composant": "Encart",
+           "enfants": [
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.titre"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.contenu"
+             }
+            },
+            {
+             "composant": "Valeur",
+             "donnee": {
+              "$data": "ligne.date_publication"
+             }
+            },
+            {
+             "composant": "Bouton",
+             "libelle": "Corriger",
+             "effets": [
+              {
+               "faire": "setState",
+               "chemin": "etat.a_modif",
+               "valeur": {
+                "$data": "ligne.id"
+               }
+              },
+              {
+               "faire": "setState",
+               "chemin": "etat.a_titre",
+               "valeur": {
+                "$data": "ligne.titre"
+               }
+              },
+              {
+               "faire": "setState",
+               "chemin": "etat.a_contenu",
+               "valeur": {
+                "$data": "ligne.contenu"
+               }
+              },
+              {
+               "faire": "setState",
+               "chemin": "etat.a_date",
+               "valeur": {
+                "$data": "ligne.date_publication"
+               }
+              }
+             ]
+            },
+            {
+             "composant": "Bouton",
+             "libelle": "Supprimer",
+             "effets": [
+              {
+               "faire": "submit",
+               "table": "annonce",
+               "mode": "supprimer"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 10,
+   "oeuvre": "35ed32c1",
+   "chemin": "composants/EspaceGestion.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "espace-gestion",
+     "acces": "gestion",
+     "titre": "Gestion",
+     "etat": [
+      {
+       "nom": "voir_membres",
+       "nature": "booleen",
+       "initial": true
+      },
+      {
+       "nom": "voir_annonces",
+       "nature": "booleen",
+       "initial": false
+      },
+      {
+       "nom": "voir_utilisateurs",
+       "nature": "booleen",
+       "initial": false
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Pile",
+       "sens": "ligne",
+       "enfants": [
+        {
+         "composant": "Bouton",
+         "libelle": "Membres",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_membres",
+           "valeur": true
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_annonces",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_utilisateurs",
+           "valeur": false
+          }
+         ],
+         "icone": "utilisateur"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Annonces",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_membres",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_annonces",
+           "valeur": true
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_utilisateurs",
+           "valeur": false
+          }
+         ],
+         "icone": "document"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Utilisateurs",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_membres",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_annonces",
+           "valeur": false
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_utilisateurs",
+           "valeur": true
+          }
+         ],
+         "icone": "reglages"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Retour à l'accueil",
+         "effets": [
+          {
+           "faire": "navigate",
+           "route": "accueil"
+          }
+         ],
+         "icone": "accueil"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Se déconnecter",
+         "effets": [
+          {
+           "faire": "emit",
+           "evenement": "deconnexion"
+          }
+         ],
+         "icone": "alerte"
+        }
+       ]
+      },
+      {
+       "composant": "Crud",
+       "si": {
+        "$data": "etat.voir_membres"
+       },
+       "table": "membre"
+      },
+      {
+       "composant": "Crud",
+       "si": {
+        "$data": "etat.voir_annonces"
+       },
+       "table": "annonce"
+      },
+      {
+       "composant": "Crud",
+       "si": {
+        "$data": "etat.voir_utilisateurs"
+       },
+       "table": "utilisateur"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 11,
+   "oeuvre": "35ed32c1",
+   "chemin": "composants/FormulaireConnexion.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "formulaire-connexion",
+     "acces": "visiteur",
+     "titre": "Connexion à l'espace de gestion",
+     "etat": [
+      {
+       "nom": "email",
+       "nature": "texte"
+      },
+      {
+       "nom": "motDePasse",
+       "nature": "texte"
+      },
+      {
+       "nom": "erreur",
+       "nature": "texte"
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Connexion à l'espace de gestion",
+       "niveau": "page"
+      },
+      {
+       "composant": "Champ",
+       "libelle": "Adresse électronique",
+       "donnee": {
+        "$data": "etat.email"
+       },
+       "nature": "courriel"
+      },
+      {
+       "composant": "Champ",
+       "libelle": "Mot de passe",
+       "donnee": {
+        "$data": "etat.motDePasse"
+       },
+       "nature": "secret"
+      },
+      {
+       "composant": "Message",
+       "nature": "erreur",
+       "texte": "Erreur de connexion",
+       "si": {
+        "$data": "etat.erreur"
+       }
+      },
+      {
+       "composant": "Bouton",
+       "libelle": "Se connecter",
+       "effets": [
+        {
+         "faire": "emit",
+         "evenement": "connexion",
+         "charge": [
+          {
+           "champ": "identifiant",
+           "depuis": {
+            "$data": "etat.email"
+           }
+          },
+          {
+           "champ": "secret",
+           "depuis": {
+            "$data": "etat.motDePasse"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 12,
+   "oeuvre": "ba20655a",
+   "chemin": "composants/Gestion.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "gestion",
+     "acces": "gestion",
+     "titre": "Gestion de l'association",
+     "etat": [
+      {
+       "nom": "voir_membres",
+       "nature": "booleen",
+       "initial": true
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Gestion de l'association",
+       "niveau": "page"
+      },
+      {
+       "composant": "Bouton",
+       "libelle": "Se déconnecter",
+       "effets": [
+        {
+         "faire": "emit",
+         "evenement": "deconnexion"
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "sens": "ligne",
+       "enfants": [
+        {
+         "composant": "Bouton",
+         "libelle": "Membres",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_membres",
+           "valeur": true
+          }
+         ]
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Annonces",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.voir_membres",
+           "valeur": false
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "TableGestion",
+       "si": {
+        "$data": "etat.voir_membres"
+       },
+       "table": "membre"
+      },
+      {
+       "composant": "TableGestion",
+       "siNon": {
+        "$data": "etat.voir_membres"
+       },
+       "table": "annonce"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 13,
+   "oeuvre": "ba20655a",
+   "chemin": "composants/PublicAnnonces.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "public-annonces",
+     "acces": "visiteur",
+     "titre": "Annonces de l'association",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Annonces de l'association",
+       "niveau": "page"
+      },
+      {
+       "composant": "Message",
+       "nature": "vide",
+       "titre": "Aucune annonce",
+       "description": "Les annonces paraîtront ici."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.annonce"
+       },
+       "vide": "Aucune annonce",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.titre"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date_publication"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.contenu"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 14,
+   "oeuvre": "cec8bddf",
+   "chemin": "composants/EcranAccueil.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "ecran-accueil",
+     "acces": "visiteur",
+     "titre": "Accueil",
+     "corps": [
+      {
+       "composant": "Titre",
+       "enfants": [
+        {
+         "composant": "Phrase",
+         "texte": "Accueil"
+        }
+       ]
+      },
+      {
+       "composant": "Pastille",
+       "texte": "Démonstration",
+       "ton": "avertissement"
+      },
+      {
+       "composant": "Encart",
+       "enfants": [
+        {
+         "composant": "CarteDeChiffre",
+         "libelle": "Consommation depuis dernier relevé"
+        },
+        {
+         "composant": "CarteDeChiffre",
+         "libelle": "Dernier index"
+        },
+        {
+         "composant": "CarteDeChiffre",
+         "libelle": "Consommation totale"
+        }
+       ]
+      },
+      {
+       "composant": "Encart",
+       "enfants": [
+        {
+         "composant": "Titre",
+         "enfants": [
+          {
+           "composant": "Phrase",
+           "texte": "Derniers relevés"
+          }
+         ]
+        },
+        {
+         "composant": "Lignes",
+         "donnee": {
+          "$data": "table.releve"
+         },
+         "vide": "Aucun relevé",
+         "modele": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index"
+           },
+           "format": "montant"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 15,
+   "oeuvre": "cec8bddf",
+   "chemin": "composants/EcranHistorique.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "ecran-historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Titre",
+       "enfants": [
+        {
+         "composant": "Phrase",
+         "texte": "Historique des relevés"
+        }
+       ]
+      },
+      {
+       "composant": "Pastille",
+       "texte": "Démonstration",
+       "ton": "avertissement"
+      },
+      {
+       "composant": "Message",
+       "nature": "vide",
+       "titre": "Aucun relevé enregistré",
+       "description": "Ajoutez un premier relevé pour voir l'historique."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.releve"
+       },
+       "vide": "Aucun relevé enregistré",
+       "modele": [
+        {
+         "composant": "Encart",
+         "espace": "m",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Illustration",
+           "donnee": {
+            "$data": "ligne.photo"
+           },
+           "alternative": "Photo du compteur"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 16,
+   "oeuvre": "60bf2c40",
+   "chemin": "composants/CalculFacture.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "calcul-facture",
+     "acces": "visiteur",
+     "titre": "Calcul de facture",
+     "etat": [
+      {
+       "nom": "consommation",
+       "nature": "nombre"
+      },
+      {
+       "nom": "calcule",
+       "nature": "booleen"
+      },
+      {
+       "nom": "message",
+       "nature": "texte"
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Calcul de facture",
+       "niveau": "page"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Saisissez votre consommation mensuelle en kWh."
+      },
+      {
+       "composant": "Encart",
+       "enfants": [
+        {
+         "composant": "Formulaire",
+         "enfants": [
+          {
+           "composant": "Champ",
+           "libelle": "Consommation (kWh)",
+           "donnee": {
+            "$data": "etat.consommation"
+           },
+           "nature": "nombre"
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Calculer",
+           "effets": [
+            {
+             "faire": "setState",
+             "chemin": "etat.calcule",
+             "valeur": true
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.calcule"
+       },
+       "enfants": [
+        {
+         "composant": "CarteDeChiffre",
+         "libelle": "Montant total TTC",
+         "ligneDeContexte": "Facture mensuelle"
+        },
+        {
+         "composant": "CarteDeChiffre",
+         "libelle": "Montant HT",
+         "ligneDeContexte": "Dont prime fixe"
+        },
+        {
+         "composant": "CarteDeChiffre",
+         "libelle": "TVA (18%)",
+         "ligneDeContexte": "Taxe sur la valeur ajoutée"
+        },
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Titre",
+           "texte": "Détail du calcul",
+           "niveau": "encart"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Prime fixe"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "TVA (18%)"
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Enregistrer ce calcul",
+           "desactive": {
+            "$data": "etat.calcule"
+           },
+           "effets": [
+            {
+             "faire": "submit",
+             "table": "calculs",
+             "mode": "creer",
+             "valeurs": [
+              {
+               "champ": "consommation",
+               "depuis": {
+                "$data": "etat.consommation"
+               }
+              }
+             ]
+            },
+            {
+             "faire": "setState",
+             "chemin": "etat.message",
+             "valeur": "Calcul enregistré avec succès."
+            }
+           ]
+          },
+          {
+           "composant": "Pastille",
+           "variante": "succes",
+           "texte": "Calcul enregistré avec succès.",
+           "si": {
+            "$data": "etat.message"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 17,
+   "oeuvre": "60bf2c40",
+   "chemin": "composants/Historique.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des calculs",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des calculs",
+       "niveau": "page"
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Vos simulations de facture SNE enregistrées."
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.calculs"
+       },
+       "vide": "Aucun historique",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant_total"
+           },
+           "format": "montant"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Phrase",
+           "texte": "Montant TTC"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Enregistrez un calcul depuis l'écran « Calcul » pour le retrouver ici."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 18,
+   "oeuvre": "0b1f3bb6",
+   "chemin": "composants/EcranAccueil.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "ecran-accueil",
+     "acces": "visiteur",
+     "titre": "Tableau de bord",
+     "corps": [
+      {
+       "composant": "Titre",
+       "enfants": [
+        {
+         "composant": "Phrase",
+         "texte": "Tableau de bord"
+        }
+       ]
+      },
+      {
+       "composant": "CarteDeChiffre",
+       "libelle": "Consommation électricité"
+      },
+      {
+       "composant": "CarteDeChiffre",
+       "libelle": "Consommation eau"
+      },
+      {
+       "composant": "CarteDeChiffre",
+       "libelle": "Coût estimé (30 jours)"
+      },
+      {
+       "composant": "Titre",
+       "enfants": [
+        {
+         "composant": "Phrase",
+         "texte": "Derniers relevés"
+        }
+       ]
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.releve"
+       },
+       "vide": "Aucun relevé disponible.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Pictogramme",
+           "icone": "graphique"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.type"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index"
+           },
+           "format": "nombre"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 19,
+   "oeuvre": "0b1f3bb6",
+   "chemin": "composants/EcranReleves.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "ecran-releves",
+     "acces": "visiteur",
+     "titre": "Relevés",
+     "etat": [
+      {
+       "nom": "type",
+       "nature": "texte",
+       "initial": "electricite"
+      },
+      {
+       "nom": "date",
+       "nature": "texte"
+      },
+      {
+       "nom": "index",
+       "nature": "texte"
+      },
+      {
+       "nom": "erreur",
+       "nature": "texte"
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Titre",
+       "enfants": [
+        {
+         "composant": "Phrase",
+         "texte": "Relevés"
+        }
+       ]
+      },
+      {
+       "composant": "Encart",
+       "enfants": [
+        {
+         "composant": "Titre",
+         "texte": "Ajouter un relevé",
+         "niveau": "encart"
+        },
+        {
+         "composant": "Formulaire",
+         "enfants": [
+          {
+           "composant": "Champ",
+           "libelle": "Type de compteur",
+           "donnee": {
+            "$data": "etat.type"
+           },
+           "nature": "choix",
+           "choix": [
+            {
+             "valeur": "electricite",
+             "libelle": "Électricité"
+            },
+            {
+             "valeur": "eau",
+             "libelle": "Eau"
+            }
+           ]
+          },
+          {
+           "composant": "Champ",
+           "libelle": "Date du relevé",
+           "donnee": {
+            "$data": "etat.date"
+           },
+           "nature": "date",
+           "requis": true
+          },
+          {
+           "composant": "Champ",
+           "libelle": "Index",
+           "donnee": {
+            "$data": "etat.index"
+           },
+           "nature": "nombre",
+           "requis": true
+          },
+          {
+           "composant": "Message",
+           "nature": "erreur",
+           "texte": "Veuillez saisir un index valide (nombre positif).",
+           "si": {
+            "$data": "etat.erreur"
+           }
+          },
+          {
+           "composant": "Bouton",
+           "libelle": "Ajouter",
+           "effets": [
+            {
+             "faire": "submit",
+             "table": "releve",
+             "mode": "creer",
+             "valeurs": [
+              {
+               "champ": "type",
+               "depuis": {
+                "$data": "etat.type"
+               }
+              },
+              {
+               "champ": "date",
+               "depuis": {
+                "$data": "etat.date"
+               }
+              },
+              {
+               "champ": "index",
+               "depuis": {
+                "$data": "etat.index"
+               }
+              }
+             ]
+            }
+           ],
+           "icone": "ajouter"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Titre",
+       "enfants": [
+        {
+         "composant": "Phrase",
+         "texte": "Historique des relevés"
+        }
+       ]
+      },
+      {
+       "composant": "Message",
+       "nature": "vide",
+       "enfants": [
+        {
+         "composant": "Phrase",
+         "texte": "Aucun relevé enregistré. Utilisez le formulaire ci-dessus pour commencer."
+        }
+       ]
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.releve"
+       },
+       "vide": "Aucun relevé",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.type"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index"
+           },
+           "format": "nombre"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 20,
+   "oeuvre": "08a20016",
+   "chemin": "composants/Connexion.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "connexion",
+     "acces": "visiteur",
+     "titre": "Connexion",
+     "etat": [
+      {
+       "nom": "email",
+       "nature": "texte"
+      },
+      {
+       "nom": "motDePasse",
+       "nature": "texte"
+      },
+      {
+       "nom": "erreur",
+       "nature": "texte"
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Encart",
+       "enfants": [
+        {
+         "composant": "Titre",
+         "texte": "Connexion",
+         "niveau": "page"
+        },
+        {
+         "composant": "Formulaire",
+         "enfants": [
+          {
+           "composant": "Champ",
+           "libelle": "Adresse électronique",
+           "donnee": {
+            "$data": "etat.email"
+           },
+           "nature": "courriel",
+           "requis": true
+          },
+          {
+           "composant": "Champ",
+           "libelle": "Mot de passe",
+           "donnee": {
+            "$data": "etat.motDePasse"
+           },
+           "nature": "secret",
+           "requis": true
+          },
+          {
+           "composant": "Message",
+           "nature": "erreur",
+           "texte": "Erreur de connexion",
+           "si": {
+            "$data": "etat.erreur"
+           }
+          },
+          {
+           "composant": "Bouton",
+           "libellé": "Se connecter",
+           "effets": [
+            {
+             "faire": "emit",
+             "evenement": "connexion",
+             "charge": [
+              {
+               "champ": "identifiant",
+               "depuis": {
+                "$data": "etat.email"
+               }
+              },
+              {
+               "champ": "secret",
+               "depuis": {
+                "$data": "etat.motDePasse"
+               }
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 21,
+   "oeuvre": "08a20016",
+   "chemin": "composants/Historique.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des relevés",
+       "niveau": "page"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.releve"
+       },
+       "vide": "Aucun relevé enregistré pour le moment.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_precedent"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "CarteDeChiffre",
+           "libellé": "Consommation"
+          },
+          {
+           "composant": "CarteDeChiffre",
+           "libellé": "Montant"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 22,
+   "oeuvre": "8a2735f0",
+   "chemin": "composants/CalculateurEnergie.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "calculateur-energie",
+     "acces": "visiteur",
+     "titre": "Calcul de consommation",
+     "etat": [
+      {
+       "nom": "indexPrecedent",
+       "nature": "texte"
+      },
+      {
+       "nom": "indexActuel",
+       "nature": "texte"
+      },
+      {
+       "nom": "tarif",
+       "nature": "nombre"
+      },
+      {
+       "nom": "erreur",
+       "nature": "texte"
+      },
+      {
+       "nom": "calcule",
+       "nature": "booleen"
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Calcul de consommation",
+       "niveau": "page"
+      },
+      {
+       "composant": "Encart",
+       "enfants": [
+        {
+         "composant": "Champ",
+         "libelle": "Index précédent",
+         "donnee": {
+          "$data": "etat.indexPrecedent"
+         },
+         "nature": "nombre"
+        },
+        {
+         "composant": "Champ",
+         "libelle": "Index actuel",
+         "donnee": {
+          "$data": "etat.indexActuel"
+         },
+         "nature": "nombre"
+        },
+        {
+         "composant": "Champ",
+         "libelle": "Tarif (FCFA / kWh)",
+         "donnee": {
+          "$data": "etat.tarif"
+         },
+         "nature": "nombre"
+        },
+        {
+         "composant": "Message",
+         "nature": "erreur",
+         "texte": "Veuillez saisir des index valides et un tarif positif.",
+         "si": {
+          "$data": "etat.erreur"
+         }
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Calculer",
+         "effets": [
+          {
+           "faire": "submit",
+           "table": "lecture",
+           "mode": "creer",
+           "valeurs": [
+            {
+             "champ": "index_precedent",
+             "depuis": {
+              "$data": "etat.indexPrecedent"
+             }
+            },
+            {
+             "champ": "index_actuel",
+             "depuis": {
+              "$data": "etat.indexActuel"
+             }
+            },
+            {
+             "champ": "tarif",
+             "depuis": {
+              "$data": "etat.tarif"
+             }
+            }
+           ]
+          },
+          {
+           "faire": "setState",
+           "chemin": "etat.calcule",
+           "valeur": true
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "composant": "Pile",
+       "si": {
+        "$data": "etat.calcule"
+       },
+       "enfants": [
+        {
+         "composant": "CarteDeChiffre",
+         "libelle": "Consommation"
+        },
+        {
+         "composant": "CarteDeChiffre",
+         "libelle": "Montant à payer"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 23,
+   "oeuvre": "8a2735f0",
+   "chemin": "composants/Historique.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "historique",
+     "acces": "visiteur",
+     "titre": "Historique des relevés",
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "Historique des relevés",
+       "niveau": "page"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.lecture"
+       },
+       "vide": "Aucun relevé enregistré pour le moment.",
+       "modele": [
+        {
+         "composant": "Encart",
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_precedent"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.index_actuel"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.consommation"
+           },
+           "format": "nombre"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.montant"
+           },
+           "format": "montant"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "n": 24,
+   "oeuvre": "fa0ede2c",
+   "chemin": "composants/Accueil.tsx",
+   "fragment": {
+    "ecran": {
+     "route": "accueil",
+     "acces": "visiteur",
+     "titre": "CPA-Tchad",
+     "etat": [
+      {
+       "nom": "actualiteOuverte",
+       "nature": "booleen",
+       "initial": false
+      }
+     ],
+     "corps": [
+      {
+       "composant": "Titre",
+       "texte": "BIENVENUE À LA CPA-TCHAD",
+       "sousTitre": "Centrale Pharmaceutique d'Achat du Tchad"
+      },
+      {
+       "composant": "CarteDeChiffre",
+       "libelle": "Produits au catalogue"
+      },
+      {
+       "composant": "CarteDeChiffre",
+       "libelle": "Appels d'offres en cours"
+      },
+      {
+       "composant": "CarteDeChiffre",
+       "libelle": "Clients actifs"
+      },
+      {
+       "composant": "CarteDeChiffre",
+       "libelle": "Fournisseurs préqualifiés"
+      },
+      {
+       "composant": "CarteDeChiffre",
+       "libelle": "Demandes en attente"
+      },
+      {
+       "composant": "Pile",
+       "sens": "ligne",
+       "enfants": [
+        {
+         "composant": "Bouton",
+         "libelle": "Voir le catalogue",
+         "onPress": {
+          "faire": "navigate",
+          "route": "catalogue"
+         },
+         "variante": "primaire"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Appels d'offres",
+         "onPress": {
+          "faire": "navigate",
+          "route": "appels"
+         },
+         "variante": "secondaire"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Clients",
+         "onPress": {
+          "faire": "navigate",
+          "route": "clients"
+         },
+         "variante": "secondaire"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Fournisseurs",
+         "onPress": {
+          "faire": "navigate",
+          "route": "fournisseurs"
+         },
+         "variante": "secondaire"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Contact",
+         "onPress": {
+          "faire": "navigate",
+          "route": "contact"
+         },
+         "variante": "secondaire"
+        },
+        {
+         "composant": "Bouton",
+         "libelle": "Rechercher",
+         "onPress": {
+          "faire": "navigate",
+          "route": "recherche"
+         },
+         "variante": "secondaire"
+        }
+       ]
+      },
+      {
+       "composant": "Phrase",
+       "texte": "Actualités récentes"
+      },
+      {
+       "composant": "Lignes",
+       "donnee": {
+        "$data": "table.actualite"
+       },
+       "vide": "Aucune actualité",
+       "modele": [
+        {
+         "composant": "Encart",
+         "effets": [
+          {
+           "faire": "setState",
+           "chemin": "etat.actualiteOuverte",
+           "valeur": true
+          }
+         ],
+         "enfants": [
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.titre"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.date"
+           },
+           "format": "date"
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.categorie"
+           }
+          },
+          {
+           "composant": "Valeur",
+           "donnee": {
+            "$data": "ligne.contenu"
+           },
+           "si": {
+            "$data": "etat.actualiteOuverte"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

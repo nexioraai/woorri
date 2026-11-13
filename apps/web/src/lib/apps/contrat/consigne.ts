@@ -12,7 +12,7 @@
  * elle n'est envoyée à aucun modèle.
  */
 import {
-  ACTIONS, COMPOSANTS, EVENEMENTS, ICONES, JETONS, NATURES_ETAT, PROPS_COMMUNES, PROPS_ECRAN, PROPS_SPEC, ROUTES_SOCLE,
+  ACTIONS, CHARGES, COMPOSANTS, EVENEMENTS, ICONES, JETONS, NATURES_ETAT, PROPS_COMMUNES, PROPS_ECRAN, ROUTES_SOCLE,
   SOURCES, VUES_TETRADE, type DefProp, type Genre,
 } from './catalogue'
 
@@ -20,7 +20,7 @@ const q = (x: string) => `\`${x}\``
 
 function decrireGenre(g: Genre): string {
   switch (g.g) {
-    case 'texte': return `texte ${q('{ "$t": … }')}`
+    case 'texte': return 'un texte en clair, dans la langue principale'
     case 'liaison': return `liaison ${q('{ "$data": … }')}`
     case 'jeton': return `jeton ${q(g.jeu)}`
     case 'variante': return g.valeurs.map(q).join(' | ')
@@ -28,7 +28,7 @@ function decrireGenre(g: Genre): string {
     case 'booleen': return 'true | false'
     case 'enfants': return 'liste de composants'
     case 'effets': return 'liste d’actions, au moins une'
-    case 'choix': return `liste de ${q('{ "valeur": …, "libelle": { "$t": … } }')}`
+    case 'choix': return `liste de ${q('{ "valeur": …, "libelle": … }')}`
     case 'filtres': return `liste de ${q('{ "champ": …, "egal": { "$data": … } }')}`
     case 'ecritures': return `liste de ${q('{ "champ": …, "depuis": { "$data": … } }')} (ou une valeur simple)`
     case 'route': return 'une route du plan'
@@ -36,6 +36,7 @@ function decrireGenre(g: Genre): string {
     case 'chemin': return `${q('etat')}.<nom>`
     case 'donneeOuValeur': return 'une valeur simple, ou une liaison'
     case 'codeLangue': return 'un code de langue lue'
+    case 'charge': return `liste de ${q('{ "champ": …, "depuis": { "$data": … } }')}`
   }
 }
 
@@ -43,11 +44,7 @@ const ligneProp = (nom: string, d: DefProp) => `    - ${q(nom)} (${d.requis ? 'r
 
 export function genererConsigne(): string {
   const s: string[] = []
-  s.push('Tu rends UN SEUL objet JSON qui suit ce contrat, et rien d’autre. Toute clé absente du contrat est refusée ; tout nom inventé est refusé, avec le nom valide le plus proche.')
-  s.push('')
-  s.push('APPLICATION :')
-  for (const [k, aide] of Object.entries(PROPS_SPEC)) s.push(`  - ${q(k)} : ${aide}`)
-  s.push(`  Une traduction : ${q('langue')}, ${q('textes')} ; un texte traduit : ${q('cle')}, ${q('texte')}.`)
+  s.push('Tu rends UN SEUL objet JSON : un écran qui suit ce contrat, et rien d’autre. Toute clé absente du contrat est refusée ; tout nom inventé est refusé, avec le nom valide le plus proche.')
   s.push('')
   s.push('ÉCRAN :')
   for (const [k, aide] of Object.entries(PROPS_ECRAN)) s.push(`  - ${q(k)} : ${aide}`)
@@ -75,13 +72,16 @@ export function genererConsigne(): string {
     for (const [arg, d] of Object.entries(def.args as Readonly<Record<string, DefProp>>)) s.push(ligneProp(arg, d))
   }
   s.push(`  Événements : ${EVENEMENTS.map(q).join(', ')}.`)
+  for (const [ev, champs] of Object.entries(CHARGES)) s.push(`  Charge de ${q(ev)} : ${Object.entries(champs).map(([k, r]) => `${q(k)} (${r})`).join(', ')} ; aucun autre événement ne porte de charge.`)
   s.push('')
-  s.push(`TEXTES : jamais une phrase en dur — une clé ${q('$t')}, traduite dans CHAQUE langue lue.`)
+  s.push('TEXTES : écris chaque texte EN CLAIR, dans la langue principale, sans balise ; Deribfy en fait la clé et la traduction.')
   s.push(`DONNÉES : jamais une valeur inventée — une liaison ${q('$data')} :`)
   for (const [src, aide] of Object.entries(SOURCES)) s.push(`  - ${q(src)} : ${aide.replace(/`([^`]+)`/gu, '$1')}`)
   s.push('')
   s.push('RÈGLES :')
   s.push('  - aucune langue, devise, moyen de paiement ni pays que la lecture du cahier ne nomme ;')
+  s.push('  - aucun montant écrit dans un texte, aucune mention de démonstration ; un mot de passe ne se lit ni ne s’écrit dans une table ;')
+  s.push(`  - un visiteur ne lit que les tables publiques ; ${q('submit')} en mode ${q('modifier')} ou ${q('supprimer')} se fait sur une ligne courante ;`)
   s.push(`  - un ${q('Bouton')} porte au moins un effet, et cet effet change ce que l’écran montre ou mène ailleurs ;`)
   s.push(`  - un ${q('Champ')} sert : sa donnée est lue par un filtre, une écriture ou un affichage ;`)
   s.push(`  - on écrit une table par ${q('submit')}, jamais par ${q('setState')} ;`)
