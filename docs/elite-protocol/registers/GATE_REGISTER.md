@@ -80,7 +80,17 @@ propriété) · `COMPLÉTUDE` (tous les défauts de la catégorie) · `RÉSISTAN
 |---|---|---|---|---|
 | **G25** juge de navigation | **chaque entrée de menu mène à un écran valide ; aucun « Section inconnue » livré** | ❓ — n'existe pas | 🟢 les écrans visités sont déjà enregistrés par le juge d'exécution (`sections_acquises.execution.ecrans`) | ⏳ **premier juge à ajouter, après M5**. Cas-tueur **réel** disponible (règle de composition n° 3) : `f1b753a6`, livrée avec **6 écrans sur 8** disant « Section inconnue » (M4, `ecransNavigation`). Il l'aurait refusée. |
 | **G26** *(candidate)* typage strict des appels à la bibliothèque fournie | **tout appel du code généré à une fonction ou une pièce de `systeme/` respecte sa signature (ordre, type et forme des arguments), vérifié par COMPILATION** | ❓ — n'existe pas | 🟢 le code généré et les signatures sont conservés | ⏳ candidate, **non implémentée**. Constat (M5, M7) : le modèle appelle `sommeParMois(paiements, 'montant', 'date')` (les deux champs inversés), `recents(paiements, 5)` (un nombre à la place d'un nom de champ), et passe `details={[{ libelle, valeur }]}` à `CarteVedette`, qui attend `[string, string][]` — la cause **lue** de `object is not iterable` dans 3 cas sur 3 (M7). `juge-contrat` ne le voit pas : il ne lit que les **noms** des réglages des composants, ni leur forme ni les arguments des fonctions. L'assembleur ne vérifie aucun type (`juge-execution.ts`, en-tête). |
+| **G27** *(candidate)* aucun réglage coûteux par défaut | **fournisseur absent → DeepSeek, ou refus de démarrer avec un message explicite ; JAMAIS Anthropic par défaut. Même règle pour tout réglage qui engage un coût** | ❓ — n'existe pas | 🟢 lisible dans le code (`fournisseurChoisi` : tout ce qui n'est pas `deepseek` donne `anthropic`, `apps/web/src/lib/apps/fournisseur.ts:69-71`) | ⏳ candidate, **non implémentée**. Constat du 2026-11-12 : les variables du générateur n'existaient qu'en Production ; une prévisualisation aurait appelé Anthropic sans que personne l'ait choisi. |
+| **G28** *(candidate)* toute conversation avec le modèle laisse une ligne | **tout appel au modèle — conversation d'accueil (`/api/onboarding`) comprise — écrit une ligne, succès ou échec** | ❓ — n'existe pas | 🔴 aujourd'hui : un échec de `/api/onboarding` n'écrit **aucune** ligne | ⏳ candidate, **non implémentée**. Constat (étape 1, 2026-11-13) : deux envois de test ont échoué dans la conversation d'accueil (`401 authentication_error`) ; **0 ligne** en base, seuls les logs Vercel les montraient. L'étape 1 ne couvre que la génération. |
 
+
+**Note de méthode — un secret ne se vérifie pas par comparaison (2026-11-13).**
+Une variable Vercel de type « Secret » ne peut être ni relue ni vérifiée par la
+CLI : `vercel env pull` écrit `[SENSITIVE]` à la place de la valeur. Le
+2026-11-12, une copie Production → Preview a recopié ce texte de substitution,
+et une comparaison d'empreintes a déclaré les deux « identiques » — deux
+`[SENSITIVE]` identiques ne prouvent rien. **Toute copie de secret se prouve
+par un appel réel qui réussit, jamais par comparaison.**
 
 **Note d'architecture — la boucle de trois tours (non implémentée, « pas
 maintenant »).** M1 mesure que **27 transitions sur 48 (56 %)** gardent
