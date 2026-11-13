@@ -246,6 +246,13 @@ export function reprocheExperience(v: VerdictExperience): string | null {
 
 const PLAFOND_MS = 240_000
 
+/**
+ * L'ATTENTE APRÈS UN CLIC DANS LE SIMULATEUR : 40 ms. happy-dom rend React sans
+ * peinture ni réseau ; 120 ms faisait passer la route de 1,8 à 3,5 s pour rien
+ * (mesuré, cliquet de marge). Chromium garde 300 ms (une vraie peinture).
+ */
+export const ATTENTE_SIMULATEUR_MS = 40
+
 /** Lance le juge dans Chromium, sur la PAGE SERVIE (cadre isolé, srcdoc). */
 export async function jugerExperience(page: string, args: ArgsExperience): Promise<VerdictExperience> {
   const debut = Date.now()

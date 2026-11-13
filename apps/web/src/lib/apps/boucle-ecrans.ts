@@ -31,7 +31,7 @@ import { jugerVivacite } from './juge-vivacite'
 import { planifierEcrans, ROLE_VISITEUR, type AppelerLeger, type Plan, type PlanEcran } from './plan-ecrans'
 import { fichiersSquelette, sourceACompleter, sourceEcranDeribfy, sourcePerimetre } from './squelette'
 import type { ContraintesFermees } from './consigne-ecran'
-import { SCRIPT_EXPERIENCE, type RefusExperience } from './juge-experience'
+import { ATTENTE_SIMULATEUR_MS, SCRIPT_EXPERIENCE, type RefusExperience } from './juge-experience'
 
 /** Mesuré (m15, 2026-11-13) : 4 et 8 appels flash simultanés passent, 0 refus. Quatre, avec repli séquentiel sur refus. */
 export const PARALLELISME = 4
@@ -155,7 +155,7 @@ export async function boucleEcrans(o: {
   // entière (3c-2) : dans le simulateur, faute de Chromium dans la fonction — la preuve,
   // elle, le rejoue dans Chromium sur la page servie.
   const langues = (o.lecture.contraintes?.langues ?? []).map((c) => ({ code: c, dir: (c === 'ar' || c === 'he' || c === 'fa' || c === 'ur' ? 'rtl' : 'ltr') as 'ltr' | 'rtl', libelles: [] }))
-  const argsXp = { ecrans: planFinal.ecrans.map((x) => ({ nom: x.nom, slug: x.slug, role: x.role === ROLE_VISITEUR ? '' : x.role })), langues, parcours: planFinal.parcours ?? [], mode: 'application', attenteMs: 120, controlesMax: 300 }
+  const argsXp = { ecrans: planFinal.ecrans.map((x) => ({ nom: x.nom, slug: x.slug, role: x.role === ROLE_VISITEUR ? '' : x.role })), langues, parcours: planFinal.parcours ?? [], mode: 'application', attenteMs: ATTENTE_SIMULATEUR_MS, controlesMax: 300 }
   const accueil = await juger(v.code, { experience: { script: SCRIPT_EXPERIENCE, args: argsXp } })
   const gestion = planFinal.ecrans.some((e) => e.navigation === 'gestion') ? await juger(v.code, { adresse: ADRESSE_GESTION }) : null
   const execution = fusionExecution(accueil, gestion)

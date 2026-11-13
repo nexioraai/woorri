@@ -26,7 +26,7 @@
 import { assembler } from './bac-a-sable'
 import { fichiersSysteme } from './bibliotheque-ui'
 import { consigneEcran, type ContraintesFermees } from './consigne-ecran'
-import { SCRIPT_EXPERIENCE, reprocheExperience } from './juge-experience'
+import { ATTENTE_SIMULATEUR_MS, SCRIPT_EXPERIENCE, reprocheExperience } from './juge-experience'
 import { importsDe, importsInterdits, lireFichiers, PAQUETS_PROPOSES } from './ecriture-directe'
 import type { EntiteDeclaree } from './entites-declarees'
 import { jugerContrat, reprocheContrat } from './juge-contrat'
@@ -229,7 +229,7 @@ export async function ecrireEcran(o: {
         else {
           // LE JUGE D'EXPÉRIENCE, MODE ÉCRAN (3c-2) : chaque contrôle de cet écran mène
           // à un écran du plan ou change visiblement quelque chose.
-          const experience = { script: SCRIPT_EXPERIENCE, args: { ecrans: o.plan.ecrans.map((x) => ({ nom: x.nom, slug: x.slug, role: x.role === ROLE_VISITEUR ? '' : x.role })), langues: [], parcours: [], mode: 'ecran', slug: ecran.slug, attenteMs: 120, controlesMax: 25 } }
+          const experience = { script: SCRIPT_EXPERIENCE, args: { ecrans: o.plan.ecrans.map((x) => ({ nom: x.nom, slug: x.slug, role: x.role === ROLE_VISITEUR ? '' : x.role })), langues: [], parcours: [], mode: 'ecran', slug: ecran.slug, attenteMs: ATTENTE_SIMULATEUR_MS, controlesMax: 25 } }
           const verdict = await juger(v.code, { adresse: `#${ecran.slug}`, experience })
           const quoi = reprocheDeMontage(verdict, ecran.nom)
           if (quoi !== null) reproches.push(quoi)

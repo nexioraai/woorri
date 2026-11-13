@@ -91,23 +91,15 @@ const CONNUS = [
     raison: 'ATTENTE de ~2,2 s par cas (délais d’idempotence simulés).',
   },
   {
-    motif: /generateur\/direct\/__tests__\/route\.test[\s\S]*UN SUCCÈS REND LA PAGE/u,
-    plafond: 3000,
+    motif: /generateur\/direct\/__tests__\/route\.test[\s\S]*(?:UN SUCCÈS REND LA PAGE|UN ÉCRAN ÉCHOUÉ|SANS NOM, LA ROUTE CONSTRUIT|UN REMPLISSAGE NE DEVIENT PAS UN NOM|LA LIVRAISON ÉCRIT SA VERSION)/u,
+    plafond: 4500,
     raison:
-      'DEUX PROCESSUS du juge d’exécution, réels (3c, 2026-11-13) : l’écran seul, ' +
-      'puis l’application entière — ≈ 0,9 s chacun, dominés par le démarrage de Node ' +
-      'et de happy-dom, pas par un calcul. C’est la seule épreuve de bout en bout de la ' +
-      'route avec l’assembleur et le juge RÉELS : c’est elle qui a attrapé la panne du ' +
-      '2026-11-01. Mesuré : 1 777 ms sur ce portable.',
-  },
-  {
-    motif: /generateur\/direct\/__tests__\/route\.test[\s\S]*UN ÉCRAN ÉCHOUÉ DEUX FOIS/u,
-    plafond: 3500,
-    raison:
-      'ATTENTE, 3c-2 : deux processus du juge réels (écran puis application) qui portent ' +
-      'le juge d’expérience — 120 ms d’attente armée après chaque clic, pour laisser React ' +
-      'rendre. Le temps est dominé par ces attentes et le démarrage de Node, pas par un ' +
-      'calcul. Mesuré : 2 067 ms.',
+      'DEUX PROCESSUS du juge d’exécution, réels, par génération (3c, 3c-2) : l’écran seul ' +
+      'puis l’application entière, qui portent le juge d’expérience (clic sur chaque ' +
+      'contrôle, 40 ms d’attente de rendu). Temps dominé par le démarrage de Node et de ' +
+      'happy-dom, pas par un calcul. C’est la seule épreuve de bout en bout de la route ' +
+      'avec l’assembleur et les juges RÉELS — celle qui a attrapé la panne du 2026-11-01. ' +
+      'Mesuré : 1,6 à 3,0 s sous la charge de la suite complète.',
   },
   {
     motif: /etape3c-boucle-ecran[\s\S]*un bouton qui ne fait rien est refusé dans la boucle/u,
