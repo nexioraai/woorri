@@ -1,0 +1,312 @@
+{
+ "note": "jetons par tour NON enregistrés : déduits au prorata des signes ; réflexion : voir rapport",
+ "lignes": [
+  {
+   "id": "e9e1803f",
+   "quand": "2026-11-13T14:52",
+   "dureeS": 370,
+   "coutUsd": 0.125,
+   "jetonsEntree": 60973,
+   "jetonsSortie": 42823,
+   "tours": 3,
+   "sommeMsTours": 370,
+   "secondesDeReecritureDeduites": 210,
+   "partDeLaDuree": 0.57,
+   "ecransDistincts": 4,
+   "parTour": [
+    {
+     "rang": 1,
+     "ok": false,
+     "ms": 114229,
+     "s": 114,
+     "tronquee": false,
+     "fichiers": 1,
+     "signes": 31469,
+     "lignes": 818,
+     "jetonsSortieDeduits": 13003,
+     "lignesIdentiquesAuTourPrecedent": null,
+     "partIdentique": null,
+     "secondesDeReecritureDeduites": null,
+     "motif": [
+      "DES JETONS QUI N’EXISTENT PAS",
+      "DES RÉGLAGES QUE LES COMPOSANTS FOURNIS NE CONNAISSENT PAS",
+      "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "fichiersChanges": null
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "ms": 126001,
+     "s": 126,
+     "tronquee": false,
+     "fichiers": 2,
+     "signes": 32460,
+     "lignes": 829,
+     "jetonsSortieDeduits": 13413,
+     "lignesIdentiquesAuTourPrecedent": 802,
+     "partIdentique": 0.967,
+     "secondesDeReecritureDeduites": 122,
+     "motif": [
+      "DES CONTRÔLES SANS NOM LISIBLE",
+      "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+      "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+      "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT",
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "fichiersChanges": [
+      "index.tsx",
+      "PERIMETRE.md"
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "ms": 129933,
+     "s": 130,
+     "tronquee": null,
+     "fichiers": 2,
+     "signes": 39708,
+     "lignes": 786,
+     "jetonsSortieDeduits": 16407,
+     "lignesIdentiquesAuTourPrecedent": 535,
+     "partIdentique": 0.681,
+     "secondesDeReecritureDeduites": 88,
+     "motif": [],
+     "fichiersChanges": [
+      "index.tsx",
+      "PERIMETRE.md"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9cc16d10",
+   "quand": "2026-11-13T13:04",
+   "dureeS": 514,
+   "coutUsd": 0.1571,
+   "jetonsEntree": 61302,
+   "jetonsSortie": 58909,
+   "tours": 3,
+   "sommeMsTours": 514,
+   "secondesDeReecritureDeduites": 262,
+   "partDeLaDuree": 0.51,
+   "ecransDistincts": 1,
+   "parTour": [
+    {
+     "rang": 1,
+     "ok": false,
+     "ms": 232316,
+     "s": 232,
+     "tronquee": false,
+     "fichiers": 5,
+     "signes": 30322,
+     "lignes": 678,
+     "jetonsSortieDeduits": 19475,
+     "lignesIdentiquesAuTourPrecedent": null,
+     "partIdentique": null,
+     "secondesDeReecritureDeduites": null,
+     "motif": [
+      "L'APPLICATION NE SE MONTE PAS",
+      "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+      "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+      "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT",
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "fichiersChanges": null
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "ms": 158132,
+     "s": 158,
+     "tronquee": false,
+     "fichiers": 5,
+     "signes": 30510,
+     "lignes": 665,
+     "jetonsSortieDeduits": 19596,
+     "lignesIdentiquesAuTourPrecedent": 588,
+     "partIdentique": 0.884,
+     "secondesDeReecritureDeduites": 140,
+     "motif": [
+      "DES CONTRÔLES SANS NOM LISIBLE",
+      "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+      "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "fichiersChanges": [
+      "index.tsx",
+      "PERIMETRE.md",
+      "composants/Public.tsx",
+      "composants/Gestion.tsx",
+      "composants/GestionTable.tsx"
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "ms": 123410,
+     "s": 123,
+     "tronquee": null,
+     "fichiers": 5,
+     "signes": 30886,
+     "lignes": 668,
+     "jetonsSortieDeduits": 19838,
+     "lignesIdentiquesAuTourPrecedent": 663,
+     "partIdentique": 0.993,
+     "secondesDeReecritureDeduites": 122,
+     "motif": [],
+     "fichiersChanges": [
+      "PERIMETRE.md"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "a13f8f9f",
+   "quand": "2026-11-13T11:12",
+   "dureeS": 603,
+   "coutUsd": 0.1987,
+   "jetonsEntree": 70366,
+   "jetonsSortie": 76902,
+   "tours": 3,
+   "sommeMsTours": 603,
+   "secondesDeReecritureDeduites": 308,
+   "partDeLaDuree": 0.51,
+   "ecransDistincts": 5,
+   "parTour": [
+    {
+     "rang": 1,
+     "ok": false,
+     "ms": 247076,
+     "s": 247,
+     "tronquee": false,
+     "fichiers": 17,
+     "signes": 59792,
+     "lignes": 1200,
+     "jetonsSortieDeduits": 23476,
+     "lignesIdentiquesAuTourPrecedent": null,
+     "partIdentique": null,
+     "secondesDeReecritureDeduites": null,
+     "motif": [],
+     "fichiersChanges": null
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "ms": 135990,
+     "s": 136,
+     "tronquee": false,
+     "fichiers": 17,
+     "signes": 58895,
+     "lignes": 1192,
+     "jetonsSortieDeduits": 23123,
+     "lignesIdentiquesAuTourPrecedent": 1174,
+     "partIdentique": 0.985,
+     "secondesDeReecritureDeduites": 134,
+     "motif": [
+      "DES CONTRÔLES MORTS",
+      "L'APPLICATION NE SE MONTE PAS",
+      "DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE",
+      "DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION",
+      "UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT",
+      "DES EXIGENCES DU CAHIER SONT MUETTES"
+     ],
+     "fichiersChanges": [
+      "composants/App.tsx",
+      "composants/donnees.tsx",
+      "composants/EcranPublic.tsx",
+      "composants/CoqueGestion.tsx",
+      "composants/EspaceParent.tsx",
+      "composants/GestionEleves.tsx",
+      "composants/GestionAccueil.tsx"
+     ]
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "ms": 219662,
+     "s": 220,
+     "tronquee": null,
+     "fichiers": 17,
+     "signes": 77181,
+     "lignes": 1645,
+     "jetonsSortieDeduits": 30303,
+     "lignesIdentiquesAuTourPrecedent": 1300,
+     "partIdentique": 0.79,
+     "secondesDeReecritureDeduites": 174,
+     "motif": [],
+     "fichiersChanges": [
+      "composants/App.tsx",
+      "composants/donnees.tsx",
+      "composants/EcranPublic.tsx",
+      "composants/CoqueGestion.tsx",
+      "composants/EspaceParent.tsx",
+      "composants/GestionFrais.tsx",
+      "composants/GestionNotes.tsx",
+      "composants/GestionEleves.tsx",
+      "composants/GestionExamens.tsx",
+      "composants/GestionParents.tsx",
+      "composants/GestionAbsences.tsx",
+      "composants/GestionAnnonces.tsx",
+      "composants/GestionVersements.tsx",
+      "composants/GestionEmploisDuTemps.tsx"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "44ca6bbe",
+   "quand": "2026-11-13T08:24",
+   "dureeS": 528,
+   "coutUsd": 0.237,
+   "jetonsEntree": 27829,
+   "jetonsSortie": 50579,
+   "tours": 2,
+   "sommeMsTours": 528,
+   "secondesDeReecritureDeduites": 202,
+   "partDeLaDuree": 0.38,
+   "ecransDistincts": 10,
+   "parTour": [
+    {
+     "rang": 1,
+     "ok": false,
+     "ms": 326139,
+     "s": 326,
+     "tronquee": false,
+     "fichiers": 7,
+     "signes": 64133,
+     "lignes": 1111,
+     "jetonsSortieDeduits": 25293,
+     "lignesIdentiquesAuTourPrecedent": null,
+     "partIdentique": null,
+     "secondesDeReecritureDeduites": null,
+     "motif": [
+      "DES RÉGLAGES QUE LES COMPOSANTS FOURNIS NE CONNAISSENT PAS"
+     ],
+     "fichiersChanges": null
+    },
+    {
+     "rang": 2,
+     "ok": true,
+     "ms": 202347,
+     "s": 202,
+     "tronquee": null,
+     "fichiers": 7,
+     "signes": 64115,
+     "lignes": 1112,
+     "jetonsSortieDeduits": 25286,
+     "lignesIdentiquesAuTourPrecedent": 1110,
+     "partIdentique": 0.998,
+     "secondesDeReecritureDeduites": 202,
+     "motif": [],
+     "fichiersChanges": [
+      "composants/App.tsx",
+      "composants/ChoixApparence.tsx"
+     ]
+    }
+   ]
+  }
+ ]
+}

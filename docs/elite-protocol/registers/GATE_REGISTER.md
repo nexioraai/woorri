@@ -119,8 +119,11 @@ Le fait annexe « `import ws from "ws"` survit ×2 » se mesure à l'étape 4, p
 3. **Messages d'attente honnêtes** : « Cahier lu : N signes, N tables, N écrans » dès la lecture
    terminée (≈ 12 s), puis « Génération : environ N minutes » avec un avancement réel — jamais un
    indicateur qui disparaît sans mot (observation du propriétaire, étape 2b).
-4. **M14** : par génération, temps et jetons de sortie par tour, et part de réflexion si elle est
-   encore activée sur la génération.
+4. **M14** — **MESURÉ le 2026-11-13** (`evidence/generateur-2026-11-12/m14-tours.mts`, `sortie/m14-tours.json`) :
+   sur 4 lignes du jour, **38 à 57 % de la durée** (202 à 308 s) réémet du code identique au tour précédent
+   (tour 2 : 88 à 100 % de lignes identiques) ; l'entrée rejoue tout l'historique (60 973 jetons pour 3 tours).
+   Jetons PAR TOUR non enregistrés (déduits au prorata) ; réflexion non demandée à `chat/completions` et
+   `reasoning_content` non lu — indicateur jetons sortie/signe 0,39–0,64, l'écart reste INCONNU.
 
 **Limite mesurée de G30 (défaut à part)** : `lire-brief` a `maxDuration = 60` s, ≈ 8 s par tranche →
 ≈ 7 tranches (≈ 170 000 signes) ; au-delà, la coupure de la passerelle serait **muette** côté client

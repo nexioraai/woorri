@@ -1173,3 +1173,36 @@ gestion, sans une erreur ; avant l'étape, `9cc16d10` (même cahier) s'arrêtait
 Hors périmètre, consigné (étape 3c) : `persistance` 7/7 ni lue ni écrite ; `couverture.taux 0,38`, 7 exigences
 absentes (connexion et comptes, multilingue, RTL, agent IA, recherche, administration, abonnement) ; tour 3 accepté
 par la règle du dernier tour.
+
+**Fusion** : `main` = `db1314bc` (gate verte), production `nexiora-d9qz4ha7q` READY, `/api/version` → `db1314b`.
+
+---
+
+# M14 · PAR TOUR — durée, taille, motif, et ce que le tour suivant a RÉÉCRIT (2026-11-13)
+
+`m14-tours.mts` (gratuit, lecture seule ; `sortie/m14-tours.json`). Les fichiers d'un tour refusé sont dans
+`tours[].source` ; ceux du tour accepté sont la version livrée (sans la bibliothèque injectée). « Identique » =
+part des lignes non vides du tour N présentes telles quelles dans le tour N−1. **Les jetons PAR TOUR ne sont pas
+enregistrés** (seuls `jetons_entree` / `jetons_sortie` totaux) : déduits au prorata des signes, et dits tels.
+
+| ligne | durée · coût | jetons entrée / sortie | tour 1 | tour 2 | tour 3 | **réécriture déduite** |
+|---|---|---|---|---|---|---|
+| `e9e1803f` (Hayine, étape 3) | 370 s · 0,125 $ | 60 973 / 42 823 | 114 s · 31 469 signes · refus : jetons inexistants, réglages inconnus, mémoire, exigences muettes | 126 s · **97 % identique** · refus : contrôles sans nom, mémoire, tables avant connexion, chargement muet, exigences muettes | 130 s · 68 % identique · accepté (dernier tour) | **210 s = 57 %** |
+| `9cc16d10` (Hayine, G30) | 514 s · 0,157 $ | 61 302 / 58 909 | 232 s · 30 322 · refus : ne se monte pas (Node), mémoire, … | 158 s · **88 %** · refus : contrôles sans nom, mémoire, … | 123 s · **99 %** · accepté (dernier tour) | **262 s = 51 %** |
+| `a13f8f9f` (école, 2b) | 603 s · 0,199 $ | 70 366 / 76 902 | 247 s · 59 792 · refus : **la construction a échoué** (`PARSE_ERROR` composants/donnees.ts:202) | 136 s · **99 %** · refus : contrôles morts, ne se monte pas, mémoire, … | 220 s · 79 % · accepté (dernier tour) | **308 s = 51 %** |
+| `44ca6bbe` (étape 1) | 528 s · 0,237 $ | 27 829 / 50 579 | 326 s · 64 133 · refus : réglages inconnus | 202 s · **100 % identique** · accepté | — | **202 s = 38 %** |
+
+**Réponse à la question** : **38 à 57 % de la durée** (202 à 308 s par génération) est passée à réémettre du code
+identique au tour précédent — le tour 2 réécrit 88 à 100 % de lignes déjà vues. Et l'entrée grossit à chaque tour
+(la boucle rejoue tout l'historique : 60 973 jetons d'entrée pour trois tours d'un cahier de ~8 000 jetons).
+
+**Part de réflexion** : la génération appelle `chat/completions` (`deepseek-v4-pro`) **sans paramètre de
+réflexion** et ne lit que `message.content` ; si le modèle produit un `reasoning_content` par défaut, il n'est ni lu
+ni enregistré, mais ses jetons sont facturés dans `completion_tokens`. Indicateur : **jetons de sortie par signe de
+code** = 0,39 (`a13f8f9f`, `44ca6bbe`), 0,41 (`e9e1803f`), **0,64 (`9cc16d10`)** — l'écart de `9cc16d10` est
+INCONNU (réflexion ? prose hors fichiers ?) et se mesure par un appel instrumenté lisant `reasoning_content`.
+
+**Motifs des refus, par classe (4 lignes, 9 tours refusés)** : « données en mémoire » ×5, « exigences muettes » ×5,
+« tables interrogées avant connexion » ×3, « contrôles sans nom » ×3, « réglages/jetons inconnus » ×3, « ne se
+monte pas (Node) » ×2, « chargement muet » ×2, construction ×1. Trois de ces classes (mémoire, tables avant
+connexion, chargement) tiennent à la couche d'accès aux données que le modèle réécrit à chaque fois.
