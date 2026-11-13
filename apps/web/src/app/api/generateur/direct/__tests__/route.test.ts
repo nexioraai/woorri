@@ -25,7 +25,7 @@ import { join } from 'node:path'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 
 const { reponses, journal } = vi.hoisted(() => ({
-  reponses: { texte: [] as string[], i: 0 },
+  reponses: { texte: [] as string[], i: 0, plan: '' },
   journal: { postgrest: null as unknown as { ecritures: Record<string, unknown[]> } },
 }))
 
@@ -80,9 +80,16 @@ vi.mock('@/lib/supabase-admin', async () => {
  * Un double qui offrirait AUSSI `create` laisserait la route y revenir sans
  * que personne le voie. Ici, y revenir fait rougir.
  */
+// ── 3c (2026-11-13) : DEUX appels par génération. Le PLAN part au modèle léger
+// par `messages.create` (comme la lecture du brief) ; chaque ÉCRAN part au gros
+// modèle par `messages.stream`. Le faux SDK rend le plan, puis les écrans.
 vi.mock('@anthropic-ai/sdk', () => ({
   default: class {
     messages = {
+      create: async () => ({
+        content: [{ type: 'text', text: reponses.plan }],
+        usage: { input_tokens: 100, output_tokens: 50 },
+      }),
       stream: () => ({
         finalMessage: () => ({
           content: [
@@ -97,13 +104,18 @@ vi.mock('@anthropic-ai/sdk', () => ({
 
 import { POST } from '../route'
 
+// 3c : le modèle n'écrit qu'un ÉCRAN par appel ; sans lecture ni table dans la
+// demande, le plan ne tient qu'un accueil. Le calcul de la facture y vit.
 const BON = [
-  '=== index.tsx ===',
-  "import { facture } from './calcul'",
-  'export const total = facture(159)',
-  '=== calcul.ts ===',
-  'export const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402',
+  '=== ecrans/accueil.tsx ===',
+  "import React from 'react'",
+  "import type { Session } from '../systeme/types'",
+  'const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402',
+  'export default function Ecran(_p: { session: Session }) {',
+  '  return <section><h1>Facture SNE</h1><p>Total pour 159 kWh : {facture(159)}</p></section>',
+  '}',
 ].join('\n')
+const PLAN = JSON.stringify({ ECRANS: [{ nom: 'accueil', role: 'visiteur', navigation: 'public', lit: [], ecrit: [], extrait: '' }] })
 
 /**
  * L'APPEL PORTE UN NOM DE PRODUIT (EP-309, 2026-11-01).
@@ -127,6 +139,7 @@ const appel = (demande = 'calcule ma facture SNE', nom: string | null = 'Facture
 beforeEach(() => {
   reponses.texte = [BON]
   reponses.i = 0
+  reponses.plan = PLAN
   if (journal.postgrest !== null) {
     journal.postgrest.ecritures[TABLE_GENERATIONS] = []
     // LA REMISE A ZERO COUVRE TOUTES LES TABLES ECRITES : sans cette ligne,
@@ -173,40 +186,58 @@ describe('EP-276 · la route de l’écriture directe', () => {
   })
 
   it('② UN SUCCÈS REND LA PAGE, ET ESTAMPILLE LE MOTEUR', async () => {
-    const d = (await (await POST(appel())).json()) as {
+    const DEMANDE = 'calcule ma facture SNE — succès'
+    const d = (await (await POST(appel(DEMANDE))).json()) as {
       ok: boolean
       html: string
       fichiers: number
       coutUsd: number
     }
     expect(d.ok, 'la boucle n’aboutit pas').toBe(true)
-    // 2 fichiers du modèle + 4 de la bibliothèque injectée (EP-299 ;
-    // systeme/donnees depuis le 2026-11-12, les calculs du tableau de bord).
-    expect(d.fichiers).toBe(6)
+    // 3c : 1 écran du modèle + le squelette de Deribfy (index, 5 modules
+    // systeme, PERIMETRE.md) + 4 de la bibliothèque injectée (EP-299) = 12.
+    expect(d.fichiers).toBe(12)
     expect(d.html, 'la page n’est pas montable').toContain('<div id="racine">')
-    // LE COÛT EST RÉEL, pas inventé : 1200 entrée + 3400 sortie aux tarifs
-    // du fournisseur. S'il tombait à zéro, personne ne verrait la dépense.
-    expect(d.coutUsd).toBeCloseTo((1200 * 5 + 3400 * 25) / 1e6, 6)
-    const l = lignesEcrites()[0] ?? {}
+    // LE COÛT EST RÉEL, pas inventé : le plan (100 + 50) et l'écran (1200 +
+    // 3400) aux tarifs du fournisseur. S'il tombait à zéro, personne ne
+    // verrait la dépense.
+    expect(d.coutUsd).toBeCloseTo(((1200 + 100) * 5 + (3400 + 50) * 25) / 1e6, 6)
+    const l = lignesEcrites().find((x) => x.demande === DEMANDE) ?? {}
     expect(l.moteur, 'la ligne ne dit pas quel moteur l’a produite').toBe('direct')
     expect(l.statut).toBe('livree')
-    expect(l.jetons_sortie).toBe(3400)
+    expect(l.jetons_sortie).toBe(3450)
+    const sa = l.sections_acquises as { ecrans?: { slug: string; resultat: string }[]; plan?: { ecrans: unknown[] }; reflexion?: number }
+    expect(sa.ecrans?.map((e) => `${e.slug}:${e.resultat}`)).toEqual(['accueil:ok'])
+    expect(sa.plan?.ecrans).toHaveLength(1)
+    expect(sa.reflexion).toBe(0)
   })
 
-  it('③ UN ÉCHEC EST JOURNALISÉ AUSSI — avec son motif et son coût', async () => {
+  it('③ UN ÉCRAN ÉCHOUÉ DEUX FOIS EST LIVRÉ « À COMPLÉTER » — journalisé avec ses reproches et son coût', async () => {
     // ── DÉFAUT MESURÉ LE 2026-10-10 : trois appels payants, UNE SEULE ligne
     // en base, et le propriétaire incapable de savoir ce qu'il avait dépensé.
-    reponses.texte = ['=== a.tsx ===\nconst x = {{{ ;']
-    const d = (await (await POST(appel())).json()) as { ok: boolean; motif: string; tours: unknown[] }
-    expect(d.ok).toBe(false)
-    expect(d.motif).toContain('Non convergé')
-    expect(d.tours.length, 'la borne de trois tours ne mord pas').toBe(3)
-    const l = lignesEcrites()[0] ?? {}
-    expect(lignesEcrites().length, 'un échec payé n’est pas journalisé').toBe(1)
-    expect(l.statut).toBe('refusee')
+    // 3c : plus de « Non convergé » ni de règle du dernier tour. L'écran qui
+    // échoue deux fois sort visible, nommé, compté — et ce qu'il a coûté aussi.
+    reponses.texte = ['=== ecrans/accueil.tsx ===\nconst x = {{{ ;']
+    // Une demande UNIQUE : la ligne se retrouve par elle, quoi qu'écrivent les tests voisins.
+    const DEMANDE = 'calcule ma facture SNE — écran fautif'
+    const d = (await (await POST(appel(DEMANDE))).json()) as { ok: boolean; tours: unknown[]; ecrans: { nom: string; resultat: string; tentatives: number }[] }
+    expect(d.ok, 'l’application doit être livrée, avec son écran à compléter').toBe(true)
+    expect(d.ecrans).toEqual([{ nom: 'accueil', resultat: 'a_completer', tentatives: 2 }])
+    expect(d.tours.length, 'la borne de deux tentatives ne mord pas').toBe(2)
+    // Une livraison INSÈRE la ligne puis repositionne son pointeur de version
+    // (une mise à jour sur la même table) : on compte les INSERTIONS.
+    const insertions = ((journal.postgrest?.ecritures[TABLE_GENERATIONS] ?? []) as { op?: string; charge?: unknown }[])
+      .filter((e) => e.op === 'insert')
+      .map((e) => (e.charge ?? {}) as Record<string, unknown>)
+      .filter((x) => x.demande === DEMANDE)
+    const l = insertions[0] ?? {}
+    expect(insertions.length, 'un échec payé n’est pas journalisé').toBe(1)
+    expect(l.statut).toBe('livree')
     expect(l.moteur).toBe('direct')
     expect(Number(l.cout_usd), 'un échec payé est compté à zéro').toBeGreaterThan(0)
-    expect(l.document, 'un échec ne doit pas prétendre porter une œuvre').toBeNull()
+    const fichiers = (l.document as { fichiers?: Record<string, string> } | null)?.fichiers ?? {}
+    expect(fichiers['ecrans/accueil.tsx'], 'l’écran échoué doit être livré « à compléter », pas muet').toContain('À compléter : accueil')
+    expect(fichiers['PERIMETRE.md']).toContain('Écrans livrés : 0 / 1.')
   })
 
   it('⑤ L’APPEL EST EN FLUX — sinon le SDK refuse avant même d’envoyer', async () => {
@@ -301,40 +332,35 @@ describe('EP-276 · la route de l’écriture directe', () => {
     expect(Object.keys(v?.etat?.fichiers ?? {}).length, 'la version ne porte aucun fichier').toBeGreaterThan(0)
   })
 
-  it('⑥ UN ÉCHEC GARDE TOUT CE QU’IL FAUT POUR LE COMPRENDRE', async () => {
+  it('⑥ UN ÉCRAN ÉCHOUÉ GARDE TOUT CE QU’IL FAUT POUR LE COMPRENDRE', async () => {
     // ── DÉFAUT MESURÉ SUR LE PREMIER TIR DIRECT, 2026-10-18.
     //
     // 63 secondes, 4 centimes, « Non convergé en 3 tours » — et AUCUN moyen
     // de dire pourquoi. Ni l'erreur du compilateur, ni ce que le modèle avait
     // écrit. Un échec qu'on ne sait pas lire est un échec qu'on repaiera.
-    //
-    // Et l'écran, lui, avait affiché « Lecture impossible » : son repli quand
-    // la réponse ne porte ni `error` ni `motif`.
-    reponses.texte = ['=== a.tsx ===\nconst x = {{{ ;']
-    const d = (await (await POST(appel())).json()) as {
-      ok: boolean
-      error?: string
-      motif?: string
-      tours?: { motif?: string }[]
+    // 3c : la même exigence, par écran — chaque tentative garde son motif, et
+    // le brut du dernier essai est conservé dans la ligne.
+    reponses.texte = ['=== ecrans/accueil.tsx ===\nconst x = {{{ ;']
+    const DEMANDE = 'calcule ma facture SNE — écran fautif, à comprendre'
+    await (await POST(appel(DEMANDE))).json()
+    const l = lignesEcrites().find((x) => x.demande === DEMANDE) ?? {}
+    const sa = l.sections_acquises as {
+      tours?: { ok: boolean; motif?: string }[]
+      ecrans?: { resultat: string; reproches: string[]; dernierTexte: string | null; tentatives: number }[]
     }
-    expect(d.ok).toBe(false)
-    // LES DEUX CHAMPS portent une phrase : quel que soit celui que l'écran
-    // lit, il trouve quelque chose à dire.
-    expect(d.error, 'l’écran retombera sur « Lecture impossible »').toContain('Non convergé')
-    expect(d.motif).toBe(d.error)
-    expect(d.error, 'la phrase ne dit pas ce qui a échoué').toContain('ne s’est pas assemblé'.replace('’', "'"))
-
-    const l = lignesEcrites()[0] ?? {}
-    const sa = l.sections_acquises as { tours?: unknown[]; dernierTexte?: string }
-    expect(sa.tours?.length, 'les tours ne sont pas gardés').toBe(3)
+    expect(sa.tours?.length, 'les tentatives ne sont pas gardées').toBe(2)
+    expect(sa.tours?.every((t) => !t.ok && typeof t.motif === 'string' && t.motif.length > 0)).toBe(true)
+    // Chaque tentative garde SON motif — sinon on sait qu'il a échoué deux fois, pas pourquoi.
+    expect(sa.tours?.[0]?.motif).toMatch(/\[accueil\]/u)
+    expect(sa.tours?.[0]?.motif).toMatch(/export default function Ecran|construction a échoué/u)
+    const e = sa.ecrans?.[0]
+    expect(e?.resultat).toBe('a_completer')
+    expect(e?.reproches.length ?? 0).toBeGreaterThan(0)
     expect(
-      sa.dernierTexte,
+      e?.dernierTexte,
       'le brut du dernier essai est perdu : impossible de dire si le modèle ' +
         'écrit mal ou si le lecteur lit mal',
     ).toContain('{{{')
-    // Chaque tour garde SON motif — sinon on sait qu'il a échoué trois fois,
-    // pas pourquoi à chaque fois.
-    expect((sa.tours as { motif?: string }[])[0]?.motif).toContain('construction a échoué')
   })
 
   it('④ UNE DEMANDE VIDE EST REFUSÉE AVANT TOUT APPEL', async () => {

@@ -175,7 +175,8 @@ describe('EP-277 · les deux dialectes', () => {
       { role: 'user', content: 'écris' },
     ])
     expect(r.texte).toBe('du code')
-    expect(r.usage).toEqual({ entree: 10, sortie: 20 })
+    // `reflexion` : 0 sur ce dialecte, qui ne la compte pas à part (3c, 2026-11-13).
+    expect(r.usage).toEqual({ entree: 10, sortie: 20, reflexion: 0 })
     const a = anthropic.vus as { max_tokens: number; model: string }
     expect(a.max_tokens, 'le plafond ne vient pas de la configuration').toBe(
       CONFIGS.anthropic.maxJetons,
@@ -199,7 +200,8 @@ describe('EP-277 · les deux dialectes', () => {
       { role: 'user', content: 'écris' },
     ])
     expect(r.texte).toBe('du code deepseek')
-    expect(r.usage).toEqual({ entree: 7, sortie: 9 })
+    // `reflexion` : lue dans completion_tokens_details.reasoning_tokens, 0 si absent (3c).
+    expect(r.usage).toEqual({ entree: 7, sortie: 9, reflexion: 0 })
     const corps = JSON.parse(vu.body ?? '{}') as { max_tokens: number; model: string; messages: unknown[] }
     // LE PLAFOND VIENT DE LA CONFIGURATION, jamais d'un littéral recopié ici :
     // un nombre écrit en double est un nombre qui divergera.

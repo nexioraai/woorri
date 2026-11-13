@@ -77,12 +77,12 @@ describe('3c · brique 6 · l’orchestrateur', () => {
     if (!r.ok) return
     expect(r.ecrans.map((e) => `${e.slug}:${e.resultat}:${String(e.tentatives.length)}`)).toEqual(['accueil:ok:1', 'reservations:ok:1', 'avis:a_completer:2'])
     expect(appels.filter((s) => s === 'avis')).toHaveLength(2)
-    expect(r.ecrans[2]!.reproches.join('\n')).toMatch(/INTERDIT DANS UN ÉCRAN/u)
-    expect(r.fichiers.get('ecrans/avis.tsx')).toContain('À compléter : avis')
-    expect(r.fichiers.get('ecrans/reservations.tsx')).toContain('Mes réservations')
+    expect(r.ecrans[2]!.reproches.join('\n')).toMatch(motifTexte('INTERDIT DANS UN ÉCRAN'))
+    expect(r.fichiers.get('ecrans/avis.tsx')).toMatch(motifTexte('À compléter : avis'))
+    expect(r.fichiers.get('ecrans/reservations.tsx')).toMatch(motifTexte('Mes réservations'))
     expect(r.fichiers.get('PERIMETRE.md')).toMatch(motifTexte('Écrans livrés : 2 / 3.'))
     expect(r.fichiers.get('PERIMETRE.md')).toMatch(motifTexte('- avis (visiteur, public, tables : avis) : À COMPLÉTER'))
-    expect(r.fichiers.get('PERIMETRE.md')).toContain('Tarif à fixer')
+    expect(r.fichiers.get('PERIMETRE.md')).toMatch(motifTexte('Tarif à fixer'))
     expect(r.tours.map((t) => t.ok)).toEqual([true, true, false, false])
     expect(r.execution?.indisponible).toBeUndefined()
     expect(r.execution?.erreurs.map((e) => e.message)).toEqual([])
@@ -94,8 +94,8 @@ describe('3c · brique 6 · l’orchestrateur', () => {
 
   it('② la persistance est structurelle', () => {
     const plan = validerPlan(JSON.parse(PLAN_JSON), LECTURE, ENTITES, 'x')
-    const ok = (slug: string, nom: string, fichier: string) => ({ nom, slug, resultat: 'ok' as const, fichier, tentatives: [], ms: 1, jetons: { entree: 0, sortie: 0, reflexion: 0 }, reproches: [] })
-    const echoue = (slug: string, nom: string) => ({ nom, slug, resultat: 'a_completer' as const, fichier: null, tentatives: [], ms: 1, jetons: { entree: 0, sortie: 0, reflexion: 0 }, reproches: ['x'] })
+    const ok = (slug: string, nom: string, fichier: string) => ({ nom, slug, resultat: 'ok' as const, fichier, tentatives: [], ms: 1, jetons: { entree: 0, sortie: 0, reflexion: 0 }, reproches: [], dernierTexte: null })
+    const echoue = (slug: string, nom: string) => ({ nom, slug, resultat: 'a_completer' as const, fichier: null, tentatives: [], ms: 1, jetons: { entree: 0, sortie: 0, reflexion: 0 }, reproches: ['x'], dernierTexte: 'brut' })
     const d = persistanceStructurelle(plan, [ok('accueil', 'accueil', 'x'), ok('reservations', 'réservations', "const t = useTable<Reservation>('reservation'); t.ajouter({})"), echoue('avis', 'avis')], ENTITES)
     expect(d).toEqual([{ table: 'avis', lue: false, ecrite: false }])
     // Lue d'après le plan mais jamais appelée dans le fichier : pas lue.
@@ -127,7 +127,7 @@ describe('3c · brique 6 · l’orchestrateur', () => {
       juger: async () => ({ monteDansSimulateur: true, erreurs: [], octetsRendus: 1, texte: '', ms: 1 }),
       jugerFaces: async () => ({ aTourne: true, motif: null, defauts: [] }) as never,
     })
-    expect(consignes[0]).toContain('accueil · reservation · avis')
+    expect(consignes[0]).toMatch(motifTexte('accueil · reservation · avis'))
     expect(r.plan.ecrans.map((e) => e.nom)).toEqual(['accueil', 'reservation', 'avis'])
     expect(r.plan.refuses[0]).toMatchObject({ quoi: 'lecture' })
     expect(r.ecrans.every((e) => e.resultat === 'a_completer')).toBe(true)

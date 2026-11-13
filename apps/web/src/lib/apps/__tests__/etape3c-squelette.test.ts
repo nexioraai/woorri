@@ -178,11 +178,9 @@ describe('3c · briques 2-3 · le squelette et l’état, montés', () => {
   }, 90_000)
 
   it('⑥ un écran « à compléter » est visible et nommé, et l’application monte quand même', async () => {
-    const carte = await carteTemoin()
-    carte.delete('ecrans/aide.tsx')
-    const { texte } = await monter(await assembleOuEchoue(new Map([...(await carteTemoin()).entries()].filter(([c]) => c !== 'ecrans/aide.tsx').concat([['ecrans/aide.tsx', (await carteTemoin()).get('ecrans/aide.tsx')!]]))), '#aide')
+    // `aide` n'a pas de témoin : c'est l'écran « à compléter » du squelette qui s'affiche.
+    const { texte } = await monter(await assembleOuEchoue(await carteTemoin()), '#aide')
     expect(texte()).toContain('À compléter : aide')
-    void carte
   }, 90_000)
 
   it('⑦ PERIMETRE.md est écrit par Deribfy, avec les états', () => {

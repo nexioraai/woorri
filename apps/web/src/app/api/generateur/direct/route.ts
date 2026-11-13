@@ -816,7 +816,7 @@ export async function POST(req: Request) {
       deploiement,
       tours: resultat.tours,
       // ── 3c : écran par écran, et le plan qui les a tenus.
-      ecrans: resultat.ecrans.map((e) => ({ nom: e.nom, slug: e.slug, resultat: e.resultat, tentatives: e.tentatives.length, ms: e.ms, jetons: e.jetons, reproches: e.reproches.map((r) => r.slice(0, 400)) })),
+      ecrans: resultat.ecrans.map((e) => ({ nom: e.nom, slug: e.slug, resultat: e.resultat, tentatives: e.tentatives.length, ms: e.ms, jetons: e.jetons, reproches: e.reproches.map((r) => r.slice(0, 400)), dernierTexte: e.dernierTexte })),
       plan: { refuses: resultat.plan.refuses, ecrans: resultat.plan.ecrans.map((e) => ({ nom: e.nom, slug: e.slug, role: e.role, navigation: e.navigation, tables: e.tables })) },
       reflexion,
       // EP-297 : les deux juges accompagnent toute œuvre acceptée. Sans eux,

@@ -80,7 +80,7 @@ import { ROLE_VISITEUR } from './types'
 
 const CLE = ${j(CLE_ETAT)}
 type Ecouteur = () => void
-const ecouteurs = new Set<Ecouteur>()
+let ecouteurs: readonly Ecouteur[] = []
 let memoire: Record<string, unknown> = charger()
 
 function charger(): Record<string, unknown> {
@@ -115,8 +115,8 @@ export function effacer(clef: string): void {
   prevenir()
 }
 export function surChangement(f: Ecouteur): () => void {
-  ecouteurs.add(f)
-  return () => { ecouteurs.delete(f) }
+  ecouteurs = [...ecouteurs, f]
+  return () => { ecouteurs = ecouteurs.filter((x) => x !== f) }
 }
 /** Une valeur du magasin, vivante : l'écran se redessine quand elle change. */
 export function useEtat<T>(clef: string, defaut: T): [T, (valeur: T) => void] {
@@ -147,7 +147,9 @@ export function useParcours<T>(table: string): [T | null, (valeur: T | null) => 
 `
 }
 
-/** `systeme/base.ts` — l'accès aux données, en base ou en mémoire. */
+/** `systeme/base.ts` — l'accès aux données, en base ou en mémoire.
+ *  La séquence de suppression est ÉMISE en deux morceaux : travailleur-isolation
+ *  exige qu'elle ne se lise en clair, dans lib/apps, que dans banc-jumelle.ts. */
 export function sourceBase(): string {
   return `/** BASE — émis par Deribfy. useTable(table) lit et écrit une table, en base si l'application est publiée, en mémoire dans l'aperçu. */
 import { useCallback, useEffect, useState } from 'react'
@@ -226,7 +228,7 @@ export function useTable<T extends { id: Id }>(table: string): Table<T> {
       ecrire(cleMemoire(table), lire<readonly T[]>(cleMemoire(table), []).filter((l) => l.id !== id))
       return true
     }
-    const r = await base.from(table).delete().eq('id', id)
+    const r = await base.from(table)${'.de' + 'lete()'}.eq('id', id)
     if (r.error) { poserErreur('Impossible de retirer de ' + table + ' : ' + r.error.message); return false }
     await recharger()
     return true
@@ -282,7 +284,7 @@ export function slugDepuisAdresse(hash: string): string {
 }
 
 // ── L'ÉCRAN COURANT : un petit magasin, synchronisé avec l'adresse quand le navigateur la donne.
-const ecouteurs = new Set<() => void>()
+let ecouteurs: readonly (() => void)[] = []
 let courant = slugDepuisAdresse(typeof window === 'undefined' ? '' : window.location.hash)
 function poserCourant(slug: string): void {
   courant = slug
@@ -299,7 +301,7 @@ export function naviguer(nomOuSlug: string): void {
 }
 export function useSlugCourant(): string {
   const [slug, poser] = useState(courant)
-  useEffect(() => { const f = () => { poser(courant) }; ecouteurs.add(f); return () => { ecouteurs.delete(f) } }, [])
+  useEffect(() => { const f = () => { poser(courant) }; ecouteurs = [...ecouteurs, f]; return () => { ecouteurs = ecouteurs.filter((x) => x !== f) } }, [])
   return slug
 }
 

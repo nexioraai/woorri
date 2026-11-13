@@ -65,7 +65,8 @@ describe('EP-296 · la configuration atteint le moteur direct', () => {
 
   it('④ LA ROUTE LIT LA CONFIGURATION ET LA JOURNALISE', () => {
     expect(ROUTE, 'la route ne transmet pas la configuration à la boucle').toMatch(
-      /boucleEcriture\(\{[^}]*configuration/u,
+      // 3c (2026-11-13) : la génération est écran par écran — `boucleEcrans`.
+      /boucleEcrans\(\{[^}]*configuration/u,
     )
     expect(ROUTE, 'la configuration n’est pas journalisée avec le tir').toMatch(
       /sections_acquises[\s\S]{0,200}configuration/u,

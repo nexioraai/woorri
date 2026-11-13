@@ -57,13 +57,15 @@ export type EcranEcrit = {
   readonly jetons: JetonsEcran
   /** Les reproches de la DERNIÈRE tentative — ce qui a empêché l'écran. */
   readonly reproches: readonly string[]
+  /** Le brut du dernier essai quand l'écran a échoué : sans lui, impossible de dire si le modèle écrit mal ou si le lecteur lit mal. */
+  readonly dernierTexte: string | null
 }
 
 const INTERDITS: readonly { readonly motif: RegExp; readonly quoi: string }[] = [
   { motif: /\bcreateClient\s*\(/u, quoi: 'createClient — la base est à Deribfy (useTable)' },
   { motif: /\bfetch\s*\(/u, quoi: 'fetch — les données passent par useTable' },
   { motif: /\b(?:localStorage|sessionStorage)\b/u, quoi: 'localStorage — l’état passe par useEtat / useParcours' },
-  { motif: /\bwindow\.(?:location|DERIBFY_BASE)\b|\blocation\.hash\s*=/u, quoi: 'window.location — la navigation passe par naviguer()' },
+  { motif: /\bwindow\.(?:location|DERIBFY_BASE)\b|\blocation\.hash\s*=/u, quoi: 'window et location — la navigation passe par naviguer()' },
   { motif: /\bclassName\s*=/u, quoi: 'className — il n’y a pas de feuille de style : style={{ }}' },
 ]
 const SYSTEME_PERMIS = /^\.\.\/systeme\/(?:ui|argent|base|etat|navigation|types|jetons|donnees)$/u
@@ -160,6 +162,7 @@ export async function ecrireEcran(o: {
   const tentatives: TentativeEcran[] = []
   const jetons = { entree: 0, sortie: 0, reflexion: 0 }
   let dernieres: string[] = []
+  let dernierTexte = ''
 
   for (let rang = 1; rang <= max; rang += 1) {
     const debut = Date.now()
@@ -190,13 +193,14 @@ export async function ecrireEcran(o: {
     }
     tentatives.push({ rang, ms: Date.now() - debut, reproches, tronquee: r.tronquee })
     dernieres = reproches
+    dernierTexte = r.texte
     if (reproches.length === 0 && fichier !== undefined) {
-      return { nom: ecran.nom, slug: ecran.slug, resultat: 'ok', fichier: fichier.contenu, tentatives, ms: Date.now() - debutTotal, jetons, reproches: [] }
+      return { nom: ecran.nom, slug: ecran.slug, resultat: 'ok', fichier: fichier.contenu, tentatives, ms: Date.now() - debutTotal, jetons, reproches: [], dernierTexte: null }
     }
     if (rang < max) {
       messages.push({ role: 'assistant', content: r.texte })
       messages.push({ role: 'user', content: `${reproches.join('\n\n')}\n\nRécris \`${chemin}\` EN ENTIER, corrigé — et rien d'autre.` })
     }
   }
-  return { nom: ecran.nom, slug: ecran.slug, resultat: 'a_completer', fichier: null, tentatives, ms: Date.now() - debutTotal, jetons, reproches: dernieres }
+  return { nom: ecran.nom, slug: ecran.slug, resultat: 'a_completer', fichier: null, tentatives, ms: Date.now() - debutTotal, jetons, reproches: dernieres, dernierTexte: dernierTexte.slice(0, 20_000) }
 }

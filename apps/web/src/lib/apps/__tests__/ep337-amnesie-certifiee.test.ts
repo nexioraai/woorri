@@ -29,6 +29,7 @@
  * souvenir, ou un rangement du navigateur.
  */
 import { describe, expect, it } from 'vitest'
+import { motifTexte } from './motif-texte'
 import {
   jugerPersistance,
   preuvesDeMemoire,
@@ -184,9 +185,15 @@ describe('EP-337 · l’amnésie ne se certifie plus', () => {
     expect(src, 'les politiques s’émettent encore depuis la liste d’entrée').toMatch(
       /emettrePolitiquesSql\(entitesCourantes,/u,
     )
-    // ET LA CONSIGNE DU TOUR SUIVANT VOIT LA TABLE DU TOUR PRÉCÉDENT.
-    expect(src, 'la consigne reste figée sur la liste d’entrée').toMatch(
-      /consignePour\(entitesCourantes\)/u,
+    // ── 3c (2026-11-13) : la génération est ÉCRAN PAR ÉCRAN. La consigne de
+    // chaque écran est bâtie dans boucle-ecran.ts depuis les entités que la
+    // route lui passe — les mêmes que celles du schéma. Plus de tour suivant.
+    expect(src, 'la route ne passe pas ses entités à la boucle d’écrans').toMatch(
+      /boucleEcrans\(\{[\s\S]{0,200}entites: entitesDeclarees,/u,
+    )
+    const ecran = readFileSync(join(__dirname, '..', 'boucle-ecran.ts'), 'utf8')
+    expect(ecran, 'la consigne d’un écran ne voit pas les entités').toMatch(
+      motifTexte('consigneEcran(ecran, o.plan, o.entites, o.devise)'),
     )
   })
 })
