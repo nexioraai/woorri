@@ -850,3 +850,67 @@ la seule variable est la longueur de la réflexion, qui triple d'un tirage à l'
 **Ce que M10 ne prouve pas** : qu'un paramètre de budget de réflexion soit honoré par ce
 point d'accès (non mesuré) ; qu'une limite de 20 000 aurait suffi aux rejeux 1 et 3 (leur
 réflexion seule approche 7 000 jetons — probable, non mesuré).
+
+---
+
+# ÉTAPE 2b — MESURE M11 : RÉFLEXION COUPÉE OU EFFORT BAS (2026-11-13)
+
+`m11-reflexion-coupee.mts` — même appel exact que `lire-brief`, même cahier (`44ca6bbe`), limite
+8 000, 3 rejeux par variante. **Dépense 0,0115 $** (plafond 0,04 $). Référence : 8 tables (M10).
+Documentation du point d'accès : `budget_tokens` **ignoré** ; seuls `thinking.type` et `effort` agissent.
+
+| variante | rejeu | arrêt | jetons sortie | réflexion (signes) | texte (signes) | résultat | **tables** | durée | coût |
+|---|---|---|---|---|---|---|---|---|---|
+| A `thinking: disabled` | 1 | end_turn | 1 464 | **0** | 4 428 | reussie | **2** | 6,7 s | 0,0010 $ |
+| A | 2 | end_turn | 1 518 | 0 | 4 546 | reussie | **6** | 5,5 s | 0,0010 $ |
+| A | 3 | end_turn | 1 528 | 0 | 4 594 | reussie | **7** | 5,5 s | 0,0010 $ |
+| B `effort: low` | 1 | end_turn | 4 289 | 9 559 | 5 144 | reussie | **8** | 20 s | 0,0029 $ |
+| B | 2 | end_turn | 5 242 | 15 579 | 3 729 | reussie | **2** | 28 s | 0,0032 $ |
+| B | 3 | end_turn | 3 790 | 9 726 | 3 996 | reussie | **8** | 19 s | 0,0023 $ |
+
+**Critère du propriétaire : `reussie` 3/3 ET 8 ± 1 tables.**
+- `reussie` 3/3 : **tenu par les deux variantes** (6/6 ; contre 1/3 en mode réflexion à 8 000, M10).
+- 8 ± 1 tables : **tenu par aucune** — A : 1/3 (2, 6, 7) ; B : 2/3 (8, 2, 8).
+
+**Ce que M11 prouve** : `disabled` est **honoré** (0 signe de réflexion, 6/6 fois ; sortie ≈ 1 500 jetons,
+jamais coupée) ; `effort: low` raccourcit la réflexion (9 500–15 500 signes contre 28 000) sans la
+borner. Les déduites (nom « Atelier Mariam », marché) tiennent en A ; en B, `ARGENT_DANS_APP` passe
+à « aucun » 3/3 là où A dit « paiements » 3/3 — le cahier parle d'acomptes et de paiements.
+
+**Ce que M11 ne prouve pas** : que le nombre de tables soit stable dans AUCUN mode — il varie de 2 à 8 à
+cahier identique, réflexion ou non. C'est une **variance propre à la déclaration des tables**, pas un
+effet de la coupe. Le critère « 8 ± 1 » n'est donc pas atteignable sans traiter cette variance, qui
+est un autre défaut. **Aucun code n'est écrit.**
+
+---
+
+# M12 — « Unexpected token 'export' » : LU JUSQU'À LA LIGNE (2026-11-13)
+
+Deux générations `[TEST-ETAPE-2]` (pièces auto, même cahier) ont tourné sur la prévisualisation
+**`353a7t9xj` (étape 1)** — par impossibilité : `n5enu7utx` n'est prête que depuis 10:00:25 UTC, les
+deux ont démarré avant (≈ 09:37 et ≈ 09:41). **Lignes de test à retirer : `f29323f6`, `4b8b1d20`.**
+`m12-syntaxe-export.mts` + `m12-navigateur.mjs` (gratuits) : page reconstruite comme le GET de l'atelier,
+chargée dans un cadre `sandbox="allow-scripts"` par `srcdoc`, Chromium et WebKit.
+
+| œuvre | `index.tsx` | `export` survivant dans le paquet | juge d'exécution (paquet nu) | **navigateur** |
+|---|---|---|---|---|
+| **`4b8b1d20`** | 768 lignes, l. 768 `export default App;` (**modèle**) | l. 20 554, région `index.tsx` : `export { App as default };` | **démarre, 0 erreur, 6 écrans** | **`Unexpected token 'export'`** (Chromium) · `Unexpected keyword 'export'` page l. 20662 (WebKit) — rien ne s'exécute |
+| `f29323f6` | 9 lignes, aucun export | aucun | ne se monte pas (`reading 'url'`) | **s'affiche** : « Logone Pièces Auto · Accueil… », 0 erreur |
+| `44ca6bbe` | 8 lignes, aucun export | aucun | démarre, 0 erreur, 10 écrans | arrêt sur `process` (M9), attrapé par l'enveloppe |
+
+**Mécanisme.** `pageAutonome` enveloppe le paquet dans `try{ … }catch` à l'intérieur du
+`<script type="module">` (`boucle-directe.ts:849-852, 1211`). Un `export` n'est légal qu'au niveau
+supérieur d'un module : dans un bloc `try`, c'est une erreur de **syntaxe**, et le module entier
+n'est jamais exécuté. Le juge, lui, importe le paquet **nu** (`juge-execution-enfant.mjs:205`,
+`import('data:text/javascript;base64,…')`) : sans enveloppe, l'`export` est légal — **aveugle par
+construction, même classe que `process`** (le juge n'exécute pas ce que le navigateur exécute).
+Aveuglement **inverse** sur `f29323f6` : le juge dit « ne se monte pas » faute de `DERIBFY_BASE`,
+que seule la page injecte ; le navigateur l'affiche.
+
+**Fait annexe, non expliqué** : `import ws from "ws"` survit **2 fois dans les 3 paquets** (région
+supabase-js embarquée) sans que le contrôle « import nu » de l'assembleur rougisse, et sans erreur
+visible au navigateur. `INCONNU` pourquoi ; noté, non corrigé.
+
+**Erreurs d'instrument déclarées** : un chemin relatif résolu depuis `/Users/yia` (M11 non lancé la
+première fois, 0 $ ; fichiers m12 créés hors dépôt, rapatriés, résidu supprimé) ; un hôte `srcdoc`
+écrit dans un script inline (fermé par le `</script>` de la page) — remplacé par un passage en argument.

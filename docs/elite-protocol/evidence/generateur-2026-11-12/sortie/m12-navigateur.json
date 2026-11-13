@@ -1,0 +1,56 @@
+{
+ "sortie": [
+  {
+   "navigateur": "chromium",
+   "id": "4b8b1d20",
+   "erreurs": [
+    {
+     "message": "Unexpected token 'export'",
+     "pile": "",
+     "ligne": null,
+     "region": null,
+     "code": null
+    }
+   ],
+   "corps": "Cette application s'est arretee en cours d'execution. Detail technique Votre base de données sera créée à la publication. Pour l’instant c’e"
+  },
+  {
+   "navigateur": "chromium",
+   "id": "f29323f6",
+   "erreurs": [],
+   "corps": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. Logone P"
+  },
+  {
+   "navigateur": "chromium",
+   "id": "44ca6bbe",
+   "erreurs": [],
+   "corps": "Cette application s'est arretee en cours d'execution. Detail technique Votre base de données sera créée à la publication. Pour l’instant c’e"
+  },
+  {
+   "navigateur": "webkit",
+   "id": "4b8b1d20",
+   "erreurs": [
+    {
+     "message": "Unexpected keyword 'export'",
+     "pile": "SyntaxError: Unexpected keyword 'export'     at unknown (about:srcdoc:20662:0)",
+     "ligne": 20662,
+     "region": "index.tsx",
+     "code": "export { App as default };"
+    }
+   ],
+   "corps": "Cette application s'est arretee en cours d'execution. Detail technique Votre base de données sera créée à la publication. Pour l’instant c’e"
+  },
+  {
+   "navigateur": "webkit",
+   "id": "f29323f6",
+   "erreurs": [],
+   "corps": "Votre base de données sera créée à la publication. Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé. Logone P"
+  },
+  {
+   "navigateur": "webkit",
+   "id": "44ca6bbe",
+   "erreurs": [],
+   "corps": "Cette application s'est arretee en cours d'execution. Detail technique Votre base de données sera créée à la publication. Pour l’instant c’e"
+  }
+ ]
+}

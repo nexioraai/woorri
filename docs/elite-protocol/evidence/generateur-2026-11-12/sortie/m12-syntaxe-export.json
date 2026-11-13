@@ -1,0 +1,59 @@
+{
+ "sortie": [
+  {
+   "id": "4b8b1d20",
+   "fichiersSha256": "609960a4a6cb4c4f",
+   "indexLignes": 768,
+   "exportsEntree": [
+    {
+     "ligne": 768,
+     "code": "export default App;"
+    }
+   ],
+   "exportsPaquet": [
+    {
+     "ligne": 20554,
+     "region": "index.tsx",
+     "code": "export { App as default };"
+    }
+   ],
+   "importsWsSurvivants": 2,
+   "enveloppeDeLaPage": "try{ … }catch dans <script type=\"module\">",
+   "juge": {
+    "monte": true,
+    "erreurs": [],
+    "ecransDistincts": 6
+   }
+  },
+  {
+   "id": "f29323f6",
+   "fichiersSha256": "208a724635a342ba",
+   "indexLignes": 9,
+   "exportsEntree": [],
+   "exportsPaquet": [],
+   "importsWsSurvivants": 2,
+   "enveloppeDeLaPage": "try{ … }catch dans <script type=\"module\">",
+   "juge": {
+    "monte": false,
+    "erreurs": [
+     "import: Cannot read properties of undefined (reading 'url')"
+    ],
+    "ecransDistincts": 1
+   }
+  },
+  {
+   "id": "44ca6bbe",
+   "fichiersSha256": "d1f65c067d2e0ace",
+   "indexLignes": 8,
+   "exportsEntree": [],
+   "exportsPaquet": [],
+   "importsWsSurvivants": 2,
+   "enveloppeDeLaPage": "try{ … }catch dans <script type=\"module\">",
+   "juge": {
+    "monte": true,
+    "erreurs": [],
+    "ecransDistincts": 10
+   }
+  }
+ ]
+}
