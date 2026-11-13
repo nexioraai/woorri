@@ -940,3 +940,26 @@ objet littéral** que `config` et `nom` dans le client de l'étape 2 (`construir
 écrite sur succès). Le déploiement d'origine reste **INCONNU** par la donnée.
 
 **Étape 2 : NON PROUVÉE.** Rien n'est fusionné.
+
+---
+
+# ÉTAPE 2 — PREUVE OBTENUE (2026-11-13, prévisualisation `ckaq59zgf`, commit `3d9a8011`)
+
+**Ligne de test à retirer : `a13f8f9f-5571-4898-b60b-11454935f500`** (cahier école, sans marqueur dans
+`demande` ; identifiée par son déploiement).
+
+| champ | valeur |
+|---|---|
+| écrite | 11:12:08 UTC · 603 s · deepseek |
+| **deploiement** | **`{ commit: '3d9a801', branche: 'etape-2-configuration', environnement: 'preview' }`** — l'instrumentation lève l'INCONNU de `c4522e43` |
+| **configuration** | **`{ currency: 'XAF', nom_produit: 'La Renaissance', encaissement: 'paiements' }`** |
+| **nom** | **`La Renaissance`** |
+| lecture du brief | `reussie`, 6 tables lues, 6 reçues |
+| `demande` | **1 000 signes** (cahier ~2 600) — G30, quatrième mesure |
+
+**Observation 2 du propriétaire (« l'indicateur a disparu sans message ») — INCONNU.** Côté serveur, la
+génération a couru sans interruption (603 s, livrée). Le client ne laisse aucune trace de son état ;
+aucun chemin du code n'efface l'indicateur sans retirer la bulle ni afficher d'avis (`construire` :
+`finally → setEnCours(false)` ; échec → `rendreLaMain` + `setAvis`). Candidats non mesurés : remontage du
+composant, réponse close avant la fin par un intermédiaire, bulle vue dans l'accueil et non dans l'écran
+Application. Noté, non reconstruit.
