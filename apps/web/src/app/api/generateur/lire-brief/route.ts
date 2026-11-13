@@ -35,6 +35,7 @@ import { nomProduitValide } from '@/lib/apps/nom-produit'
 import { projectAirSchema } from '@deribfy/air-schema'
 import { lireEntites } from '@/lib/apps/entites-declarees'
 import { CONSIGNE } from '@/lib/apps/consigne-lire-brief'
+import { SIGNES_LUS, type LectureBrief } from '@/lib/apps/lecture-brief'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -74,8 +75,14 @@ export async function POST(req: Request) {
   const corps = (await req.json().catch(() => null)) as { demande?: unknown } | null
   const demande = typeof corps?.demande === 'string' ? corps.demande.trim() : ''
   // Un texte vide n'a rien à dire. On ne paie pas pour l'apprendre.
-  if (demande === '') return NextResponse.json({ deduites: {}, coutUsd: 0 })
+  if (demande === '') return NextResponse.json({ deduites: {}, coutUsd: 0, lecture: { resultat: 'demande_vide', entreeCoupee: false, tables: 0 } satisfies LectureBrief })
 
+  // ── LE STATUT DE LA LECTURE VOYAGE DANS TOUTES LES BRANCHES (M6, 2026-11-12) :
+  // 34 générations sur 34 sans trace de ce résultat ; un JSON cassé tombait
+  // dans le `catch` et rendait `{ deduites: {} }`, indiscernable de « rien à
+  // déduire ». Voir lib/apps/lecture-brief.ts.
+  const entreeCoupee = demande.length > SIGNES_LUS
+  let tronqueeEnSortie = false
   try {
     const { QUESTIONS_DE_CONFIGURATION } = (await import(
       /* webpackIgnore: true */ `${racineDepot()}/benchmarks/air-emission/elicitation.mjs`
@@ -106,8 +113,9 @@ export async function POST(req: Request) {
       max_tokens: 8000,
       system: CONSIGNE,
       // Le brief est borné : au-delà, on lit le début, qui porte l'intention.
-      messages: [{ role: 'user', content: demande.slice(0, 24_000) }],
+      messages: [{ role: 'user', content: demande.slice(0, SIGNES_LUS) }],
     })
+    tronqueeEnSortie = r.stop_reason === 'max_tokens'
 
     const brut = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
     const d = brut.indexOf('{')
@@ -131,13 +139,24 @@ export async function POST(req: Request) {
       })
       return NextResponse.json({
         deduites: {},
+        lecture: { resultat: tronquee ? 'tronquee' : 'illisible', entreeCoupee, tables: 0 } satisfies LectureBrief,
         illisible: true,
         motif: tronquee
           ? 'La lecture du brief a ete coupee avant la fin : la limite de longueur est atteinte.'
           : 'La lecture du brief n a rien rendu d exploitable.',
       })
     }
-    const lu = JSON.parse(brut.slice(d, f + 1)) as Record<string, unknown>
+    let lu: Record<string, unknown>
+    try {
+      lu = JSON.parse(brut.slice(d, f + 1)) as Record<string, unknown>
+    } catch {
+      // Même réponse qu'avant (le `catch` général rendait `{ deduites: {} }`),
+      // mais NOMMÉE : un JSON coupé par la limite est une troncature.
+      return NextResponse.json({
+        deduites: {},
+        lecture: { resultat: tronqueeEnSortie ? 'tronquee' : 'json_casse', entreeCoupee, tables: 0 } satisfies LectureBrief,
+      })
+    }
 
     // ── LE FILTRE. La table décide, jamais le modèle.
     const deduites: Record<string, string> = {}
@@ -240,9 +259,10 @@ export async function POST(req: Request) {
       // laquelle ni pourquoi.
       entites: declarees.entites,
       entitesRefusees: declarees.refus,
+      lecture: { resultat: 'reussie', entreeCoupee, tables: declarees.entites.length } satisfies LectureBrief,
     })
   } catch {
     // UNE LECTURE RATÉE NE BLOQUE RIEN : on retombe sur le questionnaire.
-    return NextResponse.json({ deduites: {} })
+    return NextResponse.json({ deduites: {}, lecture: { resultat: 'erreur', entreeCoupee, tables: 0 } satisfies LectureBrief })
   }
 }

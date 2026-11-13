@@ -41,6 +41,7 @@ import {
 } from '@deribfy/compiler'
 import { projectAirSchema } from '@deribfy/air-schema'
 import { lireEntites } from '@/lib/apps/entites-declarees'
+import { lectureAEnregistrer } from '@/lib/apps/lecture-brief'
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
 import { proportionEprouvee } from '@/lib/apps/portee-epreuve'
@@ -366,6 +367,11 @@ export async function POST(req: Request) {
   // base tout en continuant à lui dire qu'il n'en a pas.
   let entitesCourantes = entitesDeclarees
 
+  // ── LE RÉSULTAT DE LA LECTURE DU BRIEF, ÉCRIT POUR CHAQUE GÉNÉRATION (M6).
+  // 34 sur 34 sans trace. Écrit en succès ET en échec ; absent, il s'écrit
+  // `non_transmise` — voir lib/apps/lecture-brief.ts.
+  const lectureBrief = lectureAEnregistrer((corps as { lectureBrief?: unknown }).lectureBrief, entitesDeclarees.length)
+
   let demande = typeof corps.demande === 'string' ? corps.demande.trim() : ''
   let nomExistant: string | null = null
   if (idExistant !== '') {
@@ -545,6 +551,7 @@ export async function POST(req: Request) {
         statut: 'refusee',
         duree_ms: Date.now() - debut,
         diagnostics: [`la construction a ete interrompue — ${message.slice(0, 300)}`],
+        sections_acquises: { lectureBrief },
       })
     } catch {
       /* le journal peut manquer ; l'alerte, elle, doit partir quand meme */
@@ -780,6 +787,7 @@ export async function POST(req: Request) {
     // forme, pas assez pour gonfler la ligne.
     sections_acquises: {
       configuration,
+      lectureBrief,
       tours: resultat.tours,
       // EP-297 : les deux juges accompagnent toute œuvre acceptée. Sans eux,
       // « livrée » redevient un mot sans mesure — le défaut fondateur.
