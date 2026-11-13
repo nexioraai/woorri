@@ -33,7 +33,13 @@ import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { alerter } from '@/lib/alertes'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
-import { boucleEcriture, consignePour, pageAutonome } from '@/lib/apps/boucle-directe'
+import { pageAutonome } from '@/lib/apps/boucle-directe'
+// ── 3c (2026-11-13) : la génération est ÉCRAN PAR ÉCRAN. L'ancienne boucle
+// (`boucleEcriture`) reste exportée, inerte, jusqu'à la preuve Hayine — puis
+// elle disparaît du dépôt (décision du propriétaire : pas de résidu).
+import { boucleEcrans } from '@/lib/apps/boucle-ecrans'
+import { MAX_JETONS_ECRAN } from '@/lib/apps/boucle-ecran'
+import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
 import {
   emettrePolitiquesSql,
   emettreSchemaSql,
@@ -436,18 +442,34 @@ export async function POST(req: Request) {
    * exige le flux, l'autre plafonne sa sortie a 8 192 jetons. Cette route
    * n'a pas a le savoir.
    */
-  const appeler = async (
+  // ── DEUX APPELEURS (3c, 2026-11-13). L'écran : le gros modèle, RÉFLEXION
+  // COUPÉE (M16 : 84 % des jetons de sortie partaient en réflexion jamais lue ;
+  // coupée, ×5,7 plus vite, ×3,8 moins cher, fichier plus complet), plafond
+  // propre à un écran. Le plan : le modèle léger, comme la lecture du brief.
+  // Les jetons de réflexion sont comptés quoi qu'il arrive. LA TRONCATURE
+  // VOYAGE AVEC LE TEXTE : seul le fournisseur sait s'il a coupé.
+  let reflexion = 0
+  const appelerEcran = async (
+    system: string,
     messages: readonly { role: 'user' | 'assistant'; content: string }[],
   ) => {
-    // LA CONSIGNE EST CELLE DE CETTE OEUVRE : avec entites, le bloc de base
-    // REMPLACE la regle des valeurs d'exemple. Les deux ne coexistent jamais.
-    const r = await appelerFournisseur(fournisseur, cle, consignePour(entitesCourantes), messages)
+    const r = await appelerFournisseur(fournisseur, cle, system, messages, { reflexion: false, maxJetons: MAX_JETONS_ECRAN })
     entree += r.usage.entree
     sortie += r.usage.sortie
-    // LA TRONCATURE VOYAGE AVEC LE TEXTE. La boucle ne peut pas la deviner :
-    // un texte coupé ressemble à un texte fautif, et seul le fournisseur sait
-    // lequel des deux il vient de rendre.
-    return { texte: r.texte, tronquee: r.tronquee }
+    reflexion += r.usage.reflexion
+    return { texte: r.texte, tronquee: r.tronquee, usage: r.usage }
+  }
+  const appelerLeger = async (system: string, texte: string) => {
+    const r = await clientIA().messages.create({
+      model: MODELE_LEGER,
+      max_tokens: 8000,
+      thinking: { type: 'disabled' },
+      system,
+      messages: [{ role: 'user', content: texte }],
+    })
+    entree += r.usage.input_tokens
+    sortie += r.usage.output_tokens
+    return r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
   }
 
   // L'IDENTITÉ EST CAPTURÉE ICI, hors du flux : à l'intérieur, TypeScript ne
@@ -516,15 +538,18 @@ export async function POST(req: Request) {
     // LES ENTITES VONT AU JUGE DE PERSISTANCE : une table absente du code
     // rendu est precisement ce qu'il cherche, donc elle ne peut pas s'en
     // deduire. Elle vient du cahier, par la valeur qui a bati la consigne.
-    resultat = await boucleEcriture({
+    resultat = await boucleEcrans({
       demande,
       configuration,
-      appeler,
       entites: entitesDeclarees,
-      // LA MÊME GRAMMAIRE QUE LA LECTURE DU CAHIER, jamais une seconde :
-      // deux validateurs divergeraient, et la divergence se découvrirait
-      // sur une table posée de travers, en production.
-      validerEntite: (e) => schemaEntite.safeParse(e).success,
+      // CE QUE LA LECTURE A PRODUIT ENTRE DANS LA GÉNÉRATION (3c) : les écrans,
+      // les rôles, les questions ouvertes — revalidés par `lectureAEnregistrer`.
+      // (Le modèle ne déclare plus de table en route : les entités sont celles
+      // du cahier, revalidées par la même grammaire que la lecture.)
+      lecture: { ecrans: lectureBrief.ecrans, roles: lectureBrief.roles, questionsOuvertes: lectureBrief.questionsOuvertes },
+      nom: nom ?? TITRE_SANS_NOM,
+      appelerEcran,
+      appelerLeger,
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e)
@@ -790,6 +815,10 @@ export async function POST(req: Request) {
       lectureBrief,
       deploiement,
       tours: resultat.tours,
+      // ── 3c : écran par écran, et le plan qui les a tenus.
+      ecrans: resultat.ecrans.map((e) => ({ nom: e.nom, slug: e.slug, resultat: e.resultat, tentatives: e.tentatives.length, ms: e.ms, jetons: e.jetons, reproches: e.reproches.map((r) => r.slice(0, 400)) })),
+      plan: { refuses: resultat.plan.refuses, ecrans: resultat.plan.ecrans.map((e) => ({ nom: e.nom, slug: e.slug, role: e.role, navigation: e.navigation, tables: e.tables })) },
+      reflexion,
       // EP-297 : les deux juges accompagnent toute œuvre acceptée. Sans eux,
       // « livrée » redevient un mot sans mesure — le défaut fondateur.
       jetons: resultat.ok ? resultat.jetons : null,
@@ -899,6 +928,7 @@ export async function POST(req: Request) {
     id: ecrit.data?.id ?? null,
     html: pageAutonome(resultat.code, nom ?? TITRE_SANS_NOM),
     fichiers: resultat.fichiers.size,
+    ecrans: resultat.ecrans.map((e) => ({ nom: e.nom, resultat: e.resultat, tentatives: e.tentatives.length })),
     tours: resultat.tours,
     // EP-297 : le rapport chiffré VOYAGE avec l'œuvre — l'écran le montre,
     // le propriétaire le lit, « livrée » n'est plus un mot sans mesure.

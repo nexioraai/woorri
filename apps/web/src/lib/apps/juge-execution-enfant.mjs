@@ -230,7 +230,10 @@ await new Promise((r) => setTimeout(r, Number(attenteMs) || 400))
 const racineNav = document.getElementById('racine')
 const SELECTEUR = 'button, [role="button"], a[href^="#"], nav *[data-ecran]'
 /** Combien de contrôles on accepte d'ouvrir. Borne de COÛT, pas de vérité. */
-const BUDGET_VISITES = 24
+// 24 → 48 le 2026-11-13 (3c) : une application d'écrans — 16 pour Hayine, plus les
+// boutons de rôle et les sections de gestion — en découvre plus que l'ancienne
+// borne n'en visitait. Toujours une borne de COÛT, pas de vérité.
+const BUDGET_VISITES = 48
 let visites = 0
 let decouverts = 0
 let ecransDistincts = 1
