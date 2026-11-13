@@ -48,7 +48,7 @@
  * pourrit et sert de porte d'entrée à un nouveau mort sous un vieux nom.
  */
 import { describe, expect, it } from 'vitest'
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, dirname, normalize, relative } from 'node:path'
 import { motifTexte } from './motif-texte'
 
@@ -73,6 +73,9 @@ const CONVENTIONS_APP = new Set([
 ])
 
 const MARQUE_EXEMPT = 'APPELÉ PAR LES TESTS, PAR CONSTRUCTION'
+
+/** Le témoin de la fin de V4 : premier fichier de sa liste de suppression (critère de sortie, au registre). */
+const TEMOIN_V4 = 'boucle-directe.ts'
 
 /** Écrits pour être appelés par des tests. La raison vit AUSSI dans le fichier. */
 const EXEMPTES: Readonly<Record<string, string>> = {
@@ -264,6 +267,31 @@ describe('EP-365 · un module prouvé sans appelant n’existe pas', () => {
     expect(sans, `Écris « ${MARQUE_EXEMPT} » en tête de ces fichiers.`).toEqual([])
     for (const [p, raison] of Object.entries(EXEMPTES)) {
       expect(raison.length, `${p} : une exemption sans raison est un trou`).toBeGreaterThan(20)
+    }
+  })
+
+  /**
+   * B2 (2026-11-14) — L'EXEMPTION DU CONTRAT A UNE FIN, ET CE CAS LA FAIT RESPECTER.
+   *
+   * Les modules `lib/apps/contrat/*` sont exemptés « jusqu'à l'étape 4 » : le
+   * contrat est prouvé seul, à 0 $, puis branché. Deux façons de laisser
+   * l'exemption pourrir, deux contrôles :
+   *   · un module du contrat DÉJÀ atteignable depuis la production reste
+   *     inscrit → rouge, sans attendre V4 ;
+   *   · V4 est TERMINÉE (son critère de sortie, inscrit au registre : la liste
+   *     de suppression exécutée — dont `boucle-directe.ts`) et un module du
+   *     contrat est encore exempté → rouge.
+   */
+  it('⑥ B2 — aucun module du contrat ne reste exempté une fois branché, ni après V4', () => {
+    const contrat = Object.keys(EXEMPTES).filter((p) => p.startsWith('lib/apps/contrat/'))
+    const morts = new Set(mortsTransitifs(carte()))
+    expect(
+      contrat.filter((p) => !morts.has(p)),
+      'Ces modules du contrat sont branchés : retire-les d’EXEMPTES (et leur marque).',
+    ).toEqual([])
+    const v4Terminee = !existsSync(join(SRC, 'lib', 'apps', TEMOIN_V4))
+    if (v4Terminee) {
+      expect(contrat, 'V4 est terminée (sa liste de suppression est exécutée) : plus aucun module du contrat ne peut être exempté.').toEqual([])
     }
   })
 

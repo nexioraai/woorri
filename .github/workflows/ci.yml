@@ -151,15 +151,15 @@ jobs:
         continue-on-error: true
         run: node scripts/check-api-docs.mjs
 
-      - name: Lint (informatif, non bloquant)
-        run: npx eslint .
-        continue-on-error: true
-
-      # ── LE CLIQUET, LUI, EST LU.
+      # ── B1 (2026-11-14, ordre du propriétaire) : L'ÉTAPE « Lint (informatif,
+      # non bloquant) » EST RETIRÉE. Elle échouait à chaque passage, sans `id` ;
+      # le gate l'ABSORBAIT et le disait — « personne ne lit leur résultat ».
+      # Une étape qu'on ne lit pas n'est pas une mesure : la gate devient
+      # binaire. La dette (mesurée ce jour : 960 erreurs, dont 949
+      # `no-explicit-any`, dans 175 fichiers) n'est PAS effacée : le cliquet
+      # ci-dessous la gèle et refuse qu'elle grossisse.
       #
-      # L'étape ci-dessus échoue à chaque passage et n'a pas d'`id` : le gate
-      # ne lit pas son résultat, et le verdict du CI le dit — « personne ne lit
-      # leur résultat ». Une erreur NEUVE y était donc invisible.
+      # ── LE CLIQUET, LUI, EST LU.
       #
       # Mesuré le 2026-10-07 : 1 076 erreurs, dont 1 053 `no-explicit-any`. Les
       # 23 autres sont des défauts RÉELS de React, noyés dans le bruit depuis
