@@ -1,0 +1,32 @@
+{
+ "fichiersSha256": "d1f65c067d2e0ace98323288ac1d7884a3a0ee5c611702a7b780fab71dc25131",
+ "mesure": {
+  "demarre": true,
+  "erreurs": [],
+  "ecransDistincts": 10,
+  "ecransVisites": 24,
+  "signesAccueil": 916,
+  "sectionInconnue": 0,
+  "ecransVides": 0
+ },
+ "localisation": {
+  "lignesDeLaPage": 22233,
+  "region": "composants/App.tsx",
+  "instruction": "const supabaseUrl = window.ENV?.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || \"\";",
+  "autourDeLaColonne": "abaseUrl = window.ENV?.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || \"\";"
+ },
+ "referencesProcessRequire": [
+  {
+   "fichier": "composants/App.tsx",
+   "ligne": 23,
+   "code": "const supabaseUrl = (window as any).ENV?.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || '';",
+   "auteur": "MODÈLE"
+  },
+  {
+   "fichier": "composants/App.tsx",
+   "ligne": 24,
+   "code": "const supabaseKey = (window as any).ENV?.SUPABASE_KEY || process.env.REACT_APP_SUPABASE_KEY || '';",
+   "auteur": "MODÈLE"
+  }
+ ]
+}

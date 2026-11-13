@@ -777,3 +777,44 @@ Co-occurrences dans un même tour refusé :
 | `3b8a5a93` | 2026-11-12T08:09 | +66/−6 | fix(generateur): le juge monte l'espace de gestion ; champs nommés ; tendances honnêtes | bibliotheque-ui.ts, boucle-directe.ts, juge-execution-enfant.mjs, juge-execution.ts |
 | `8eedc275` | 2026-11-12T08:21 | +209/−58 | feat(generateur): quatre mises en page pour l'espace de gestion des applis générées | bibliotheque-ui.ts |
 | `3e9856c7` | 2026-11-12T15:38 | +295/−9 | fix(generateur): le contrat des pièces — enseigné, jugé, et un plantage ne blanchit plus l'écran | bibliotheque-ui.ts, boucle-directe.ts, juge-contrat.ts |
+
+---
+
+# ÉTAPE 1 — PREUVE EN PRÉVISUALISATION (2026-11-13)
+
+**Ligne de test à retirer : `44ca6bbe-65a0-4f47-994d-f2fc8db72978`** (cahier marqué `[TEST-ETAPE-1]`).
+Les deux envois précédents (le cahier, puis un texte non-cahier envoyé par erreur)
+ont échoué dans `/api/onboarding` (`401`, clé Preview `[SENSITIVE]` — mon erreur)
+et n'ont écrit **aucune** ligne : rien d'autre à retirer.
+
+| champ | valeur |
+|---|---|
+| horodatage | 2026-11-13 08:24:02 UTC |
+| moteur · fournisseur | `direct` · **`deepseek`** |
+| **lecture du brief** | **`resultat: tronquee`** · tables lues **0** · tables reçues **0** · entrée coupée à 24 000 : non · source : client |
+| configuration reçue | `{}` (défaut de l'étape 2, toujours présent) |
+| tours | 1 refusé (« réglages inconnus », `juge-contrat`) · **2 accepté** |
+| juges conservés | exécution : démarre, 0 erreur · persistance 0 · couverture 0 absente · vivacité 0 · jetons 0 |
+| coût | **0,237 $** (27 829 / 50 579 jetons ; la lecture du brief n'est pas comptée dans cette colonne) · 528 s |
+
+> **Étape 1 : PROUVÉE.** La ligne porte le résultat de la lecture du brief. Et dès sa
+> première ligne, il dit ce qu'aucune des 34 précédentes ne pouvait dire : la
+> lecture a été **coupée en sortie** (`tronquee`, limite de 8 000 jetons de
+> `lire-brief`), et la génération est partie **sans table**.
+
+**L'œuvre, mesurée comme en M3/M5** (`m9-etape1.mts`, gratuit) : démarre **dans le juge**,
+0 erreur, **10 écrans** distincts, accueil **916 signes**, 0 « Section inconnue », 0 écran vide.
+
+**Mais elle plante dans l'aperçu** : `ReferenceError: process is not defined`, `srcdoc` l. 22054 c. 49.
+- Ligne 22054 de la page reconstruite comme l'atelier la sert → région
+  **`composants/App.tsx`**, écrit **par le modèle** :
+  `const supabaseUrl = window.ENV?.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL || "";`
+  (lignes 23 et 24 de `App.tsx` ; **aucune** référence à `process` ni `require` dans
+  la bibliothèque fournie).
+- **Pourquoi aucun juge ne l'a vu** : le juge d'exécution monte l'œuvre dans un
+  processus **Node** avec un DOM simulé. Dans Node, `process` est un global :
+  `process.env.REACT_APP_SUPABASE_URL` y vaut `undefined`, **sans erreur**. Aucun
+  des trois processus enfants des juges ne retire `process` (0 occurrence de
+  `globalThis.process`). Le juge mesure le même code et répond « démarre » —
+  **aveugle à cette classe par construction**. Le seul juge qui tourne dans un
+  vrai navigateur (`juge-navigateur`) n'est pas branché (M4).
