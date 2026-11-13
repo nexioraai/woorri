@@ -1149,3 +1149,27 @@ relevées à la mesure plus la même marge étroite : 8 800 → 9 000 (mesuré 8
 
 Rouge-puis-vert vérifiés par `cmp` contre les versions de l'étape 3. **Preuve en prévisualisation** : Hayine
 regénéré `[TEST-ETAPE-3]`, l'aperçu doit s'afficher.
+
+## ÉTAPE 3 — PREUVE OBTENUE (2026-11-13, prévisualisation `pmfoudovh`, commit `4eecbde3`)
+
+**Ligne de test à retirer : `e9e1803f-4d8b-46f4-872b-c31523ec4faf`** (cahier Hayine PDF, 22 866 signes).
+Brut : `brut/etape3/e9e1803f.json.gz` (ligne), `brut/etape3/e9e1803f-fichiers.json.gz` (6 fichiers livrés),
+`sortie/etape3-preuve-chromium.txt` (rejeu).
+
+| champ | valeur |
+|---|---|
+| écrite | 14:52:28 UTC · 370 s · deepseek · 0,125 $ · `livree` |
+| **deploiement** | **`{ commit: '4eecbde', branche: 'etape-3-demarrage', environnement: 'preview' }`** |
+| **lecture** | `reussie`, 1 tranche (22 866 < 24 000), 1 tentative, **`coutUsd: 0,001367 $` mesuré** (7 663 jetons entrée · 2 181 sortie), 7 tables lues = 7 reçues, 4 rôles, 16 écrans, 8 questions ouvertes ; `parTranche[0]` : nom `Hayine`, 7 tables, 16 écrans, `nomRefuse: null` |
+| configuration / nom | `{ XAF, nom_produit: Hayine, encaissement: paiements }` · `Hayine` |
+| tours | `1:refus` (jeton inexistant `var(--radius-xs)`) · `2:refus` (contrôles sans nom ; 7 tables ni lues ni écrites) · `3:ok` |
+| juge d'exécution (Node) | monte, 4 écrans distincts, 15 visités, 0 erreur |
+| **exports écrits par le modèle dans `index.tsx`** | **aucun** (la consigne tenue) ; paquet 837 612 octets, 0 ligne `export` |
+| **Chromium, page servie (assembleur et `pageAutonome` réels)** | **accueil : 0 erreur**, 276 signes rendus (« Hayine · Accueil · Langue FR EN AR · Catalogue… ») · **`#gestion` : 0 erreur**, 900 signes, 13 contrôles (CoqueGestion, « Données à jour », tableau de bord) |
+
+**Verdict étape 3 : PROUVÉE** — l'œuvre livrée s'exécute dans Chromium aux conditions de l'atelier, accueil et
+gestion, sans une erreur ; avant l'étape, `9cc16d10` (même cahier) s'arrêtait sur « Unexpected token 'export' ».
+
+Hors périmètre, consigné (étape 3c) : `persistance` 7/7 ni lue ni écrite ; `couverture.taux 0,38`, 7 exigences
+absentes (connexion et comptes, multilingue, RTL, agent IA, recherche, administration, abonnement) ; tour 3 accepté
+par la règle du dernier tour.
