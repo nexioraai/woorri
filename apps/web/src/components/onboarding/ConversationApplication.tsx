@@ -708,7 +708,7 @@ export default function ConversationApplication({
    */
   const deduireConfiguration = async (
     texte: string,
-  ): Promise<{ config: Configuration; entites: EntiteDeclaree[]; lecture?: LectureBrief }> => {
+  ): Promise<{ config: Configuration; entites: EntiteDeclaree[]; lecture?: LectureBrief; nom?: string }> => {
     try {
       const rl = await fetch('/api/generateur/lire-brief', {
         method: 'POST',
@@ -720,6 +720,7 @@ export default function ConversationApplication({
         entites?: EntiteDeclaree[];
         entitesRefusees?: { quoi: string; motif: string }[];
         lecture?: LectureBrief;
+        nomProduit?: { nom?: string };
       };
       setEntites(dl.entites ?? []);
       setEntitesRefusees(dl.entitesRefusees ?? []);
@@ -752,6 +753,11 @@ export default function ConversationApplication({
         entites: lues,
         // Le statut de la lecture VOYAGE avec, comme les entités (M6).
         lecture: dl.lecture,
+        // LE NOM AUSSI (étape 2, 2026-11-13). MESURÉ : `nom` null pour 16
+        // générations sur 16 depuis le 2026-11-04 — `lire-brief` le proposait
+        // (`nomProduit`, EP-309 ⑨), et cette fonction le jetait. La route le
+        // revalide (`nomProduitValide`) : un remplissage y reste refusé.
+        nom: typeof dl.nomProduit?.nom === 'string' ? dl.nomProduit.nom : undefined,
       };
     } catch {
       return { config: { currency: DEVISE_PAR_DEFAUT }, entites: [] };
@@ -791,6 +797,7 @@ export default function ConversationApplication({
       config: lu.config,
       entites: lu.entites,
       lecture: lu.lecture,
+      nom: lu.nom,
       dejaAffiche: true,
     });
   };
@@ -906,6 +913,7 @@ export default function ConversationApplication({
           config: lu.config,
           entites: lu.entites,
           lecture: lu.lecture,
+          nom: lu.nom,
           dejaAffiche: false,
         });
         return;
@@ -1338,6 +1346,7 @@ export default function ConversationApplication({
         config: lu.config,
         entites: lu.entites,
         lecture: lu.lecture,
+        nom: lu.nom,
         dejaAffiche: true,
       });
     })();

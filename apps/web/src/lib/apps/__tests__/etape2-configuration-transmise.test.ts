@@ -54,4 +54,17 @@ describe('étape 2 — la configuration calculée voyage jusqu’au générateur
       lectureBrief: 'opts.lecture',
     })
   })
+
+  // Décision du propriétaire (2026-11-13) : le nom se corrige DANS l'étape 2 —
+  // même chemin, même classe (donnée calculée puis jetée). MESURÉ : `nom`
+  // null pour 16 générations sur 16 depuis le 2026-11-04.
+  it('③ le nom proposé par la lecture du brief voyage jusqu’à construire, par argument', () => {
+    expect(ECRAN).toMatch(motifTexte("nom: typeof dl.nomProduit?.nom === 'string' ? dl.nomProduit.nom : undefined,"))
+    // Chaque appelant vivant de `construire` passe le nom avec la lecture :
+    // les deux lignes vont ensemble, autant de fois l'une que l'autre.
+    const lectures = ECRAN.match(/lecture: lu\.lecture,/gu)?.length ?? 0
+    const noms = ECRAN.match(/nom: lu\.nom,/gu)?.length ?? 0
+    expect(lectures).toBeGreaterThanOrEqual(3)
+    expect(noms, 'un appelant passe la lecture sans le nom').toBe(lectures)
+  })
 })

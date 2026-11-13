@@ -217,11 +217,16 @@ describe('EP-309 — le nom du produit', () => {
     // dit où il a lu le nom, et on cherche ce passage dans le brief. La
     // pièce est prête et testée.
     //
-    // MAIS L'ÉCRAN NE LA CONSOMME PLUS. La question du nom, posée à la fin
-    // du pré-vol, a cassé la production : toute réponse qui ne passait pas
-    // sa validation renvoyait l'utilisateur à la PREMIÈRE question. Elle
-    // reviendra pré-remplie et SANS POUVOIR BLOQUER, et elle sera exercée en
-    // production avant d'être déclarée en ligne.
+    // L'ÉCRAN NE LA CONSOMMAIT PLUS. La question du nom, posée à la fin du
+    // pré-vol, a cassé la production : toute réponse qui ne passait pas sa
+    // validation renvoyait l'utilisateur à la PREMIÈRE question.
+    //
+    // ── RÉVEILLÉE LE 2026-11-13 (étape 2), SANS QUESTION ET SANS POUVOIR
+    // BLOQUER : MESURÉ `nom` null pour 16 générations sur 16 depuis le
+    // 2026-11-04 — la pièce proposait, l'écran jetait. L'écran transmet
+    // désormais `nomProduit.nom` en argument de `construire` (cliquet :
+    // etape2-configuration-transmise ③) ; la route le revalide. Exercée en
+    // prévisualisation avant la mise en ligne.
     //
     // Ce cliquet garde la pièce serveur en vie : sans lui, quelqu'un la
     // retirerait comme du code mort, et le lot ③ repartirait de zéro.
