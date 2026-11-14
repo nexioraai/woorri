@@ -7,7 +7,7 @@
  * langue. Aucune autre transformation : le moteur lit le contrat tel quel.
  */
 import type { Spec } from './catalogue'
-import type { AppCompilee, EcranCompile, LangueApp } from './rendu/moteur'
+import type { AppCompilee, EcranCompile, LangueApp, ComptesApp } from './rendu/moteur'
 import { textesDe } from './textes'
 
 type O = Record<string, unknown>
@@ -26,7 +26,7 @@ export function compilerEcran(ecran: unknown): EcranCompile {
   return e as unknown as EcranCompile
 }
 
-export function compilerApp(spec: Spec, o: { readonly nom: string; readonly langues: readonly LangueApp[]; readonly devise: string | null; readonly kit?: string }): AppCompilee {
+export function compilerApp(spec: Spec, o: { readonly nom: string; readonly langues: readonly LangueApp[]; readonly devise: string | null; readonly kit?: string; readonly comptes?: ComptesApp }): AppCompilee {
   const dictionnaires: Record<string, Record<string, string>> = {}
   for (const t of spec.traductions ?? []) dictionnaires[t.langue] = Object.fromEntries(t.textes.map((x) => [x.cle, x.texte]))
   return {
@@ -37,5 +37,6 @@ export function compilerApp(spec: Spec, o: { readonly nom: string; readonly lang
     barre: spec.barre,
     dictionnaires,
     ...(o.kit !== undefined ? { kit: o.kit } : {}),
+    ...(o.comptes !== undefined ? { comptes: o.comptes } : {}),
   }
 }

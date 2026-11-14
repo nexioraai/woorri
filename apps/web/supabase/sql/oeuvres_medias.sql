@@ -1,4 +1,6 @@
 -- LES MÉDIAS DES APPLICATIONS GÉNÉRÉES (2026-11-14) — photo, vidéo, document joint.
+-- PROJET : celui des APPLICATIONS PUBLIEES (deribfy-bus-intercites, OEUVRES_SUPABASE_URL),
+-- PAS celui de Deribfy (nexiora-ai). Pose le 2026-11-14, verifie false/52428800/2/0.
 -- A executer manuellement dans l'editeur SQL Supabase, UNE fois pour toutes les
 -- applications (meme convention que comptes_documents.sql). Rejouable sans risque.
 --

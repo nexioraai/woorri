@@ -42,7 +42,17 @@ export type AppCompilee = {
   readonly dictionnaires: Readonly<Record<string, Readonly<Record<string, string>>>>
   /** Le kit de couleurs de l'application (V4.3d) : un monde visuel propre à chaque œuvre. */
   readonly kit?: string
+  /** Les comptes que le CAHIER demande (T2b) : individuels (avec leur identifiant, leur secret, leur vérification) ou partagés. */
+  readonly comptes?: ComptesApp
 }
+export type ComptesApp =
+  | { readonly mode: 'partage' }
+  | {
+      readonly mode: 'individuels'
+      readonly identifiant: 'courriel' | 'telephone' | 'courriel-ou-telephone'
+      readonly secret: { readonly nature: 'mot-de-passe' } | { readonly nature: 'code'; readonly chiffres: number }
+      readonly verification: 'exigee' | 'facultative' | 'aucune'
+    }
 
 type Action = Readonly<Record<string, unknown>> & { readonly faire: string }
 type Portee = { readonly ligne: Ligne; readonly table: string } | null

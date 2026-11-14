@@ -36,6 +36,7 @@ import { LANGUES_CONNUES } from '../squelette'
 import { ARCHETYPES, ICONE_ARCHETYPE, carte, expanser, libellesDuGabarit, type DefArchetype, type Remplissage } from './archetypes'
 import type { Spec } from './catalogue'
 import { compilerApp } from './compiler'
+import { comptesDuCahier } from './comptes-du-cahier'
 import { remplirEcran, textesDuRepli, type AppelModele, type EcranRempli, type FicheEcran, type JetonsAppel, type PrixJetons, type Voisine } from './deux-passes'
 import { contexteDuPlan, deriverPlan, routeDe, squeletteDeSpec, type LectureGraphe, type PlanGraphe } from './graphe'
 import { SOURCES_MOTEUR } from './sources-moteur'
@@ -282,7 +283,10 @@ export async function genererApplication(o: {
   // ── LA COMPILATION, L'ASSEMBLAGE, LES JUGES.
   const kit = kitDuCahier(o.demande, o.nom)
   consignes.push({ quoi: 'kit de couleurs', motif: `${kit.kit} — ${kit.motif}` })
-  const app = compilerApp(spec, { nom: sur(o.nom) || g.accueil!, langues, devise: o.devise, kit: kit.kit })
+  // T2b : les comptes que le cahier demande (la demande de l'utilisateur prime ; le partage n'est qu'un repli).
+  const { motif: motifComptes, ...comptes } = comptesDuCahier(o.demande)
+  consignes.push({ quoi: 'comptes', motif: motifComptes })
+  const app = compilerApp(spec, { nom: sur(o.nom) || g.accueil!, langues, devise: o.devise, kit: kit.kit, comptes })
   const fichiers = fichiersDeLOeuvre(app, tables.map((t) => t.nom))
   const v = await assembler(new Map(fichiers))
   let execution: VerdictExecution | null = null
