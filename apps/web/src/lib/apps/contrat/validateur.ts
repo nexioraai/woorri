@@ -547,7 +547,7 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
     verifierLiaison(donnee(n.siNon), `${ch}.siNon`, portee, 'visible')
     verifierLiaison(donnee(n.videSi), `${ch}.videSi`, portee, 'visible')
     const pourRole = chaine(n.pourRole)
-    if (pourRole !== null && !ctx.roles.some((r) => normaliser(r) === normaliser(pourRole))) c.noter('ROLE_INCONNU', `${ch}.pourRole`, `le rôle ${dire(pourRole)} n’est pas lu dans le cahier`, lePlusProche(pourRole, [...ctx.roles]))
+    if (pourRole !== null && pourRole !== 'visiteur' && !ctx.roles.some((r) => normaliser(r) === normaliser(pourRole))) c.noter('ROLE_INCONNU', `${ch}.pourRole`, `le rôle ${dire(pourRole)} n’est pas lu dans le cahier`, lePlusProche(pourRole, [...ctx.roles]))
     // LE CONTRÔLE D'UN ÉTAT DÉCLARE QUAND IL AGIT (V4, bloc 3) : l'appel à l'action de l'état
     // vide qui ne fait que changer l'état s'affichait aussi quand il n'avait rien à changer —
     // « Effacer la recherche » sur une recherche déjà vide (tir cdafe7d4, juge d'expérience).

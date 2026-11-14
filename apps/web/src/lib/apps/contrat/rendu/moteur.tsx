@@ -516,7 +516,8 @@ function Rendu({ n, portee }: { n: unknown; portee: Portee }) {
   if ('si' in o && !vrai(valeurDe(liaisonDe(o.si) ?? '', c, portee))) return null
   if ('siNon' in o && vrai(valeurDe(liaisonDe(o.siNon) ?? '', c, portee))) return null
   // L'accueil d'un rôle : une fois le rôle choisi, seules ses cartes (et les publiques) restent.
-  if (typeof o.pourRole === 'string' && c.session.role !== 'visiteur' && c.session.role !== o.pourRole) return null
+  // `pourRole` (2026-11-14) : montré à CE rôle seulement ; « visiteur » : à qui n'a pas encore choisi.
+  if (typeof o.pourRole === 'string' && c.session.role !== o.pourRole) return null
   const enfants = (k = 'enfants') => liste(o[k]).map((m, i) => <Rendu key={i} n={m} portee={portee} />)
   const effets = liste(o.effets)
   switch (o.composant) {
@@ -531,7 +532,7 @@ function Rendu({ n, portee }: { n: unknown; portee: Portee }) {
     }
     case 'Encart': {
       const style: React.CSSProperties = { display: 'grid', gap: 8, padding: ESPACE[chaine(o.espace) ?? 'm'] ?? 16, borderRadius: RAYON[chaine(o.rayon) ?? 'm'] ?? 8, background: couleur(o.fond, 'surface'),
-        boxShadow: OMBRE[chaine(o.elevation) ?? 'leve'] ?? 'none', border: '1px solid var(--dx-bordure)', minWidth: 0, minHeight: CIBLE, textAlign: 'start' }
+        boxShadow: OMBRE[chaine(o.elevation) ?? 'leve'] ?? 'none', border: '1px solid var(--dx-bordure)', minWidth: 0, minHeight: CIBLE, textAlign: 'start', alignContent: 'start' }
       if (effets.length === 0) return <div style={style}>{enfants()}</div>
       const agir = () => { c.executer(effets, portee) }
       return <div role="button" tabIndex={0} onClick={agir} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); agir() } }} style={{ ...style, cursor: 'pointer' }}>{enfants()}</div>
@@ -772,10 +773,21 @@ function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; maga
   // ── LA COQUE (V4.3f, v2). Bureau : menu latéral groupé + en-tête (titre, avatar). Tablette :
   // un rail d'icônes. Téléphone : en-tête + barre du bas. Les langues et l'apparence sont dans le Compte.
   const gestion = app.ecrans.find((e) => e.route === 'gestion')
-  const voitGestion = gestion !== undefined && (session.role === 'visiteur' || session.role === gestion.acces)
-  const principaux = app.barre.filter((r) => r !== 'compte' && r !== 'gestion').map((r) => app.ecrans.find((e) => e.route === r)).filter((e): e is EcranCompile => e !== undefined)
+  const voitGestion = gestion !== undefined && session.role === gestion.acces
+  // Le menu (2026-11-14) : l'accueil, puis les écrans que CE profil peut ouvrir — ceux de la barre,
+  // puis ceux de son espace (les raccourcis de son accueil) — jamais l'écran de connexion (il est
+  // dans l'en-tête), jamais l'écran d'un autre rôle ; sept au plus, l'accueil donne le reste.
+  const connexion = app.ecrans.find((e) => emetConnexion(e.corps))
+  const ouvrable = (e: EcranCompile) => e.route !== connexion?.route && e.route !== 'compte' && e.route !== 'gestion' && (e.acces === 'visiteur' || e.acces === session.role)
+  const accueilApp = app.ecrans.find((e) => e.route === 'accueil')
+  const ordre = [...new Set(['accueil', ...app.barre, ...(accueilApp !== undefined && session.role !== 'visiteur' ? routesDuRole(accueilApp.corps, session.role, null) : [])])]
+  const principaux = ordre.map((r) => app.ecrans.find((e) => e.route === r)).filter((e): e is EcranCompile => e !== undefined && ouvrable(e)).slice(0, MENU_MAX)
   const compte = app.ecrans.find((e) => e.route === 'compte')
-  const tous = [...principaux, ...(voitGestion ? [gestion] : []), ...(compte !== undefined ? [compte] : [])]
+  const tous = [...principaux.slice(0, largeur === 'compact' ? BARRE_MAX - (voitGestion ? 2 : 1) : MENU_MAX), ...(voitGestion ? [gestion] : []), ...(compte !== undefined ? [compte] : [])]
+  // Pas sur l'accueil du visiteur : la page y porte déjà le bouton principal « Se connecter ».
+  const seConnecter = connexion !== undefined && session.utilisateur === null && route !== connexion.route && !(route === 'accueil' && session.role === 'visiteur')
+    ? <BoutonBrut libelle={s('seConnecter')} genre="principal" surClic={() => { allerA(connexion.route) }} />
+    : null
   const libelleNav = (e: EcranCompile) => (e.route === 'accueil' ? s('accueil') : e.route === 'compte' ? s('compte') : e.route === 'gestion' ? s('gestion') : t(e.titre))
   const profil = session.role === 'visiteur' ? s('visiteur') : session.role
   const sousMarque = s('espace').replace('{r}', profil)
@@ -797,18 +809,18 @@ function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; maga
     const table = forme === 'menu' ? tableListee(e) : null
     const base: React.CSSProperties = { border: 0, cursor: 'pointer', color: actif ? 'var(--dx-accent)' : 'var(--dx-texteNav)', background: 'transparent' }
     const style: React.CSSProperties = forme === 'menu'
-      ? { ...base, minHeight: CIBLE - 4, borderRadius: 10, background: actif ? 'color-mix(in srgb, var(--dx-accent) 13%, var(--dx-barre))' : 'transparent', fontWeight: actif ? 650 : 500, display: 'flex', alignItems: 'center', gap: 12, paddingInline: 12, textAlign: 'start', inlineSize: '100%', minBlockSize: CIBLE }
+      ? { ...base, minHeight: CIBLE - 4, borderRadius: 10, background: actif ? 'color-mix(in srgb, var(--dx-accent) 13%, var(--dx-barre))' : 'transparent', fontWeight: actif ? 650 : 500, display: 'flex', alignItems: 'center', gap: 12, paddingInline: 12, textAlign: 'start', inlineSize: '100%', boxSizing: 'border-box', minBlockSize: CIBLE }
       : { ...base, minHeight: forme === 'rail' ? 64 : 56, minWidth: CIBLE, borderRadius: 12, fontWeight: 600, fontSize: 11.5, display: 'grid', justifyItems: 'center', alignContent: 'center', gap: 3, paddingInline: 4, ...(forme === 'rail' && actif ? { background: 'color-mix(in srgb, var(--dx-accent) 13%, var(--dx-barre))' } : {}) }
     return (
       <button key={e.route} type="button" aria-current={actif ? 'page' : undefined} title={libelle} onClick={() => { allerA(e.route) }} style={style}>
         <Picto nom={e.icone ?? 'document'} coul={actif ? 'accent' : 'texteNav'} />
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxInlineSize: '100%' }}>{forme === 'menu' ? libelle : libelleCourt(libelle)}</span>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxInlineSize: '100%', ...(forme === 'menu' ? { flex: 1, minWidth: 0 } : {}) }}>{forme === 'menu' ? libelle : libelleCourt(libelle)}</span>
         {table !== null ? <Compteur magasin={magasin} table={table} /> : null}
       </button>
     )
   }
   const groupe = (titre: string, ecrans: readonly EcranCompile[]) => ecrans.length === 0 ? null : (
-    <div style={{ display: 'grid', gap: 2 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 2 }}>
       <span style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--dx-texteDiscret)', fontWeight: 650, paddingInline: 12, paddingBlockEnd: 6 }}>{titre}</span>
       {ecrans.map((e) => lien(e, 'menu'))}
     </div>
@@ -822,7 +834,7 @@ function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; maga
             <span style={{ fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--dx-texteDiscret)', fontWeight: 650 }}>{new Intl.DateTimeFormat(langue, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(aujourdhui)}</span>
             <span style={{ fontSize: 12, fontWeight: 650, paddingInline: 10, paddingBlock: 3, borderRadius: 999, color: 'var(--dx-accent)', background: 'color-mix(in srgb, var(--dx-accent) 12%, transparent)' }}>{sousMarque}</span>
           </div>}
-      {avatar}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 'none' }}>{seConnecter}{avatar}</div>
     </header>
   )
   const contenu = <main style={{ flex: 1, width: '100%', maxWidth: largeur === 'etendu' ? 1240 : 1040, marginInline: 'auto', paddingInline: marge, paddingBlock: largeur === 'compact' ? 20 : 28, display: 'grid', gap: 20, alignContent: 'start', minWidth: 0 }}>{ecran !== undefined ? <EcranVivant key={ecran.route} g={g} ecran={ecran} /> : null}</main>
@@ -836,7 +848,8 @@ function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; maga
         ? <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '264px minmax(0, 1fr)', alignItems: 'start' }}>
             <div style={fondBarre}><aside style={{ ...coteBarre, gap: 24, padding: 20 }}>
               {marque(false)}
-              <nav aria-label="Navigation" style={{ display: 'grid', gap: 20 }}>
+              {/* Une colonne bornée : un libellé long se coupe, il ne pousse plus le menu sur la page. */}
+              <nav aria-label="Navigation" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 20 }}>
                 {groupe(s('menu'), principaux)}
                 {voitGestion && gestion !== undefined ? groupe(s('gestion'), [gestion]) : null}
                 {compte !== undefined ? groupe(s('compte'), [compte]) : null}
@@ -874,6 +887,26 @@ export function libelleCourt(t: string): string {
   const mots = t.split(/[\s'’]+/u).filter((m) => m !== '' && !PETITS_MOTS.has(m.toLowerCase()))
   const m = mots[0] ?? t
   return m.charAt(0).toUpperCase() + m.slice(1)
+}
+
+const MENU_MAX = 7
+const BARRE_MAX = 5
+/** L'écran de connexion : celui qui émet `connexion`. */
+function emetConnexion(x: unknown): boolean {
+  if (Array.isArray(x)) return x.some(emetConnexion)
+  const o = objet(x)
+  if (o === null) return false
+  if (o.faire === 'emit' && o.evenement === 'connexion') return true
+  return Object.values(o).some(emetConnexion)
+}
+/** Les destinations réservées à ce rôle dans un écran (les raccourcis de son espace), dans l'ordre. */
+function routesDuRole(x: unknown, role: string, herite: string | null): string[] {
+  if (Array.isArray(x)) return x.flatMap((y) => routesDuRole(y, role, herite))
+  const o = objet(x)
+  if (o === null) return []
+  const r = typeof o.pourRole === 'string' ? o.pourRole : herite
+  const ici = r === role && o.faire === 'navigate' && typeof o.route === 'string' ? [o.route] : []
+  return [...ici, ...Object.values(o).flatMap((v) => routesDuRole(v, role, r))]
 }
 
 /** Les rôles que l'application protège (ses écrans non publics). */

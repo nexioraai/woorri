@@ -62,14 +62,23 @@ describe('V4 · l’application Hayine assemblée, dans Chromium', () => {
     expect(v.ecransOuverts).toBe(ecrans.length)
   }, 300_000)
 
-  it('④ l’accueil d’un rôle : ses cartes, sans la gestion ; la garde UNE fois sur le parcours', async () => {
+  it('④ l’accueil par espace : le visiteur choisit son espace, le rôle voit les siens ; la garde UNE fois', async () => {
     const { r, html } = await hayine()
-    const p = await navigateur.newPage({ viewport: { width: 390, height: 844 } })
+    const p = await navigateur.newPage({ viewport: { width: 1280, height: 900 } })
     await p.route('**/*', (x) => (x.request().url().startsWith(ADRESSE) ? x.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }) : x.fulfill({ status: 404, body: '' })))
     const cartes = () => p.evaluate(() => [...document.querySelectorAll('main [role="button"]')].map((e) => (e.textContent ?? '').trim()))
+    const menu = () => p.evaluate(() => [...document.querySelectorAll('nav[aria-label="Navigation"] button')].map((e) => e.getAttribute('title') ?? ''))
+    const ecrans = r.spec.ecrans as unknown as { route: string; acces: string; titre: unknown }[]
+    const lus = ecrans.filter((e) => r.ecrans.some((l) => l.route === e.route && l.choix !== 'deribfy'))
+    const gestion = ecrans.find((e) => e.route === 'gestion')!
+    const roles = [...new Set([...lus.map((e) => e.acces), gestion.acces].filter((a) => a !== 'visiteur'))]
     await p.goto(`${ADRESSE}#accueil`); await p.waitForTimeout(200)
+    // Le visiteur : une carte par espace, ses écrans publics (≤ 3), RIEN de réservé, pas « Gestion ».
     const visiteur = await cartes()
-    expect(visiteur).toContain('Gestion')
+    expect(visiteur.filter((t) => t.startsWith('Espace ')).sort()).toEqual(roles.map((x) => `Espace ${x}`).sort())
+    expect(visiteur).not.toContain('Gestion')
+    expect(visiteur.length).toBe(roles.length + Math.min(3, lus.filter((e) => e.acces === 'visiteur').length))
+    expect((await menu()).length).toBeLessThanOrEqual(7 + 1)
     // Le parcours lu : la garde n'apparaît qu'une fois.
     const gardes: string[] = []
     for (const route of r.graphe.parcours) {
@@ -77,13 +86,19 @@ describe('V4 · l’application Hayine assemblée, dans Chromium', () => {
       if (await p.evaluate(() => !!document.querySelector('[data-deribfy="garde"]'))) { gardes.push(route); await p.click('[data-deribfy="garde"] [data-role] button'); await p.waitForTimeout(100) }
     }
     expect(gardes).toHaveLength(1)
-    // Revenu à l'accueil avec le rôle choisi : ses cartes et les publiques, sans « Gestion » (réservée au gestionnaire).
+    // Revenu à l'accueil avec le rôle choisi : SES raccourcis (six au plus), plus d'espaces, pas « Gestion ».
     await p.evaluate(() => { window.location.hash = 'accueil' }); await p.waitForTimeout(150)
     const connecte = await cartes()
-    const role = (r.spec.ecrans as unknown as { route: string; acces: string }[]).find((e) => e.route === gardes[0])!.acces
-    const attendues = (r.spec.ecrans as unknown as { route: string; acces: string }[]).filter((e) => r.couverture.lus > 0 && r.ecrans.some((l) => l.route === e.route && l.choix !== 'deribfy') && (e.acces === 'visiteur' || e.acces === role)).map((e) => String(r.remplissages[e.route]!.slots.titre))
+    const role = ecrans.find((e) => e.route === gardes[0])!.acces
+    expect(connecte.filter((t) => t.startsWith('Espace '))).toEqual([])
     expect(connecte).not.toContain('Gestion')
-    expect(connecte.length).toBe(attendues.length)
+    expect(connecte.length).toBe(Math.min(6, lus.filter((e) => e.acces === role).length + (gestion.acces === role ? 1 : 0)))
+    // Le menu : aucun écran d'un autre rôle, sept entrées au plus (plus le compte).
+    const autres = new Set(ecrans.filter((e) => e.acces !== 'visiteur' && e.acces !== role).map((e) => e.route))
+    const titresAutres = lus.filter((e) => autres.has(e.route)).map((e) => String(r.remplissages[e.route]!.slots.titre))
+    const m = await menu()
+    expect(m.length).toBeLessThanOrEqual(7 + 1)
+    for (const t of titresAutres) if (!lus.some((e) => e.acces === role && String(r.remplissages[e.route]!.slots.titre) === t)) expect(m).not.toContain(t)
     await p.close()
   }, 120_000)
 

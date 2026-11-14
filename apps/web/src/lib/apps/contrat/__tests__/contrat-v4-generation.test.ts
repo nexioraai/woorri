@@ -95,28 +95,44 @@ describe('V4 · bloc 2 · la génération branchée', () => {
     const attendu = r.ecrans.reduce((a, e) => a + e.cout, 0) + r.langues.reduce((a, l) => a + l.cout, 0)
     expect(r.cout).toBeCloseTo(attendu, 12)
     expect(r.languesPage).toEqual([{ code: 'fr', dir: 'ltr' }, { code: 'en', dir: 'ltr' }, { code: 'ar', dir: 'rtl' }])
-    // L'ACCUEIL (V4, bloc 3) : une carte par écran lu — son titre RÉDIGÉ, réservée à son rôle —, UNE
-    // entrée « Gestion » au rôle de gestion, et aucune table à plat.
+    // L'ACCUEIL PAR ESPACE (2026-11-14, Conterak : « beaucoup de répétition ») : chaque écran lu
+    // y entre UNE fois, réservé à SON rôle (carte, ou lien discret au-delà de six) ; l'écran de
+    // connexion par le seul bouton principal du visiteur ; au visiteur, une carte par espace ;
+    // « Gestion » dans l'espace du rôle de gestion seulement ; aucune table à plat.
     const accueil = (r.spec.ecrans as unknown as { route: string; corps: unknown[] }[]).find((e) => e.route === 'accueil')!
-    const cartes: { route: string; titre: string; pourRole?: string }[] = []
-    const marcher = (x: unknown) => {
-      if (Array.isArray(x)) { x.forEach(marcher); return }
+    type Entree = { route: string; titre: string; forme: 'carte' | 'lien' | 'principal'; pourRole: string | null }
+    const entrees: Entree[] = []
+    const marcher = (x: unknown, role: string | null) => {
+      if (Array.isArray(x)) { x.forEach((y) => { marcher(y, role) }); return }
       if (typeof x !== 'object' || x === null) return
       const o = x as Record<string, unknown>
-      if (o.composant === 'Encart' && Array.isArray(o.effets)) {
+      const ici = typeof o.pourRole === 'string' ? o.pourRole : role
+      if ((o.composant === 'Encart' || o.composant === 'Bouton') && Array.isArray(o.effets)) {
         const route = String((o.effets[0] as { route: string }).route)
-        const enfants = o.enfants as { composant: string; texte?: string }[]
-        const titre = String(enfants.find((x) => x.composant === 'Titre')?.texte)
-        // V4.3f : chaque carte porte son pictogramme.
-        expect(enfants[0]?.composant, `carte ${route} sans pictogramme`).toBe('Pictogramme')
-        cartes.push({ route, titre, ...(typeof o.pourRole === 'string' ? { pourRole: o.pourRole } : {}) })
+        if (o.composant === 'Encart') {
+          const enfants = o.enfants as { composant: string; texte?: string }[]
+          expect(enfants[0]?.composant, `carte ${route} sans pictogramme`).toBe('Pictogramme')
+          entrees.push({ route, titre: String(enfants.find((y) => y.composant === 'Titre')?.texte), forme: 'carte', pourRole: ici })
+        } else entrees.push({ route, titre: String(o.libelle), forme: o.genre === 'principal' ? 'principal' : 'lien', pourRole: ici })
       }
-      Object.values(o).forEach(marcher)
+      Object.values(o).forEach((v) => { marcher(v, ici) })
     }
-    marcher(accueil.corps)
-    const lusSpec = (r.spec.ecrans as unknown as { route: string; acces: string }[]).filter((e) => lus.some((l) => l.route === e.route))
-    expect(cartes.filter((c) => c.route !== 'gestion')).toEqual(lusSpec.map((e) => ({ route: e.route, titre: String(r.remplissages[e.route]!.slots.titre), ...(e.acces !== 'visiteur' ? { pourRole: e.acces } : {}) })))
-    expect(cartes.filter((c) => c.route === 'gestion')).toEqual([{ route: 'gestion', titre: 'Gestion', pourRole: r.graphe.routes.find((x) => x.route === 'gestion')!.acces }])
+    marcher(accueil.corps, null)
+    const lusSpec = (r.spec.ecrans as unknown as { route: string; acces: string; corps: unknown[] }[]).filter((e) => lus.some((l) => l.route === e.route))
+    const connexion = lusSpec.find((e) => JSON.stringify(e.corps).includes('"evenement":"connexion"'))
+    const gestionAcces = r.graphe.routes.find((x) => x.route === 'gestion')!.acces
+    const roles = [...new Set([...lusSpec.map((e) => e.acces), gestionAcces].filter((a) => a !== 'visiteur'))]
+    const espaces = entrees.filter((e) => e.pourRole === 'visiteur' && e.titre.startsWith('Espace '))
+    for (const e of lusSpec) {
+      const siennes = entrees.filter((x) => x.route === e.route && x.pourRole === (e.acces === 'visiteur' ? (roles.length > 1 ? 'visiteur' : null) : e.acces))
+      if (e.route === connexion?.route) { expect(siennes.map((x) => x.forme), e.route).toEqual(['principal']); continue }
+      expect(siennes.map((x) => x.titre), e.route).toEqual([String(r.remplissages[e.route]!.slots.titre)])
+    }
+    for (const role of roles) {
+      expect(entrees.filter((x) => x.pourRole === role && x.forme === 'carte').length, role).toBeLessThanOrEqual(6)
+      if (roles.length > 1) expect(espaces.filter((x) => x.titre === `Espace ${role}`).length, role).toBe(1)
+    }
+    expect(entrees.filter((c) => c.route === 'gestion' && c.pourRole !== 'visiteur')).toEqual([{ route: 'gestion', titre: 'Gestion', forme: expect.stringMatching(/carte|lien/u), pourRole: gestionAcces }])
     expect(JSON.stringify(accueil.corps)).not.toMatch(/"route":"[a-z0-9-]+-liste"/u)
   })
 

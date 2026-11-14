@@ -178,7 +178,8 @@ export function expanser(r: Remplissage, o: OptionsGabarit): O {
         { composant: 'Champ', libelle: t('libelleIdentifiant'), donnee: d('etat.identifiant'), nature: t('natureIdentifiant'), requis: true },
         { composant: 'Champ', libelle: t('libelleSecret'), donnee: d('etat.secret'), nature: 'secret', requis: true },
         bouton(g.seConnecter!, [{ faire: 'emit', evenement: 'connexion', charge: [{ champ: 'identifiant', depuis: d('etat.identifiant') }, { champ: 'secret', depuis: d('etat.secret') }] }, nav(t('apres'))], 'principal'),
-        ...(route('inscription') !== null ? [bouton(v.libelleInscription !== undefined ? t('libelleInscription') : g.ajouter!, [nav(route('inscription')!)], 'discret')] : []),
+        // Un lien d'inscription vers ce même écran ne change rien (Conterak, juge : « ne change rien à l'écran ») : pas de lien.
+        ...(route('inscription') !== null && route('inscription') !== r.route ? [bouton(v.libelleInscription !== undefined ? t('libelleInscription') : g.ajouter!, [nav(route('inscription')!)], 'discret')] : []),
         accueil]
       break
     case 'onboarding':

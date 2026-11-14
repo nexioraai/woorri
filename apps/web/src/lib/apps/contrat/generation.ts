@@ -356,15 +356,10 @@ export function composerEcrans(o: {
   for (const r of o.graphe.routes) {
     if (r.tetrade !== undefined || r.origine === 'gestion') parRoute.set(r.route, (o.squelette.ecrans as unknown as O[]).find((e) => e.route === r.route)!)
   }
-  parRoute.set('accueil', ex({ archetype: 'accueil', route: 'accueil', acces: 'visiteur', slots: { titre: sur(o.nom) || g.accueil!, raccourcis: cartes.length > 0 ? cartes.slice(0, 12) : [{ libelle: g.aide!, route: 'aide' }] } }))
+  parRoute.set('accueil', accueilParEspace({ ...o, cartes, gestion, g, rp }))
   parRoute.set('compte', ex({ archetype: 'compte', route: 'compte', acces: 'visiteur', slots: { titre: rp.compte! } }))
   for (const p of ['aide', 'contact', 'legal'] as const) parRoute.set(p, ex({ archetype: 'pageDuCompte', route: p, acces: 'visiteur', slots: { titre: g[p]!, texte: rp[p]!, retour: 'compte' } }))
   for (const x of o.lus) parRoute.set(x.route, voirToutVersLaListe(x.ecran, o.graphe))
-  // ── LA COUTURE : au-delà de douze, les cartes suivantes ; puis l'entrée de la gestion.
-  parRoute.set('accueil', coudre(parRoute.get('accueil')!, [
-    ...(cartes.length > 12 ? [{ composant: 'Pile', espace: 's', enfants: cartes.slice(12).map(carte) }] : []),
-    ...(gestion !== undefined ? [carte({ libelle: rp.gestion!, route: gestion.route, role: gestion.acces, icone: 'reglages' })] : []),
-  ]))
   for (let i = 0; i + 1 < o.graphe.parcours.length; i += 1) {
     const a = o.graphe.parcours[i]!
     const b = o.graphe.parcours[i + 1]!
@@ -372,6 +367,75 @@ export function composerEcrans(o: {
     if (e !== undefined && !ciblesDe(e).has(b)) parRoute.set(a, coudre(e, [bouton(rp.continuer!, b)]))
   }
   return o.graphe.routes.map((r) => parRoute.get(r.route)!)
+}
+
+/**
+ * L'ACCUEIL PAR ESPACE (2026-11-14, Conterak : « beaucoup de répétition »). Plus jamais une
+ * carte par écran lu pour tout le monde :
+ *   · le VISITEUR (`pourRole: 'visiteur'`) : le nom, une phrase, UN bouton principal (se
+ *     connecter s'il y a un écran de connexion, sinon commencer), ses écrans publics (≤ 3),
+ *     et une carte par espace — elle mène au premier écran de ce rôle, dont la garde demande
+ *     le rôle ;
+ *   · chaque RÔLE (`pourRole: rôle`) : six raccourcis, puis ses autres écrans en liens discrets (aucun écran lu sans entrée) ;
+ *     l'entrée de la gestion dans l'espace du rôle de gestion.
+ * Aucun chiffre ici : l'accueil est ouvert au visiteur, et `pourRole` cache, il ne protège pas
+ * (DONNEE_PRIVEE_EXPOSEE l'a refusé) — les chiffres sont sur les tableaux de bord, derrière la garde.
+ * Une application à un seul rôle n'a pas d'accueil visiteur : sa session porte le rôle.
+ */
+type CarteAccueil = { readonly libelle: string; readonly route: string; readonly role?: string; readonly icone?: string }
+const RACCOURCIS_MAX = 6
+const PUBLICS_MAX = 3
+function accueilParEspace(o: {
+  readonly nom: string; readonly graphe: PlanGraphe; readonly cartes: readonly CarteAccueil[]
+  readonly lus: readonly { readonly route: string; readonly ecran: Record<string, unknown>; readonly acces: string }[]
+  readonly gestion: PlanGraphe['routes'][number] | undefined
+  readonly g: Readonly<Record<string, string>>; readonly rp: Readonly<Record<string, string>>
+}): O {
+  const connexion = o.lus.find((x) => emet(x.ecran, 'connexion'))
+  const publiques = o.cartes.filter((c) => c.role === undefined && c.route !== connexion?.route)
+  const roles = [...new Set(o.cartes.flatMap((c) => (c.role !== undefined ? [c.role] : [])))]
+  if (o.gestion !== undefined && o.gestion.acces !== 'visiteur' && !roles.includes(o.gestion.acces)) roles.push(o.gestion.acces)
+  const titrePage: O = { composant: 'Titre', texte: sur(o.nom) || o.g.accueil!, niveau: 'page' }
+  const section = (t: string): O => ({ composant: 'Titre', texte: t, niveau: 'section' })
+  // Des cartes de même hauteur dans une rangée.
+  const rangee = (enfants: O[]): O => ({ composant: 'Pile', sens: 'ligne', espace: 'm', aligner: 'etirer', enfants })
+  const lien = (c: CarteAccueil): O => ({ composant: 'Bouton', libelle: c.libelle, effets: [{ faire: 'navigate', route: c.route }], genre: 'discret', ...(c.icone !== undefined ? { icone: c.icone } : {}) })
+  const sansRole = (c: CarteAccueil) => carte({ libelle: c.libelle, route: c.route, ...(c.icone !== undefined ? { icone: c.icone } : {}) })
+  const suite = o.graphe.parcours.find((r) => r !== 'accueil' && r !== connexion?.route)
+
+  const espaceDe = (role: string): O => {
+    const siennes = o.cartes.filter((c) => c.role === role)
+    const gestion = o.gestion !== undefined && o.gestion.acces === role ? [{ libelle: o.rp.gestion!, route: o.gestion.route, icone: 'reglages' }] : []
+    const raccourcis = [...siennes, ...gestion]
+    return { composant: 'Pile', espace: 'l', pourRole: role, enfants: [
+      ...(raccourcis.length > 0 ? [section(o.rp.raccourcis!), rangee(raccourcis.slice(0, RACCOURCIS_MAX).map(sansRole))] : []),
+      ...(raccourcis.length > RACCOURCIS_MAX ? [section(o.rp.autres!), { composant: 'Pile', sens: 'ligne', espace: 's', enfants: raccourcis.slice(RACCOURCIS_MAX).map(lien) }] : []),
+    ] }
+  }
+  const visiteur: O[] = [
+    ...(roles.length > 1 ? [{ composant: 'Phrase', texte: o.rp.choisir! }] : []),
+    ...(connexion !== undefined ? [{ composant: 'Bouton', libelle: o.g.seConnecter!, effets: [{ faire: 'navigate', route: connexion.route }], genre: 'principal', icone: 'utilisateur' }]
+      : suite !== undefined ? [{ composant: 'Bouton', libelle: o.rp.commencer!, effets: [{ faire: 'navigate', route: suite }], genre: 'principal', icone: 'suivant' }] : []),
+    ...(publiques.length > 0 ? [rangee(publiques.slice(0, PUBLICS_MAX).map(sansRole))] : []),
+    ...(publiques.length > PUBLICS_MAX ? [{ composant: 'Pile', sens: 'ligne', espace: 's', enfants: publiques.slice(PUBLICS_MAX).map(lien) }] : []),
+    ...(roles.length > 1 ? [section(o.rp.vosEspaces!), rangee(roles.map((r) => {
+      const premier = o.cartes.find((c) => c.role === r)?.route ?? (o.gestion?.acces === r ? o.gestion.route : undefined)
+      return premier === undefined ? null : carte({ libelle: o.rp.espace!.replace('{r}', r), route: premier, icone: 'utilisateur' })
+    }).filter((x): x is O => x !== null))] : []),
+  ]
+  return { route: 'accueil', acces: 'visiteur', titre: titrePage.texte, corps: [
+    titrePage,
+    roles.length > 0 ? { composant: 'Pile', espace: 'l', pourRole: 'visiteur', enfants: visiteur } : { composant: 'Pile', espace: 'l', enfants: visiteur },
+    ...roles.map(espaceDe),
+  ] }
+}
+/** Un écran émet-il cet événement (la connexion : c'est l'écran de connexion) ? */
+function emet(x: unknown, evenement: string): boolean {
+  if (Array.isArray(x)) return x.some((y) => emet(y, evenement))
+  if (typeof x !== 'object' || x === null) return false
+  const n = x as O
+  if (n.faire === 'emit' && n.evenement === evenement) return true
+  return Object.values(n).some((v) => emet(v, evenement))
 }
 
 /** « Voir tout » d'une liste de derniers ajouts : la LISTE de sa table (tétrade), jamais un détail. */

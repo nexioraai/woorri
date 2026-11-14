@@ -132,7 +132,7 @@ const variante = (...valeurs: string[]): Genre => ({ g: 'variante', valeurs })
 export const PROPS_COMMUNES: Readonly<Record<string, DefProp>> = {
   si: p(L, false, 'affiché seulement quand cette liaison est vraie (non vide)'),
   siNon: p(L, false, 'affiché seulement quand cette liaison est fausse (ou vide)'),
-  pourRole: p({ g: 'role' }, false, 'montré au visiteur et à ce rôle seulement (l’accueil d’un rôle)'),
+  pourRole: p({ g: 'role' }, false, 'montré à ce rôle seulement ; « visiteur » : à qui n’a pas encore choisi'),
 }
 
 export const COMPOSANTS: Readonly<Record<string, DefComposant>> = {

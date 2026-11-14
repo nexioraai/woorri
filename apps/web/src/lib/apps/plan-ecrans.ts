@@ -197,6 +197,9 @@ function archetypeRefuse(e: PlanEcran, a: unknown): string | null {
   if (a === undefined || a === null || a === '') return 'absent du plan'
   if (typeof a !== 'string' || !(NOMS_ARCHETYPES as readonly string[]).includes(a)) return `« ${String(a)} » hors des treize noms`
   if (AVEC_TABLE.has(a) && e.tables.lit.length === 0 && e.tables.ecrit.length === 0) return `« ${a} » lit une table, et l'écran n'en a aucune`
+  // MESURÉ sur Conterak (fcc4f126) : « rappels » rendu en « compte » — un deuxième compte. Ces
+  // deux écrans existent UNE fois, écrits par Deribfy ; un écran lu n'en est jamais une copie.
+  if (a === 'compte' || a === 'accueil') return `« ${a} » existe déjà une fois, écrit par Deribfy`
   if (a === 'formulaire' && e.tables.ecrit.length === 0) return '« formulaire » écrit une table, et l’écran n’en écrit aucune'
   if (a === 'checkout' && !e.tables.ecrit.some((t) => EST_PAIEMENT.test(t))) return '« checkout » écrit un paiement, et l’écran n’écrit aucune table de paiement'
   return null
