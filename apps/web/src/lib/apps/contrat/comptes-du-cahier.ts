@@ -25,6 +25,21 @@ export type Comptes =
 
 const sansAccents = (x: string) => x.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 
+/** L'indicatif téléphonique d'un pays lu (nom en français ou en anglais) ; absent s'il n'est pas connu. */
+const INDICATIFS: Readonly<Record<string, string>> = {
+  tchad: '+235', chad: '+235', cameroun: '+237', cameroon: '+237', niger: '+227', nigeria: '+234', senegal: '+221', mali: '+223',
+  'burkina faso': '+226', burkina: '+226', "cote d'ivoire": '+225', 'cote d’ivoire': '+225', 'ivory coast': '+225', gabon: '+241',
+  centrafrique: '+236', 'republique centrafricaine': '+236', 'central african republic': '+236', congo: '+242', 'republique du congo': '+242',
+  'republique democratique du congo': '+243', rdc: '+243', benin: '+229', togo: '+228', guinee: '+224', guinea: '+224', mauritanie: '+222',
+  maroc: '+212', morocco: '+212', algerie: '+213', algeria: '+213', tunisie: '+216', tunisia: '+216', libye: '+218', libya: '+218',
+  soudan: '+249', sudan: '+249', egypte: '+20', egypt: '+20', ghana: '+233', kenya: '+254', rwanda: '+250', madagascar: '+261',
+  france: '+33', belgique: '+32', belgium: '+32', suisse: '+41', switzerland: '+41', canada: '+1', 'etats-unis': '+1', 'united states': '+1',
+}
+export function indicatifDuPays(pays: readonly string[]): string | undefined {
+  for (const p of pays) { const i = INDICATIFS[sansAccents(p).trim()]; if (i !== undefined) return i }
+  return undefined
+}
+
 /** Ce qui dit qu'une personne CRÉE son compte (et pas seulement qu'un compte existe). */
 const INSCRIPTION = /(s['’ ]?inscri|inscription|creer (un |son |votre |leur )?compte|creation (de |du |des )?compte|ouvrir (un |son )?compte|sign ?up|register|mot de passe oublie)/u
 const COURRIEL = /(e-?mail|courriel|adresse electronique)/u

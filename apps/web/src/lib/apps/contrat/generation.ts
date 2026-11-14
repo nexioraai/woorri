@@ -36,7 +36,7 @@ import { LANGUES_CONNUES } from '../squelette'
 import { ARCHETYPES, ICONE_ARCHETYPE, carte, expanser, libellesDuGabarit, type DefArchetype, type Remplissage } from './archetypes'
 import type { Spec } from './catalogue'
 import { compilerApp } from './compiler'
-import { comptesDuCahier } from './comptes-du-cahier'
+import { comptesDuCahier, indicatifDuPays } from './comptes-du-cahier'
 import { remplirEcran, textesDuRepli, type AppelModele, type EcranRempli, type FicheEcran, type JetonsAppel, type PrixJetons, type Voisine } from './deux-passes'
 import { contexteDuPlan, deriverPlan, routeDe, squeletteDeSpec, type LectureGraphe, type PlanGraphe } from './graphe'
 import { SOURCES_MOTEUR } from './sources-moteur'
@@ -284,8 +284,11 @@ export async function genererApplication(o: {
   const kit = kitDuCahier(o.demande, o.nom)
   consignes.push({ quoi: 'kit de couleurs', motif: `${kit.kit} — ${kit.motif}` })
   // T2b : les comptes que le cahier demande (la demande de l'utilisateur prime ; le partage n'est qu'un repli).
-  const { motif: motifComptes, ...comptes } = comptesDuCahier(o.demande)
-  consignes.push({ quoi: 'comptes', motif: motifComptes })
+  const { motif: motifComptes, ...comptesLus } = comptesDuCahier(o.demande)
+  // Une personne qui s'inscrit reçoit le premier rôle qui n'est pas de gestion ; l'indicatif est celui du pays lu.
+  const indicatif = indicatifDuPays(o.lecture.pays)
+  const comptes = comptesLus.mode === 'partage' ? comptesLus : { ...comptesLus, roleDeBase: graphe.roles.find((r) => !ROLE_GESTION_PLAN.test(r)) ?? graphe.roles[0] ?? 'utilisateur', ...(indicatif !== undefined ? { indicatif } : {}) }
+  consignes.push({ quoi: 'comptes', motif: comptesLus.mode === 'partage' ? motifComptes : `${motifComptes} ; rôle de base « ${comptes.mode === 'individuels' ? String(comptes.roleDeBase) : ''} »` })
   const app = compilerApp(spec, { nom: sur(o.nom) || g.accueil!, langues, devise: o.devise, kit: kit.kit, comptes })
   const fichiers = fichiersDeLOeuvre(app, tables.map((t) => t.nom))
   const v = await assembler(new Map(fichiers))

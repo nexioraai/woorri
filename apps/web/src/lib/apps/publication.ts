@@ -192,10 +192,6 @@ const hoteDe = (url: string): string => {
  *
  * ── SANS BASE, RIEN NE SORT. C'est le plus étroit, et c'est le défaut.
  */
-const connectSrcPour = (urlProjet: string): string => {
-  const h = hoteDe(urlProjet)
-  return h === '' ? "connect-src 'none'" : `connect-src https://${h} wss://${h}`
-}
 
 /** Le tronc commun : tout ce que les deux régimes partagent. */
 const CSP_TRONC: readonly string[] = [
@@ -219,8 +215,15 @@ const CSP_TRONC: readonly string[] = [
  * dissymétrie ci-dessus. Il ne doit JAMAIS apparaître sur une route servie
  * depuis `deribfy.com`.
  */
+// T2b (2026-11-14) : `'self'` en plus — l'application envoie l'inscription à SON sous-domaine
+// (POST, mené par le proxy à `/a/<nom>`), et à rien d'autre que son projet.
 export const cspSousDomaine = (urlProjet: string): string =>
-  [...CSP_TRONC, connectSrcPour(urlProjet), 'sandbox allow-scripts allow-same-origin'].join('; ')
+  [...CSP_TRONC, connectSrcSousDomaine(urlProjet), 'sandbox allow-scripts allow-same-origin'].join('; ')
+const connectSrcSousDomaine = (urlProjet: string): string => {
+  const h = hoteDe(urlProjet)
+  // Sans base, rien ne sort (une œuvre sans base n'a pas de comptes) ; avec, son projet ET son origine.
+  return h === '' ? "connect-src 'none'" : `connect-src 'self' https://${h} wss://${h}`
+}
 
 /** Les en-têtes d'une page servie sous son propre sous-domaine. */
 export const entetesSousDomaine = (urlProjet: string): Readonly<Record<string, string>> => ({

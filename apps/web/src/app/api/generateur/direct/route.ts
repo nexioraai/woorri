@@ -755,6 +755,8 @@ export async function POST(req: Request) {
           spec: resultat.spec,
           // Les remplissages : l'œuvre se recompile EXACTEMENT avec des gabarits corrigés (V4, bloc 3).
           remplissages: resultat.remplissages,
+          // T2b : les comptes que le cahier demande — lus par l'inscription de l'application publiée.
+          ...(resultat.app.comptes !== undefined ? { comptes: resultat.app.comptes } : {}),
           // Les langues de la page : le bandeau d'aperçu les suit (V4).
           langues: resultat.languesPage,
         }

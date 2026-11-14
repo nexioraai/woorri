@@ -52,6 +52,10 @@ export type ComptesApp =
       readonly identifiant: 'courriel' | 'telephone' | 'courriel-ou-telephone'
       readonly secret: { readonly nature: 'mot-de-passe' } | { readonly nature: 'code'; readonly chiffres: number }
       readonly verification: 'exigee' | 'facultative' | 'aucune'
+      /** Le rôle d'une personne qui s'inscrit : jamais un rôle de gestion (celui-là, le responsable le donne). */
+      readonly roleDeBase?: string
+      /** L'indicatif du pays lu, pour un numéro saisi sans lui. */
+      readonly indicatif?: string
     }
 
 type Action = Readonly<Record<string, unknown>> & { readonly faire: string }

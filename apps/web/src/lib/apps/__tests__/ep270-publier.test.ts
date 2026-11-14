@@ -123,8 +123,14 @@ describe('EP-270 · le web se publie', () => {
     expect(sd, 'le temps réel est bloqué : panne silencieuse').toContain(
       'wss://psxbilpmnojtlzosokzz.supabase.co',
     )
-    expect(sd, 'le réseau de l’application n’est plus borné à son projet').toMatch(
-      /connect-src https:\/\/psxbilpmnojtlzosokzz\.supabase\.co wss:\/\/psxbilpmnojtlzosokzz\.supabase\.co/u,
+    // ── ET SA PROPRE ORIGINE, RATIFIÉE LE 2026-11-14 (T2b, comptes individuels).
+    //
+    // `'self'` est `<nom>.deribfy.app` : le proxy y mène TOUT chemin à `/a/<nom>`,
+    // qui ne sert que la page (GET) et l'inscription (POST, seulement si le cahier
+    // demande des comptes individuels). Ce n'est pas `www.deribfy.com` : la session
+    // du produit reste hors d'atteinte (domaine enregistrable distinct).
+    expect(sd, 'le réseau de l’application n’est plus borné à son projet et à son origine').toMatch(
+      /connect-src 'self' https:\/\/psxbilpmnojtlzosokzz\.supabase\.co wss:\/\/psxbilpmnojtlzosokzz\.supabase\.co/u,
     )
     // ── ON COMPARE DES JETONS, PAS DES MORCEAUX.
     //
@@ -137,7 +143,8 @@ describe('EP-270 · le web se publie', () => {
       .slice(sd.indexOf('connect-src'), sd.indexOf('; sandbox'))
       .split(/\s+/u)
       .slice(1)
-    expect(sources, 'connect-src ne nomme plus exactement deux sources').toEqual([
+    expect(sources, 'connect-src ne nomme plus exactement trois sources').toEqual([
+      "'self'",
       'https://psxbilpmnojtlzosokzz.supabase.co',
       'wss://psxbilpmnojtlzosokzz.supabase.co',
     ])

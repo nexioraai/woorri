@@ -285,7 +285,8 @@ describe('V4 · bloc 2 · la génération branchée', () => {
     expect(comptesDuCahier('Chaque client peut s’inscrire avec son adresse e-mail et un mot de passe.')).toMatchObject({ mode: 'individuels', identifiant: 'courriel', secret: { nature: 'mot-de-passe' }, verification: 'aucune' })
     // La génération le porte jusqu'à l'application, et le CONSIGNE.
     const { r } = await hayine()
-    expect(r.app.comptes).toEqual({ mode: 'individuels', identifiant: 'courriel-ou-telephone', secret: { nature: 'mot-de-passe' }, verification: 'exigee' })
+    // Le rôle de base : le premier qui n'est pas de gestion — jamais un rôle de gestion par une inscription.
+    expect(r.app.comptes).toMatchObject({ mode: 'individuels', identifiant: 'courriel-ou-telephone', secret: { nature: 'mot-de-passe' }, verification: 'exigee', roleDeBase: 'Particulier' })
     expect(r.consignes.find((c) => c.quoi === 'comptes')?.motif).toMatch(/^le cahier demande que chacun crée son compte/u)
   })
 })

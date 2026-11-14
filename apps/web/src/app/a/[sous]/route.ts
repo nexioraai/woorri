@@ -17,6 +17,11 @@ import { languesDePage, pageAutonome } from '@/lib/apps/boucle-directe'
 import { baseDeLOeuvre } from '@/lib/apps/base-de-l-oeuvre'
 import { entetesSousDomaine } from '@/lib/apps/publication'
 import { nomValide } from '@/lib/apps/sous-domaine'
+import { createHash } from 'node:crypto'
+import { createClient } from '@supabase/supabase-js'
+import { configBaseOeuvres } from '@/lib/apps/base-oeuvres'
+import { comptesDuDocument, inscrire, type AdminAuth } from '@/lib/apps/inscription-oeuvre'
+import { consommerJeton } from '@/lib/rate-limit/rateLimit'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -70,4 +75,47 @@ export async function GET(_req: Request, ctx: { params: Promise<{ sous: string }
     pageAutonome(v.code, titre, base, 'servie', null, languesDePage(lu.data.document)),
     { status: 200, headers: entetesSousDomaine(base?.url ?? '') },
   )
+}
+
+/**
+ * T2b-2 · L'INSCRIPTION (2026-11-14) — `POST <nom>.deribfy.app`, quel que soit le chemin.
+ *
+ * Ouverte SEULEMENT pour une application publiée dont le cahier demande des
+ * comptes individuels (`document.comptes`). Le compte est créé dans le projet
+ * des œuvres, rattaché à cette œuvre et à son rôle de base ; l'adresse du
+ * visiteur n'est gardée que hachée. Une seule réponse « introuvable » pour toute
+ * application qui n'ouvre pas l'inscription.
+ */
+const PLAFOND_PAR_OEUVRE = 60
+const PLAFOND_PAR_ADRESSE = 5
+const HEURE = 3_600_000
+
+export async function POST(req: Request, ctx: { params: Promise<{ sous: string }> }) {
+  const { sous } = await ctx.params
+  if (!nomValide(sous)) return introuvable()
+  const texte = await req.text()
+  if (texte.length > 4_096) return Response.json({ message: 'Demande trop longue.' }, { status: 413 })
+  let corps: { faire?: unknown; identifiant?: unknown; secret?: unknown }
+  try { corps = JSON.parse(texte) as typeof corps } catch { return Response.json({ message: 'Demande illisible.' }, { status: 400 }) }
+  if (corps.faire !== 'inscrire') return Response.json({ message: 'Demande illisible.' }, { status: 400 })
+
+  const lu = await supabaseAdmin.from(TABLE_GENERATIONS).select('id, document, publication_jeton').eq('publication_slug', sous).maybeSingle()
+  if (lu.error !== null || lu.data === null || lu.data.publication_jeton === null) return introuvable()
+  const comptes = comptesDuDocument(lu.data.document)
+  if (comptes === null) return introuvable()
+  const cfg = configBaseOeuvres(process.env)
+  if (!cfg.ok) return Response.json({ message: 'Le service est momentanément indisponible.' }, { status: 503 })
+
+  const idOeuvre = String(lu.data.id)
+  const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0]!.trim() || 'inconnue'
+  const adresse = createHash('sha256').update(ip).digest('hex').slice(0, 32)
+  const r = await inscrire({
+    idOeuvre, comptes, identifiant: corps.identifiant, secret: corps.secret, adresse,
+    admin: createClient(cfg.config.url, cfg.config.cleSecrete, { auth: { persistSession: false, autoRefreshToken: false } }) as unknown as AdminAuth,
+    limiter: (cle) => consommerJeton({
+      type: cle.portee === 'oeuvre' ? `app_inscription:${idOeuvre}` : `app_inscription:${cle.valeur}`,
+      siteId: null, fenetreMs: HEURE, plafond: cle.portee === 'oeuvre' ? PLAFOND_PAR_OEUVRE : PLAFOND_PAR_ADRESSE,
+    }),
+  })
+  return r.ok ? Response.json({ ok: true }, { status: 201 }) : Response.json({ message: r.message }, { status: r.statut })
 }
