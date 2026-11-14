@@ -274,7 +274,13 @@ export async function genererApplication(o: {
   // ── LES ÉCRANS DE DERIBFY, sans appel ; la composition (cartes d'accueil, gestion, couture).
   const g = libellesDuGabarit(principale)
   const langues = (ctx.langues.length > 0 ? ctx.langues : [principale]).map(langueApp)
-  const comptesPourPage = comptesDemandes.sorte === 'individuels' ? { ...comptesDemandes, roleDeBase: graphe.roles.find((r) => !ROLE_GESTION_PLAN.test(r)) ?? graphe.roles[0] ?? 'utilisateur' } : null
+  // LE RÔLE DE BASE (mesuré sur edd1a7f9 : 12 écrans pour « utilisateur », l'inscription donnait
+  // « consommateur », premier de la liste — la personne inscrite n'aurait vu AUCUN de ses écrans) :
+  // le rôle, hors gestion, qui porte le PLUS d'écrans lus ; à défaut, le premier rôle hors gestion.
+  const parRole = new Map<string, number>()
+  for (const f of fiches) if (f.fiche.acces !== 'visiteur' && !ROLE_GESTION_PLAN.test(f.fiche.acces)) parRole.set(f.fiche.acces, (parRole.get(f.fiche.acces) ?? 0) + 1)
+  const roleDeBase = [...parRole.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] ?? graphe.roles.find((r) => !ROLE_GESTION_PLAN.test(r)) ?? graphe.roles[0] ?? 'utilisateur'
+  const comptesPourPage = comptesDemandes.sorte === 'individuels' ? { ...comptesDemandes, roleDeBase } : null
   const ecrans = composerEcrans({
     graphe, squelette, principale, langues, nom: o.nom, comptes: comptesPourPage,
     lus: fiches.map((f, i) => ({ route: f.r.route, ecran: remplis[i]!.ecran, titre: titreDe(remplis[i]!.remplissage, f.r.nom), acces: f.fiche.acces, icone: ICONE_ARCHETYPE[remplis[i]!.archetype] ?? 'document' })),
@@ -293,7 +299,7 @@ export async function genererApplication(o: {
   const { motif: motifComptes, ...comptesLus } = comptesDemandes
   // Une personne qui s'inscrit reçoit le premier rôle qui n'est pas de gestion ; l'indicatif est celui du pays lu.
   const indicatif = indicatifDuPays(o.lecture.pays)
-  const comptes = comptesLus.sorte === 'partage' ? comptesLus : { ...comptesLus, roleDeBase: graphe.roles.find((r) => !ROLE_GESTION_PLAN.test(r)) ?? graphe.roles[0] ?? 'utilisateur', ...(indicatif !== undefined ? { indicatif } : {}) }
+  const comptes = comptesLus.sorte === 'partage' ? comptesLus : { ...comptesLus, roleDeBase, ...(indicatif !== undefined ? { indicatif } : {}) }
   consignes.push({ quoi: 'comptes', motif: comptesLus.sorte === 'partage' ? motifComptes : `${motifComptes} ; rôle de base « ${comptes.sorte === 'individuels' ? String(comptes.roleDeBase) : ''} »` })
   const app = compilerApp(spec, { nom: sur(o.nom) || g.accueil!, langues, devise: o.devise, kit: kit.kit, comptes })
   const fichiers = fichiersDeLOeuvre(app, tables.map((t) => t.nom))

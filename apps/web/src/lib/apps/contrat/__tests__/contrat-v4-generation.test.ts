@@ -316,4 +316,22 @@ describe('V4 · bloc 2 · la génération branchée', () => {
     } finally { globalThis.fetch = avant }
     expect(envoyes).toEqual([{ url: '/', corps: { faire: 'inscrire', identifiant: '+23566123456', secret: '1234', conditions: true } }])
   })
+
+  it('⑪ le rôle de base est celui qui porte les écrans — jamais le premier de la liste (edd1a7f9)', async () => {
+    // Mesuré sur edd1a7f9 : rôles lus « consommateur, gestionnaire, …, utilisateur », 12 écrans pour « utilisateur » ;
+    // l'inscription donnait « consommateur » — la personne inscrite n'aurait vu aucun de ses écrans.
+    const plan = { ECRANS: [
+      { nom: 'prise de photo', role: 'utilisateur', navigation: 'public', lit: ['releve'], ecrit: ['releve'], extrait: '' },
+      { nom: 'historique', role: 'utilisateur', navigation: 'public', lit: ['releve'], ecrit: [], extrait: '' },
+      { nom: 'tableau', role: 'gestionnaire', navigation: 'gestion', lit: ['releve'], ecrit: [], extrait: '' },
+    ] }
+    const r = await genererApplication({
+      demande: 'Création de compte obligatoire avec un e-mail et un mot de passe.', nom: 'Relevés',
+      lecture: { ecrans: ['prise de photo', 'historique', 'tableau'], roles: ['consommateur', 'gestionnaire', 'utilisateur'], parcours: [], langues: [], devises: [], moyensPaiement: [], pays: [] },
+      entites: [{ id: 'ent_releve', name: 'releve', fields: ['index', 'photo'].map((c) => ({ id: `fld_${c}`, name: c, type: 'string', required: false })) }],
+      devise: null, appelerModele: modeleSimule().appeler, appelerLeger: planSimule(plan).appeler, prix: PRIX, juger: JUGE_SIMULE,
+    })
+    expect(r.ok, r.motif ?? '').toBe(true)
+    expect(r.app.comptes).toMatchObject({ sorte: 'individuels', roleDeBase: 'utilisateur' })
+  })
 })
