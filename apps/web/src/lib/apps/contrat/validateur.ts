@@ -313,6 +313,7 @@ function ecran(c: Collecte, x: unknown, chemin: string) {
   if ('route' in x) genre(c, { g: 'route' }, x.route, `${chemin}.route`, 'route')
   if ('acces' in x && (typeof x.acces !== 'string' || !MOTIF.role.test(x.acces))) c.noter('VALEUR_INVALIDE', `${chemin}.acces`, `${dire(x.acces)} n’est pas un rôle`, null)
   if ('titre' in x) texte(c, x.titre, `${chemin}.titre`)
+  if ('icone' in x) genre(c, { g: 'icone' }, x.icone, `${chemin}.icone`, 'icone')
   if ('tetrade' in x) {
     const t = x.tetrade
     if (!estObjet(t)) c.noter('TYPE_INVALIDE', `${chemin}.tetrade`, '{ table, vue } attendu', null)
@@ -579,6 +580,23 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
           verifierLiaison(donnee(f.egal), `${ch}.filtre[${String(i)}].egal`, portee, 'visible')
         })
         tableau(n.modele).forEach((m, i) => { parcourir(m, `${ch}.modele[${String(i)}]`, t) })
+        break
+      }
+      // V4.3f : un chiffre ou un graphique calculé depuis une table — chaque colonne nommée en est une.
+      case 'Indicateur':
+      case 'Graphique': {
+        const d = donnee(n.donnee)
+        if (d !== null && !d.startsWith('table.')) { c.noter('LIAISON_HORS_PORTEE', `${ch}.donnee`, `${dire(d)} : ${String(n.composant)} lit une table (table.<table>)`, null); break }
+        verifierLiaison(d, `${ch}.donnee`, portee, 'visible')
+        const t = d?.split('.')[1]
+        if (t === undefined || !tables.has(t)) break
+        for (const k of ['colonne', 'par', 'valeur'] as const) {
+          const col = chaine(n[k])
+          if (col === null) continue
+          if (secrete(col, `${ch}.${k}`)) continue
+          if (!colonnes(t).includes(col)) c.noter('CHAMP_INCONNU', `${ch}.${k}`, `${dire(col)} n’est pas une colonne de ${t}`, lePlusProche(col, colonnes(t)))
+        }
+        if (n.composant === 'Indicateur' && n.mesure === 'somme' && chaine(n.colonne) === null) c.noter('PROP_MANQUANTE', `${ch}.colonne`, 'une somme dit quelle colonne elle additionne', null)
         break
       }
       default:

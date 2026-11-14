@@ -139,9 +139,11 @@ const lisible = (c: string) => c.replace(/_/gu, ' ').replace(/^./u, (x) => x.toU
 
 /** L'espace de gestion : une carte par table, vers sa liste. */
 function ecranGestion(r: RoutePlan, listes: readonly RoutePlan[]): O {
-  return { route: r.route, acces: r.acces, titre: 'Gestion', corps: [
+  // V4.3f : un compteur par table (calculé depuis ses lignes), puis une carte d'accès par table.
+  return { route: r.route, acces: r.acces, titre: 'Gestion', icone: 'reglages', corps: [
     { composant: 'Titre', texte: 'Gestion', niveau: 'page' },
-    { composant: 'Pile', espace: 's', enfants: listes.map((x) => ({ composant: 'Encart', effets: [nav(x.route)], enfants: [{ composant: 'Titre', texte: lisible(x.tetrade!.table), niveau: 'encart' }] })) },
+    { composant: 'Pile', sens: 'ligne', espace: 'm', enfants: listes.map((x) => ({ composant: 'Indicateur', donnee: { $data: `table.${x.tetrade!.table}` }, libelle: lisible(x.tetrade!.table), mesure: 'nombre', icone: 'document' })) },
+    { composant: 'Pile', espace: 's', enfants: listes.map((x) => ({ composant: 'Encart', effets: [nav(x.route)], enfants: [{ composant: 'Pictogramme', icone: 'document', couleur: 'accent' }, { composant: 'Titre', texte: lisible(x.tetrade!.table), niveau: 'encart' }] })) },
     bouton('Accueil', [nav('accueil')], 'discret'),
   ] }
 }
@@ -150,7 +152,7 @@ function ecranTetrade(r: RoutePlan, t: TableLue, journal: boolean): O {
   const base = routeDe(t.nom)
   const cols = t.colonnes
   const titre = `${lisible(t.nom)} — ${{ liste: 'liste', detail: 'détail', creer: 'nouveau', editer: 'modifier' }[r.tetrade!.vue]}`
-  const commun = { route: r.route, acces: r.acces, titre, tetrade: r.tetrade }
+  const commun = { route: r.route, acces: r.acces, titre, icone: { liste: 'document', detail: 'information', creer: 'ajouter', editer: 'modifier' }[r.tetrade!.vue], tetrade: r.tetrade }
   switch (r.tetrade!.vue) {
     case 'liste': return { ...commun, corps: [
       { composant: 'Lignes', donnee: d(`table.${t.nom}`), vide: 'Aucun enregistrement', modele: [

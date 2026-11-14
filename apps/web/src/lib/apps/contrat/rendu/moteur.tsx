@@ -27,6 +27,7 @@ export type EcranCompile = {
   readonly route: string
   readonly acces: string
   readonly titre: TexteCompile
+  readonly icone?: string
   readonly etat?: readonly { readonly nom: string; readonly nature: string; readonly initial?: unknown }[]
   readonly corps: readonly Noeud[]
   readonly tetrade?: { readonly table: string; readonly vue: string }
@@ -59,7 +60,10 @@ const CIBLE = 48
 const STYLE = `
 :root,[data-theme="clair"]{--dx-fond:#f7f7f5;--dx-surface:#ffffff;--dx-texte:#1b1d21;--dx-texteDiscret:#4f5560;--dx-accent:#1f5fbf;--dx-surAccent:#ffffff;--dx-succes:#1d7a46;--dx-alerte:#8a5a00;--dx-danger:#b42318;--dx-bordure:#d5d8de;--dx-ombre:rgba(0,0,0,.14);--dx-squelette:#e6e8ec}
 [data-theme="sombre"]{--dx-fond:#14161a;--dx-surface:#1e2127;--dx-texte:#eef0f3;--dx-texteDiscret:#b4bac4;--dx-accent:#7fb0ff;--dx-surAccent:#0b1a33;--dx-succes:#6fd39a;--dx-alerte:#f0c06a;--dx-danger:#ff8a80;--dx-bordure:#3a3f48;--dx-ombre:rgba(0,0,0,.5);--dx-squelette:#2b3038}
-html,body{margin:0;background:var(--dx-fond);color:var(--dx-texte);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+html,body{margin:0;background:var(--dx-fond);color:var(--dx-texte);font-family:"Inter","SF Pro Text",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;-webkit-font-smoothing:antialiased}
+.dx-chiffre{font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+.dx-carte{background:var(--dx-surface);border:1px solid var(--dx-bordure);border-radius:14px;box-shadow:0 1px 2px var(--dx-ombre)}
+.dx-doux{background:color-mix(in srgb,var(--dx-accent) 12%,var(--dx-surface))}
 *{box-sizing:border-box}
 #racine{min-height:100vh;overflow-x:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -214,12 +218,17 @@ function Lignes({ n, portee }: { n: Noeud; portee: Portee }) {
     return !vrai(v) || String(l[String(f.champ)] ?? '') === String(v)
   }))
   if (lignes.length === 0) return <EtatVide n={n} portee={portee} />
-  const colonnes = c.largeur === 'compact' ? 1 : c.largeur === 'moyen' ? 2 : 3
+  // « liste » : des rangées, les plus récentes d'abord, bornées par `limite` (les derniers ajouts).
+  const enListe = n.disposition === 'liste' || n.disposition === 'recents'
+  const limite = n.disposition === 'recents' ? 5 : null
+  const ordonnees = enListe ? [...lignes].sort((a, b) => (dateDe(b)?.getTime() ?? 0) - (dateDe(a)?.getTime() ?? 0)) : lignes
+  const montrees = limite !== null ? ordonnees.slice(0, limite) : ordonnees
+  const colonnes = enListe || c.largeur === 'compact' ? 1 : c.largeur === 'moyen' ? 2 : 3
   return (
     <div data-etat={lecture.etat === 'partiel' ? 'partiel' : 'ideal'} style={{ display: 'grid', gap: 12 }}>
       {lecture.etat === 'partiel' ? <Bandeau /> : null}
-      <div style={{ display: 'grid', gap: 12, gridTemplateColumns: `repeat(${String(colonnes)}, minmax(0, 1fr))` }}>
-        {lignes.map((l) => <div key={l.id} style={{ display: 'grid', gap: 8, minWidth: 0 }}>{liste(n.modele).map((m, i) => <Rendu key={i} n={m} portee={{ ligne: l, table }} />)}</div>)}
+      <div className={enListe ? 'dx-carte' : undefined} style={{ display: 'grid', gap: enListe ? 0 : 12, gridTemplateColumns: `repeat(${String(colonnes)}, minmax(0, 1fr))` }}>
+        {montrees.map((l, k) => <div key={l.id} style={{ display: 'grid', gap: 8, minWidth: 0, ...(enListe ? { paddingInline: 16, paddingBlock: 12, borderBlockStart: k === 0 ? 'none' : '1px solid var(--dx-bordure)' } : {}) }}>{liste(n.modele).map((m, i) => <Rendu key={i} n={m} portee={{ ligne: l, table }} />)}</div>)}
       </div>
     </div>
   )
@@ -273,6 +282,122 @@ function Champ({ n, portee }: { n: Noeud; portee: Portee }) {
   )
 }
 
+// ── V4.3f · LE TABLEAU DE BORD. Chaque chiffre est CALCULÉ ici, depuis les lignes réelles.
+const COLONNES_DATE = ['created_at', 'cree_le', 'date_creation', 'date', 'date_inscription']
+function dateDe(l: Ligne): Date | null {
+  for (const k of COLONNES_DATE) { const v = l[k]; if (typeof v === 'string' || typeof v === 'number') { const d = new Date(v); if (!Number.isNaN(d.getTime())) return d } }
+  return null
+}
+const initialesDe = (t: string) => t.trim().split(/\s+/u).filter(Boolean).slice(0, 2).map((m) => m[0]!.toUpperCase()).join('') || '·'
+function Initiales({ texte }: { texte: string }) {
+  return <span aria-hidden="true" className="dx-doux" style={{ inlineSize: 36, blockSize: 36, borderRadius: 999, display: 'inline-grid', placeItems: 'center', color: 'var(--dx-accent)', fontWeight: 700, fontSize: 14, flex: 'none' }}>{initialesDe(texte)}</span>
+}
+/** La carte d'un chiffre ou d'un graphique : son état dans `data-mesure` (`data-etat` reste aux listes et fiches, qui portent l'appel à l'action). */
+function Carte({ children, etat }: { children: React.ReactNode; etat?: string }) {
+  return <section className="dx-carte" data-mesure={etat} style={{ display: 'grid', gap: 10, padding: 20, minWidth: 0, alignContent: 'start' }}>{children}</section>
+}
+function Reessayer() {
+  const c = useCtx()
+  return <div><BoutonBrut libelle={c.s('reessayer')} genre="secondaire" icone="retour" surClic={() => { c.executer([{ faire: 'emit', evenement: 'rafraichir' }], null) }} /></div>
+}
+function Indicateur({ n }: { n: Noeud }) {
+  const c = useCtx()
+  const table = (liaisonDe(n.donnee) ?? '').split('.')[1] ?? ''
+  const lecture = useLecture(c.magasin, table)
+  // « Maintenant » est fixé une fois : un rendu ne lit pas l'horloge.
+  const [maintenant] = useState(() => Date.now())
+  const tete = (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      <span style={{ fontSize: 13, color: 'var(--dx-texteDiscret)', fontWeight: 500 }}>{c.t(n.libelle)}</span>
+      {chaine(n.icone) !== null ? <span className="dx-doux" style={{ inlineSize: 32, blockSize: 32, borderRadius: 8, display: 'grid', placeItems: 'center', color: 'var(--dx-accent)' }}><Picto nom={chaine(n.icone)!} coul="accent" /></span> : null}
+    </div>
+  )
+  if (lecture.etat === 'attente') return <Carte etat="chargement">{tete}<div data-squelette="" style={{ blockSize: 36, inlineSize: '50%', borderRadius: 6, background: 'var(--dx-squelette)' }} /></Carte>
+  if (lecture.etat === 'erreur') return <Carte etat="erreur">{tete}<span style={{ color: 'var(--dx-danger)', fontSize: 13 }}>{c.s('erreur')}</span><Reessayer /></Carte>
+  const lignes = lecture.lignes
+  const col = chaine(n.colonne)
+  const valeur = n.mesure === 'somme' && col !== null ? lignes.reduce((a, l) => a + (Number(l[col]) || 0), 0) : lignes.length
+  const datees = lignes.filter((l) => dateDe(l) !== null)
+  const recents = datees.filter((l) => maintenant - dateDe(l)!.getTime() < 30 * 86_400_000).length
+  const sous = lignes.length === 0 ? c.s('pasEncore') : datees.length > 0 ? `+${new Intl.NumberFormat(c.langue).format(recents)} ${c.s('ces30')}` : null
+  return (
+    <Carte etat={lignes.length === 0 ? 'vide' : 'ideal'}>
+      {tete}
+      <span className="dx-chiffre" style={{ fontSize: c.largeur === 'compact' ? 28 : 34, fontWeight: 700, lineHeight: 1.1 }}>{formater(valeur, chaine(n.format) === 'montant' ? 'montant' : 'nombre', c)}</span>
+      {sous !== null ? <span style={{ fontSize: 13, color: lignes.length === 0 ? 'var(--dx-texteDiscret)' : 'var(--dx-succes)' }}>{sous}</span> : null}
+    </Carte>
+  )
+}
+type Groupe = { readonly cle: string; readonly libelle: string; readonly valeur: number }
+function groupes(lignes: readonly Ligne[], par: string, valeur: string | null, langue: string): { liste: Groupe[]; parDate: boolean } {
+  const ajout = (l: Ligne) => (valeur !== null ? Number(l[valeur]) || 0 : 1)
+  const dates = lignes.map((l) => { const v = l[par]; const d = typeof v === 'string' || typeof v === 'number' ? new Date(v) : null; return d !== null && !Number.isNaN(d.getTime()) && typeof v === 'string' && /\d{4}-\d{2}/u.test(v) ? d : null })
+  if (lignes.length > 0 && dates.filter((d) => d !== null).length >= lignes.length / 2) {
+    const fin = new Date()
+    const mois = Array.from({ length: 6 }, (_x, i) => new Date(fin.getFullYear(), fin.getMonth() - 5 + i, 1))
+    const cle = (d: Date) => `${String(d.getFullYear())}-${String(d.getMonth() + 1)}`
+    const somme = new Map<string, number>()
+    lignes.forEach((l, i) => { const d = dates[i]; if (d !== null && d !== undefined) somme.set(cle(d), (somme.get(cle(d)) ?? 0) + ajout(l)) })
+    return { parDate: true, liste: mois.map((d) => ({ cle: cle(d), libelle: new Intl.DateTimeFormat(langue, { month: 'short' }).format(d), valeur: somme.get(cle(d)) ?? 0 })) }
+  }
+  const somme = new Map<string, number>()
+  for (const l of lignes) { const k = String(l[par] ?? '—'); somme.set(k, (somme.get(k) ?? 0) + ajout(l)) }
+  return { parDate: false, liste: [...somme.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, v]) => ({ cle: k, libelle: k, valeur: v })) }
+}
+const TEINTES = ['accent', 'succes', 'alerte', 'danger', 'texteDiscret', 'bordure']
+function Graphique({ n }: { n: Noeud }) {
+  const c = useCtx()
+  const table = (liaisonDe(n.donnee) ?? '').split('.')[1] ?? ''
+  const lecture = useLecture(c.magasin, table)
+  const titre = <h2 style={{ margin: 0, fontSize: 16, fontWeight: 650 }}>{c.t(n.titre)}</h2>
+  if (lecture.etat === 'attente') return <Carte etat="chargement">{titre}<div data-squelette="" style={{ blockSize: 160, borderRadius: 8, background: 'var(--dx-squelette)' }} /></Carte>
+  if (lecture.etat === 'erreur') return <Carte etat="erreur">{titre}<span style={{ color: 'var(--dx-danger)', fontSize: 13 }}>{c.s('erreur')}</span><Reessayer /></Carte>
+  const { liste: gs } = groupes(lecture.lignes, chaine(n.par) ?? '', chaine(n.valeur), c.langue)
+  const total = gs.reduce((a, g) => a + g.valeur, 0)
+  if (lecture.lignes.length === 0 || total === 0) {
+    return (
+      <Carte etat="vide">{titre}
+        <div aria-hidden="true" style={{ display: 'flex', alignItems: 'flex-end', gap: 10, blockSize: 120, opacity: 0.5 }}>{[30, 55, 40, 70, 50, 85].map((h, i) => <div key={i} style={{ flex: 1, blockSize: `${String(h)}%`, borderRadius: 6, background: 'var(--dx-squelette)' }} />)}</div>
+        <span style={{ fontSize: 13, color: 'var(--dx-texteDiscret)' }}>{c.s('pasEncore')}</span>
+      </Carte>
+    )
+  }
+  const nf = new Intl.NumberFormat(c.langue)
+  if (n.forme === 'anneau') {
+    const R = 52, P = 2 * Math.PI * R
+    const parts = gs.map((g) => (g.valeur / total) * P)
+    const decalages = parts.map((_x, i) => parts.slice(0, i).reduce((a, b) => a + b, 0))
+    return (
+      <Carte etat="ideal">{titre}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 24 }}>
+          <svg viewBox="0 0 140 140" width={140} height={140} role="img" aria-label={`${c.t(n.titre)} : ${nf.format(total)}`}>
+            <circle cx={70} cy={70} r={R} fill="none" stroke="var(--dx-squelette)" strokeWidth={18} />
+            {gs.map((g, i) => <circle key={g.cle} cx={70} cy={70} r={R} fill="none" stroke={`var(--dx-${TEINTES[i % TEINTES.length]!})`} strokeWidth={18} strokeDasharray={`${String(parts[i]!)} ${String(P - parts[i]!)}`} strokeDashoffset={String(-decalages[i]!)} transform="rotate(-90 70 70)" />)}
+            <text x={70} y={68} textAnchor="middle" style={{ fontSize: 24, fontWeight: 700, fill: 'var(--dx-texte)' }}>{nf.format(total)}</text>
+          </svg>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8, minWidth: 0 }}>
+            {gs.map((g, i) => <li key={g.cle} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}><span aria-hidden="true" style={{ inlineSize: 10, blockSize: 10, borderRadius: 3, background: `var(--dx-${TEINTES[i % TEINTES.length]!})` }} /><span style={{ overflowWrap: 'anywhere' }}>{g.libelle}</span><strong className="dx-chiffre" style={{ marginInlineStart: 'auto', paddingInlineStart: 12 }}>{nf.format(g.valeur)}</strong></li>)}
+          </ul>
+        </div>
+      </Carte>
+    )
+  }
+  const max = Math.max(1, ...gs.map((g) => g.valeur))
+  return (
+    <Carte etat="ideal">{titre}
+      <div role="img" aria-label={`${c.t(n.titre)} : ${gs.map((g) => `${g.libelle} ${nf.format(g.valeur)}`).join(', ')}`} style={{ display: 'grid', gridTemplateColumns: `repeat(${String(gs.length)}, minmax(0, 1fr))`, alignItems: 'end', gap: 12, blockSize: 180, paddingBlockStart: 20 }}>
+        {gs.map((g, i) => (
+          <div key={g.cle} style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', gap: 6, blockSize: '100%', minWidth: 0, textAlign: 'center' }}>
+            <span className="dx-chiffre" style={{ fontSize: 12, color: 'var(--dx-texteDiscret)' }}>{nf.format(g.valeur)}</span>
+            <div style={{ display: 'flex', alignItems: 'flex-end' }}><div style={{ inlineSize: '100%', blockSize: `${String(Math.max(4, (g.valeur / max) * 100))}%`, minBlockSize: 4, borderRadius: 6, background: i === gs.length - 1 ? 'var(--dx-accent)' : 'color-mix(in srgb,var(--dx-accent) 22%,var(--dx-surface))' }} /></div>
+            <span style={{ fontSize: 12, color: 'var(--dx-texteDiscret)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.libelle}</span>
+          </div>
+        ))}
+      </div>
+    </Carte>
+  )
+}
+
 function Rendu({ n, portee }: { n: unknown; portee: Portee }) {
   const c = useCtx()
   const o = objet(n)
@@ -287,7 +412,11 @@ function Rendu({ n, portee }: { n: unknown; portee: Portee }) {
     case 'Pile': {
       const ligne = o.sens === 'ligne'
       const aligner: Readonly<Record<string, string>> = { debut: 'flex-start', centre: 'center', fin: 'flex-end', etirer: 'stretch' }
-      return <div style={{ display: 'flex', flexDirection: ligne ? 'row' : 'column', flexWrap: ligne ? 'wrap' : 'nowrap', gap: ESPACE[chaine(o.espace) ?? 'm'] ?? 16, alignItems: aligner[chaine(o.aligner) ?? (ligne ? 'centre' : 'etirer')] ?? 'stretch', minWidth: 0 }}>{enfants()}</div>
+      // Dans une rangée (V4.3f) : les cartes se partagent la largeur, une colonne de texte prend la place qui reste.
+      const croissance = (m: unknown): string => { const x = objet(m); return x === null ? '0 1 auto' : x.composant === 'Pile' && x.sens !== 'ligne' ? '1 1 160px' : x.composant === 'Indicateur' || x.composant === 'Graphique' || x.composant === 'Encart' ? '1 1 240px' : '0 1 auto' }
+      return <div style={{ display: 'flex', flexDirection: ligne ? 'row' : 'column', flexWrap: ligne ? 'wrap' : 'nowrap', gap: ESPACE[chaine(o.espace) ?? 'm'] ?? 16, alignItems: aligner[chaine(o.aligner) ?? (ligne ? 'centre' : 'etirer')] ?? 'stretch', minWidth: 0 }}>
+        {ligne ? liste(o.enfants).map((m, i) => <div key={i} style={{ flex: croissance(m), minWidth: 0, display: 'grid' }}><Rendu n={m} portee={portee} /></div>) : enfants()}
+      </div>
     }
     case 'Encart': {
       const style: React.CSSProperties = { display: 'grid', gap: 8, padding: ESPACE[chaine(o.espace) ?? 'm'] ?? 16, borderRadius: RAYON[chaine(o.rayon) ?? 'm'] ?? 8, background: couleur(o.fond, 'surface'),
@@ -305,8 +434,12 @@ function Rendu({ n, portee }: { n: unknown; portee: Portee }) {
     case 'Phrase':
       return <p style={{ margin: 0, fontSize: TAILLE[chaine(o.taille) ?? 'corps'] ?? 16, color: couleur(o.couleur, 'texte'), lineHeight: 1.5, overflowWrap: 'anywhere' }}>{c.t(o.texte)}</p>
     case 'Valeur': {
-      const v = valeurDe(liaisonDe(o.donnee) ?? '', c, portee)
+      const lien = liaisonDe(o.donnee) ?? ''
+      const brut = valeurDe(lien, c, portee)
+      // Le rôle « visiteur » se dit dans la langue de l'usager, pas avec son nom technique.
+      const v = lien === 'session.role' && brut === 'visiteur' ? c.s('visiteur') : brut
       const format = chaine(o.format)
+      if (format === 'initiales') return <Initiales texte={String(v ?? '')} />
       return (
         <div style={{ display: 'grid', gap: 2, minWidth: 0 }}>
           {o.libelle !== undefined ? <span style={{ fontSize: TAILLE.legende, color: 'var(--dx-texteDiscret)' }}>{c.t(o.libelle)}</span> : null}
@@ -352,6 +485,10 @@ function Rendu({ n, portee }: { n: unknown; portee: Portee }) {
         </div>
       )
     }
+    case 'Indicateur':
+      return <Indicateur n={o as Noeud} />
+    case 'Graphique':
+      return <Graphique n={o as Noeud} />
     case 'Trait':
       return <hr style={{ border: 0, borderBlockStart: '1px solid var(--dx-bordure)', marginBlock: ESPACE[chaine(o.espace) ?? 's'] ?? 8, marginInline: 0 }} />
     default:
@@ -459,8 +596,11 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
     <Contexte.Provider value={ctx}>
       {annonce !== null ? <p role="status" style={{ margin: 0, padding: 12, borderRadius: 8, background: 'var(--dx-surface)', border: '1px solid var(--dx-succes)', color: 'var(--dx-succes)' }}>{annonce}</p> : null}
       {garde
-        ? <section data-deribfy="garde" style={{ display: 'grid', gap: 16 }}>
-            <h1 style={{ margin: 0 }}>{s('quiEtesVous')}</h1>
+        // La garde est une CARTE qui explique (V4.3f) — pas une question posée seule sur une page vide.
+        ? <section data-deribfy="garde" className="dx-carte" style={{ display: 'grid', gap: 16, padding: 28, maxInlineSize: 520, justifySelf: 'center', inlineSize: '100%', textAlign: 'center', justifyItems: 'center' }}>
+            <span aria-hidden="true" className="dx-doux" style={{ inlineSize: 56, blockSize: 56, borderRadius: 16, display: 'grid', placeItems: 'center' }}><Picto nom="utilisateur" coul="accent" /></span>
+            <h1 style={{ margin: 0, fontSize: 24 }}>{s('quiEtesVous')}</h1>
+            <p style={{ margin: 0, color: 'var(--dx-texteDiscret)', lineHeight: 1.5 }}>{s('garde').replace('{r}', ecran.acces)}</p>
             <div data-role={ecran.acces}><BoutonBrut libelle={`${s('entrerComme')} ${ecran.acces}`} genre="principal" surClic={() => { g.poserSession((x) => ({ ...x, role: ecran.acces })) }} /></div>
           </section>
         : <section style={{ display: 'grid', gap: 16, minWidth: 0 }}>
@@ -508,33 +648,84 @@ function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; maga
   const g: Global = { app, magasin, langue, poserLangue, largeur, session, poserSession, parcours, poserParcours, t, s }
 
   const marge = largeur === 'compact' ? 16 : largeur === 'moyen' ? 24 : 32
-  const barre = app.barre.map((r) => app.ecrans.find((e) => e.route === r)).filter((e): e is EcranCompile => e !== undefined)
+  // ── LA COQUE (V4.3f). Au large : un menu latéral (la barre + la gestion) et un en-tête ;
+  // au téléphone : un en-tête et une barre du bas à icônes et libellés courts.
+  const gestion = app.ecrans.find((e) => e.route === 'gestion')
+  const routesNav = [...app.barre, ...(gestion !== undefined && !app.barre.includes('gestion') && (session.role === 'visiteur' || session.role === gestion.acces) ? ['gestion'] : [])]
+  const nav = routesNav.map((r) => app.ecrans.find((e) => e.route === r)).filter((e): e is EcranCompile => e !== undefined)
+  const large = largeur === 'etendu'
+  const langues = app.langues.length > 1
+    ? <div role="group" aria-label={s('langue')} style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        {app.langues.map((l) => <BoutonBrut key={l.code} libelle={l.libelle} genre={l.code === langue ? 'principal' : 'discret'} presse={l.code === langue} attributs={{ 'data-langue': l.code, lang: l.code }} surClic={() => { poserLangue(l.code) }} />)}
+      </div>
+    : null
+  // L'accueil et le compte se disent « Accueil » et « Compte » dans la barre, quel que soit leur titre.
+  const libelleNav = (e: EcranCompile) => (e.route === 'accueil' ? s('accueil') : e.route === 'compte' ? s('compte') : t(e.titre))
+  const pastilleRole = (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--dx-texteDiscret)', minWidth: 0 }}>
+      <span aria-hidden="true" style={{ inlineSize: 8, blockSize: 8, borderRadius: 999, background: session.role === 'visiteur' ? 'var(--dx-bordure)' : 'var(--dx-succes)' }} />
+      <span style={{ overflowWrap: 'anywhere' }}>{s('profil')} : {session.role === 'visiteur' ? s('visiteur') : session.role}</span>
+    </span>
+  )
+  const marque = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+      <span aria-hidden="true" style={{ inlineSize: 36, blockSize: 36, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'var(--dx-accent)', color: 'var(--dx-surAccent)', fontWeight: 800, flex: 'none' }}>{initialesDe(app.nom).slice(0, 1)}</span>
+      <strong style={{ overflowWrap: 'anywhere', fontSize: 16 }}>{app.nom}</strong>
+    </div>
+  )
+  const lienNav = (e: EcranCompile, court: boolean) => {
+    const actif = e.route === route
+    const libelle = libelleNav(e)
+    return (
+      <button key={e.route} type="button" aria-current={actif ? 'page' : undefined} title={libelle} onClick={() => { allerA(e.route) }}
+        style={court
+          ? { minHeight: 56, minWidth: CIBLE, border: 0, borderRadius: 10, background: 'transparent', color: actif ? 'var(--dx-accent)' : 'var(--dx-texteDiscret)', fontWeight: 600, fontSize: 12, display: 'grid', justifyItems: 'center', alignContent: 'center', gap: 2, paddingInline: 4 }
+          : { minHeight: CIBLE, border: 0, borderRadius: 10, background: actif ? 'color-mix(in srgb,var(--dx-accent) 12%,var(--dx-surface))' : 'transparent', color: actif ? 'var(--dx-accent)' : 'var(--dx-texte)', fontWeight: actif ? 650 : 500, display: 'flex', alignItems: 'center', gap: 12, paddingInline: 12, textAlign: 'start', inlineSize: '100%' }}>
+        <Picto nom={e.icone ?? 'document'} coul={actif ? 'accent' : 'texteDiscret'} />
+        <span style={court ? { maxInlineSize: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } : { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{court ? libelleCourt(libelle) : libelle}</span>
+      </button>
+    )
+  }
+  const contenu = <main style={{ flex: 1, width: '100%', maxWidth: large ? 1200 : 1040, marginInline: 'auto', paddingInline: marge, paddingBlock: large ? 28 : 20, display: 'grid', gap: 20, alignContent: 'start', minWidth: 0 }}>{ecran !== undefined ? <EcranVivant key={ecran.route} g={g} ecran={ecran} /> : null}</main>
   return (
     <>
       <style>{STYLE}</style>
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <header style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingInline: marge, paddingBlock: 8, borderBlockEnd: '1px solid var(--dx-bordure)', background: 'var(--dx-surface)' }}>
-          <strong style={{ overflowWrap: 'anywhere' }}>{app.nom}</strong>
-          {app.langues.length > 1
-            ? <div role="group" aria-label={s('langue')} style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                {app.langues.map((l) => <BoutonBrut key={l.code} libelle={l.libelle} genre={l.code === langue ? 'principal' : 'discret'} presse={l.code === langue} attributs={{ 'data-langue': l.code, lang: l.code }} surClic={() => { poserLangue(l.code) }} />)}
-              </div>
-            : null}
-        </header>
-        <main style={{ flex: 1, width: '100%', maxWidth: 1040, marginInline: 'auto', paddingInline: marge, paddingBlock: 24, display: 'grid', gap: 16, alignContent: 'start', minWidth: 0 }}>
-          {ecran !== undefined ? <EcranVivant key={ecran.route} g={g} ecran={ecran} /> : null}
-        </main>
-        <nav aria-label="Navigation" style={{ position: 'sticky', bottom: 0, display: 'grid', gridTemplateColumns: `repeat(${String(Math.max(1, barre.length))}, minmax(0, 1fr))`, gap: 4, padding: 4, background: 'var(--dx-surface)', borderBlockStart: '1px solid var(--dx-bordure)' }}>
-          {barre.map((e) => (
-            <button key={e.route} type="button" aria-current={e.route === route ? 'page' : undefined} onClick={() => { allerA(e.route) }}
-              style={{ minHeight: CIBLE, minWidth: CIBLE, border: 0, borderRadius: 8, background: e.route === route ? 'var(--dx-fond)' : 'transparent', color: e.route === route ? 'var(--dx-accent)' : 'var(--dx-texte)', fontWeight: 600, overflowWrap: 'anywhere', paddingInline: 4 }}>
-              {t(e.titre)}
-            </button>
-          ))}
-        </nav>
-      </div>
+      {large
+        ? <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '256px minmax(0, 1fr)' }}>
+            <aside style={{ position: 'sticky', insetBlockStart: 0, blockSize: '100vh', display: 'flex', flexDirection: 'column', gap: 20, padding: 20, background: 'var(--dx-surface)', borderInlineEnd: '1px solid var(--dx-bordure)' }}>
+              {marque}
+              <nav aria-label="Navigation" style={{ display: 'grid', gap: 4 }}>{nav.map((e) => lienNav(e, false))}</nav>
+              <div style={{ marginBlockStart: 'auto', padding: 12, borderRadius: 12, background: 'var(--dx-fond)' }}>{pastilleRole}</div>
+            </aside>
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <header style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingInline: marge, paddingBlock: 12, borderBlockEnd: '1px solid var(--dx-bordure)', background: 'var(--dx-surface)' }}>
+                <span style={{ fontSize: 14, color: 'var(--dx-texteDiscret)', overflowWrap: 'anywhere' }}>{app.nom} <span aria-hidden="true">/</span> <strong style={{ color: 'var(--dx-texte)' }}>{ecran !== undefined ? t(ecran.titre) : ''}</strong></span>
+                {langues}
+              </header>
+              {contenu}
+            </div>
+          </div>
+        : <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <header style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingInline: marge, paddingBlock: 8, borderBlockEnd: '1px solid var(--dx-bordure)', background: 'var(--dx-surface)' }}>
+              {marque}
+              {langues}
+            </header>
+            {contenu}
+            <nav aria-label="Navigation" style={{ position: 'sticky', bottom: 0, display: 'grid', gridTemplateColumns: `repeat(${String(Math.max(1, nav.length))}, minmax(0, 1fr))`, gap: 2, padding: 4, background: 'var(--dx-surface)', borderBlockStart: '1px solid var(--dx-bordure)' }}>
+              {nav.map((e) => lienNav(e, true))}
+            </nav>
+          </div>}
     </>
   )
+}
+
+/** Un libellé de barre du bas : court tel quel ; long, son premier mot (« Rechercher un fournisseur » → « Rechercher »). */
+const PETITS_MOTS = new Set(['le', 'la', 'les', 'l', 'un', 'une', 'des', 'du', 'de', 'd', 'au', 'aux', 'mon', 'ma', 'mes', 'votre', 'vos', 'toutes', 'tous', 'tout', 'voir', 'the', 'a', 'an', 'all', 'my', 'your', 'of', 'to'])
+export function libelleCourt(t: string): string {
+  if (t.length <= 14) return t
+  const mots = t.split(/[\s'’]+/u).filter((m) => m !== '' && !PETITS_MOTS.has(m.toLowerCase()))
+  const m = mots[0] ?? t
+  return m.charAt(0).toUpperCase() + m.slice(1)
 }
 
 /** Les rôles que l'application protège (ses écrans non publics). */

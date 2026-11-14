@@ -12,7 +12,7 @@
  * elle n'est envoyée à aucun modèle.
  */
 import {
-  ACTIONS, CHARGES, COMPOSANTS, EVENEMENTS, ICONES, JETONS, NATURES_ETAT, PROPS_COMMUNES, PROPS_ECRAN, ROUTES_SOCLE,
+  ACTIONS, CHARGES, COMPOSANTS, COMPOSANTS_DE_DERIBFY, EVENEMENTS, ICONES, JETONS, NATURES_ETAT, PROPS_COMMUNES, PROPS_DE_DERIBFY, PROPS_ECRAN, PROPS_ECRAN_DE_DERIBFY, ROUTES_SOCLE,
   SOURCES, VUES_TETRADE, type DefProp, type Genre,
 } from './catalogue'
 
@@ -48,15 +48,15 @@ export function genererConsigne(): string {
   s.push('Tu rends UN SEUL objet JSON : un écran qui suit ce contrat, et rien d’autre. Toute clé absente du contrat est refusée ; tout nom inventé est refusé, avec le nom valide le plus proche.')
   s.push('')
   s.push('ÉCRAN :')
-  for (const [k, aide] of Object.entries(PROPS_ECRAN)) s.push(`  - ${q(k)} : ${aide}`)
+  for (const [k, aide] of Object.entries(PROPS_ECRAN).filter(([k]) => !PROPS_ECRAN_DE_DERIBFY.includes(k))) s.push(`  - ${q(k)} : ${aide}`)
   s.push(`  Tétrade : ${q('table')}, ${q('vue')} parmi ${VUES_TETRADE.map(q).join(', ')}.`)
   s.push(`  État : ${q('nom')}, ${q('nature')} parmi ${NATURES_ETAT.map(q).join(', ')}, ${q('initial')}.`)
   s.push(`  Rôle : un rôle lu, ou ${q('visiteur')}. Routes du socle, écrites par Deribfy : ${ROUTES_SOCLE.map(q).join(', ')}.`)
   s.push('')
   s.push(`COMPOSANTS — chacun s’écrit ${q('{ "composant": … }')} :`)
-  for (const [nom, def] of Object.entries(COMPOSANTS)) {
+  for (const [nom, def] of Object.entries(COMPOSANTS).filter(([n]) => !COMPOSANTS_DE_DERIBFY.includes(n))) {
     s.push(`  ${q(nom)} — ${def.aide}`)
-    for (const [prop, d] of Object.entries(def.props)) s.push(ligneProp(prop, d))
+    for (const [prop, d] of Object.entries(def.props)) if (!(PROPS_DE_DERIBFY[nom] ?? []).includes(prop)) s.push(ligneProp(prop, d))
   }
   s.push('  Tous les composants acceptent aussi :')
   for (const [prop, d] of Object.entries(PROPS_COMMUNES)) s.push(ligneProp(prop, d))

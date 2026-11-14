@@ -105,7 +105,10 @@ describe('V4 · bloc 2 · la génération branchée', () => {
       const o = x as Record<string, unknown>
       if (o.composant === 'Encart' && Array.isArray(o.effets)) {
         const route = String((o.effets[0] as { route: string }).route)
-        const titre = String(((o.enfants as { texte: string }[])[0]!).texte)
+        const enfants = o.enfants as { composant: string; texte?: string }[]
+        const titre = String(enfants.find((x) => x.composant === 'Titre')?.texte)
+        // V4.3f : chaque carte porte son pictogramme.
+        expect(enfants[0]?.composant, `carte ${route} sans pictogramme`).toBe('Pictogramme')
         cartes.push({ route, titre, ...(typeof o.pourRole === 'string' ? { pourRole: o.pourRole } : {}) })
       }
       Object.values(o).forEach(marcher)

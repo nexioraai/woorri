@@ -27,7 +27,7 @@ export const CTX: Contexte = {
   roles: ['Client', 'Gérant'],
   tables: [
     { nom: 'offre', colonnes: ['nom', 'ville', 'prix', 'statut'], publique: true },
-    { nom: 'reservation', colonnes: ['offre', 'client', 'montant', 'statut'] },
+    { nom: 'reservation', colonnes: ['offre', 'client', 'montant', 'statut', 'date'] },
     { nom: 'paiement', colonnes: ['montant', 'moyen'] },
     { nom: 'compte', colonnes: ['nom', 'courriel', 'langue'] },
   ],
@@ -38,6 +38,12 @@ export const CTX: Contexte = {
   parcours: ['accueil', 'offres', 'offre', 'paiement', 'confirmation'],
 }
 
+/** Une date ISO, il y a `mois` mois, au jour `jour` (les données du témoin restent récentes). */
+function moisAvant(mois: number, jour: number): string {
+  const d = new Date()
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - mois, Math.min(jour, 28))).toISOString().slice(0, 10)
+}
+
 export const DONNEES: Record<string, Ligne[]> = {
   offre: [
     { id: 'o1', nom: 'Chambre double — Hôtel du Chari', ville: 'NDjamena', prix: 35000, statut: 'disponible' },
@@ -45,9 +51,16 @@ export const DONNEES: Record<string, Ligne[]> = {
     { id: 'o3', nom: 'Chambre simple — Auberge du Logone', ville: 'Moundou', prix: 18000, statut: 'complet' },
     { id: 'o4', nom: 'Bungalow — Lac Fitri', ville: 'Ati', prix: 27000, statut: 'disponible' },
   ],
+  // Des réservations sur six mois : le tableau de bord en tire ses chiffres et ses graphiques (V4.3f).
   reservation: [
-    { id: 'r1', offre: 'Chambre double — Hôtel du Chari', client: 'Achta Mahamat', montant: 35000, statut: 'payée' },
-    { id: 'r2', offre: 'Bungalow — Lac Fitri', client: 'Idriss Saleh', montant: 27000, statut: 'en attente' },
+    { id: 'r1', offre: 'Chambre double — Hôtel du Chari', client: 'Achta Mahamat', montant: 35000, statut: 'payée', date: moisAvant(0, 3) },
+    { id: 'r2', offre: 'Bungalow — Lac Fitri', client: 'Idriss Saleh', montant: 27000, statut: 'en attente', date: moisAvant(0, 1) },
+    { id: 'r3', offre: 'Suite familiale — Résidence Moursal', client: 'Fatimé Abakar', montant: 62000, statut: 'payée', date: moisAvant(1, 12) },
+    { id: 'r4', offre: 'Chambre simple — Auberge du Logone', client: 'Mahamat Saleh', montant: 18000, statut: 'payée', date: moisAvant(1, 20) },
+    { id: 'r5', offre: 'Chambre double — Hôtel du Chari', client: 'Zara Oumar', montant: 35000, statut: 'annulée', date: moisAvant(2, 8) },
+    { id: 'r6', offre: 'Bungalow — Lac Fitri', client: 'Hassan Ali', montant: 27000, statut: 'payée', date: moisAvant(3, 15) },
+    { id: 'r7', offre: 'Suite familiale — Résidence Moursal', client: 'Khadidja Brahim', montant: 62000, statut: 'en attente', date: moisAvant(4, 5) },
+    { id: 'r8', offre: 'Chambre double — Hôtel du Chari', client: 'Abakar Moussa', montant: 35000, statut: 'payée', date: moisAvant(5, 22) },
   ],
   paiement: [],
   compte: [{ id: 'c1', nom: 'Achta Mahamat', courriel: 'achta@exemple.td', langue: 'fr' }],
@@ -74,7 +87,7 @@ export const REMPLISSAGES: Remplissage[] = [
   { archetype: 'profil', route: 'profil', acces: 'Client', slots: { titre: 'Mon profil', table: 'compte', colonnes: [{ colonne: 'nom', libelle: 'Nom' }, { colonne: 'courriel', libelle: 'Courriel' }, { colonne: 'langue', libelle: 'Langue' }], vide: 'Profil introuvable.' } },
   { archetype: 'compte', route: 'compte', acces: 'visiteur', slots: { titre: 'Mon compte' } },
   { archetype: 'dashboard', route: 'tableau', acces: 'Gérant', slots: { titre: 'Tableau de bord', table: 'reservation', vide: 'Aucune réservation.', raccourcis: [{ libelle: 'Gérer les offres', route: 'gestion' }, { libelle: 'Voir le site', route: 'offres' }],
-    colonnes: [{ colonne: 'offre', libelle: 'Offre' }, { colonne: 'client', libelle: 'Client' }, { colonne: 'montant', libelle: 'Montant', format: 'montant' }, { colonne: 'statut', libelle: 'Statut', format: 'statut' }] } },
+    colonnes: [{ colonne: 'client', libelle: 'Client' }, { colonne: 'offre', libelle: 'Offre' }, { colonne: 'montant', libelle: 'Montant', format: 'montant' }, { colonne: 'statut', libelle: 'Statut', format: 'statut' }, { colonne: 'date', libelle: 'Date', format: 'date' }] } },
   { archetype: 'tableAdmin', route: 'gestion', acces: 'Gérant', slots: { titre: 'Gérer les offres', table: 'offre', colonnes: colonnesOffre, creation: 'nouvelle-offre', vide: 'Aucune offre.' } },
   { archetype: 'formulaire', route: 'nouvelle-offre', acces: 'Gérant', slots: { titre: 'Nouvelle offre', table: 'offre', apres: 'gestion', libelleEnvoi: 'Publier l’offre', champs: [
     { colonne: 'nom', libelle: 'Nom de l’offre', nature: 'texte', requis: true }, { colonne: 'ville', libelle: 'Ville', nature: 'texte', requis: true }, { colonne: 'prix', libelle: 'Prix par nuit', nature: 'nombre', requis: true }] } },

@@ -80,6 +80,24 @@ describe('V3 · les archétypes', () => {
     expect(n).toBeGreaterThan(140)
   })
 
+  it('⑦ V4.3f · le tableau de bord se calcule depuis la table ; chaque écran a son icône ; le compte dit le profil', () => {
+    const ecrans = specTemoin().ecrans as unknown as { route: string; icone?: string; corps: Record<string, unknown>[] }[]
+    const tableau = JSON.stringify(ecrans.find((e) => e.route === 'tableau')!.corps)
+    // Des chiffres CALCULÉS par le moteur (aucune valeur écrite) : un compte, la somme du montant, deux graphiques.
+    expect(tableau).toMatch(motifTexte('"composant":"Indicateur","donnee":{"$data":"table.reservation"},"libelle":"Au total","mesure":"nombre"'))
+    expect(tableau).toMatch(motifTexte('"mesure":"somme","colonne":"montant","format":"montant"'))
+    expect(tableau).toMatch(motifTexte('"composant":"Graphique","donnee":{"$data":"table.reservation"},"titre":"Évolution par mois","forme":"barres","par":"date","valeur":"montant"'))
+    expect(tableau).toMatch(motifTexte('"forme":"anneau","par":"statut"'))
+    expect(tableau).toMatch(motifTexte('"disposition":"recents"'))
+    expect(tableau).not.toMatch(/"(?:valeur|texte)":\s*\d/u)
+    // Une icône de navigation sur chaque écran.
+    expect(ecrans.filter((e) => e.icone === undefined).map((e) => e.route)).toEqual([])
+    // Le compte : le profil toujours, l'identifiant seulement s'il existe (jamais « — »).
+    const compte = JSON.stringify(ecrans.find((e) => e.route === 'compte')!.corps)
+    expect(compte).toMatch(motifTexte('"donnee":{"$data":"session.role"}'))
+    expect(compte).toMatch(motifTexte('"donnee":{"$data":"session.utilisateur"},"si":{"$data":"session.utilisateur"}'))
+  })
+
   it('⑥ le moteur est ÉMIS, jamais exécuté par Deribfy : aucun module ne l’importe autrement qu’en type', () => {
     const racine = join(__dirname, '..', '..', '..', '..')
     const fautifs: string[] = []

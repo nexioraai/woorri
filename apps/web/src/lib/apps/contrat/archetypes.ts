@@ -138,9 +138,9 @@ export function validerRemplissage(r: Remplissage): RefusArchetype[] {
 
 // ── LES LIBELLÉS DES GABARITS : des textes de Deribfy, dans la langue principale de l'application.
 const GABARIT: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  fr: { accueil: 'Accueil', seConnecter: 'Se connecter', ajouter: 'Ajouter', retour: 'Retour', modifier: 'Modifier', supprimer: 'Supprimer', effacer: 'Effacer la recherche', deconnexion: 'Se déconnecter', aide: 'Aide', contact: 'Contact', legal: 'Mentions légales', utilisateur: 'Connecté en tant que', recents: 'Les plus récents', moyen: 'Moyen de paiement' },
-  en: { accueil: 'Home', seConnecter: 'Sign in', ajouter: 'Add', retour: 'Back', modifier: 'Edit', supprimer: 'Delete', effacer: 'Clear the search', deconnexion: 'Sign out', aide: 'Help', contact: 'Contact', legal: 'Legal notice', utilisateur: 'Signed in as', recents: 'Most recent', moyen: 'Payment method' },
-  ar: { accueil: 'الرئيسية', seConnecter: 'تسجيل الدخول', ajouter: 'إضافة', retour: 'رجوع', modifier: 'تعديل', supprimer: 'حذف', effacer: 'مسح البحث', deconnexion: 'تسجيل الخروج', aide: 'المساعدة', contact: 'اتصل بنا', legal: 'الإشعارات القانونية', utilisateur: 'متصل باسم', recents: 'الأحدث', moyen: 'وسيلة الدفع' },
+  fr: { accueil: 'Accueil', seConnecter: 'Se connecter', ajouter: 'Ajouter', retour: 'Retour', modifier: 'Modifier', supprimer: 'Supprimer', effacer: 'Effacer la recherche', deconnexion: 'Se déconnecter', aide: 'Aide', contact: 'Contact', legal: 'Mentions légales', utilisateur: 'Connecté en tant que', recents: 'Les plus récents', moyen: 'Moyen de paiement', total: 'Au total', montantTotal: 'Montant total', repartition: 'Répartition', evolution: 'Évolution par mois', derniers: 'Derniers ajouts', role: 'Profil' },
+  en: { accueil: 'Home', seConnecter: 'Sign in', ajouter: 'Add', retour: 'Back', modifier: 'Edit', supprimer: 'Delete', effacer: 'Clear the search', deconnexion: 'Sign out', aide: 'Help', contact: 'Contact', legal: 'Legal notice', utilisateur: 'Signed in as', recents: 'Most recent', moyen: 'Payment method', total: 'Total', montantTotal: 'Total amount', repartition: 'Breakdown', evolution: 'Monthly trend', derniers: 'Latest additions', role: 'Profile' },
+  ar: { accueil: 'الرئيسية', seConnecter: 'تسجيل الدخول', ajouter: 'إضافة', retour: 'رجوع', modifier: 'تعديل', supprimer: 'حذف', effacer: 'مسح البحث', deconnexion: 'تسجيل الخروج', aide: 'المساعدة', contact: 'اتصل بنا', legal: 'الإشعارات القانونية', utilisateur: 'متصل باسم', recents: 'الأحدث', moyen: 'وسيلة الدفع', total: 'الإجمالي', montantTotal: 'المبلغ الإجمالي', repartition: 'التوزيع', evolution: 'التطور الشهري', derniers: 'آخر الإضافات', role: 'الملف' },
 }
 export const libellesDuGabarit = (langue: string): Readonly<Record<string, string>> => GABARIT[langue] ?? GABARIT.en!
 
@@ -151,7 +151,13 @@ const bouton = (libelle: string, effets: O[], genre = 'secondaire', icone?: stri
 const titre = (t: string): O => ({ composant: 'Titre', texte: t, niveau: 'page' })
 type Col = { colonne: string; libelle: string; format?: string }
 /** Une carte d'accueil : un titre lisible, une destination, et — s'il y en a un — le rôle à qui elle est destinée. */
-export const carte = (x: { libelle: string; route: string; role?: string }): O => ({ composant: 'Encart', effets: [nav(x.route)], enfants: [{ composant: 'Titre', texte: x.libelle, niveau: 'encart' }], ...(x.role !== undefined && x.role !== 'visiteur' ? { pourRole: x.role } : {}) })
+export const carte = (x: { libelle: string; route: string; role?: string; icone?: string }): O => ({ composant: 'Encart', effets: [nav(x.route)], enfants: [...(x.icone !== undefined ? [{ composant: 'Pictogramme', icone: x.icone, couleur: 'accent' }] : []), { composant: 'Titre', texte: x.libelle, niveau: 'encart' }], ...(x.role !== undefined && x.role !== 'visiteur' ? { pourRole: x.role } : {}) })
+
+/** Le pictogramme de navigation de chaque archétype (V4.3f). */
+export const ICONE_ARCHETYPE: Readonly<Record<string, string>> = { auth: 'utilisateur', onboarding: 'information', accueil: 'accueil', liste: 'document', recherche: 'recherche', detail: 'information', formulaire: 'ajouter', checkout: 'paiement', confirmation: 'valide', profil: 'utilisateur', compte: 'utilisateur', dashboard: 'calendrier', tableAdmin: 'reglages' }
+const ICONE_PAGE: Readonly<Record<string, string>> = { aide: 'aide', contact: 'message', legal: 'document' }
+const EST_DATE = /date|jour|cree|created|inscription|debut|echeance/iu
+const EST_STATUT = /statut|etat|status|categorie|type/iu
 const valeurs = (cols: readonly Col[], source = 'ligne', table = ''): O[] => cols.map((c) => ({ composant: 'Valeur', libelle: c.libelle, donnee: d(source === 'ligne' ? `ligne.${c.colonne}` : `parcours.${table}.${c.colonne}`), ...(c.format !== undefined ? { format: c.format } : {}) }))
 
 export type OptionsGabarit = { readonly langue: string; readonly langues: readonly { readonly code: string; readonly libelle: string }[] }
@@ -183,7 +189,7 @@ export function expanser(r: Remplissage, o: OptionsGabarit): O {
     case 'accueil':
       corps = [titre(t('titre')), ...(v.intro !== undefined ? [{ composant: 'Phrase', texte: t('intro') }] : []),
         // Un raccourci peut être réservé à un rôle (`role`) : l'accueil d'un rôle montre SES écrans.
-        { composant: 'Pile', espace: 's', enfants: (v.raccourcis as { libelle: string; route: string; role?: string }[]).map((x) => carte(x)) }]
+        { composant: 'Pile', sens: 'ligne', espace: 'm', enfants: (v.raccourcis as { libelle: string; route: string; role?: string; icone?: string }[]).map((x) => carte(x)) }]
       break
     case 'liste': case 'dashboard': case 'tableAdmin': {
       const cols = v.colonnes as Col[]
@@ -196,13 +202,34 @@ export function expanser(r: Remplissage, o: OptionsGabarit): O {
             ...(edition !== null ? [bouton(g.modifier!, [nav(edition, 'ligne.id')], 'secondaire', 'modifier')] : []),
             bouton(g.supprimer!, [{ faire: 'submit', table: t('table'), ecriture: 'supprimer' }], 'danger', 'supprimer')] }] }]
         : [{ composant: 'Encart', ...(detail !== null ? { effets: [nav(detail, 'ligne.id')] } : {}), enfants: valeurs(cols) }]
+      // ── LE TABLEAU DE BORD (V4.3f) : des chiffres et des graphiques CALCULÉS depuis la table par
+      // le moteur, puis les derniers ajouts — depuis les colonnes que le modèle a remplies.
+      const montant = cols.find((c) => c.format === 'montant')
+      const date = cols.find((c) => c.format === 'date' || EST_DATE.test(c.colonne))
+      const statut = cols.find((c) => c.format === 'statut' || EST_STATUT.test(c.colonne))
+      const nom = cols.find((c) => c !== montant && c !== date && c !== statut) ?? cols[0]!
+      const tableau = r.archetype === 'dashboard' ? [
+        { composant: 'Pile', sens: 'ligne', espace: 'm', enfants: [
+          { composant: 'Indicateur', donnee: d(`table.${t('table')}`), libelle: g.total!, mesure: 'nombre', icone: 'document' },
+          ...(montant !== undefined ? [{ composant: 'Indicateur', donnee: d(`table.${t('table')}`), libelle: g.montantTotal!, mesure: 'somme', colonne: montant.colonne, format: 'montant', icone: 'paiement' }] : []),
+        ] },
+        ...(date !== undefined ? [{ composant: 'Graphique', donnee: d(`table.${t('table')}`), titre: g.evolution!, forme: 'barres', par: date.colonne, ...(montant !== undefined ? { valeur: montant.colonne } : {}) }] : []),
+        ...(statut !== undefined ? [{ composant: 'Graphique', donnee: d(`table.${t('table')}`), titre: g.repartition!, forme: 'anneau', par: statut.colonne }] : []),
+        { composant: 'Titre', texte: g.derniers!, niveau: 'section' },
+      ] : []
       corps = [titre(t('titre')),
         ...(r.archetype === 'dashboard' && Array.isArray(v.raccourcis) && v.raccourcis.length > 0
-          ? [{ composant: 'Pile', sens: 'ligne', espace: 's', enfants: (v.raccourcis as { libelle: string; route: string }[]).map((x) => ({ composant: 'Encart', effets: [nav(x.route)], enfants: [{ composant: 'Phrase', texte: x.libelle }] })) },
-             { composant: 'Titre', texte: g.recents!, niveau: 'section' }]
+          ? [{ composant: 'Pile', sens: 'ligne', espace: 's', enfants: (v.raccourcis as { libelle: string; route: string }[]).map((x) => ({ composant: 'Encart', effets: [nav(x.route)], enfants: [{ composant: 'Phrase', texte: x.libelle }] })) }]
           : []),
+        ...tableau,
         ...(creation !== null ? [bouton(v.libelleCreation !== undefined ? t('libelleCreation') : g.ajouter!, [nav(creation)], 'principal', 'ajouter')] : []),
-        { composant: 'Lignes', donnee: d(`table.${t('table')}`), vide: t('vide'), videAction: [nav(creation ?? 'accueil')], videLibelle: creation !== null ? (v.libelleCreation !== undefined ? t('libelleCreation') : g.ajouter!) : g.accueil!, modele },
+        { composant: 'Lignes', donnee: d(`table.${t('table')}`), vide: t('vide'), videAction: [nav(creation ?? 'accueil')], videLibelle: creation !== null ? (v.libelleCreation !== undefined ? t('libelleCreation') : g.ajouter!) : g.accueil!,
+          ...(r.archetype === 'dashboard' ? { disposition: 'recents', modele: [{ composant: 'Pile', sens: 'ligne', espace: 'm', aligner: 'centre', enfants: [
+            { composant: 'Valeur', donnee: d(`ligne.${nom.colonne}`), format: 'initiales' },
+            { composant: 'Pile', espace: 'xs', enfants: [{ composant: 'Valeur', donnee: d(`ligne.${nom.colonne}`) }, ...cols.filter((c) => c !== nom && c !== montant && c !== statut).slice(0, 1).map((c) => ({ composant: 'Valeur', donnee: d(`ligne.${c.colonne}`), ...(c.format !== undefined ? { format: c.format } : {}) }))] },
+            ...(statut !== undefined ? [{ composant: 'Valeur', donnee: d(`ligne.${statut.colonne}`), format: 'statut' }] : []),
+            ...(montant !== undefined ? [{ composant: 'Valeur', donnee: d(`ligne.${montant.colonne}`), format: 'montant' }] : []),
+          ] }] } : { modele }) },
         accueil]
       break
     }
@@ -256,7 +283,8 @@ export function expanser(r: Remplissage, o: OptionsGabarit): O {
         { composant: 'Pile', sens: 'ligne', espace: 's', enfants: (v.suites as { libelle: string; route: string }[]).map((x, i) => bouton(x.libelle, [nav(x.route)], i === 0 ? 'principal' : 'secondaire')) }]
       break
     case 'compte':
-      corps = [titre(t('titre')), { composant: 'Valeur', libelle: g.utilisateur!, donnee: d('session.utilisateur') },
+      // Le profil, toujours ; l'identifiant de connexion, seulement s'il y en a un (jamais un tiret « — »).
+      corps = [titre(t('titre')), { composant: 'Valeur', libelle: g.role!, donnee: d('session.role') }, { composant: 'Valeur', libelle: g.utilisateur!, donnee: d('session.utilisateur'), si: d('session.utilisateur') },
         bouton(g.aide!, [nav('aide')], 'secondaire', 'aide'), bouton(g.contact!, [nav('contact')], 'secondaire', 'message'), bouton(g.legal!, [nav('legal')], 'secondaire', 'document'),
         bouton(g.deconnexion!, [{ faire: 'emit', evenement: 'deconnexion' }, nav('accueil')], 'danger'), accueil]
       break
@@ -266,5 +294,6 @@ export function expanser(r: Remplissage, o: OptionsGabarit): O {
     default:
       throw new Error(`archétype inconnu : ${r.archetype}`)
   }
-  return { route: r.route, acces: r.acces, titre: t('titre'), ...(etat.length > 0 ? { etat } : {}), corps }
+  const icone = r.archetype === 'pageDuCompte' ? ICONE_PAGE[r.route] ?? 'document' : ICONE_ARCHETYPE[r.archetype]
+  return { route: r.route, acces: r.acces, titre: t('titre'), ...(icone !== undefined ? { icone } : {}), ...(etat.length > 0 ? { etat } : {}), corps }
 }

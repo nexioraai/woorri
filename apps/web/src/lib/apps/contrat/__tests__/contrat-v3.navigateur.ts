@@ -167,6 +167,39 @@ describe('V3 · les archétypes dans Chromium', () => {
     }
   }, 300_000)
 
+  it('⑥ V4.3f · les chiffres sont ceux des données ; vides, aucun autre que 0 ; la coque suit la largeur', async () => {
+    const lire = async (doc: string, largeur: number) => {
+      const p = await ouvrir(doc, largeur)
+      await aller(p, 'tableau')
+      if (await p.evaluate(`!!document.querySelector('[data-deribfy="garde"]')`)) { await p.click('[data-deribfy="garde"] [data-role] button'); await p.waitForTimeout(120) }
+      const r = (await p.evaluate(`(() => ({
+        cartes: [...document.querySelectorAll('main [data-mesure]')].map((e) => (e.innerText || '').replace(/\\s+/g, ' ').trim()),
+        barres: document.querySelectorAll('main [data-mesure="ideal"] [role="img"] > div').length,
+        texte: (document.querySelector('main') || document.body).innerText,
+        aside: !!document.querySelector('aside nav[aria-label="Navigation"]'),
+        bas: [...document.querySelectorAll('div > nav[aria-label="Navigation"]:not(aside nav) button')].map((b) => ({ libelle: (b.innerText || '').trim(), icone: !!b.querySelector('svg') })),
+      }))()`)) as { cartes: string[]; barres: number; texte: string; aside: boolean; bas: { libelle: string; icone: boolean }[] }
+      await p.close()
+      return r
+    }
+    const plein = await lire(await html({}), 1280)
+    // 8 réservations, 301 000 au total : ce sont les données du témoin, pas une valeur écrite.
+    expect(plein.cartes.find((x) => x.startsWith('Au total'))).toMatch(/^Au total 8 /u)
+    expect(plein.cartes.find((x) => x.startsWith('Montant total'))).toMatch(/301\s000/u)
+    expect(plein.barres).toBe(6)
+    expect(plein.aside).toBe(true)
+    // Vides : chaque carte dit « 0 » ou « pas encore », et aucun autre chiffre n'apparaît.
+    const vide = await lire(await html({ etat: 'vide' }), 1280)
+    expect(vide.cartes.length).toBeGreaterThan(0)
+    expect(vide.cartes.every((x) => /Pas encore de données/u.test(x))).toBe(true)
+    expect(vide.texte.match(/[1-9]/gu) ?? []).toEqual([])
+    // Le téléphone : pas de menu latéral ; une barre du bas à icônes et libellés courts.
+    const tel = await lire(await html({}), 390)
+    expect(tel.aside).toBe(false)
+    expect(tel.bas.length).toBeGreaterThanOrEqual(3)
+    expect(tel.bas.every((b) => b.icone && b.libelle.length > 0 && b.libelle.length <= 14)).toBe(true)
+  }, 120_000)
+
   it('⑤ la garde : le rôle se choisit UNE fois sur le parcours ; un seul rôle, aucune question', async () => {
     const compter = async (doc: string, routes: readonly string[]) => {
       const p = await ouvrir(doc, 390)

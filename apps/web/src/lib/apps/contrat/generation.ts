@@ -33,7 +33,7 @@ import { ATTENTE_SIMULATEUR_MS, SCRIPT_EXPERIENCE } from '../juge-experience'
 import type { DefautPersistance } from '../juge-persistance'
 import { planifierEcrans, ROLE_GESTION as ROLE_GESTION_PLAN, type AppelerLeger, type Plan, type PlanEcran } from '../plan-ecrans'
 import { LANGUES_CONNUES } from '../squelette'
-import { ARCHETYPES, carte, expanser, libellesDuGabarit, type DefArchetype, type Remplissage } from './archetypes'
+import { ARCHETYPES, ICONE_ARCHETYPE, carte, expanser, libellesDuGabarit, type DefArchetype, type Remplissage } from './archetypes'
 import type { Spec } from './catalogue'
 import { compilerApp } from './compiler'
 import { remplirEcran, textesDuRepli, type AppelModele, type EcranRempli, type FicheEcran, type JetonsAppel, type PrixJetons, type Voisine } from './deux-passes'
@@ -270,7 +270,7 @@ export async function genererApplication(o: {
   const langues = (ctx.langues.length > 0 ? ctx.langues : [principale]).map(langueApp)
   const ecrans = composerEcrans({
     graphe, squelette, principale, langues, nom: o.nom,
-    lus: fiches.map((f, i) => ({ route: f.r.route, ecran: remplis[i]!.ecran, titre: titreDe(remplis[i]!.remplissage, f.r.nom), acces: f.fiche.acces })),
+    lus: fiches.map((f, i) => ({ route: f.r.route, ecran: remplis[i]!.ecran, titre: titreDe(remplis[i]!.remplissage, f.r.nom), acces: f.fiche.acces, icone: ICONE_ARCHETYPE[remplis[i]!.archetype] ?? 'document' })),
   })
   const sansTraduction: Spec = { ecrans: ecrans as Spec['ecrans'], barre: [...graphe.barre] }
 
@@ -343,12 +343,12 @@ export function composerEcrans(o: {
   readonly principale: string
   readonly langues: readonly LangueApp[]
   readonly nom: string
-  readonly lus: readonly { readonly route: string; readonly ecran: Record<string, unknown>; readonly titre: string; readonly acces: string }[]
+  readonly lus: readonly { readonly route: string; readonly ecran: Record<string, unknown>; readonly titre: string; readonly acces: string; readonly icone?: string }[]
 }): O[] {
   const g = libellesDuGabarit(o.principale)
   const rp = textesDuRepli(o.principale)
   const ex = (r: Remplissage) => expanser(r, { langue: o.principale, langues: o.langues })
-  const cartes = o.lus.map((x) => ({ libelle: x.titre, route: x.route, ...(x.acces !== 'visiteur' ? { role: x.acces } : {}) }))
+  const cartes = o.lus.map((x) => ({ libelle: x.titre, route: x.route, ...(x.acces !== 'visiteur' ? { role: x.acces } : {}), ...(x.icone !== undefined ? { icone: x.icone } : {}) }))
   const gestion = o.graphe.routes.find((r) => r.origine === 'gestion')
   const parRoute = new Map<string, O>()
   for (const r of o.graphe.routes) {
@@ -361,7 +361,7 @@ export function composerEcrans(o: {
   // ── LA COUTURE : au-delà de douze, les cartes suivantes ; puis l'entrée de la gestion.
   parRoute.set('accueil', coudre(parRoute.get('accueil')!, [
     ...(cartes.length > 12 ? [{ composant: 'Pile', espace: 's', enfants: cartes.slice(12).map(carte) }] : []),
-    ...(gestion !== undefined ? [carte({ libelle: rp.gestion!, route: gestion.route, role: gestion.acces })] : []),
+    ...(gestion !== undefined ? [carte({ libelle: rp.gestion!, route: gestion.route, role: gestion.acces, icone: 'reglages' })] : []),
   ]))
   for (let i = 0; i + 1 < o.graphe.parcours.length; i += 1) {
     const a = o.graphe.parcours[i]!

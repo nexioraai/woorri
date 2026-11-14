@@ -162,7 +162,7 @@ export const COMPOSANTS: Readonly<Record<string, DefComposant>> = {
   Valeur: { aide: 'une donnée affichée, avec son libellé', props: {
     libelle: p(T, false, 'ce que c’est'),
     donnee: p(L, true, 'la donnée'),
-    format: p(variante('texte', 'montant', 'date', 'nombre', 'statut'), false, 'montant : dans la devise de l’application'),
+    format: p(variante('texte', 'montant', 'date', 'nombre', 'statut', 'initiales'), false, 'montant : dans la devise de l’application ; initiales : un rond à initiales'),
   } },
   Bouton: { aide: 'une commande ; elle porte TOUJOURS au moins un effet', props: {
     libelle: p(T, true, 'ce qui est écrit dessus'),
@@ -186,6 +186,7 @@ export const COMPOSANTS: Readonly<Record<string, DefComposant>> = {
     videAction: p({ g: 'effets' }, false, 'l’appel à l’action de l’état vide'),
     videLibelle: p(T, false, 'son libellé'),
     videSi: p(L, false, 'l’appel à l’action de l’état vide n’est montré que si cette liaison est vraie'),
+    disposition: p(variante('grille', 'liste', 'recents'), false, 'grille par défaut ; recents : les cinq plus récentes, en liste'),
   } },
   Fiche: { aide: 'la ligne en cours d’une table (choisie par navigate avec), avec ses états', props: {
     donnee: p(L, true, '`table.<table>`'),
@@ -212,10 +213,38 @@ export const COMPOSANTS: Readonly<Record<string, DefComposant>> = {
     texte: p(T, true, 'ce qu’il dit'),
     effets: p({ g: 'effets' }, false, 'une issue (réessayer, revenir)'),
   } },
+  // ── V4.3f : le tableau de bord. Ses chiffres sont CALCULÉS depuis les lignes réelles de la
+  // table, par le moteur — jamais écrits par personne (aucun chiffre inventé).
+  Indicateur: { aide: 'un chiffre clé, calculé depuis une table', props: {
+    donnee: p(L, true, '`table.<table>`'),
+    libelle: p(T, true, 'ce que le chiffre compte'),
+    mesure: p(variante('nombre', 'somme'), true, 'nombre : les lignes ; somme : une colonne additionnée'),
+    colonne: p({ g: 'table' }, false, 'pour somme : la colonne additionnée'),
+    format: p(variante('nombre', 'montant'), false, 'montant : dans la devise de l’application'),
+    icone: p({ g: 'icone' }, false, 'son pictogramme'),
+  } },
+  Graphique: { aide: 'un graphique, calculé depuis une table', props: {
+    donnee: p(L, true, '`table.<table>`'),
+    titre: p(T, true, 'ce qu’il montre'),
+    forme: p(variante('barres', 'anneau'), true, 'barres : par mois (colonne de date) ou par valeur ; anneau : la part de chaque valeur'),
+    par: p({ g: 'table' }, true, 'la colonne qui regroupe (date, statut, catégorie)'),
+    valeur: p({ g: 'table' }, false, 'la colonne additionnée ; absente : on compte les lignes'),
+  } },
   Trait: { aide: 'une séparation', props: {
     espace: p(jeton('espace'), false, 'l’espace autour'),
   } },
 }
+
+/**
+ * Les composants que SEULS les gabarits de Deribfy posent (V4.3f) : leurs chiffres
+ * sont calculés par le moteur depuis les données ; le modèle ne les écrit jamais,
+ * et sa consigne ne les décrit pas.
+ */
+export const COMPOSANTS_DE_DERIBFY: readonly string[] = ['Indicateur', 'Graphique']
+/** De même pour l'écran : son pictogramme de navigation est posé par les gabarits. */
+export const PROPS_ECRAN_DE_DERIBFY: readonly string[] = ['icone']
+/** Et ces props-là d'un composant (la disposition des derniers ajouts). */
+export const PROPS_DE_DERIBFY: Readonly<Record<string, readonly string[]>> = { Lignes: ['disposition'] }
 
 /** Les quatre actions. `submit` est exécuté par le squelette en JavaScript : aucun formulaire. */
 export const ACTIONS = {
@@ -246,6 +275,7 @@ export const PROPS_ECRAN = {
   route: 'la route du plan',
   acces: 'le rôle qui l’ouvre, ou `visiteur`',
   titre: 'le titre, en clair',
+  icone: 'facultatif : le pictogramme de l’écran dans la navigation',
   tetrade: 'facultatif : `{ table, vue }` pour un écran de tétrade',
   etat: 'facultatif : les valeurs d’état, `[{ nom, nature, initial? }]`',
   corps: 'les composants',
@@ -334,6 +364,7 @@ export const Ecran = z.strictObject({
   route: Route,
   acces: z.string().regex(MOTIF.role),
   titre: Texte,
+  icone: z.enum(ICONES).optional(),
   tetrade: z.strictObject({ table: Identifiant, vue: z.enum(VUES_TETRADE) }).optional(),
   etat: z.array(z.strictObject({ nom: Identifiant, nature: z.enum(NATURES_ETAT), initial: Litteral.optional() })).optional(),
   corps: z.array(Noeud).min(1),
@@ -371,7 +402,7 @@ export function schemaJsonDuContrat(): Record<string, unknown> {
 export function identifiantsDuCatalogue(): Set<string> {
   // Ce que le MODÈLE écrit : un écran. L'application, la barre et les traductions sont à Deribfy.
   const s = new Set<string>(['composant', 'faire', '$data', 'visiteur'])
-  for (const k of Object.keys(PROPS_ECRAN)) s.add(k)
+  for (const k of Object.keys(PROPS_ECRAN)) if (!PROPS_ECRAN_DE_DERIBFY.includes(k)) s.add(k)
   for (const k of ['table', 'vue', 'nom', 'nature', 'initial', 'champ', 'egal', 'depuis', 'valeur', 'libelle']) s.add(k)
   for (const [ev, champs] of Object.entries(CHARGES)) { s.add(ev); for (const c of Object.keys(champs)) s.add(c) }
   for (const v of VUES_TETRADE) s.add(v)
@@ -380,9 +411,10 @@ export function identifiantsDuCatalogue(): Set<string> {
   for (const [jeu, valeurs] of Object.entries(JETONS)) { s.add(jeu); for (const v of valeurs) s.add(v) }
   for (const i of ICONES) s.add(i)
   for (const src of Object.keys(SOURCES)) s.add(src)
-  for (const [nom, def] of Object.entries(COMPOSANTS)) {
+  for (const [nom, def] of Object.entries(COMPOSANTS).filter(([n]) => !COMPOSANTS_DE_DERIBFY.includes(n))) {
     s.add(nom)
     for (const [prop, d] of Object.entries(def.props)) {
+      if ((PROPS_DE_DERIBFY[nom] ?? []).includes(prop)) continue
       s.add(prop)
       if (d.genre.g === 'variante') for (const v of d.genre.valeurs) s.add(v)
     }
