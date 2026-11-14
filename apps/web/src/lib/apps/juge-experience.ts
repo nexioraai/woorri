@@ -102,6 +102,7 @@ export const SCRIPT_EXPERIENCE = String.raw`async (o) => {
   // Sans cela, un formulaire à photo obligatoire bloquait le parcours — et le juge ne passait que par
   // un « Continuer » qui sautait l'étape.
   const PNG_1PX = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+  let joint = false
   const joindre = (c) => {
     try {
       if (c.files && c.files.length > 0) return
@@ -114,9 +115,13 @@ export const SCRIPT_EXPERIENCE = String.raw`async (o) => {
       const dt = new DataTransfer(); dt.items.add(f)
       c.files = dt.files
       c.dispatchEvent(new Event('change', { bubbles: true }))
+      joint = true
     } catch (e) {}
   }
+  // On n'attend une prise QUE si un fichier vient d'être joint (sinon : aucun délai ajouté).
   const confirmerLesPrises = async () => {
+    if (!joint) return
+    joint = false
     for (let k = 0; k < 10 && zone().querySelector('[data-attente] button') === null && zone().querySelector('input[type="file"]') !== null; k += 1) await att(30)
     for (const b of [...zone().querySelectorAll('[data-attente] button')]) { try { b.click() } catch (e) {} }
     await att(30)
