@@ -46,6 +46,8 @@ export type PlanGraphe = {
   readonly parcours: readonly string[]
   readonly barre: readonly string[]
   readonly tables: readonly TableLue[]
+  /** Les rôles lus, plus « Gestionnaire » quand aucun rôle lu ne gère. */
+  readonly roles: readonly string[]
   readonly refus: readonly { readonly quoi: string; readonly motif: string }[]
 }
 
@@ -55,7 +57,12 @@ export function routeDe(nom: string): string {
   return s === '' ? 'ecran' : s
 }
 
-/** Le rôle de gestion : celui que la lecture nomme ainsi, sinon le premier rôle lu. */
+/**
+ * Le rôle de gestion : celui que la lecture nomme ainsi. Si aucun rôle lu ne le
+ * dit, Deribfy CRÉE le rôle « Gestionnaire » et le consigne : la gestion des
+ * tables ne retombe jamais sur un rôle de l'usager (pièces auto : « client »).
+ */
+export const ROLE_GESTIONNAIRE = 'Gestionnaire'
 const ROLE_GESTION = /admin|gestion|g[ée]rant|direct|responsable|secr[ée]tariat|personnel/iu
 
 const NOMS_SOCLE: Readonly<Record<string, string>> = { accueil: 'Accueil', compte: 'Compte', aide: 'Aide', contact: 'Contact', legal: 'Mentions légales' }
@@ -85,8 +92,10 @@ export function deriverPlan(l: LectureGraphe, tablesDeclarees: readonly TableLue
     if (secretes.length > 0) refus.push({ quoi: `table « ${t.nom} »`, motif: `colonne(s) secrète(s) ${secretes.join(', ')} retirée(s) des écrans : la connexion les porte (COLONNE_SECRETE)` })
     return { ...t, colonnes: t.colonnes.filter((c) => !COLONNE_SECRETE.test(c)) }
   })
-  const gestion = l.roles.find((r) => ROLE_GESTION.test(r)) ?? l.roles[0] ?? 'gestion'
-  if (!l.roles.some((r) => ROLE_GESTION.test(r))) refus.push({ quoi: 'rôle de gestion', motif: `aucun rôle lu ne le dit : la gestion des tables va à « ${gestion} »` })
+  const lu = l.roles.find((r) => ROLE_GESTION.test(r))
+  const gestion = lu ?? ROLE_GESTIONNAIRE
+  const roles = lu !== undefined ? [...l.roles] : [...l.roles, ROLE_GESTIONNAIRE]
+  if (lu === undefined) refus.push({ quoi: 'rôle de gestion', motif: `aucun rôle lu ne le dit : Deribfy crée le rôle « ${ROLE_GESTIONNAIRE} », qui gère les tables` })
   for (const t of tables) {
     const lesVues = t.journal === true ? (['liste', 'detail'] as const) : (['liste', 'detail', 'creer', 'editer'] as const)
     for (const v of lesVues) ajouter({ route: `${routeDe(t.nom)}-${v}`, nom: `${t.nom} — ${v}`, origine: 'tetrade', acces: gestion, tetrade: { table: t.nom, vue: v } })
@@ -103,14 +112,14 @@ export function deriverPlan(l: LectureGraphe, tablesDeclarees: readonly TableLue
   const candidats = [...parcours.filter((r) => r !== 'accueil'), ...lus].filter((r, i, a) => a.indexOf(r) === i)
   const barre = ['accueil', ...candidats.slice(0, 3), 'compte']
   if (barre.length < 3) barre.splice(1, 0, 'aide')
-  return { routes, parcours, barre, tables, refus }
+  return { routes, parcours, barre, tables, roles, refus }
 }
 
 /** Le contexte de validation d'un plan : ses routes, ses rôles, ses tables, la lecture. */
 export function contexteDuPlan(p: PlanGraphe, l: LectureGraphe): Contexte {
   return {
     routes: p.routes.filter((r) => r.origine !== 'tetrade').map((r) => r.route),
-    roles: [...l.roles],
+    roles: [...p.roles],
     tables: p.tables,
     langues: l.langues ?? [],
     devises: l.devises ?? [],

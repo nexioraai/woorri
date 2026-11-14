@@ -6,8 +6,9 @@
 //      leur tétrade, 100 % des routes ont un écran, le validateur couche 2 ne
 //      lève AUCUN refus de graphe ; le compte mène à l'aide, au contact, aux
 //      mentions légales et déconnecte ; le parcours lu est relié d'écran en écran ;
-//   ② quand la lecture ne nomme aucun rôle de gestion, la dérivation le DIT
-//      (pièces auto : la gestion tombe au premier rôle lu, « client ») ;
+//   ② quand la lecture ne nomme aucun rôle de gestion, Deribfy CRÉE le rôle
+//      « Gestionnaire », le consigne, et lui donne les tables — jamais à un
+//      rôle de l'usager (pièces auto lit « client ») ;
 //   ③ une colonne secrète est retirée des écrans dès la dérivation (A1, écran 10 :
 //      utilisateur.mot_de_passe) ;
 //   ④ la dérivation est déterministe.
@@ -16,7 +17,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { contexteDuPlan, deriverPlan, mesurerPlan, squeletteDeSpec, type LectureGraphe } from '../graphe'
+import { ROLE_GESTIONNAIRE, contexteDuPlan, deriverPlan, mesurerPlan, squeletteDeSpec, type LectureGraphe } from '../graphe'
 import { validerSpec, type Contexte, type TableLue } from '../validateur'
 
 const J = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'lectures-v2.json'), 'utf8')) as {
@@ -56,10 +57,23 @@ describe('V2 · le graphe dérivé de la lecture', () => {
     })
   })
 
-  it('② aucun rôle de gestion lu : la dérivation le dit', () => {
-    const r = juger(J.lectures['pieces-c4522e43']!.lecture, J.lectures['pieces-c4522e43']!.tables)
-    expect(r.plan.refus.filter((x) => x.quoi === 'rôle de gestion')).toHaveLength(1)
-    expect(r.plan.routes.filter((x) => x.origine === 'tetrade').every((x) => x.acces === 'client')).toBe(true)
+  it('② aucun rôle de gestion lu : Deribfy crée « Gestionnaire » et le consigne', () => {
+    const { lecture, tables } = J.lectures['pieces-c4522e43']!
+    const r = juger(lecture, tables)
+    expect(lecture.roles.some((x) => /gestion/iu.test(x))).toBe(false)
+    expect(r.plan.refus.filter((x) => x.quoi === 'rôle de gestion').map((x) => x.motif)).toEqual(['aucun rôle lu ne le dit : Deribfy crée le rôle « Gestionnaire », qui gère les tables'])
+    expect(r.plan.roles).toEqual([...lecture.roles, ROLE_GESTIONNAIRE])
+    const tetrade = r.plan.routes.filter((x) => x.origine === 'tetrade')
+    expect(tetrade.length).toBeGreaterThan(0)
+    expect(tetrade.every((x) => x.acces === ROLE_GESTIONNAIRE)).toBe(true)
+    expect(tetrade.some((x) => lecture.roles.includes(x.acces))).toBe(false)
+    // Un rôle de gestion lu : aucun rôle créé, rien consigné.
+    for (const [id, x] of Object.entries(J.lectures)) {
+      if (id === 'pieces-c4522e43') continue
+      const p = juger(x.lecture, x.tables).plan
+      expect(p.roles, id).toEqual(x.lecture.roles)
+      expect(p.refus.filter((y) => y.quoi === 'rôle de gestion'), id).toEqual([])
+    }
   })
 
   it('③ une colonne secrète n’entre dans aucun écran : retirée dès la dérivation', () => {
