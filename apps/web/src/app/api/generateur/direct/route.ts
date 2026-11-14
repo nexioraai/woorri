@@ -430,6 +430,12 @@ export async function POST(req: Request) {
 
   let entree = 0
   let sortie = 0
+  // ── LE PLAN FLASH PART AU MODÈLE LÉGER, ET SE PAIE À SON TARIF (V4, bloc 3,
+  // 2026-11-14). Ses jetons étaient comptés au tarif du gros modèle : la ligne
+  // de Hayine aurait dit ~0,133 $ pour un coût réel de ~0,12 $. Ils sont tenus
+  // à part, et payés au `prixLeger` du fournisseur.
+  let entreeLeger = 0
+  let sortieLeger = 0
 
   /**
    * L'APPEL, ET IL EST NU.
@@ -470,8 +476,8 @@ export async function POST(req: Request) {
       system,
       messages: [{ role: 'user', content: texte }],
     })
-    entree += r.usage.input_tokens
-    sortie += r.usage.output_tokens
+    entreeLeger += r.usage.input_tokens
+    sortieLeger += r.usage.output_tokens
     return r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
   }
 
@@ -644,7 +650,9 @@ export async function POST(req: Request) {
   // 06:00-10:00 UTC, du lundi au vendredi — a donc été enregistrée à la
   // MOITIÉ de son coût réel.
   const tarif = tarifAppel
-  const coutUsd = (entree * tarif.entree + sortie * tarif.sortie) / 1e6
+  const tarifLeger = tarifDe(config.prixLeger, new Date(debut))
+  const coutPlanUsd = (entreeLeger * tarifLeger.entree + sortieLeger * tarifLeger.sortie) / 1e6
+  const coutUsd = (entree * tarif.entree + sortie * tarif.sortie) / 1e6 + coutPlanUsd
 
   // ── LA LIGNE EST ECRITE DANS LES DEUX CAS, SUCCES COMME ECHEC.
   //
@@ -673,8 +681,8 @@ export async function POST(req: Request) {
     statut: resultat.ok ? 'livree' : 'refusee',
     cout_usd: Number(coutUsd.toFixed(4)),
     duree_ms: dureeMs,
-    jetons_entree: entree,
-    jetons_sortie: sortie,
+    jetons_entree: entree + entreeLeger,
+    jetons_sortie: sortie + sortieLeger,
     tirages: resultat.tours.length,
     diagnostics: resultat.ok
       ? [
@@ -771,6 +779,8 @@ export async function POST(req: Request) {
       couverture: resultat.couverture,
       persistance: resultat.persistance,
       coutModele: resultat.cout,
+      // Le plan flash, au tarif du modèle léger : ses jetons et son coût, à part.
+      plan_flash: { entree: entreeLeger, sortie: sortieLeger, coutUsd: Number(coutPlanUsd.toFixed(6)) },
     },
   }
   // ── UNE ŒUVRE NEUVE S'INSÈRE ; UNE RÉGÉNÉRATION MET À JOUR.

@@ -24,6 +24,7 @@ import { join } from 'node:path'
 // table change, et le test passerait au vert contre du vide.
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
+import { CONFIGS } from '@/lib/apps/fournisseur'
 
 const { reponses, journal } = vi.hoisted(() => ({
   reponses: { texte: [] as string[], i: 0, plan: '', brouillon: '' },
@@ -198,9 +199,11 @@ describe('EP-276 · la route de l’écriture directe', () => {
     // V4 : le moteur de rendu (4 fichiers), l'application compilée, l'entrée = 6.
     expect(d.fichiers).toBe(6)
     expect(d.html, 'la page n’est pas montable').toMatch(motifTexte('<div id="racine">'))
-    // LE COÛT EST RÉEL, pas inventé : le plan (100 + 50), la passe A et la
-    // passe B (1200 + 3400 chacune) aux tarifs du fournisseur.
-    expect(d.coutUsd).toBeCloseTo(((2 * 1200 + 100) * 5 + (2 * 3400 + 50) * 25) / 1e6, 6)
+    // LE COÛT EST RÉEL, pas inventé : la passe A et la passe B (1200 + 3400
+    // chacune) au tarif du gros modèle, le plan (100 + 50) au tarif du modèle
+    // LÉGER qui l'a écrit (V4, bloc 3 — il était compté au tarif du gros).
+    const c = CONFIGS.anthropic
+    expect(d.coutUsd).toBeCloseTo((2 * 1200 * c.prix.pointe.entree + 2 * 3400 * c.prix.pointe.sortie + 100 * c.prixLeger.pointe.entree + 50 * c.prixLeger.pointe.sortie) / 1e6, 9)
     const l = lignesEcrites().find((x) => x.demande === DEMANDE) ?? {}
     expect(l.moteur, 'la ligne ne dit pas quel moteur l’a produite').toBe('direct')
     expect(l.statut).toBe('livree')
@@ -213,6 +216,7 @@ describe('EP-276 · la route de l’écriture directe', () => {
     expect(sa.contrat).toEqual([])
     expect(sa.plan?.ecrans).toHaveLength(2)
     expect(sa.reflexion).toBe(0)
+    expect((l.sections_acquises as { plan_flash?: unknown }).plan_flash).toEqual({ entree: 100, sortie: 50, coutUsd: (100 * c.prixLeger.pointe.entree + 50 * c.prixLeger.pointe.sortie) / 1e6 })
   })
 
   it('③ UNE PASSE B REFUSÉE TROIS FOIS PASSE EN REPLI — journalisé avec ses refus et son coût', async () => {
