@@ -135,6 +135,11 @@ export async function POST(req: Request) {
         // tranche de 24 000 signes rend ~1 500 à 2 500 jetons : la marge est large.
         max_tokens: 8000,
         thinking: { type: 'disabled' },
+        // ── LA CRÉATIVITÉ AU MINIMUM (M13, 2026-11-14). Le même cahier Hayine, lu trois fois
+        // sans température posée (donc au défaut), a rendu 8, 10 puis 7 tables. Une lecture
+        // n'invente rien : elle relève. La température 0 réduit le hasard sans le supprimer
+        // (calculs serveur non garantis identiques) — la stabilité se MESURE ensuite.
+        temperature: 0,
         system: CONSIGNE,
         messages: [{ role: 'user', content: texte }],
       })

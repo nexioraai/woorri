@@ -73,6 +73,13 @@ describe('la lecture du brief : réflexion coupée, reprise unique, par tranches
     for (const [p] of messagesCreateMock.mock.calls as [{ thinking?: { type?: string } }][]) expect(p.thinking?.type).not.toBe('enabled')
   })
 
+  it('①bis la lecture part avec la créativité au minimum : température 0 (M13)', async () => {
+    messagesCreateMock.mockResolvedValue(reponseModele(JSON.stringify(LU_VALIDE)))
+    await POST(requete(CAHIER))
+    expect(messagesCreateMock.mock.calls.length).toBeGreaterThan(0)
+    for (const [p] of messagesCreateMock.mock.calls as [{ temperature?: number }][]) expect(p.temperature, 'la lecture part sans température : au défaut, elle varie').toBe(0)
+  })
+
   it('② une lecture tronquée est reprise une fois, et la reprise qui aboutit rend « reussie » en 2 tentatives', async () => {
     messagesCreateMock
       .mockResolvedValueOnce(reponseModele('{"ARGENT_DANS_APP":"paiements","ENTITES":[{"id":"ent_', 'max_tokens'))

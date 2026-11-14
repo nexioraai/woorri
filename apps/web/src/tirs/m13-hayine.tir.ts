@@ -29,6 +29,8 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 const BUDGET_USD = 0.01
+/** Une campagne à part ne réécrit pas la précédente : `M13_SUFFIXE=-t0` après la température 0. */
+const SUFFIXE = process.env.M13_SUFFIXE ?? ''
 const SHA = '9ee1ca865053'
 const EVIDENCE = join(racineDepot(), 'docs', 'elite-protocol', 'evidence', 'generateur-2026-11-12')
 const sha12 = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 12)
@@ -42,20 +44,20 @@ describe('tir · M13 · Hayine relu trois fois', () => {
     const { POST } = await import('@/app/api/generateur/lire-brief/route')
     let cumul = 0
     const releve: unknown[] = []
-    mkdirSync(join(EVIDENCE, 'brut', 'm13'), { recursive: true })
+    mkdirSync(join(EVIDENCE, 'brut', `m13${SUFFIXE}`), { recursive: true })
     for (let i = 1; i <= 3; i += 1) {
       if (cumul > BUDGET_USD) throw new Error(`ARRÊT AVANT la lecture ${String(i)} : ${cumul.toFixed(4)} $ > ${String(BUDGET_USD)} $`)
       const debut = Date.now()
       const res = await POST(new Request('https://deribfy.test/api/generateur/lire-brief', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer tir' }, body: JSON.stringify({ demande }) }))
       const ms = Date.now() - debut
       const d = (await res.json()) as { entites?: { name?: string; id?: string; fields?: { name?: string }[] }[]; roles?: string[]; ecrans?: string[]; lecture?: { coutUsd?: number; resultat?: string } }
-      writeFileSync(join(EVIDENCE, 'brut', 'm13', `lecture-${String(i)}.json.gz`), gzipSync(Buffer.from(JSON.stringify({ status: res.status, ms, sha12: SHA, reponse: d })), { level: 9 }))
+      writeFileSync(join(EVIDENCE, 'brut', `m13${SUFFIXE}`, `lecture-${String(i)}.json.gz`), gzipSync(Buffer.from(JSON.stringify({ status: res.status, ms, sha12: SHA, reponse: d })), { level: 9 }))
       cumul += d.lecture?.coutUsd ?? 0
       const r = { i, status: res.status, ms, coutUsd: d.lecture?.coutUsd, resultat: d.lecture?.resultat, tables: (d.entites ?? []).map((e) => e.name), colonnes: Object.fromEntries((d.entites ?? []).map((e) => [e.name, (e.fields ?? []).map((f) => f.name)])), ecrans: d.ecrans?.length, roles: d.roles }
       releve.push(r)
       process.stdout.write(`\n  lecture ${String(i)} · ${String(res.status)} · ${String(ms)} ms · ${JSON.stringify({ tables: r.tables, coutUsd: r.coutUsd })}`)
     }
-    writeFileSync(join(EVIDENCE, 'sortie', 'm13-hayine.json'), JSON.stringify({ quand: new Date().toISOString(), cumulUsd: Number(cumul.toFixed(5)), budgetUsd: BUDGET_USD, releve }, null, 1) + '\n')
+    writeFileSync(join(EVIDENCE, 'sortie', `m13-hayine${SUFFIXE}.json`), JSON.stringify({ quand: new Date().toISOString(), cumulUsd: Number(cumul.toFixed(5)), budgetUsd: BUDGET_USD, releve }, null, 1) + '\n')
     process.stdout.write(`\n  coût mesuré cumulé : ${cumul.toFixed(5)} $\n`)
   }, 600_000)
 })

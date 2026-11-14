@@ -1,0 +1,219 @@
+{
+ "quand": "2026-11-14T12:26:24.620Z",
+ "cumulUsd": 0.00363,
+ "budgetUsd": 0.01,
+ "releve": [
+  {
+   "i": 1,
+   "status": 200,
+   "ms": 7331,
+   "coutUsd": 0.001202,
+   "resultat": "reussie",
+   "tables": [
+    "compte",
+    "reservation",
+    "paiement",
+    "fournisseur",
+    "abonnement_ia",
+    "journal_audit"
+   ],
+   "colonnes": {
+    "compte": [
+     "nom",
+     "email",
+     "telephone",
+     "type",
+     "langue",
+     "verifie"
+    ],
+    "reservation": [
+     "compte",
+     "fournisseur",
+     "categorie",
+     "statut",
+     "montant_origine",
+     "devise_origine",
+     "montant_final",
+     "devise_debitee",
+     "date_creation"
+    ],
+    "paiement": [
+     "reservation",
+     "montant",
+     "devise",
+     "statut",
+     "moyen",
+     "reference_externe"
+    ],
+    "fournisseur": [
+     "nom",
+     "categorie",
+     "actif",
+     "capacites"
+    ],
+    "abonnement_ia": [
+     "compte",
+     "debut",
+     "fin",
+     "quota",
+     "credit_restant"
+    ],
+    "journal_audit": [
+     "compte",
+     "action",
+     "date",
+     "details"
+    ]
+   },
+   "ecrans": 16,
+   "roles": [
+    "particulier",
+    "agence",
+    "entreprise",
+    "administrateur"
+   ]
+  },
+  {
+   "i": 2,
+   "status": 200,
+   "ms": 7296,
+   "coutUsd": 0.001252,
+   "resultat": "reussie",
+   "tables": [
+    "compte",
+    "reservation",
+    "paiement",
+    "fournisseur",
+    "abonnement_ia",
+    "journal_audit"
+   ],
+   "colonnes": {
+    "compte": [
+     "nom",
+     "email",
+     "telephone",
+     "type",
+     "langue",
+     "verifie"
+    ],
+    "reservation": [
+     "compte",
+     "fournisseur",
+     "categorie",
+     "statut",
+     "prix_fournisseur",
+     "devise_origine",
+     "montant_total",
+     "devise_debitee",
+     "date_creation",
+     "id_externe"
+    ],
+    "paiement": [
+     "reservation",
+     "montant",
+     "devise",
+     "statut",
+     "moyen",
+     "reference",
+     "date"
+    ],
+    "fournisseur": [
+     "nom",
+     "categorie",
+     "actif",
+     "capacites"
+    ],
+    "abonnement_ia": [
+     "compte",
+     "debut",
+     "fin",
+     "quota",
+     "credit",
+     "actif"
+    ],
+    "journal_audit": [
+     "compte",
+     "action",
+     "cible",
+     "date"
+    ]
+   },
+   "ecrans": 16,
+   "roles": [
+    "particulier",
+    "agence",
+    "entreprise",
+    "administrateur"
+   ]
+  },
+  {
+   "i": 3,
+   "status": 200,
+   "ms": 6575,
+   "coutUsd": 0.001175,
+   "resultat": "reussie",
+   "tables": [
+    "compte",
+    "reservation",
+    "paiement",
+    "fournisseur",
+    "abonnement_ia",
+    "journal_audit"
+   ],
+   "colonnes": {
+    "compte": [
+     "nom",
+     "email",
+     "telephone",
+     "type",
+     "langue",
+     "verifie"
+    ],
+    "reservation": [
+     "compte",
+     "fournisseur",
+     "categorie",
+     "statut",
+     "montant_origine",
+     "devise_origine",
+     "montant_final",
+     "devise_debitee",
+     "date_creation"
+    ],
+    "paiement": [
+     "reservation",
+     "statut",
+     "montant",
+     "devise",
+     "reference_externe",
+     "date"
+    ],
+    "fournisseur": [
+     "nom",
+     "actif",
+     "capacites"
+    ],
+    "abonnement_ia": [
+     "compte",
+     "debut",
+     "fin",
+     "quota",
+     "credit"
+    ],
+    "journal_audit": [
+     "compte",
+     "action",
+     "date",
+     "details"
+    ]
+   },
+   "ecrans": 16,
+   "roles": [
+    "particulier",
+    "agence",
+    "entreprise",
+    "administrateur"
+   ]
+  }
+ ]
+}
