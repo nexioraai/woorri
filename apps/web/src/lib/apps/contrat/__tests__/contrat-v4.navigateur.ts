@@ -160,7 +160,14 @@ describe('V4 · l’application Hayine assemblée, dans Chromium', () => {
     expect(await photo.first().getAttribute('capture')).toBe('environment')
     expect(await photo.first().getAttribute('accept')).toBe('image/*')
     await photo.first().setInputFiles({ name: 'compteur.png', mimeType: 'image/png', buffer: png })
+    // T1 : la prise ATTEND « Reprendre » ou « Valider » — rien n'entre dans le formulaire avant.
+    await p.waitForSelector('[data-nature="photo"] [data-attente="oui"] img[data-media="image"]')
+    expect(await p.$$eval('[data-nature="photo"] [data-attente="oui"] label, [data-nature="photo"] [data-attente="oui"] button', (xs) => xs.map((x) => (x.textContent ?? '').trim()))).toEqual(['Reprendre', 'Valider'])
+    await p.locator('[data-nature="photo"] [data-attente="oui"] input[type="file"]').setInputFiles({ name: 'compteur-2.png', mimeType: 'image/png', buffer: png })
+    await p.waitForSelector('[data-nature="photo"] [data-attente="oui"] img[data-media="image"]')
+    await p.getByRole('button', { name: 'Valider' }).click()
     await p.waitForSelector('[data-nature="photo"] img[data-media="image"]')
+    expect(await p.$$('[data-nature="photo"] [data-attente]')).toHaveLength(0)
     // Réduite au téléphone avant l'envoi : 1 600 px au plus.
     await p.waitForFunction(() => ((document.querySelector('[data-nature="photo"] img[data-media="image"]') as HTMLImageElement | null)?.naturalWidth ?? 0) > 0)
     expect(await p.$eval('[data-nature="photo"] img[data-media="image"]', (x) => Math.max((x as HTMLImageElement).naturalWidth, (x as HTMLImageElement).naturalHeight))).toBe(1600)

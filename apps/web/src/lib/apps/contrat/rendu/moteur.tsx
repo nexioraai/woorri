@@ -350,12 +350,16 @@ function BoutonFichier({ libelle, accepte, capture, principal, surFichier, icone
 function ChampMedia({ nature, libelle, requis, aide, v, poser }: { nature: string; libelle: string; requis: boolean; aide: string | null; v: unknown; poser: (x: unknown) => void }) {
   const c = useCtx()
   const [erreur, poserErreur] = useState<string | null>(null)
+  // UNE PRISE SE VÉRIFIE (T1, norme des appareils photo) : une photo ou une vidéo prise attend
+  // « Reprendre » ou « Valider » ; seule une prise validée entre dans le formulaire.
+  const [enAttente, poserEnAttente] = useState<File | null>(null)
   const prendre = (f: File) => {
     const limite = LIMITE[nature] ?? 20 * MO
     if (f.size > limite) { poserErreur(c.s('tropLourd').replace('{n}', String(Math.round(limite / MO)))); return }
     poserErreur(null)
-    void reduire(f).then(poser)
+    void reduire(f).then((x) => { if (nature === 'fichier') poser(x); else poserEnAttente(x) })
   }
+  const valider = () => { if (enAttente !== null) { poser(enAttente); poserEnAttente(null) } }
   const localiser = () => {
     if (typeof navigator === 'undefined' || navigator.geolocation === undefined) { poserErreur(c.s('positionIndisponible')); return }
     navigator.geolocation.getCurrentPosition(
@@ -374,7 +378,16 @@ function ChampMedia({ nature, libelle, requis, aide, v, poser }: { nature: strin
             <input type="text" aria-label={libelle} value={typeof v === 'string' ? v : ''} onChange={(e) => { poser(e.target.value) }} style={{ ...champ, flex: '1 1 200px', width: 'auto' }} />
             <BoutonBrut libelle={c.s('maPosition')} genre="secondaire" icone="localisation" surClic={localiser} />
           </div>
-        : <>
+        : enAttente !== null
+          ? <div data-attente="oui" style={{ display: 'grid', gap: 8 }}>
+              <MediaVu v={enAttente} alternative={libelle} />
+              <span role="status" style={{ fontSize: TAILLE.legende, color: 'var(--dx-alerte)', fontWeight: 600 }}>{c.s('verifierPrise')}</span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <BoutonFichier libelle={c.s('reprendre')} accepte={ACCEPTE[nature] ?? '*/*'} capture="environment" principal={false} icone="appareil" surFichier={prendre} />
+                <BoutonBrut libelle={c.s('valider')} genre="principal" icone="valide" surClic={valider} />
+              </div>
+            </div>
+          : <>
             {plein ? <MediaVu v={v} alternative={libelle} /> : null}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {nature === 'photo' ? <>
