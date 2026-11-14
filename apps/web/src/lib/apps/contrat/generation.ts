@@ -239,7 +239,7 @@ export async function genererApplication(o: {
   //    « Créer un compte » est une route de Deribfy (écrite par lui, aux normes, jamais par le modèle).
   const comptesDemandes = comptesDuCahier(o.demande)
   const graphe0 = deriverPlan(lectureG, tables)
-  const graphe: PlanGraphe = comptesDemandes.mode === 'individuels' && !graphe0.routes.some((r) => r.route === ROUTE_INSCRIPTION)
+  const graphe: PlanGraphe = comptesDemandes.sorte === 'individuels' && !graphe0.routes.some((r) => r.route === ROUTE_INSCRIPTION)
     ? { ...graphe0, routes: [...graphe0.routes, { route: ROUTE_INSCRIPTION, nom: textesDuRepli(langueApp(lectureG.langues?.[0] ?? 'fr').code).creerCompte!, origine: 'socle', acces: 'visiteur' }] }
     : graphe0
   const ctx: Contexte = contexteDuPlan(graphe, lectureG)
@@ -274,7 +274,7 @@ export async function genererApplication(o: {
   // ── LES ÉCRANS DE DERIBFY, sans appel ; la composition (cartes d'accueil, gestion, couture).
   const g = libellesDuGabarit(principale)
   const langues = (ctx.langues.length > 0 ? ctx.langues : [principale]).map(langueApp)
-  const comptesPourPage = comptesDemandes.mode === 'individuels' ? { ...comptesDemandes, roleDeBase: graphe.roles.find((r) => !ROLE_GESTION_PLAN.test(r)) ?? graphe.roles[0] ?? 'utilisateur' } : null
+  const comptesPourPage = comptesDemandes.sorte === 'individuels' ? { ...comptesDemandes, roleDeBase: graphe.roles.find((r) => !ROLE_GESTION_PLAN.test(r)) ?? graphe.roles[0] ?? 'utilisateur' } : null
   const ecrans = composerEcrans({
     graphe, squelette, principale, langues, nom: o.nom, comptes: comptesPourPage,
     lus: fiches.map((f, i) => ({ route: f.r.route, ecran: remplis[i]!.ecran, titre: titreDe(remplis[i]!.remplissage, f.r.nom), acces: f.fiche.acces, icone: ICONE_ARCHETYPE[remplis[i]!.archetype] ?? 'document' })),
@@ -293,8 +293,8 @@ export async function genererApplication(o: {
   const { motif: motifComptes, ...comptesLus } = comptesDemandes
   // Une personne qui s'inscrit reçoit le premier rôle qui n'est pas de gestion ; l'indicatif est celui du pays lu.
   const indicatif = indicatifDuPays(o.lecture.pays)
-  const comptes = comptesLus.mode === 'partage' ? comptesLus : { ...comptesLus, roleDeBase: graphe.roles.find((r) => !ROLE_GESTION_PLAN.test(r)) ?? graphe.roles[0] ?? 'utilisateur', ...(indicatif !== undefined ? { indicatif } : {}) }
-  consignes.push({ quoi: 'comptes', motif: comptesLus.mode === 'partage' ? motifComptes : `${motifComptes} ; rôle de base « ${comptes.mode === 'individuels' ? String(comptes.roleDeBase) : ''} »` })
+  const comptes = comptesLus.sorte === 'partage' ? comptesLus : { ...comptesLus, roleDeBase: graphe.roles.find((r) => !ROLE_GESTION_PLAN.test(r)) ?? graphe.roles[0] ?? 'utilisateur', ...(indicatif !== undefined ? { indicatif } : {}) }
+  consignes.push({ quoi: 'comptes', motif: comptesLus.sorte === 'partage' ? motifComptes : `${motifComptes} ; rôle de base « ${comptes.sorte === 'individuels' ? String(comptes.roleDeBase) : ''} »` })
   const app = compilerApp(spec, { nom: sur(o.nom) || g.accueil!, langues, devise: o.devise, kit: kit.kit, comptes })
   const fichiers = fichiersDeLOeuvre(app, tables.map((t) => t.nom))
   const v = await assembler(new Map(fichiers))
@@ -360,7 +360,7 @@ export function composerEcrans(o: {
   readonly nom: string
   readonly lus: readonly { readonly route: string; readonly ecran: Record<string, unknown>; readonly titre: string; readonly acces: string; readonly icone?: string }[]
   /** T2b : les comptes individuels que le cahier demande — la page « Créer un compte » et son lien depuis la connexion. */
-  readonly comptes?: (Exclude<ReturnType<typeof comptesDuCahier>, { mode: 'partage' }> & { readonly roleDeBase: string }) | null
+  readonly comptes?: (Exclude<ReturnType<typeof comptesDuCahier>, { sorte: 'partage' }> & { readonly roleDeBase: string }) | null
 }): O[] {
   const g = libellesDuGabarit(o.principale)
   const rp = textesDuRepli(o.principale)

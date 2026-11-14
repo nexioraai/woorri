@@ -25,7 +25,7 @@
  */
 
 export type ComptesIndividuels = {
-  readonly mode: 'individuels'
+  readonly sorte: 'individuels'
   readonly identifiant: 'courriel' | 'telephone' | 'courriel-ou-telephone'
   readonly secret: { readonly nature: 'mot-de-passe' } | { readonly nature: 'code'; readonly chiffres: number }
   readonly verification: 'exigee' | 'facultative' | 'aucune'
@@ -77,7 +77,7 @@ export function verifierSecret(secret: string, c: ComptesIndividuels): string | 
 /** Lit des comptes individuels dans un document d'œuvre ; null si l'œuvre n'en a pas. */
 export function comptesDuDocument(document: unknown): ComptesIndividuels | null {
   const c = (document as { comptes?: unknown } | null)?.comptes as Partial<ComptesIndividuels> | undefined
-  if (c === undefined || c === null || c.mode !== 'individuels' || typeof c.roleDeBase !== 'string' || c.roleDeBase === '') return null
+  if (c === undefined || c === null || c.sorte !== 'individuels' || typeof c.roleDeBase !== 'string' || c.roleDeBase === '') return null
   if (c.identifiant !== 'courriel' && c.identifiant !== 'telephone' && c.identifiant !== 'courriel-ou-telephone') return null
   if (c.secret?.nature !== 'mot-de-passe' && !(c.secret?.nature === 'code' && Number.isInteger(c.secret.chiffres))) return null
   return c as ComptesIndividuels

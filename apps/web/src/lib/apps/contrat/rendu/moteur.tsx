@@ -46,9 +46,9 @@ export type AppCompilee = {
   readonly comptes?: ComptesApp
 }
 export type ComptesApp =
-  | { readonly mode: 'partage' }
+  | { readonly sorte: 'partage' }
   | {
-      readonly mode: 'individuels'
+      readonly sorte: 'individuels'
       readonly identifiant: 'courriel' | 'telephone' | 'courriel-ou-telephone'
       readonly secret: { readonly nature: 'mot-de-passe' } | { readonly nature: 'code'; readonly chiffres: number }
       readonly verification: 'exigee' | 'facultative' | 'aucune'
@@ -429,7 +429,7 @@ function MotDePasse({ valeur, poser, style, manque }: { valeur: string; poser: (
   const c = useCtx()
   const [visible, poserVisible] = useState(false)
   // Un code de N chiffres (le cahier le demande) : le pavé numérique, N chiffres au plus.
-  const code = c.app.comptes?.mode === 'individuels' && c.app.comptes.secret.nature === 'code' ? c.app.comptes.secret.chiffres : null
+  const code = c.app.comptes?.sorte === 'individuels' && c.app.comptes.secret.nature === 'code' ? c.app.comptes.secret.chiffres : null
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 0 }}>
       <input type={visible ? 'text' : 'password'} value={valeur} onChange={(e) => { poser(code !== null ? e.target.value.replace(/\D/gu, '').slice(0, code) : e.target.value) }} autoComplete="current-password" required aria-invalid={manque ? true : undefined}
@@ -915,7 +915,7 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
                 const id = identifiantDeCompte(identifiant ?? '', g.app.comptes)
                 void magasin.connecter(id, secretDeCompte(chaine(charge.secret) ?? '', g.app.comptes)).then(async (erreur) => {
                   if (erreur !== null) { poserAnnonce(/fetch|network|réseau|timeout/iu.test(erreur) ? erreur : s('identifiantsInvalides')); return }
-                  const compte = g.app.comptes?.mode === 'individuels' ? await magasin.compteConnecte?.() : null
+                  const compte = g.app.comptes?.sorte === 'individuels' ? await magasin.compteConnecte?.() : null
                   g.poserSession((x) => ({ role: compte?.role ?? x.role, utilisateur: compte?.utilisateur || identifiant }))
                   poserAnnonce(s('connecte')); suite()
                 })
@@ -947,7 +947,7 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
 
   const garde = ecran.acces !== 'visiteur' && g.session.role !== ecran.acces
   // T2b : une application publiée aux comptes individuels ne laisse pas CHOISIR son rôle.
-  const parCompte = g.app.comptes?.mode === 'individuels' && magasin.connecter !== undefined
+  const parCompte = g.app.comptes?.sorte === 'individuels' && magasin.connecter !== undefined
   const routeConnexion = g.app.ecrans.find((e) => emetConnexion(e.corps))?.route ?? null
   const routeInscription = g.app.ecrans.some((e) => e.route === 'creer-un-compte') ? 'creer-un-compte' : null
   return (
@@ -1009,7 +1009,7 @@ function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; maga
     return () => { window.removeEventListener('hashchange', h); window.removeEventListener('resize', r) }
   }, [app])
   useEffect(() => {
-    if (app.comptes?.mode !== 'individuels' || magasin.compteConnecte === undefined) return
+    if (app.comptes?.sorte !== 'individuels' || magasin.compteConnecte === undefined) return
     void magasin.compteConnecte().then((c) => { if (c !== null) poserSessionBrute({ role: c.role ?? 'visiteur', utilisateur: c.utilisateur }) })
   }, [app, magasin])
   useEffect(() => {
@@ -1175,14 +1175,14 @@ function routesDuRole(x: unknown, role: string, herite: string | null): string[]
 /** T2b : l'identifiant tel que l'inscription l'a rangé — un numéro sans indicatif reçoit celui du pays. */
 function identifiantDeCompte(brut: string, c: AppCompilee['comptes']): string {
   const x = brut.trim()
-  if (c?.mode !== 'individuels' || x.includes('@')) return x.toLowerCase()
+  if (c?.sorte !== 'individuels' || x.includes('@')) return x.toLowerCase()
   const t = x.replace(/[\s.()-]/gu, '')
   if (/^\+\d{8,15}$/u.test(t)) return t
   if (/^00\d{8,15}$/u.test(t)) return `+${t.slice(2)}`
   return c.indicatif !== undefined && /^0?\d{6,12}$/u.test(t) ? `${c.indicatif}${t.replace(/^0/u, '')}` : x
 }
 /** T2b : un code de N chiffres est rangé `code-<chiffres>` (même forme que le serveur, `inscription-oeuvre.ts`). */
-const secretDeCompte = (secret: string, c: AppCompilee['comptes']): string => (c?.mode === 'individuels' && c.secret.nature === 'code' ? `code-${secret}` : secret)
+const secretDeCompte = (secret: string, c: AppCompilee['comptes']): string => (c?.sorte === 'individuels' && c.secret.nature === 'code' ? `code-${secret}` : secret)
 
 /** Les rôles que l'application protège (ses écrans non publics). */
 export function rolesDeLApplication(app: AppCompilee): string[] {
@@ -1192,7 +1192,7 @@ const cleSession = (app: AppCompilee) => `deribfy:session:${app.nom}`
 /** UN seul rôle : pas de question, la session le porte d'emblée. Sinon : le rôle gardé, ou visiteur. */
 function sessionInitiale(app: AppCompilee, magasin: Source): Session {
   // T2b : comptes individuels en base — personne n'a de rôle avant de s'être connecté (relu au montage).
-  if (app.comptes?.mode === 'individuels' && magasin.connecter !== undefined) return { role: 'visiteur', utilisateur: null }
+  if (app.comptes?.sorte === 'individuels' && magasin.connecter !== undefined) return { role: 'visiteur', utilisateur: null }
   const roles = rolesDeLApplication(app)
   if (roles.length === 1) return { role: roles[0]!, utilisateur: null }
   try {

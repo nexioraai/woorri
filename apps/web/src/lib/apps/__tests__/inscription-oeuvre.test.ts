@@ -4,8 +4,8 @@
 import { describe, expect, it } from 'vitest'
 import { comptesDuDocument, inscrire, lireIdentifiant, secretDeConnexion, telephoneInternational, verifierSecret, type AdminAuth, type ComptesIndividuels, type Limiteur } from '../inscription-oeuvre'
 
-const CODE: ComptesIndividuels = { mode: 'individuels', identifiant: 'courriel-ou-telephone', secret: { nature: 'code', chiffres: 4 }, verification: 'facultative', roleDeBase: 'consommateur', indicatif: '+235' }
-const MDP: ComptesIndividuels = { mode: 'individuels', identifiant: 'courriel', secret: { nature: 'mot-de-passe' }, verification: 'aucune', roleDeBase: 'Particulier' }
+const CODE: ComptesIndividuels = { sorte: 'individuels', identifiant: 'courriel-ou-telephone', secret: { nature: 'code', chiffres: 4 }, verification: 'facultative', roleDeBase: 'consommateur', indicatif: '+235' }
+const MDP: ComptesIndividuels = { sorte: 'individuels', identifiant: 'courriel', secret: { nature: 'mot-de-passe' }, verification: 'aucune', roleDeBase: 'Particulier' }
 
 function adminSimule(erreur: string | null = null) {
   const crees: Record<string, unknown>[] = []
@@ -68,7 +68,7 @@ describe('T2b-2 · l’inscription dans une application publiée', () => {
 
   it('⑥ seule une œuvre aux comptes INDIVIDUELS ouvre l’inscription', () => {
     expect(comptesDuDocument({ comptes: CODE })).toEqual(CODE)
-    expect(comptesDuDocument({ comptes: { mode: 'partage' } })).toBeNull()
+    expect(comptesDuDocument({ comptes: { sorte: 'partage' } })).toBeNull()
     expect(comptesDuDocument({})).toBeNull()
     expect(comptesDuDocument({ comptes: { ...CODE, roleDeBase: '' } })).toBeNull()
   })

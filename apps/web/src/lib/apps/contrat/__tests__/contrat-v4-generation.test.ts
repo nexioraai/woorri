@@ -277,18 +277,18 @@ describe('V4 · bloc 2 · la génération branchée', () => {
 
   it('⑨ les comptes : ce que le CAHIER demande — individuels, ou partagés seulement s’il ne dit rien', async () => {
     // Hayine : « La création de compte est obligatoire », nom, e-mail, téléphone, vérification des coordonnées.
-    expect(comptesDuCahier(CAHIER)).toMatchObject({ mode: 'individuels', identifiant: 'courriel-ou-telephone', secret: { nature: 'mot-de-passe' }, verification: 'exigee' })
+    expect(comptesDuCahier(CAHIER)).toMatchObject({ sorte: 'individuels', identifiant: 'courriel-ou-telephone', secret: { nature: 'mot-de-passe' }, verification: 'exigee' })
     // La tontine ne demande aucune inscription : le repli, un accès partagé.
     const tontine = readFileSync(join(__dirname, '..', '..', '__tests__', 'fixtures', 'cahier.txt'), 'utf8')
-    expect(comptesDuCahier(tontine).mode).toBe('partage')
+    expect(comptesDuCahier(tontine).sorte).toBe('partage')
     // Un code personnel, le téléphone seul, une vérification facultative.
     expect(comptesDuCahier('Création de compte obligatoire. Numéro de téléphone obligatoire. Le compte est protégé par un code personnel à 4 chiffres. La vérification par SMS peut être proposée, mais elle n’est pas obligatoire.'))
-      .toMatchObject({ mode: 'individuels', identifiant: 'telephone', secret: { nature: 'code', chiffres: 4 }, verification: 'facultative' })
-    expect(comptesDuCahier('Chaque client peut s’inscrire avec son adresse e-mail et un mot de passe.')).toMatchObject({ mode: 'individuels', identifiant: 'courriel', secret: { nature: 'mot-de-passe' }, verification: 'aucune' })
+      .toMatchObject({ sorte: 'individuels', identifiant: 'telephone', secret: { nature: 'code', chiffres: 4 }, verification: 'facultative' })
+    expect(comptesDuCahier('Chaque client peut s’inscrire avec son adresse e-mail et un mot de passe.')).toMatchObject({ sorte: 'individuels', identifiant: 'courriel', secret: { nature: 'mot-de-passe' }, verification: 'aucune' })
     // La génération le porte jusqu'à l'application, et le CONSIGNE.
     const { r } = await hayine()
     // Le rôle de base : le premier qui n'est pas de gestion — jamais un rôle de gestion par une inscription.
-    expect(r.app.comptes).toMatchObject({ mode: 'individuels', identifiant: 'courriel-ou-telephone', secret: { nature: 'mot-de-passe' }, verification: 'exigee', roleDeBase: 'Particulier' })
+    expect(r.app.comptes).toMatchObject({ sorte: 'individuels', identifiant: 'courriel-ou-telephone', secret: { nature: 'mot-de-passe' }, verification: 'exigee', roleDeBase: 'Particulier' })
     expect(r.consignes.find((c) => c.quoi === 'comptes')?.motif).toMatch(/^le cahier demande que chacun crée son compte/u)
   })
 

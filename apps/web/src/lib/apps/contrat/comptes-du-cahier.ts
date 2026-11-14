@@ -14,9 +14,9 @@
  */
 
 export type Comptes =
-  | { readonly mode: 'partage'; readonly motif: string }
+  | { readonly sorte: 'partage'; readonly motif: string }
   | {
-      readonly mode: 'individuels'
+      readonly sorte: 'individuels'
       readonly identifiant: 'courriel' | 'telephone' | 'courriel-ou-telephone'
       readonly secret: { readonly nature: 'mot-de-passe' } | { readonly nature: 'code'; readonly chiffres: number }
       readonly verification: 'exigee' | 'facultative' | 'aucune'
@@ -56,7 +56,7 @@ function phrasesDuCompte(cahier: string): string[] {
 export function comptesDuCahier(cahier: string): Comptes {
   const texte = sansAccents(cahier)
   const inscription = INSCRIPTION.exec(texte)
-  if (inscription === null) return { mode: 'partage', motif: 'le cahier ne demande pas que chacun crée son compte : un accès partagé par l’application' }
+  if (inscription === null) return { sorte: 'partage', motif: 'le cahier ne demande pas que chacun crée son compte : un accès partagé par l’application' }
   const compte = phrasesDuCompte(cahier).join(' . ')
   const courriel = COURRIEL.test(compte)
   const telephone = TELEPHONE.test(compte)
@@ -67,7 +67,7 @@ export function comptesDuCahier(cahier: string): Comptes {
   const phrasesVerif = compte.split(' . ').filter((p) => VERIFICATION.test(p))
   const verification = phrasesVerif.length === 0 ? 'aucune' : phrasesVerif.some((p) => FACULTATIVE.test(p)) ? 'facultative' : 'exigee'
   return {
-    mode: 'individuels', identifiant, secret, verification,
+    sorte: 'individuels', identifiant, secret, verification,
     motif: `le cahier demande que chacun crée son compte (« ${inscription[0]} ») : identifiant ${identifiant}, ${secret.nature === 'code' ? `code de ${String(secret.chiffres)} chiffres` : 'mot de passe'}, vérification ${verification}`,
   }
 }

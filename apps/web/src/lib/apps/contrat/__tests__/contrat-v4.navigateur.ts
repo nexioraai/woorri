@@ -244,7 +244,7 @@ describe('V4 · l’application Hayine assemblée, dans Chromium', () => {
     })
     expect(r.ok, r.motif ?? '').toBe(true)
     expect(r.contrat.map((x) => `${x.classe} · ${x.chemin} · ${x.quoi}`)).toEqual([])
-    expect(r.app.comptes).toMatchObject({ mode: 'individuels', identifiant: 'courriel-ou-telephone', secret: { nature: 'code', chiffres: 4 }, roleDeBase: 'abonné', indicatif: '+235' })
+    expect(r.app.comptes).toMatchObject({ sorte: 'individuels', identifiant: 'courriel-ou-telephone', secret: { nature: 'code', chiffres: 4 }, roleDeBase: 'abonné', indicatif: '+235' })
     const html = pageAutonome(r.code!, 'Relevés', undefined, 'apercu', null, r.languesPage)
     const p = await navigateur.newPage({ viewport: { width: 390, height: 844 } })
     await p.route('**/*', (x) => (x.request().url().startsWith(ADRESSE) ? x.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }) : x.fulfill({ status: 404, body: '' })))
