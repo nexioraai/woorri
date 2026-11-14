@@ -1,6 +1,4 @@
 /**
- * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — jusqu’à l’étape 4 (EP-365) : branché par l’étape 4.
- *
  * V3 — LES TREIZE ARCHÉTYPES. Le modèle n'écrit plus un écran : il REMPLIT les
  * emplacements (« slots ») d'un archétype imposé ; Deribfy en tire l'écran du
  * contrat. Chaque slot déclare son genre admis, sa cardinalité, s'il est requis.

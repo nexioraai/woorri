@@ -1,4 +1,6 @@
 /**
+ * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — depuis V4, bloc 2 (EP-365) : la route ne l’appelle plus ; supprimé au bloc 4.
+ *
  * LA BOUCLE D'UN ÉCRAN — un appel, des juges, au plus une reprise (3c, brique 5).
  *
  * ── CE QUI REMPLACE LA RÈGLE DU DERNIER TOUR.

@@ -1,6 +1,4 @@
 /**
- * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — à l’étape 1 seulement (EP-365) : branché par l’étape 4.
- *
  * LE CONTRAT DES ÉCRANS — étape 1 du plan « assembler plutôt qu'inventer ».
  *
  * UNE SEULE SOURCE. Tout ce qui parle du contrat en DÉRIVE, par code :

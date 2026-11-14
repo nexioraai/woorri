@@ -22,6 +22,7 @@
  */
 import type { EntiteDeclaree } from './entites-declarees'
 import { cle } from './lecture-brief'
+import { ARCHETYPES, NOMS_ARCHETYPES, type NomArchetype } from './contrat/archetypes'
 
 export type Navigation = 'public' | 'gestion'
 
@@ -44,6 +45,13 @@ export type PlanEcran = {
   readonly origine?: 'deribfy'
   /** Pour un écran de gestion écrit par Deribfy : la table qu'il gère. */
   readonly gere?: string
+  /**
+   * V4 (option `archetypes`) : l'archétype de l'écran, parmi les treize noms
+   * fermés — choisi par le plan s'il est valide, sinon DÉDUIT PAR RÈGLE depuis
+   * la table et le rôle, et le refus est consigné. Jamais un appel de plus.
+   */
+  readonly archetype?: NomArchetype
+  readonly origineArchetype?: 'plan' | 'regle'
 }
 
 export type RefusPlan = { readonly quoi: string; readonly motif: string }
@@ -96,6 +104,7 @@ export function validerPlan(
   lecture: { readonly ecrans: readonly string[]; readonly roles: readonly string[]; readonly parcours?: readonly string[] },
   entites: readonly EntiteDeclaree[],
   cahier: string,
+  options: { readonly archetypes?: boolean } = {},
 ): Plan {
   const refuses: RefusPlan[] = []
   const rolesLus = new Map(lecture.roles.map((r) => [cle(r), r.trim()]))
@@ -155,9 +164,56 @@ export function validerPlan(
     if (navBrut !== '' && navBrut !== navigation) refuses.push({ quoi: `écran « ${nom} », navigation « ${navBrut} »`, motif: `inconnue → ${navigation}` })
     const extrait = extraitCite(e.extrait, cahier)
     if (typeof e.extrait === 'string' && e.extrait.trim() !== '' && extrait === '') refuses.push({ quoi: `écran « ${nom} », extrait`, motif: 'ne cite pas le cahier : vidé' })
-    ecrans.push({ nom, slug, role, navigation, tables: { lit, ecrit: ecrit.filter((t) => t !== '') }, extrait })
+    ecrans.push({ nom, slug, role, navigation, tables: { lit, ecrit: ecrit.filter((t) => t !== '') }, extrait, ...(options.archetypes === true ? { archetype: e.archetype as NomArchetype } : {}) })
   }
-  return completerParConstruction({ ecrans, refuses }, lecture, entites, slugs)
+  const plan = completerParConstruction({ ecrans, refuses }, lecture, entites, slugs)
+  return options.archetypes === true ? avecArchetypes(plan) : plan
+}
+
+/** Les archétypes qui lisent ou écrivent une table : sans table, ils ne se remplissent pas. */
+const AVEC_TABLE = new Set<string>(NOMS_ARCHETYPES.filter((a) => 'table' in ARCHETYPES[a].slots))
+const EST_RECORD = /d[ée]tail|fiche|profil|r[ée]capitulatif|confirmation|re[çc]u|facture/iu
+const EST_PAIEMENT = /paiement|payment|transaction|versement|reglement|r[èe]glement|commande/iu
+
+/**
+ * LA RÈGLE, quand le plan n'a pas dit (ou mal dit) l'archétype : depuis la
+ * table et le rôle — la gestion → dashboard ; une écriture → formulaire ; un
+ * record → détail ; une collection → liste ; sans table → onboarding (une page
+ * de contenu). Un écran de langue → onboarding (il porte le choix de langue).
+ */
+export function archetypeParRegle(e: PlanEcran): NomArchetype {
+  if (EST_LANGUE.test(e.nom)) return 'onboarding'
+  const aTable = e.tables.lit.length > 0 || e.tables.ecrit.length > 0
+  if (!aTable) return 'onboarding'
+  if (e.navigation === 'gestion' || ROLE_GESTION.test(e.role)) return 'dashboard'
+  if (e.tables.ecrit.length > 0 && e.tables.lit.length === 0) return 'formulaire'
+  if (EST_RECORD.test(e.nom)) return 'detail'
+  if (e.tables.ecrit.length > 0) return 'formulaire'
+  return 'liste'
+}
+
+/** Pourquoi l'archétype du plan ne tient pas — null s'il tient. */
+function archetypeRefuse(e: PlanEcran, a: unknown): string | null {
+  if (a === undefined || a === null || a === '') return 'absent du plan'
+  if (typeof a !== 'string' || !(NOMS_ARCHETYPES as readonly string[]).includes(a)) return `« ${String(a)} » hors des treize noms`
+  if (AVEC_TABLE.has(a) && e.tables.lit.length === 0 && e.tables.ecrit.length === 0) return `« ${a} » lit une table, et l'écran n'en a aucune`
+  if (a === 'formulaire' && e.tables.ecrit.length === 0) return '« formulaire » écrit une table, et l’écran n’en écrit aucune'
+  if (a === 'checkout' && !e.tables.ecrit.some((t) => EST_PAIEMENT.test(t))) return '« checkout » écrit un paiement, et l’écran n’écrit aucune table de paiement'
+  return null
+}
+
+function avecArchetypes(p: Plan): Plan {
+  const refuses = [...p.refuses]
+  const ecrans = p.ecrans.map((e): PlanEcran => {
+    // Écrits par Deribfy (accueil, gestion) : le graphe V2 et les archétypes du socle les portent.
+    if (e.origine === 'deribfy' && !EST_LANGUE.test(e.nom)) return { ...e, archetype: EST_ACCUEIL.test(e.nom.trim()) ? 'accueil' : 'tableAdmin', origineArchetype: 'regle' }
+    const pourquoi = EST_LANGUE.test(e.nom) ? 'écran de langue : il porte le choix de langue' : archetypeRefuse(e, e.archetype)
+    if (pourquoi === null) return { ...e, origineArchetype: 'plan' }
+    const archetype = archetypeParRegle(e)
+    refuses.push({ quoi: `écran « ${e.nom} », archétype`, motif: `${pourquoi} → ${archetype}, déduit par règle` })
+    return { ...e, archetype, origineArchetype: 'regle' }
+  })
+  return { ...p, ecrans, refuses }
 }
 
 /**
@@ -212,16 +268,20 @@ function completerParConstruction(
 export function consignePlan(
   lecture: { readonly ecrans: readonly string[]; readonly roles: readonly string[] },
   entites: readonly EntiteDeclaree[],
+  o: { readonly archetypes?: boolean } = {},
 ): string {
   return [
     'Tu lis un cahier des charges et tu rends UN PLAN D’ÉCRANS, en JSON strict, sans autre texte :',
-    '{ "ECRANS": [ { "nom": "…", "role": "…", "navigation": "public" | "gestion", "lit": ["…"], "ecrit": ["…"], "extrait": "…" } ] }',
+    o.archetypes === true
+      ? '{ "ECRANS": [ { "nom": "…", "role": "…", "navigation": "public" | "gestion", "archetype": "…", "lit": ["…"], "ecrit": ["…"], "extrait": "…" } ] }'
+      : '{ "ECRANS": [ { "nom": "…", "role": "…", "navigation": "public" | "gestion", "lit": ["…"], "ecrit": ["…"], "extrait": "…" } ] }',
     '',
     'RÈGLES — des listes FERMÉES, tu n’inventes aucun nom :',
     `· nom : EXACTEMENT un de ces écrans, chacun une fois : ${lecture.ecrans.join(' · ')}.`,
     `· role : qui voit cet écran — un de : ${[...lecture.roles, ROLE_VISITEUR].join(' · ')} (visiteur = sans compte).`,
     '· navigation : "public" si on y arrive sans compte ou depuis la barre publique ; "gestion" si c’est un écran d’administration (espace de gestion).',
     `· lit / ecrit : les tables que cet écran AFFICHE / MODIFIE, parmi : ${entites.map((e) => e.name).join(' · ')}. Un écran sans table a des listes vides.`,
+    ...(o.archetypes === true ? [`· archetype : la forme de l’écran — EXACTEMENT un de : ${NOMS_ARCHETYPES.map((a) => `${a} (${ARCHETYPES[a].aide})`).join(' · ')}.`] : []),
     '· extrait : les phrases du cahier qui parlent de CET écran, RECOPIÉES mot pour mot (600 signes au plus). Si le cahier n’en dit rien, "".',
     'Le texte peut être une tranche d’un document plus long : décris ce que tu vois.',
   ].join('\n')
@@ -247,7 +307,8 @@ export async function planifierEcrans(
   lecture: { readonly ecrans: readonly string[]; readonly roles: readonly string[]; readonly parcours?: readonly string[] },
   entites: readonly EntiteDeclaree[],
   cahier: string,
+  o: { readonly archetypes?: boolean } = {},
 ): Promise<Plan> {
-  const texte = await appeler(consignePlan(lecture, entites), cahier)
-  return validerPlan(lireJsonDuPlan(texte), lecture, entites, cahier)
+  const texte = await appeler(consignePlan(lecture, entites, o), cahier)
+  return validerPlan(lireJsonDuPlan(texte), lecture, entites, cahier, o)
 }

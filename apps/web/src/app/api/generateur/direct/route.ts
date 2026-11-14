@@ -34,11 +34,11 @@ import { alerter } from '@/lib/alertes'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
 import { pageAutonome } from '@/lib/apps/boucle-directe'
-// ── 3c (2026-11-13) : la génération est ÉCRAN PAR ÉCRAN. L'ancienne boucle
-// (`boucleEcriture`) reste exportée, inerte, jusqu'à la preuve Hayine — puis
-// elle disparaît du dépôt (décision du propriétaire : pas de résidu).
-import { boucleEcrans } from '@/lib/apps/boucle-ecrans'
-import { MAX_JETONS_ECRAN } from '@/lib/apps/boucle-ecran'
+// ── V4 (2026-11-14) : la génération ASSEMBLE. Le graphe, les archétypes et le
+// contrat sont à Deribfy ; le modèle remplit des slots, en deux passes. Les
+// anciennes boucles (`boucleEcriture`, `boucleEcrans`) ne sont plus appelées :
+// elles disparaissent au bloc 4 (décision du propriétaire : pas de résidu).
+import { genererApplication } from '@/lib/apps/contrat/generation'
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
 import {
   emettrePolitiquesSql,
@@ -449,11 +449,14 @@ export async function POST(req: Request) {
   // Les jetons de réflexion sont comptés quoi qu'il arrive. LA TRONCATURE
   // VOYAGE AVEC LE TEXTE : seul le fournisseur sait s'il a coupé.
   let reflexion = 0
-  const appelerEcran = async (
+  // V4 : un seul appeleur pour les deux passes et la traduction ; chaque appel
+  // dit lui-même sa réflexion (coupée) et son plafond.
+  const appelerModele = async (
     system: string,
     messages: readonly { role: 'user' | 'assistant'; content: string }[],
+    options: { readonly reflexion?: boolean; readonly maxJetons: number },
   ) => {
-    const r = await appelerFournisseur(fournisseur, cle, system, messages, { reflexion: false, maxJetons: MAX_JETONS_ECRAN })
+    const r = await appelerFournisseur(fournisseur, cle, system, messages, { ...(options.reflexion === false ? { reflexion: false } : {}), maxJetons: options.maxJetons })
     entree += r.usage.entree
     sortie += r.usage.sortie
     reflexion += r.usage.reflexion
@@ -533,23 +536,25 @@ export async function POST(req: Request) {
   /** Le travail lui-même, inchangé — il rend l'objet que le flux publiera. */
   async function travailler() {
   const debut = Date.now()
+  // LE TARIF DE L'HEURE DE L'APPEL, connu AVANT : chaque écran et chaque langue
+  // portent leur coût dans la ligne (V4).
+  const tarifAppel = tarifDe(config.prix, new Date())
   let resultat
   try {
-    // LES ENTITES VONT AU JUGE DE PERSISTANCE : une table absente du code
-    // rendu est precisement ce qu'il cherche, donc elle ne peut pas s'en
-    // deduire. Elle vient du cahier, par la valeur qui a bati la consigne.
-    resultat = await boucleEcrans({
+    // CE QUE LA LECTURE A PRODUIT ENTRE DANS LA GÉNÉRATION : les écrans, les
+    // rôles, le parcours et les contraintes fermées — revalidés par
+    // `lectureAEnregistrer`. Les entités sont celles du cahier.
+    resultat = await genererApplication({
       demande,
-      configuration,
-      entites: entitesDeclarees,
-      // CE QUE LA LECTURE A PRODUIT ENTRE DANS LA GÉNÉRATION (3c) : les écrans,
-      // les rôles, les questions ouvertes — revalidés par `lectureAEnregistrer`.
-      // (Le modèle ne déclare plus de table en route : les entités sont celles
-      // du cahier, revalidées par la même grammaire que la lecture.)
-      lecture: { ecrans: lectureBrief.ecrans, roles: lectureBrief.roles, questionsOuvertes: lectureBrief.questionsOuvertes, parcours: lectureBrief.parcours, contraintes: { langues: lectureBrief.langues, devises: lectureBrief.devises, moyensPaiement: lectureBrief.moyensPaiement, pays: lectureBrief.pays } },
       nom: nom ?? TITRE_SANS_NOM,
-      appelerEcran,
+      lecture: { ecrans: lectureBrief.ecrans, roles: lectureBrief.roles, parcours: lectureBrief.parcours, langues: lectureBrief.langues, devises: lectureBrief.devises, moyensPaiement: lectureBrief.moyensPaiement, pays: lectureBrief.pays },
+      entites: entitesDeclarees,
+      devise: typeof configuration.currency === 'string' ? configuration.currency : lectureBrief.devises[0] ?? null,
+      // LA CONFIGURATION DU PRÉ-VOL ATTEINT LE MOTEUR (EP-296) : elle prime sur le cahier dans chaque fiche.
+      configuration,
+      appelerModele,
       appelerLeger,
+      prix: { entree: tarifAppel.entree, sortie: tarifAppel.sortie },
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e)
@@ -594,7 +599,8 @@ export async function POST(req: Request) {
   // Sans cette ligne, `declaration-en-route` serait le CINQUIÈME module
   // prouvé sans appelant de ce dépôt : la boucle déclarerait la table, et
   // le schéma s'émettrait quand même depuis la liste d'entrée.
-  if (resultat.ok) entitesCourantes = resultat.entites
+  // V4 : les tables sont celles du cahier ; aucune n'est découverte en route.
+  entitesCourantes = entitesDeclarees
   const dureeMs = Date.now() - debut
 
   // ── LE SCHEMA DES DONNEES DE L'OEUVRE (lot D2, 2026-11-02).
@@ -637,7 +643,7 @@ export async function POST(req: Request) {
   // Toute génération tombée dans une fenêtre de pointe — 01:00-04:00 et
   // 06:00-10:00 UTC, du lundi au vendredi — a donc été enregistrée à la
   // MOITIÉ de son coût réel.
-  const tarif = tarifDe(config.prix, new Date())
+  const tarif = tarifAppel
   const coutUsd = (entree * tarif.entree + sortie * tarif.sortie) / 1e6
 
   // ── LA LIGNE EST ECRITE DANS LES DEUX CAS, SUCCES COMME ECHEC.
@@ -672,6 +678,15 @@ export async function POST(req: Request) {
     tirages: resultat.tours.length,
     diagnostics: resultat.ok
       ? [
+          // ── LE CONTRAT SUR L'APPLICATION ENTIÈRE (V4) : vide attendu ; chaque refus se dit.
+          ...(resultat.contrat.length > 0
+            ? [`${String(resultat.contrat.length)} refus du contrat sur l’application entière : ` + [...new Set(resultat.contrat.map((r) => r.classe))].join(', ')]
+            : []),
+          // ── LES ÉCRANS EN REPLI : écrits par Deribfy depuis la table, nommés.
+          ...(resultat.couverture.replis.length > 0
+            ? [`${String(resultat.couverture.replis.length)} écran(s) en repli (écrits par Deribfy, le modèle refusé trois fois) : ${resultat.couverture.replis.join(', ')}`]
+            : []),
+          ...resultat.langues.filter((l) => l.nonTraduits.length > 0).map((l) => `${l.langue} : ${String(l.nonTraduits.length)} texte(s) non traduit(s), gardés dans la langue principale`),
           ...(resultat.execution !== null &&
           resultat.execution.indisponible === undefined &&
           (resultat.execution.ecransDecouverts ?? 0) > (resultat.execution.ecransVisites ?? 0)
@@ -700,136 +715,62 @@ export async function POST(req: Request) {
                   (resultat.execution.erreurs[0]?.message ?? 'cause inconnue'),
               ]
             : []),
-          ...(resultat.jetons.length > 0
-            ? [
-                `${String(resultat.jetons.length)} jeton(s) inexistant(s) — l’application peut mourir au démarrage : ` +
-                  [...new Set(resultat.jetons.map((d) => d.reference))].slice(0, 6).join(', '),
-              ]
+          ...((resultat.execution?.experience?.refus.length ?? 0) > 0
+            ? [`${String(resultat.execution?.experience?.refus.length ?? 0)} refus du juge d’expérience`]
             : []),
-          ...(resultat.vivacite.length > 0
-            ? [`${String(resultat.vivacite.length)} contrôle(s) sans action — voir le rapport de vivacité`]
-            : []),
-          ...(resultat.couverture.absentes.length > 0
-            ? [
-                'Couverture partielle, non déclarée : ' +
-                  resultat.couverture.absentes.map((e) => e.exigence).join(', '),
-              ]
-            : []),
-          // ── ET LE CAS OÙ LE JUGE N'A RIEN PU MESURER SE CONSIGNE AUSSI.
-          //
-          // Il rendait `taux: 1` — couverture parfaite sans avoir rien
-          // regarde. Un tir relu dans trois mois lirait 1,00 et conclurait
-          // que cette oeuvre couvrait son cahier. On l'ecrit donc LA OU
-          // l'enregistrement vit, pas seulement a l'ecran.
+          // ── LA COUVERTURE NON MESURÉE SE CONSIGNE (EP-366) : sans écran lu,
+          // il n'y a rien à couvrir, et « 1,00 » mentirait.
           ...(resultat.couverture.taux === null
-            ? [
-                'Couverture NON MESUREE : la demande ne contient aucune des ' +
-                  'familles d exigences reconnues — ce controle n a rien verifie',
-              ]
+            ? ['Couverture NON MESUREE : la lecture ne nomme aucun écran — ce controle n a rien verifie']
             : []),
-          // ── ET CE QUI RESTE EN MEMOIRE SE DIT, parce que c'est le seul
-          //    defaut dont la consequence tombe APRES la livraison.
-          //
-          // Les jetons tuent au demarrage, un controle mort se voit, une
-          // couverture partielle se lit. Une table en memoire, elle, marche
-          // a l'ecran : c'est le rechargement qui l'apprend, a la personne
-          // qui vient de perdre sa saisie. Donc on le dit MAINTENANT.
           ...(resultat.persistance.length > 0
             ? [
-                // ── LE CAS « AUCUNE TABLE » NE SE DIT PAS COMME LES AUTRES.
-                //
-                // MESURÉ SUR L'ŒUVRE 60bf2c40 (2026-11-04, 18:52) : le
-                // diagnostic stocké était
-                //
-                //     « DONNEES NON CONSERVEES — …  (ni lue ni ecrite) »
-                //
-                // avec un nom de table VIDE, parce que le verdict
-                // sentinelle de `jugerPersistance` n'en porte pas. La
-                // seule trace de ce défaut en journal n'apprenait donc
-                // rien à qui la lisait.
-                resultat.persistance.length === 1 && resultat.persistance[0]?.table === ''
-                  ? 'DONNEES NON CONSERVEES — cette application veut se souvenir ' +
-                    'et n’a AUCUNE table : ce qui y est saisi disparait au rechargement'
-                  : 'DONNEES NON CONSERVEES — ce qui y est saisi disparait au ' +
-                    'rechargement : ' +
-                    resultat.persistance
-                      .map(
-                        (d) =>
-                          `${d.table} (${d.lue ? 'lue, jamais ecrite' : d.ecrite ? 'ecrite, jamais lue' : 'ni lue ni ecrite'})`,
-                      )
-                      .join(', '),
+                'DONNEES NON CONSERVEES — ce qui y est saisi disparait au rechargement : ' +
+                  resultat.persistance.map((d) => `${d.table} (${d.lue ? 'lue, jamais ecrite' : d.ecrite ? 'ecrite, jamais lue' : 'ni lue ni ecrite'})`).join(', '),
               ]
             : []),
         ]
-      : [resultat.motif],
-    // La colonne `document` porte l'oeuvre. Ici l'oeuvre est du CODE, pas un
-    // document AIR : on range les fichiers, qui sont ce qui se recompile.
-    //
-    // ── ET LE SCHEMA DES DONNEES Y VOYAGE AVEC EUX (lot D2, 2026-11-02).
-    //
-    // Un livrable de premier rang, pas un effet de bord : versionne avec les
-    // fichiers, donc un retour en arriere ramene le code ET le schema qui lui
-    // correspond. Les separer aurait produit du code d'hier sur des tables
-    // d'aujourd'hui, sans moyen de savoir laquelle des deux a bouge.
+      : [resultat.motif ?? 'la construction a échoué'],
+    // La colonne `document` porte l'oeuvre : les fichiers qui se recompilent
+    // (le moteur, l'application compilée, l'entrée), le schéma et les
+    // politiques qui leur correspondent, et — V4 — la SPEC dont l'application
+    // est compilée : c'est elle que la retouche modifiera, pas le code.
     document: resultat.ok
       ? {
           fichiers: Object.fromEntries(resultat.fichiers),
           schema: schemaDeLOeuvre,
           politiques: politiquesDeLOeuvre,
-          // ── LA DÉCLARATION VOYAGE AVEC L'ŒUVRE (M4 a, 2026-11-04).
-          //
-          // MESURÉ AVANT D'ÉCRIRE : le document ne portait que trois
-          // clés — `fichiers`, `politiques`, `schema`. Le SQL émis,
-          // jamais les entités qui l'ont produit. Il n'y avait donc RIEN
-          // à montrer au modèle le jour d'une modification.
-          //
-          // Sans elle, il réinvente ses identifiants, toutes les tables
-          // paraissent abandonnées, et M1 arrête SYSTÉMATIQUEMENT. Le
-          // piège ne casse rien : il rend toute modification impossible.
+          // LA DÉCLARATION VOYAGE AVEC L'ŒUVRE (M4 a, 2026-11-04).
           entites: entitesCourantes,
-          // ── ET LA CONFIGURATION AVEC (b, 2026-11-04).
-          //
-          // MESURÉ : `sections_acquises.configuration` vaut `{}` sur les
-          // œuvres existantes. Le juge de devise de la RETOUCHE n'avait
-          // donc rien à comparer — il aurait été inerte, comme la
-          // couverture l'était en recevant zéro écran.
-          //
-          // Un juge inerte est pire qu'un juge absent : son zéro se lit
-          // comme « aucun défaut ».
+          // ET LA CONFIGURATION AVEC (b, 2026-11-04).
           configuration,
+          spec: resultat.spec,
+          // Les langues de la page : le bandeau d'aperçu les suit (V4).
+          langues: resultat.languesPage,
         }
       : null,
-    // ── LE DÉTAIL DE CHAQUE TOUR, ET LE BRUT DU DERNIER ESSAI.
-    //
-    // DÉFAUT MESURÉ LE 2026-10-18 : le premier tir direct a échoué en
-    // 63 secondes pour 4 centimes, et la ligne ne portait que « Non convergé
-    // en 3 tours ». Impossible de dire si DeepSeek écrivait mal, si le
-    // plafond de 8 192 jetons tronquait, ou si mon lecteur ne savait pas lire
-    // sa forme de réponse.
+    // ── LE DÉTAIL DE CHAQUE APPEL, ET DE CHAQUE ÉCRAN.
     //
     // Un échec qu'on ne sait pas lire est un échec qu'on repaiera pour
-    // comprendre. Le brut est borné à 20 000 caractères : assez pour voir la
-    // forme, pas assez pour gonfler la ligne.
+    // comprendre (2026-10-18). V4 : par écran, l'archétype, l'origine du
+    // choix, les tentatives A/B, le repli, les jetons et le coût ; par
+    // langue, ses jetons, son coût et ce qui n'est pas traduit.
     sections_acquises: {
       configuration,
       lectureBrief,
       deploiement,
       tours: resultat.tours,
-      // ── 3c : écran par écran, et le plan qui les a tenus.
-      ecrans: resultat.ecrans.map((e) => ({ nom: e.nom, slug: e.slug, resultat: e.resultat, tentatives: e.tentatives.length, ms: e.ms, jetons: e.jetons, reproches: e.reproches.map((r) => r.slice(0, 400)), dernierTexte: e.dernierTexte, origine: e.origine ?? 'modele' })),
-      plan: { refuses: resultat.plan.refuses, ecrans: resultat.plan.ecrans.map((e) => ({ nom: e.nom, slug: e.slug, role: e.role, navigation: e.navigation, tables: e.tables })) },
+      ecrans: resultat.ecrans,
+      langues: resultat.langues,
+      plan: { refuses: resultat.plan.refuses, ecrans: resultat.plan.ecrans.map((e) => ({ nom: e.nom, slug: e.slug, role: e.role, navigation: e.navigation, tables: e.tables, archetype: e.archetype, origineArchetype: e.origineArchetype })) },
+      graphe: { routes: resultat.graphe.routes.length, parcours: resultat.graphe.parcours, barre: resultat.graphe.barre, roles: resultat.graphe.roles },
+      consignes: resultat.consignes,
+      contrat: resultat.contrat,
       reflexion,
-      // 3c-2 : le juge d'expérience (simulateur) et le parcours planifié.
-      experience: resultat.ok ? resultat.experience : null,
-      parcours: resultat.plan.parcours ?? [],
-      // EP-297 : les deux juges accompagnent toute œuvre acceptée. Sans eux,
-      // « livrée » redevient un mot sans mesure — le défaut fondateur.
-      jetons: resultat.ok ? resultat.jetons : null,
-      execution: resultat.ok ? resultat.execution : null,
-      vivacite: resultat.ok ? resultat.vivacite : null,
-      couverture: resultat.ok ? resultat.couverture : null,
-      persistance: resultat.ok ? resultat.persistance : null,
-      dernierTexte: resultat.ok ? null : resultat.dernierTexte.slice(0, 20_000),
+      execution: resultat.execution,
+      couverture: resultat.couverture,
+      persistance: resultat.persistance,
+      coutModele: resultat.cout,
     },
   }
   // ── UNE ŒUVRE NEUVE S'INSÈRE ; UNE RÉGÉNÉRATION MET À JOUR.
@@ -921,25 +862,28 @@ export async function POST(req: Request) {
     // Les deux champs portent désormais une phrase lisible : quel que soit
     // celui que l'écran lit, il trouve quelque chose à dire.
     const phrase =
-      `${resultat.motif} Le code produit ne s'est pas assemblé ` +
-      `(${String(resultat.tours.length)} essai(s), ${String(Math.round(dureeMs / 1000))} s).`
+      `${resultat.motif ?? ''} L’application ne s’est pas assemblée ` +
+      `(${String(resultat.tours.length)} appel(s), ${String(Math.round(dureeMs / 1000))} s).`
     return { ok: false as const, error: phrase, motif: phrase, tours: resultat.tours, coutUsd, dureeMs }
   }
 
   return {
     ok: true as const,
     id: ecrit.data?.id ?? null,
-    html: pageAutonome(resultat.code, nom ?? TITRE_SANS_NOM),
+    // Le bandeau d'aperçu suit les langues lues et la droite-à-gauche (V4).
+    html: pageAutonome(resultat.code ?? '', nom ?? TITRE_SANS_NOM, undefined, 'apercu', null, resultat.languesPage),
     fichiers: resultat.fichiers.size,
-    ecrans: resultat.ecrans.map((e) => ({ nom: e.nom, resultat: e.resultat, tentatives: e.tentatives.length })),
+    ecrans: resultat.ecrans,
     tours: resultat.tours,
     // EP-297 : le rapport chiffré VOYAGE avec l'œuvre — l'écran le montre,
     // le propriétaire le lit, « livrée » n'est plus un mot sans mesure.
-    jetons: resultat.jetons,
+    // V4 : `jetons` et `vivacite` (juges de CODE) ne sont plus mesurés — ils
+    // sont ABSENTS, pas vides : un « 0 défaut » non mesuré serait un mensonge.
+    contrat: resultat.contrat,
     execution: resultat.execution,
-    vivacite: resultat.vivacite,
     couverture: resultat.couverture,
     persistance: resultat.persistance,
+    langues: resultat.langues,
     coutUsd,
     dureeMs,
   }

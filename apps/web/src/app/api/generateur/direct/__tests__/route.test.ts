@@ -23,9 +23,10 @@ import { join } from 'node:path'
 // dépôt l'exige, et il a raison — un nom recopié survit au jour où la vraie
 // table change, et le test passerait au vert contre du vide.
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
+import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
 
 const { reponses, journal } = vi.hoisted(() => ({
-  reponses: { texte: [] as string[], i: 0, plan: '' },
+  reponses: { texte: [] as string[], i: 0, plan: '', brouillon: '' },
   journal: { postgrest: null as unknown as { ecritures: Record<string, unknown[]> } },
 }))
 
@@ -90,10 +91,13 @@ vi.mock('@anthropic-ai/sdk', () => ({
         content: [{ type: 'text', text: reponses.plan }],
         usage: { input_tokens: 100, output_tokens: 50 },
       }),
-      stream: () => ({
+      // V4 : la réponse se choisit par la CONSIGNE reçue (passe A, passe B), pas
+      // par un rang partagé — les générations des tests voisins, dont personne
+      // ne lit le flux, tournent encore et consommeraient le rang.
+      stream: (args: { system: { text: string }[] }) => ({
         finalMessage: () => ({
           content: [
-            { type: 'text', text: reponses.texte[Math.min(reponses.i++, reponses.texte.length - 1)] ?? '' },
+            { type: 'text', text: args.system[0]?.text.startsWith('Tu rédiges') === true ? reponses.brouillon : reponses.texte[Math.min(reponses.i++, reponses.texte.length - 1)] ?? '' },
           ],
           usage: { input_tokens: 1200, output_tokens: 3400 },
         }),
@@ -104,17 +108,12 @@ vi.mock('@anthropic-ai/sdk', () => ({
 
 import { POST } from '../route'
 
-// 3c : le modèle n'écrit qu'un ÉCRAN par appel ; sans lecture ni table dans la
-// demande, le plan ne tient qu'un accueil. Le calcul de la facture y vit.
-const BON = [
-  '=== ecrans/facture.tsx ===',
-  "import React from 'react'",
-  "import type { Session } from '../systeme/types'",
-  'const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402',
-  'export default function Ecran(_p: { session: Session }) {',
-  '  return <section><h1>Facture SNE</h1><p>Total pour 159 kWh : {facture(159)}</p></section>',
-  '}',
-].join('\n')
+// V4 (2026-11-14) : le modèle ne remplit que les SLOTS d'un archétype, en deux
+// passes — A, un brouillon en texte libre ; B, sa conversion en JSON strict.
+// L'écran lu « facture » n'a pas de table : son archétype, déduit par règle, est
+// une page de contenu (onboarding).
+const BROUILLON = '### titre\nFacture SNE\n### etapes\n- Le total se lit sur votre relevé.\n### fin\naccueil\n### libelleFin\nCommencer\n'
+const BON = JSON.stringify({ slots: { titre: 'Facture SNE', etapes: [{ composant: 'Phrase', texte: 'Le total se lit sur votre relevé.' }], fin: 'accueil', libelleFin: 'Commencer' } })
 // 3c-2 : l'accueil est écrit par Deribfy ; l'écran du modèle s'appelle « facture », nommé par la lecture.
 const PLAN = JSON.stringify({ ECRANS: [{ nom: 'facture', role: 'visiteur', navigation: 'public', lit: [], ecrit: [], extrait: '' }] })
 
@@ -138,6 +137,7 @@ const appel = (demande = 'calcule ma facture SNE', nom: string | null = 'Facture
   })
 
 beforeEach(() => {
+  reponses.brouillon = BROUILLON
   reponses.texte = [BON]
   reponses.i = 0
   reponses.plan = PLAN
@@ -195,37 +195,38 @@ describe('EP-276 · la route de l’écriture directe', () => {
       coutUsd: number
     }
     expect(d.ok, 'la boucle n’aboutit pas').toBe(true)
-    // 3c : 1 écran du modèle + le squelette de Deribfy (index, 5 modules
-    // systeme, PERIMETRE.md) + 4 de la bibliothèque injectée (EP-299) = 12.
-    // 3c-2 : + systeme/langue.ts et systeme/gestion.tsx, + l'accueil de Deribfy = 15.
-    expect(d.fichiers).toBe(15)
-    expect(d.html, 'la page n’est pas montable').toContain('<div id="racine">')
-    // LE COÛT EST RÉEL, pas inventé : le plan (100 + 50) et l'écran (1200 +
-    // 3400) aux tarifs du fournisseur. S'il tombait à zéro, personne ne
-    // verrait la dépense.
-    expect(d.coutUsd).toBeCloseTo(((1200 + 100) * 5 + (3400 + 50) * 25) / 1e6, 6)
+    // V4 : le moteur de rendu (4 fichiers), l'application compilée, l'entrée = 6.
+    expect(d.fichiers).toBe(6)
+    expect(d.html, 'la page n’est pas montable').toMatch(motifTexte('<div id="racine">'))
+    // LE COÛT EST RÉEL, pas inventé : le plan (100 + 50), la passe A et la
+    // passe B (1200 + 3400 chacune) aux tarifs du fournisseur.
+    expect(d.coutUsd).toBeCloseTo(((2 * 1200 + 100) * 5 + (2 * 3400 + 50) * 25) / 1e6, 6)
     const l = lignesEcrites().find((x) => x.demande === DEMANDE) ?? {}
     expect(l.moteur, 'la ligne ne dit pas quel moteur l’a produite').toBe('direct')
     expect(l.statut).toBe('livree')
-    expect(l.jetons_sortie).toBe(3450)
-    const sa = l.sections_acquises as { ecrans?: { slug: string; resultat: string }[]; plan?: { ecrans: unknown[] }; reflexion?: number }
-    expect(sa.ecrans?.map((e) => `${e.slug}:${e.resultat}`)).toEqual(['accueil:ok', 'facture:ok'])
+    expect(l.jetons_sortie).toBe(6850)
+    const sa = l.sections_acquises as { ecrans?: { route: string; archetype: string; choix: string; tentativesA: number; tentativesB: number; repli: boolean; cout: number }[]; plan?: { ecrans: unknown[] }; reflexion?: number; contrat?: unknown[] }
+    // La ligne porte CHAQUE écran : le socle et la page lue.
+    expect(sa.ecrans?.map((e) => `${e.route}:${e.archetype}:${e.choix}`)).toEqual(['accueil:accueil:deribfy', 'compte:compte:deribfy', 'aide:pageDuCompte:deribfy', 'contact:pageDuCompte:deribfy', 'legal:pageDuCompte:deribfy', 'facture:onboarding:regle'])
+    expect(sa.ecrans?.find((e) => e.route === 'facture')).toMatchObject({ tentativesA: 1, tentativesB: 1, repli: false })
+    expect(sa.ecrans?.find((e) => e.route === 'facture')?.cout).toBeCloseTo((2 * 1200 * 5 + 2 * 3400 * 25) / 1e6, 9)
+    expect(sa.contrat).toEqual([])
     expect(sa.plan?.ecrans).toHaveLength(2)
     expect(sa.reflexion).toBe(0)
   })
 
-  it('③ UN ÉCRAN ÉCHOUÉ DEUX FOIS EST LIVRÉ « À COMPLÉTER » — journalisé avec ses reproches et son coût', async () => {
+  it('③ UNE PASSE B REFUSÉE TROIS FOIS PASSE EN REPLI — journalisé avec ses refus et son coût', async () => {
     // ── DÉFAUT MESURÉ LE 2026-10-10 : trois appels payants, UNE SEULE ligne
     // en base, et le propriétaire incapable de savoir ce qu'il avait dépensé.
-    // 3c : plus de « Non convergé » ni de règle du dernier tour. L'écran qui
-    // échoue deux fois sort visible, nommé, compté — et ce qu'il a coûté aussi.
-    reponses.texte = ['=== ecrans/facture.tsx ===\nconst x = {{{ ;']
+    // V4 : la passe B est relancée deux fois au plus ; refusée encore, Deribfy
+    // écrit l'écran depuis sa table — visible, nommé, compté, et son coût aussi.
+    reponses.texte = ['{ pas du json']
     // Une demande UNIQUE : la ligne se retrouve par elle, quoi qu'écrivent les tests voisins.
     const DEMANDE = 'calcule ma facture SNE — écran fautif'
-    const d = (await (await POST(appel(DEMANDE))).json()) as { ok: boolean; tours: unknown[]; ecrans: { nom: string; resultat: string; tentatives: number }[] }
-    expect(d.ok, 'l’application doit être livrée, avec son écran à compléter').toBe(true)
-    expect(d.ecrans).toEqual([{ nom: 'accueil', resultat: 'ok', tentatives: 0 }, { nom: 'facture', resultat: 'a_completer', tentatives: 2 }])
-    expect(d.tours.length, 'la borne de deux tentatives ne mord pas').toBe(2)
+    const d = (await (await POST(appel(DEMANDE))).json()) as { ok: boolean; tours: unknown[]; ecrans: { route: string; repli: boolean; tentativesA: number; tentativesB: number }[] }
+    expect(d.ok, 'l’application doit être livrée, avec son écran en repli').toBe(true)
+    expect(d.ecrans.find((e) => e.route === 'facture')).toMatchObject({ repli: true, tentativesA: 1, tentativesB: 3 })
+    expect(d.tours.length, 'la borne de deux relances ne mord pas').toBe(4)
     // Une livraison INSÈRE la ligne puis repositionne son pointeur de version
     // (une mise à jour sur la même table) : on compte les INSERTIONS.
     const insertions = ((journal.postgrest?.ecritures[TABLE_GENERATIONS] ?? []) as { op?: string; charge?: unknown }[])
@@ -238,8 +239,8 @@ describe('EP-276 · la route de l’écriture directe', () => {
     expect(l.moteur).toBe('direct')
     expect(Number(l.cout_usd), 'un échec payé est compté à zéro').toBeGreaterThan(0)
     const fichiers = (l.document as { fichiers?: Record<string, string> } | null)?.fichiers ?? {}
-    expect(fichiers['ecrans/facture.tsx'], 'l’écran échoué doit être livré « à compléter », pas muet').toContain('À compléter : facture')
-    expect(fichiers['PERIMETRE.md']).toContain('Écrans livrés : 1 / 2.')
+    expect(Object.keys(fichiers).sort()).toEqual(['app.ts', 'index.tsx', 'rendu/base.ts', 'rendu/donnees.ts', 'rendu/moteur.tsx', 'rendu/textes-systeme.ts'])
+    expect((l.diagnostics as string[]).some((x) => x.startsWith('1 écran(s) en repli') && x.endsWith(': facture')), 'le repli n’est pas dit dans la ligne').toBe(true)
   })
 
   it('⑤ L’APPEL EST EN FLUX — sinon le SDK refuse avant même d’envoyer', async () => {
@@ -340,29 +341,25 @@ describe('EP-276 · la route de l’écriture directe', () => {
     // 63 secondes, 4 centimes, « Non convergé en 3 tours » — et AUCUN moyen
     // de dire pourquoi. Ni l'erreur du compilateur, ni ce que le modèle avait
     // écrit. Un échec qu'on ne sait pas lire est un échec qu'on repaiera.
-    // 3c : la même exigence, par écran — chaque tentative garde son motif, et
-    // le brut du dernier essai est conservé dans la ligne.
-    reponses.texte = ['=== ecrans/facture.tsx ===\nconst x = {{{ ;']
+    // V4 : la même exigence, par passe — chaque tentative refusée garde sa
+    // CLASSE et son écran, et la ligne de l'écran garde les refus d'avant le repli.
+    reponses.texte = ['{ pas du json']
     const DEMANDE = 'calcule ma facture SNE — écran fautif, à comprendre'
     await (await POST(appel(DEMANDE))).json()
     const l = lignesEcrites().find((x) => x.demande === DEMANDE) ?? {}
     const sa = l.sections_acquises as {
-      tours?: { ok: boolean; motif?: string }[]
-      ecrans?: { resultat: string; reproches: string[]; dernierTexte: string | null; tentatives: number }[]
+      tours?: { passe: string; ok: boolean; motif?: string }[]
+      ecrans?: { route: string; repli: boolean; refus: string[] }[]
     }
-    expect(sa.tours?.length, 'les tentatives ne sont pas gardées').toBe(2)
-    expect(sa.tours?.every((t) => !t.ok && typeof t.motif === 'string' && t.motif.length > 0)).toBe(true)
-    // Chaque tentative garde SON motif — sinon on sait qu'il a échoué deux fois, pas pourquoi.
-    expect(sa.tours?.[0]?.motif).toMatch(/\[facture\]/u)
-    expect(sa.tours?.[0]?.motif).toMatch(/export default function Ecran|construction a échoué/u)
-    const e = sa.ecrans?.find((x) => x.resultat === 'a_completer')
-    expect(e?.resultat).toBe('a_completer')
-    expect(e?.reproches.length ?? 0).toBeGreaterThan(0)
-    expect(
-      e?.dernierTexte,
-      'le brut du dernier essai est perdu : impossible de dire si le modèle ' +
-        'écrit mal ou si le lecteur lit mal',
-    ).toContain('{{{')
+    expect(sa.tours?.map((t) => `${t.passe}:${String(t.ok)}`), 'les tentatives ne sont pas gardées').toEqual(['A:true', 'B:false', 'B:false', 'B:false'])
+    // Chaque tentative refusée garde SON motif — sinon on sait qu'elle a échoué, pas pourquoi.
+    for (const t of sa.tours?.filter((x) => !x.ok) ?? []) {
+      expect(t.motif).toMatch(/^\[facture\] JSON_ILLISIBLE · /u)
+    }
+    const e = sa.ecrans?.find((x) => x.route === 'facture')
+    expect(e?.repli).toBe(true)
+    expect(e?.refus.length ?? 0).toBeGreaterThan(0)
+    expect(e?.refus[0]).toMatch(/^JSON_ILLISIBLE · /u)
   })
 
   it('④ UNE DEMANDE VIDE EST REFUSÉE AVANT TOUT APPEL', async () => {

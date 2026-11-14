@@ -1,6 +1,4 @@
 /**
- * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — à l’étape 1 seulement (EP-365) : branché par l’étape 4.
- *
  * LES CONTRAINTES FERMÉES — langues, devises, moyens de paiement, pays.
  *
  * Elles viennent de la LECTURE du cahier (`lectureBrief`) ; le validateur

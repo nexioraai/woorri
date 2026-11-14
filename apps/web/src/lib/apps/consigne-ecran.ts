@@ -1,4 +1,6 @@
 /**
+ * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — depuis V4, bloc 2 (EP-365) : la route ne l’appelle plus ; supprimé au bloc 4.
+ *
  * LA CONSIGNE D'UN ÉCRAN — courte, et bornée dès le premier jour (3c, brique 4).
  *
  * ── MESURÉ (M16, 2026-11-13) : cette consigne (2 806 signes) + la fiche d'un

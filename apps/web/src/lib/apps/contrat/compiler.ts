@@ -1,6 +1,4 @@
 /**
- * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — jusqu’à l’étape 4 (EP-365) : branché par l’étape 4.
- *
  * V3 — LA COMPILATION D'UNE SPEC POUR LE MOTEUR DE RENDU (côté Deribfy).
  *
  * Chaque texte écrit en clair par le modèle devient `{ $k, $t }` : sa clé

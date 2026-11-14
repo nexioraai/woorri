@@ -88,7 +88,8 @@ describe('V3 · les archétypes', () => {
         const p = join(d, n)
         if (statSync(p).isDirectory()) { if (n !== 'node_modules' && n !== '__tests__' && n !== 'rendu') marcher(p); continue }
         if (!/\.(tsx?|mjs)$/u.test(n) || /\.(test|navigateur|tir)\.tsx?$/u.test(n)) continue
-        for (const m of readFileSync(p, 'utf8').matchAll(/^import\s+(type\s+)?[^;]*?from\s+['"]([^'"]*rendu\/(?:moteur|donnees|textes-systeme))['"]/gmu)) {
+        // Un import à la fois : sans `;` dans le code, `[^;]*?` traversait les imports précédents (faux positif mesuré sur generation.ts).
+        for (const m of readFileSync(p, 'utf8').matchAll(/^import\s+(type\s+)?(?:(?!^import\b)[^;])*?from\s+['"]([^'"]*rendu\/(?:moteur|donnees|textes-systeme|base))['"]/gmu)) {
           if (m[1] === undefined) fautifs.push(`${relative(racine, p)} → ${m[2]!}`)
         }
       }

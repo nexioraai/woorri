@@ -176,8 +176,10 @@ describe('EP-337 · l’amnésie ne se certifie plus', () => {
       join(__dirname, '..', '..', '..', 'app', 'api', 'generateur', 'direct', 'route.ts'),
       'utf8',
     )
-    expect(src, 'la route ignore ce que la boucle a appris').toMatch(
-      /if \(resultat\.ok\) entitesCourantes = resultat\.entites/u,
+    // V4 (2026-11-14) : aucune table n'est découverte en route — les tables
+    // sont celles du cahier, et le schéma s'émet depuis CETTE liste-là.
+    expect(src, 'la route n’émet plus depuis les entités du cahier').toMatch(
+      /entitesCourantes = entitesDeclarees\n/u,
     )
     expect(src, 'le schéma s’émet encore depuis la liste d’entrée').toMatch(
       /emettreSchemaSql\(entitesCourantes\)/u,
@@ -185,15 +187,15 @@ describe('EP-337 · l’amnésie ne se certifie plus', () => {
     expect(src, 'les politiques s’émettent encore depuis la liste d’entrée').toMatch(
       /emettrePolitiquesSql\(entitesCourantes,/u,
     )
-    // ── 3c (2026-11-13) : la génération est ÉCRAN PAR ÉCRAN. La consigne de
-    // chaque écran est bâtie dans boucle-ecran.ts depuis les entités que la
-    // route lui passe — les mêmes que celles du schéma. Plus de tour suivant.
-    expect(src, 'la route ne passe pas ses entités à la boucle d’écrans').toMatch(
-      /boucleEcrans\(\{[\s\S]{0,200}entites: entitesDeclarees,/u,
+    // ── V4 (2026-11-14) : la génération ASSEMBLE. Les fiches de chaque écran
+    // (table et colonnes) sont tirées des entités que la route lui passe — les
+    // mêmes que celles du schéma.
+    expect(src, 'la route ne passe pas ses entités à la génération').toMatch(
+      /genererApplication\(\{[\s\S]{0,900}\n\s+entites: entitesDeclarees,\n/u,
     )
-    const ecran = readFileSync(join(__dirname, '..', 'boucle-ecran.ts'), 'utf8')
-    expect(ecran, 'la consigne d’un écran ne voit pas les entités').toMatch(
-      motifTexte('consigneEcran(ecran, o.plan, o.entites, o.devise, o.contraintes)'),
+    const generation = readFileSync(join(__dirname, '..', 'contrat', 'generation.ts'), 'utf8')
+    expect(generation, 'les fiches ne voient pas les entités').toMatch(
+      motifTexte('const tables = tablesDesEntites(o.entites)'),
     )
   })
 })

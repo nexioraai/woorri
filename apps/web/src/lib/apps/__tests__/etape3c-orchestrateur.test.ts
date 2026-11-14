@@ -145,13 +145,17 @@ describe('3c · brique 6 · l’orchestrateur', () => {
     expect(r.ecrans.filter((e) => e.origine === 'deribfy').map((e) => e.slug)).toEqual(['accueil', 'gestion-reservation', 'gestion-avis'])
   }, 180_000)
 
-  it('⑤ la route direct appelle boucleEcrans, plus boucleEcriture, et écrit écrans, plan et réflexion dans la ligne', () => {
+  it('⑤ V4 : la route direct appelle genererApplication — ni boucleEcrans ni boucleEcriture — et écrit écrans, plan et réflexion dans la ligne', () => {
+    // V4, bloc 2 (2026-11-14) : l'orchestrateur de 3c est REMPLACÉ (décision
+    // du propriétaire) ; ce test, qui épinglait son branchement, épingle
+    // désormais celui qui le remplace. boucleEcrans disparaît au bloc 4.
     const src = readFileSync(join(__dirname, '..', '..', '..', 'app', 'api', 'generateur', 'direct', 'route.ts'), 'utf8')
-    expect(src).toMatch(motifTexte('resultat = await boucleEcrans({'))
+    expect(src).toMatch(motifTexte('resultat = await genererApplication({'))
+    expect(src).not.toMatch(/\bboucleEcrans\(/u)
     expect(src).not.toMatch(/\bboucleEcriture\(/u)
-    expect(src).toMatch(motifTexte("{ reflexion: false, maxJetons: MAX_JETONS_ECRAN }"))
-    expect(src).toMatch(motifTexte('lecture: { ecrans: lectureBrief.ecrans, roles: lectureBrief.roles, questionsOuvertes: lectureBrief.questionsOuvertes, parcours: lectureBrief.parcours, contraintes: {'))
-    expect(src).toMatch(motifTexte('ecrans: resultat.ecrans.map('))
+    expect(src).toMatch(motifTexte("{ ...(options.reflexion === false ? { reflexion: false } : {}), maxJetons: options.maxJetons }"))
+    expect(src).toMatch(motifTexte('lecture: { ecrans: lectureBrief.ecrans, roles: lectureBrief.roles, parcours: lectureBrief.parcours, langues: lectureBrief.langues,'))
+    expect(src).toMatch(motifTexte('      ecrans: resultat.ecrans,\n      langues: resultat.langues,'))
     expect(src).toMatch(motifTexte('plan: { refuses: resultat.plan.refuses,'))
     expect(src).toMatch(/^\s*reflexion,$/mu)
   })

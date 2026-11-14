@@ -1,4 +1,6 @@
 /**
+ * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — depuis V4, bloc 2 (EP-365) : la route ne l’appelle plus ; supprimé au bloc 4.
+ *
  * L'ORCHESTRATEUR — génération ÉCRAN PAR ÉCRAN (3c, brique 6).
  *
  *   lecture (écrans, rôles, questions ouvertes) + entités + configuration

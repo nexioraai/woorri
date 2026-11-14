@@ -91,7 +91,7 @@ const CONNUS = [
     raison: 'ATTENTE de ~2,2 s par cas (délais d’idempotence simulés).',
   },
   {
-    motif: /generateur\/direct\/__tests__\/route\.test[\s\S]*(?:UN SUCCÈS REND LA PAGE|UN ÉCRAN ÉCHOUÉ|SANS NOM, LA ROUTE CONSTRUIT|UN REMPLISSAGE NE DEVIENT PAS UN NOM|LA LIVRAISON ÉCRIT SA VERSION)/u,
+    motif: /generateur\/direct\/__tests__\/route\.test[\s\S]*(?:UN SUCCÈS REND LA PAGE|UN ÉCRAN ÉCHOUÉ|UNE PASSE B REFUSÉE|SANS NOM, LA ROUTE CONSTRUIT|UN REMPLISSAGE NE DEVIENT PAS UN NOM|LA LIVRAISON ÉCRIT SA VERSION)/u,
     plafond: 4500,
     raison:
       'DEUX PROCESSUS du juge d’exécution, réels, par génération (3c, 3c-2) : l’écran seul ' +
@@ -99,7 +99,8 @@ const CONNUS = [
       'contrôle, 40 ms d’attente de rendu). Temps dominé par le démarrage de Node et de ' +
       'happy-dom, pas par un calcul. C’est la seule épreuve de bout en bout de la route ' +
       'avec l’assembleur et les juges RÉELS — celle qui a attrapé la panne du 2026-11-01. ' +
-      'Mesuré : 1,6 à 3,0 s sous la charge de la suite complète.',
+      'Mesuré : 1,6 à 3,0 s sous la charge de la suite complète. V4 (2026-11-14) : un processus, l’application ' +
+      'assemblée par Deribfy (6 écrans) et son juge d’expérience ; mesuré 3,9 s sous la charge de la gate.',
   },
   {
     motif: /etape3c-boucle-ecran[\s\S]*un bouton qui ne fait rien est refusé dans la boucle/u,

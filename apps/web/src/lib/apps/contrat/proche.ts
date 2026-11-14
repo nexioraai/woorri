@@ -1,6 +1,4 @@
 /**
- * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — à l’étape 1 seulement (EP-365) : branché par l’étape 4.
- *
  * LE NOM VALIDE LE PLUS PROCHE — chaque refus du validateur le donne.
  *
  * Mesuré sur 5b1c20bc : l'ancien juge proposait « ROLE_VISITEUR » pour

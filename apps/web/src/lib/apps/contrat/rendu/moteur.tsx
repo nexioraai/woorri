@@ -1,6 +1,4 @@
 /**
- * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — jusqu’à l’étape 4 (EP-365) : branché par l’étape 4.
- *
  * V3 — LE MOTEUR DE RENDU (code de l'application générée, web).
  *
  * Il ne reçoit AUCUN code du modèle : une spec compilée (écrans du contrat,
@@ -20,7 +18,7 @@
  */
 import React, { createContext, useContext, useEffect, useState, useSyncExternalStore } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { Ligne, Magasin } from './donnees'
+import type { Ligne, Source } from './donnees'
 import { texteSysteme, type CleSysteme } from './textes-systeme'
 
 export type TexteCompile = string | { readonly $k: string; readonly $t: string }
@@ -73,7 +71,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 // ── LE CONTEXTE.
 type Ctx = {
   readonly app: AppCompilee
-  readonly magasin: Magasin
+  readonly magasin: Source
   readonly langue: string
   readonly largeur: Largeur
   readonly session: Session
@@ -89,7 +87,7 @@ type Ctx = {
 const Contexte = createContext<Ctx | null>(null)
 const useCtx = (): Ctx => { const c = useContext(Contexte); if (c === null) throw new Error('moteur hors contexte'); return c }
 
-function useLecture(magasin: Magasin, table: string) {
+function useLecture(magasin: Source, table: string) {
   return useSyncExternalStore((e) => magasin.abonner(e), () => magasin.lire(table))
 }
 
@@ -372,7 +370,7 @@ function allerA(route: string): void { window.location.hash = route }
 
 type Global = {
   readonly app: AppCompilee
-  readonly magasin: Magasin
+  readonly magasin: Source
   readonly langue: string
   readonly poserLangue: (code: string) => void
   readonly largeur: Largeur
@@ -414,16 +412,27 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
             const valeurs = Object.fromEntries(liste(a.valeurs).map(objet).filter((v): v is Readonly<Record<string, unknown>> => v !== null).map((v) => [String(v.champ), val(v.depuis)]))
             const cible = portee !== null && portee.table === table ? portee.ligne : g.parcours.get(table) ?? null
             const ecriture = a.ecriture === 'modifier' || a.ecriture === 'supprimer' ? a.ecriture : 'creer'
-            magasin.ecrire(table, ecriture, ecriture === 'creer' ? null : cible, valeurs)
-            poserAnnonce(s('enregistre'))
+            const ecrit = magasin.ecrire(table, ecriture, ecriture === 'creer' ? null : cible, valeurs)
+            // En base l'écriture répond plus tard : l'écran ne dit « enregistré » qu'après, et dit l'échec sinon.
+            if (ecrit instanceof Promise) void ecrit.then((erreur) => { poserAnnonce(erreur === null ? s('enregistre') : erreur) })
+            else poserAnnonce(s('enregistre'))
             break
           }
           case 'emit': {
             const ev = String(a.evenement)
             if (ev === 'connexion') {
               const charge = Object.fromEntries(liste(a.charge).map(objet).filter((v): v is Readonly<Record<string, unknown>> => v !== null).map((v) => [String(v.champ), val(v.depuis)]))
-              g.poserSession((x) => ({ role: x.role, utilisateur: chaine(charge.identifiant) }))
-              poserAnnonce(s('connecte'))
+              const identifiant = chaine(charge.identifiant)
+              if (magasin.connecter !== undefined) {
+                // En base : la vraie connexion ; la session ne change qu'après sa réponse.
+                void magasin.connecter(identifiant ?? '', chaine(charge.secret) ?? '').then((erreur) => {
+                  if (erreur === null) { g.poserSession((x) => ({ role: x.role, utilisateur: identifiant })); poserAnnonce(s('connecte')) }
+                  else poserAnnonce(erreur)
+                })
+              } else {
+                g.poserSession((x) => ({ role: x.role, utilisateur: identifiant }))
+                poserAnnonce(s('connecte'))
+              }
             } else if (ev === 'deconnexion') { g.poserSession({ role: 'visiteur', utilisateur: null }); poserAnnonce(s('deconnecte')) }
             else if (ev === 'choisirLangue') { const code = chaine(a.valeur); if (code !== null) g.poserLangue(code) }
             else if (ev === 'rafraichir') { magasin.recharger(); poserAnnonce(s('actualise')) }
@@ -458,7 +467,7 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
   )
 }
 
-function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; magasin: Magasin; parcoursInitial: ReadonlyMap<string, Ligne> }) {
+function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; magasin: Source; parcoursInitial: ReadonlyMap<string, Ligne> }) {
   const [langue, poserLangue] = useState(app.langues[0]?.code ?? 'fr')
   const [route, poserRoute] = useState(() => routeCourante() || 'accueil')
   const [largeur, poserLargeur] = useState<Largeur>(() => classeDeLargeur(window.innerWidth))
@@ -523,7 +532,7 @@ function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; maga
 }
 
 /** Monte l'application dans `#racine`. */
-export function monter(app: AppCompilee, magasin: Magasin, parcoursInitial: ReadonlyMap<string, Ligne> = new Map()): void {
+export function monter(app: AppCompilee, magasin: Source, parcoursInitial: ReadonlyMap<string, Ligne> = new Map()): void {
   const racine = document.getElementById('racine')
   if (racine === null) throw new Error('#racine absent')
   createRoot(racine).render(<Application app={app} magasin={magasin} parcoursInitial={parcoursInitial} />)

@@ -1,6 +1,4 @@
 /**
- * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — jusqu’à l’étape 4 (EP-365) : branché par l’étape 4.
- *
  * V2 — LE GRAPHE DES ROUTES, DÉRIVÉ DE LA LECTURE, AVANT TOUT APPEL AU MODÈLE.
  *
  * Deribfy fixe la carte ; le modèle ne fera que remplir des écrans déjà placés.

@@ -1,6 +1,4 @@
 /**
- * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — à l’étape 1 seulement (EP-365) : branché par l’étape 4.
- *
  * LE VALIDATEUR DU CONTRAT — couches 1 et 2, en millisecondes, sans appel.
  *
  *   COUCHE 1 — le SCHÉMA : la forme seule, contre le catalogue. Chaque faute

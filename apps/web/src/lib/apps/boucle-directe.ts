@@ -1035,12 +1035,48 @@ const CADRE_BANDEAU =
   '<div role="status" style="background:#fff4e5;border-bottom:1px solid #f0c48a;' +
   'color:#7a4a00;padding:10px 14px;font:14px/1.5 system-ui,-apple-system,sans-serif">'
 
+/**
+ * LES QUATRE PHRASES DU BANDEAU, PAR LANGUE (V4, bloc 2, 2026-11-14).
+ *
+ * Mesuré en V3 : le bandeau restait en français dans une application arabe,
+ * sa ponctuation déplacée par la droite-à-gauche. Le français est le texte
+ * d'avant, à l'octet près ; une langue absente d'ici prend l'anglais.
+ */
+type PhrasesBandeau = { readonly apercu: string; readonly publiee: (lien: string) => string; readonly sansMemoire: string; readonly telecharge: string }
+const PHRASES_BANDEAU: Readonly<Record<string, PhrasesBandeau>> = {
+  fr: {
+    apercu: '<strong>Votre base de données sera créée à la publication.</strong> ' +
+      'Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas ' +
+      'conservé.',
+    publiee: (lien) => '<strong>Les données ne sont pas accessibles depuis cet aperçu.</strong> ' +
+      'Ouvrez votre application publiée pour vous connecter et voir vos ' +
+      `données : ${lien}`,
+    sansMemoire: '<strong>Cette application ne conserve pas de données.</strong> ' +
+      'Ce que vous saisissez disparaît au rechargement de la page.',
+    telecharge: '<strong>Cette application n’est pas encore reliée à une base.</strong> ' +
+      'Ce que vous saisissez ne sera pas conservé. Voyez le fichier ' +
+      '<code>LISEZ-MOI.md</code> de l’archive — section « Vos données ».',
+  },
+  en: {
+    apercu: '<strong>Your database will be created when you publish.</strong> For now this is a preview: what you enter here will not be kept.',
+    publiee: (lien) => `<strong>Your data cannot be reached from this preview.</strong> Open your published application to sign in and see your data: ${lien}`,
+    sansMemoire: '<strong>This application does not keep data.</strong> What you enter disappears when the page reloads.',
+    telecharge: '<strong>This application is not yet connected to a database.</strong> What you enter will not be kept. See the <code>LISEZ-MOI.md</code> file in the archive, section “Vos données”.',
+  },
+  ar: {
+    apercu: '<strong>ستُنشأ قاعدة بياناتك عند النشر.</strong> هذه معاينة الآن: ما تُدخله هنا لن يُحفظ.',
+    publiee: (lien) => `<strong>لا يمكن الوصول إلى بياناتك من هذه المعاينة.</strong> افتح تطبيقك المنشور لتسجّل الدخول وترى بياناتك: ${lien}`,
+    sansMemoire: '<strong>هذا التطبيق لا يحفظ البيانات.</strong> ما تُدخله يختفي عند إعادة تحميل الصفحة.',
+    telecharge: '<strong>هذا التطبيق غير مرتبط بقاعدة بيانات بعد.</strong> ما تُدخله لن يُحفظ. راجع الملف <code>LISEZ-MOI.md</code> في الأرشيف، قسم «Vos données».',
+  },
+}
+const phrasesDe = (code: string): PhrasesBandeau => PHRASES_BANDEAU[code] ?? PHRASES_BANDEAU.en!
+const LIEN_PUBLIEE = (adresse: string): string =>
+  `<a href="${adresse}" target="_blank" rel="noopener noreferrer" ` +
+  `style="color:#7a4a00;font-weight:600">${adresse.replace(/^https:\/\//u, '')}</a>`
+
 /** L'APERÇU : ce qui va se passer. Rien n'est cassé, rien n'est à faire. */
-const BANDEAU_APERCU =
-  CADRE_BANDEAU +
-  '<strong>Votre base de données sera créée à la publication.</strong> ' +
-  'Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas ' +
-  'conservé.</div>'
+const BANDEAU_APERCU = CADRE_BANDEAU + PHRASES_BANDEAU.fr!.apercu + '</div>'
 
 /**
  * L'APERÇU D'UNE ŒUVRE DÉJÀ PUBLIÉE — et c'est le défaut mesuré le
@@ -1072,12 +1108,7 @@ const BANDEAU_APERCU =
  * Donc on le DIT, et on donne le seul endroit où ça marche : l'adresse
  * publiée.
  */
-const BANDEAU_PUBLIEE = (adresse: string): string =>
-  CADRE_BANDEAU +
-  '<strong>Les données ne sont pas accessibles depuis cet aperçu.</strong> ' +
-  'Ouvrez votre application publiée pour vous connecter et voir vos ' +
-  `données : <a href="${adresse}" target="_blank" rel="noopener noreferrer" ` +
-  `style="color:#7a4a00;font-weight:600">${adresse.replace(/^https:\/\//u, '')}</a></div>`
+const BANDEAU_PUBLIEE = (adresse: string): string => CADRE_BANDEAU + PHRASES_BANDEAU.fr!.publiee(LIEN_PUBLIEE(adresse)) + '</div>'
 
 /**
  * L'ŒUVRE SERVIE AU PUBLIC QUI NE CONSERVE RIEN (⑥, 2026-11-05).
@@ -1098,17 +1129,30 @@ const BANDEAU_PUBLIEE = (adresse: string): string =>
  * La phrase juste n'est ni « ce sera créé » (faux) ni « ouvrez la version
  * publiée » (on y est) : c'est que cette application ne garde rien.
  */
-const BANDEAU_SANS_MEMOIRE =
-  CADRE_BANDEAU +
-  '<strong>Cette application ne conserve pas de données.</strong> ' +
-  'Ce que vous saisissez disparaît au rechargement de la page.</div>'
+const BANDEAU_SANS_MEMOIRE = CADRE_BANDEAU + PHRASES_BANDEAU.fr!.sansMemoire + '</div>'
 
 /** LE TÉLÉCHARGEMENT : ce qu'il reste à faire, et où c'est écrit. */
-const BANDEAU_TELECHARGE =
-  CADRE_BANDEAU +
-  '<strong>Cette application n’est pas encore reliée à une base.</strong> ' +
-  'Ce que vous saisissez ne sera pas conservé. Voyez le fichier ' +
-  '<code>LISEZ-MOI.md</code> de l’archive — section « Vos données ».</div>'
+const BANDEAU_TELECHARGE = CADRE_BANDEAU + PHRASES_BANDEAU.fr!.telecharge + '</div>'
+
+/**
+ * LE BANDEAU DANS CHAQUE LANGUE LUE : une version par langue, et la règle de
+ * style ne montre que celle de `<html lang>` — que le moteur pose à chaque
+ * changement de langue. Aucun script : la page le suit d'elle-même. Chaque
+ * version porte son `dir` : la ponctuation arabe reste à sa place.
+ */
+export type LangueDePage = { readonly code: string; readonly dir: 'ltr' | 'rtl' }
+function bandeauMultilingue(langues: readonly LangueDePage[], phrase: (p: PhrasesBandeau) => string): string {
+  return CADRE_BANDEAU + langues.map((l) => `<span data-bandeau-langue="${l.code}" lang="${l.code}" dir="${l.dir}">${phrase(phrasesDe(l.code))}</span>`).join('') + '</div>'
+}
+/** Les langues de page qu'un document d'œuvre porte (V4) — `null` pour une œuvre d'avant : sa page reste celle d'avant. */
+export function languesDePage(document: unknown): LangueDePage[] | null {
+  const l = (document as { langues?: unknown } | null)?.langues
+  if (!Array.isArray(l) || l.length === 0) return null
+  const lues = l.filter((x): x is LangueDePage => typeof x === 'object' && x !== null && typeof (x as LangueDePage).code === 'string' && ((x as LangueDePage).dir === 'ltr' || (x as LangueDePage).dir === 'rtl'))
+  return lues.length === l.length ? lues : null
+}
+const STYLE_BANDEAU = (langues: readonly LangueDePage[]): string =>
+  `<style>${langues.map((l) => `html:not([lang="${l.code}"]) [data-bandeau-langue="${l.code}"]{display:none}`).join('')}</style>`
 
 const CONFIGURATION_EMISE = (injectee: ConfigurationOeuvre): string =>
   `<script>window.DERIBFY_BASE=Object.freeze(${JSON.stringify(injectee)});</script>`
@@ -1138,8 +1182,14 @@ export function pageAutonome(
    * Absente, le bandeau d'avant est rendu tel quel.
    */
   adressePubliee: string | null = null,
+  /**
+   * LES LANGUES LUES de l'application, la principale d'abord (V4, bloc 2).
+   * Absentes : la page d'avant, à l'octet près (`lang="fr"`, bandeau français).
+   */
+  langues: readonly LangueDePage[] | null = null,
 ): string {
   const sur = titre.replace(/[<>&"]/gu, '')
+  const lues = langues !== null && langues.length > 0 ? langues.filter((l) => /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$/u.test(l.code)) : null
   // ── LA CONFIGURATION EST SÉRIALISÉE EN JSON, PAS INTERPOLÉE À LA MAIN.
   //
   // `JSON.stringify` échappe ce qu'il faut ; une concaténation de guillemets
@@ -1159,7 +1209,7 @@ export function pageAutonome(
     options: optionsPour(configuration?.schema ?? ''),
   }
   const morceaux = [
-    '<!doctype html><html lang="fr"><head><meta charset="utf-8" />',
+    lues === null ? '<!doctype html><html lang="fr"><head><meta charset="utf-8" />' : `<!doctype html><html lang="${lues[0]!.code}" dir="${lues[0]!.dir}"><head><meta charset="utf-8" />`,
     '<meta name="viewport" content="width=device-width, initial-scale=1" />',
     `<title>${sur}</title>`,
     // N2 : installable — manifeste cuit, balises Apple, couleur de thème.
@@ -1170,6 +1220,7 @@ export function pageAutonome(
     `<meta name="apple-mobile-web-app-title" content="${sur}" />`,
     `<link rel="apple-touch-icon" href="data:image/png;base64,${ICONE_192}" />`,
     `<style>${VARIABLES_CSS}*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--foreground);font-family:system-ui,-apple-system,sans-serif}</style>`,
+    ...(lues === null ? [] : [STYLE_BANDEAU(lues)]),
     // LE PRÉLUDE PART EN PREMIER, et en script ORDINAIRE : un module serait
     // différé, donc installé APRÈS que l'application a déjà échoué.
     `<script>${PRELUDE}</script>`,
@@ -1202,13 +1253,15 @@ export function pageAutonome(
     // là et son origine est la sienne.
     injectee.url !== ''
       ? ''
-      : destination === 'archive'
-        ? BANDEAU_TELECHARGE
-        : destination === 'servie'
-          ? BANDEAU_SANS_MEMOIRE
-          : adressePubliee !== null
-            ? BANDEAU_PUBLIEE(adressePubliee)
-            : BANDEAU_APERCU,
+      : lues !== null
+        ? bandeauMultilingue(lues, (p) => (destination === 'archive' ? p.telecharge : destination === 'servie' ? p.sansMemoire : adressePubliee !== null ? p.publiee(LIEN_PUBLIEE(adressePubliee)) : p.apercu))
+        : destination === 'archive'
+          ? BANDEAU_TELECHARGE
+          : destination === 'servie'
+            ? BANDEAU_SANS_MEMOIRE
+            : adressePubliee !== null
+              ? BANDEAU_PUBLIEE(adressePubliee)
+              : BANDEAU_APERCU,
     '<div id="racine"></div>',
     `<script type="module">${ENVELOPPE_MODULE.avant}${code}${ENVELOPPE_MODULE.apres}</script>`,
     '</body></html>',

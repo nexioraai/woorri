@@ -1,6 +1,4 @@
 /**
- * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — jusqu’à l’étape 4 (EP-365) : branché par l’étape 4.
- *
  * V3 — LES TEXTES DU MOTEUR LUI-MÊME (états, garde, barre), écrits par Deribfy
  * et traduits par Deribfy. Une langue lue sans entrée ici retombe sur l'anglais.
  */

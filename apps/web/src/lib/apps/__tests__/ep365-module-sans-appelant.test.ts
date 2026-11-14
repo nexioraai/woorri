@@ -82,19 +82,10 @@ const EXEMPTES: Readonly<Record<string, string>> = {
   'lib/testing/postgrest.ts': 'instrument de preuve — ses 31 appelants SONT des tests',
   'lib/architecture/checkDomainBoundaries.ts': 'contrôle d’architecture exécuté PAR un test',
   'app/sites/[slug]/themes/checkSectionOrder.ts': 'contrôle d’ordre exécuté PAR un test',
-  'lib/apps/contrat/catalogue.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
+  'lib/apps/boucle-ecran.ts': 'V4, bloc 2 (2026-11-14) : remplacée par contrat/deux-passes.ts, la route ne l’appelle plus ; ses tests la gardent jusqu’au bloc 4, qui la SUPPRIME (liste de suppression du registre)',
+  'lib/apps/boucle-ecrans.ts': 'V4, bloc 2 (2026-11-14) : remplacée par contrat/generation.ts, la route ne l’appelle plus ; ses tests la gardent jusqu’au bloc 4, qui la SUPPRIME (liste de suppression du registre)',
+  'lib/apps/consigne-ecran.ts': 'V4, bloc 2 (2026-11-14) : la consigne d’un écran écrit en code, remplacée par les consignes A et B des archétypes ; supprimée au bloc 4 (liste de suppression du registre)',
   'lib/apps/contrat/consigne.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
-  'lib/apps/contrat/contraintes.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
-  'lib/apps/contrat/proche.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
-  'lib/apps/contrat/validateur.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
-  'lib/apps/contrat/textes.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
-  'lib/apps/contrat/graphe.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
-  'lib/apps/contrat/archetypes.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
-  'lib/apps/contrat/deux-passes.ts': 'V4, bloc 1 (2026-11-14) : les deux passes et le repli sont prouvés SEULS, modèle simulé, à 0 $ ; le bloc 2 les branche sur la route de génération — il SORT alors de cette liste',
-  'lib/apps/contrat/compiler.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
-  'lib/apps/contrat/rendu/moteur.tsx': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
-  'lib/apps/contrat/rendu/donnees.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
-  'lib/apps/contrat/rendu/textes-systeme.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
 }
 
 /** MESURÉ LE 2026-11-06. Cette liste ne grandit jamais. */

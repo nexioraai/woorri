@@ -1,6 +1,4 @@
 /**
- * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — jusqu’à l’étape 4 (EP-365) : branché par l’étape 4.
- *
  * V3 — LA SOURCE DE DONNÉES DU MOTEUR DE RENDU (code de l'application générée).
  *
  * Une table se lit dans l'un de CINQ états, et le moteur rend chacun :
@@ -8,8 +6,8 @@
  *   vide (avec son appel à l'action), partiel (bandeau + ce qui est arrivé),
  *   idéal.
  * Ce magasin-ci est celui des TÉMOINS : en mémoire, sa latence et l'état final
- * de chaque table se règlent. L'étape 4 le remplacera par la base réelle,
- * derrière la même interface.
+ * de chaque table se règlent. La base réelle (`base.ts`) offre la même
+ * interface (`Source`) : c'est elle que sert l'application publiée.
  */
 export type Ligne = { readonly id: string } & Readonly<Record<string, unknown>>
 export type EtatSource = 'attente' | 'erreur' | 'vide' | 'partiel' | 'ideal'
@@ -24,7 +22,20 @@ export type Reglages = {
   readonly latenceMs?: number
 }
 
-export class Magasin {
+/**
+ * CE QUE LE MOTEUR LIT — le magasin des témoins (en mémoire) et la base réelle
+ * (`base.ts`) l'offrent tous deux. Une écriture en base est asynchrone et rend
+ * son message d'erreur ; `connecter` n'existe qu'en base.
+ */
+export interface Source {
+  abonner(e: () => void): () => void
+  lire(t: string): Lecture
+  recharger(): void
+  ecrire(t: string, e: Ecriture, ligne: Ligne | null, valeurs: Readonly<Record<string, unknown>>): void | Promise<string | null>
+  connecter?(identifiant: string, secret: string): Promise<string | null>
+}
+
+export class Magasin implements Source {
   private lignes = new Map<string, Ligne[]>()
   private etats = new Map<string, EtatSource>()
   private forces: Readonly<Record<string, EtatSource>>

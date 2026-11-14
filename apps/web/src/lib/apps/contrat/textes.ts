@@ -1,6 +1,4 @@
 /**
- * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — jusqu’à l’étape 4 (EP-365) : branché par l’étape 4.
- *
  * LES CLÉS DE TEXTE SONT À DERIBFY.
  *
  * Le modèle écrit chaque texte EN CLAIR, dans la langue principale. Deribfy

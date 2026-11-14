@@ -1,6 +1,4 @@
 /**
- * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — jusqu’à l’étape 4 (EP-365) : branché par le bloc 2 de V4.
- *
  * V4 · BLOC 1 — UN ÉCRAN EN DEUX PASSES.
  *
  * Deribfy impose l'archétype, la route, le rôle et la table : le modèle ne
@@ -56,6 +54,8 @@ export type FicheEcran = {
   readonly moyensPaiement: readonly string[]
   /** L'extrait du cahier qui parle de cet écran. */
   readonly extrait: string
+  /** La configuration du client (marché, encaissement, logistique) : elle PRIME sur le cahier. */
+  readonly configuration?: string
 }
 
 export type OptionsAppelModele = { readonly reflexion?: boolean; readonly maxJetons: number }
@@ -146,6 +146,7 @@ function decrireFiche(f: FicheEcran, def: DefArchetype): string {
     `LANGUE DES TEXTES : ${f.langue}. Langues lues : ${f.langues.map((l) => l.code).join(', ')} (Deribfy traduit ensuite).`,
     `DEVISE : ${f.devise ?? 'aucune lue'} — aucun montant écrit dans un texte, les montants viennent des données.`,
     ...(f.moyensPaiement.length > 0 ? [`MOYENS DE PAIEMENT LUS : ${f.moyensPaiement.join(', ')}.`] : []),
+    ...(f.configuration !== undefined && f.configuration !== '' ? [`CONFIGURATION DU CLIENT — elle PRIME sur le cahier :\n${f.configuration}`] : []),
     `SLOTS À REMPLIR :`,
     ...Object.entries(def.slots).filter(([k]) => !(k in imposes)).map(([k, d]) => decrireSlot(k, d, f)),
     '',
@@ -259,9 +260,9 @@ export function relance(refus: readonly RefusB[]): string {
 // LE REPLI — Deribfy écrit l'écran depuis la table.
 // ════════════════════════════════════════════════════════════════════════
 const REPLI: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  fr: { vide: 'Rien pour le moment.', enregistrer: 'Enregistrer', payer: 'Payer', commencer: 'Commencer', courriel: 'Courriel', secret: 'Mot de passe', rechercher: 'Rechercher', fait: 'C’est enregistré.', aide: 'Une question ? Passez par la page Contact.', contact: 'Écrivez-nous, nous vous répondrons.', legal: 'Cette application est éditée par son exploitant.' },
-  en: { vide: 'Nothing yet.', enregistrer: 'Save', payer: 'Pay', commencer: 'Start', courriel: 'Email', secret: 'Password', rechercher: 'Search', fait: 'Saved.', aide: 'A question? Use the Contact page.', contact: 'Write to us, we will answer.', legal: 'This application is published by its operator.' },
-  ar: { vide: 'لا شيء حاليًا.', enregistrer: 'حفظ', payer: 'ادفع', commencer: 'ابدأ', courriel: 'البريد الإلكتروني', secret: 'كلمة المرور', rechercher: 'بحث', fait: 'تم الحفظ.', aide: 'لديك سؤال؟ استخدم صفحة الاتصال.', contact: 'راسلنا وسنرد عليك.', legal: 'هذا التطبيق من نشر مشغّله.' },
+  fr: { vide: 'Rien pour le moment.', enregistrer: 'Enregistrer', payer: 'Payer', commencer: 'Commencer', courriel: 'Courriel', secret: 'Mot de passe', rechercher: 'Rechercher', fait: 'C’est enregistré.', aide: 'Une question ? Passez par la page Contact.', contact: 'Écrivez-nous, nous vous répondrons.', legal: 'Cette application est éditée par son exploitant.', continuer: 'Continuer', compte: 'Compte' },
+  en: { vide: 'Nothing yet.', enregistrer: 'Save', payer: 'Pay', commencer: 'Start', courriel: 'Email', secret: 'Password', rechercher: 'Search', fait: 'Saved.', aide: 'A question? Use the Contact page.', contact: 'Write to us, we will answer.', legal: 'This application is published by its operator.', continuer: 'Continue', compte: 'Account' },
+  ar: { vide: 'لا شيء حاليًا.', enregistrer: 'حفظ', payer: 'ادفع', commencer: 'ابدأ', courriel: 'البريد الإلكتروني', secret: 'كلمة المرور', rechercher: 'بحث', fait: 'تم الحفظ.', aide: 'لديك سؤال؟ استخدم صفحة الاتصال.', contact: 'راسلنا وسنرد عليك.', legal: 'هذا التطبيق من نشر مشغّله.', continuer: 'متابعة', compte: 'الحساب' },
 }
 export const textesDuRepli = (langue: string): Readonly<Record<string, string>> => REPLI[langue] ?? REPLI.en!
 

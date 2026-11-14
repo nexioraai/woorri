@@ -138,7 +138,8 @@ describe('EP-351 · l’aperçu d’une œuvre publiée', () => {
       /\.select\([^)]*publication_slug[^)]*publication_jeton/u,
     )
     expect(src, 'l’adresse n’est pas transmise à la page').toMatch(
-      /pageAutonome\([^)]*adresse\)/u,
+      // V4 : un argument de plus (les langues de la page) suit l'adresse.
+      /pageAutonome\([^)]*adresse[,)]/u,
     )
     // ── ET LA BASE N'EST TOUJOURS PAS INJECTÉE DANS LE CADRE OPAQUE.
     //
