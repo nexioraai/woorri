@@ -229,4 +229,49 @@ describe('V4 · l’application Hayine assemblée, dans Chromium', () => {
     expect(await hash()).toBe('#suite')
     await p.close()
   }, 120_000)
+
+  it('⑦ créer un compte : la page que le cahier demande, ses champs, ses obligations, l’enchaînement jusqu’à l’espace', async () => {
+    const plan = { ECRANS: [{ nom: 'mes relevés', role: 'abonné', navigation: 'public', lit: ['releve'], ecrit: ['releve'], extrait: '' }] }
+    const r = await genererApplication({
+      demande: 'Création de compte obligatoire. L’abonné s’inscrit avec son numéro de téléphone ou son adresse e-mail et un code personnel à 4 chiffres. La vérification par SMS peut être proposée, mais elle n’est pas obligatoire.',
+      nom: 'Relevés', lecture: { ecrans: ['mes relevés'], roles: ['abonné', 'gestionnaire'], parcours: [], langues: [], devises: [], moyensPaiement: [], pays: ['Tchad'] },
+      entites: [
+        { id: 'ent_profil', name: 'profil', fields: ['nom_complet', 'ville', 'quartier', 'code_personnel'].map((c) => ({ id: `fld_${c}`, name: c, type: 'string', required: false })) },
+        { id: 'ent_releve', name: 'releve', fields: ['index', 'photo'].map((c) => ({ id: `fld_${c}`, name: c, type: 'string', required: false })) },
+      ],
+      devise: null, appelerModele: modeleSimule().appeler, appelerLeger: planSimule(plan).appeler, prix: { entree: 1.32, sortie: 3.96 },
+      juger: () => Promise.resolve({ monteDansSimulateur: true, erreurs: [], octetsRendus: 1, texte: '', ms: 0 }),
+    })
+    expect(r.ok, r.motif ?? '').toBe(true)
+    expect(r.contrat.map((x) => `${x.classe} · ${x.chemin} · ${x.quoi}`)).toEqual([])
+    expect(r.app.comptes).toMatchObject({ mode: 'individuels', identifiant: 'courriel-ou-telephone', secret: { nature: 'code', chiffres: 4 }, roleDeBase: 'abonné', indicatif: '+235' })
+    const html = pageAutonome(r.code!, 'Relevés', undefined, 'apercu', null, r.languesPage)
+    const p = await navigateur.newPage({ viewport: { width: 390, height: 844 } })
+    await p.route('**/*', (x) => (x.request().url().startsWith(ADRESSE) ? x.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }) : x.fulfill({ status: 404, body: '' })))
+    // L'accueil du visiteur mène à « Créer un compte ».
+    await p.goto(`${ADRESSE}#accueil`); await p.waitForTimeout(250)
+    await p.locator('main button').filter({ hasText: 'Créer un compte' }).click(); await p.waitForTimeout(200)
+    expect(await p.evaluate(() => window.location.hash)).toBe('#creer-un-compte')
+    // Les champs : identifiant, code (masqué), profil SANS le code personnel (un secret ne se range pas dans une table), conditions.
+    const libelles = await p.$$eval('main label > span:first-child, main [role="group"] > span:first-child', (xs) => xs.map((x) => (x.textContent ?? '').replace(/ \*$/u, '')))
+    expect(libelles).toEqual(['Téléphone ou adresse e-mail', 'Code personnel (4 chiffres)', 'Nom complet', 'Ville', 'Quartier'])
+    expect(await p.$$('main input[type="checkbox"]')).toHaveLength(1)
+    expect(await p.$$('main input[type="password"]')).toHaveLength(1)
+    // Un code de 4 chiffres : le pavé numérique, 4 chiffres au plus.
+    expect(await p.$eval('main input[type="password"]', (x) => [x.getAttribute('inputmode'), x.getAttribute('maxlength')])).toEqual(['numeric', '4'])
+    // Envoyé vide : chaque champ obligatoire le dit, la page reste.
+    await p.locator('main button').filter({ hasText: 'Créer mon compte' }).click(); await p.waitForTimeout(150)
+    expect((await p.$$eval('main [role="alert"]', (xs) => xs.map((x) => x.textContent))).filter((t) => t === 'Obligatoire').length).toBe(6)
+    expect(await p.evaluate(() => window.location.hash)).toBe('#creer-un-compte')
+    // Rempli sans accepter les conditions : toujours refusé.
+    const champs = p.locator('main input:not([type="checkbox"])')
+    for (const [i, v] of ['66 12 34 56', '1234', 'Awa Mahamat', 'Ndjamena', 'Moursal'].entries()) await champs.nth(i).fill(v)
+    await p.locator('main button').filter({ hasText: 'Créer mon compte' }).click(); await p.waitForTimeout(150)
+    expect(await p.$$eval('main [role="alert"]', (xs) => xs.map((x) => x.textContent))).toEqual(['Obligatoire'])
+    // Accepté : l'aperçu le DIT (le compte sera créé dans l'application publiée) et l'enchaînement mène à l'espace de l'abonné.
+    await p.locator('main input[type="checkbox"]').check()
+    await p.locator('main button').filter({ hasText: 'Créer mon compte' }).click(); await p.waitForTimeout(250)
+    expect(await p.evaluate(() => window.location.hash)).not.toBe('#creer-un-compte')
+    await p.close()
+  }, 120_000)
 })

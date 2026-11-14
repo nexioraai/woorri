@@ -95,7 +95,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ sous: string }
   if (!nomValide(sous)) return introuvable()
   const texte = await req.text()
   if (texte.length > 4_096) return Response.json({ message: 'Demande trop longue.' }, { status: 413 })
-  let corps: { faire?: unknown; identifiant?: unknown; secret?: unknown }
+  let corps: { faire?: unknown; identifiant?: unknown; secret?: unknown; conditions?: unknown }
   try { corps = JSON.parse(texte) as typeof corps } catch { return Response.json({ message: 'Demande illisible.' }, { status: 400 }) }
   if (corps.faire !== 'inscrire') return Response.json({ message: 'Demande illisible.' }, { status: 400 })
 
@@ -110,7 +110,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ sous: string }
   const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0]!.trim() || 'inconnue'
   const adresse = createHash('sha256').update(ip).digest('hex').slice(0, 32)
   const r = await inscrire({
-    idOeuvre, comptes, identifiant: corps.identifiant, secret: corps.secret, adresse,
+    idOeuvre, comptes, identifiant: corps.identifiant, secret: corps.secret, conditions: corps.conditions, adresse,
     admin: createClient(cfg.config.url, cfg.config.cleSecrete, { auth: { persistSession: false, autoRefreshToken: false } }) as unknown as AdminAuth,
     limiter: (cle) => consommerJeton({
       type: cle.portee === 'oeuvre' ? `app_inscription:${idOeuvre}` : `app_inscription:${cle.valeur}`,

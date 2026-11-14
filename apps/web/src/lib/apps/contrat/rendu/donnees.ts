@@ -33,6 +33,10 @@ export interface Source {
   recharger(): void
   ecrire(t: string, e: Ecriture, ligne: Ligne | null, valeurs: Readonly<Record<string, unknown>>): void | Promise<string | null>
   connecter?(identifiant: string, secret: string): Promise<string | null>
+  /** T2b : créer un compte individuel (l'application publiée le demande à SON sous-domaine) ; absent en mémoire. */
+  inscrire?(identifiant: string, secret: string, conditions: boolean): Promise<string | null>
+  /** T2b : le rôle et l'identifiant du compte connecté, tels que le serveur les a écrits ; absent en mémoire. */
+  compteConnecte?(): Promise<{ readonly role: string | null; readonly utilisateur: string } | null>
   /** Un média gardé en base (`media:<chemin>`) → une adresse lisible un moment ; absent en mémoire. */
   media?(valeur: string): Promise<string | null>
 }

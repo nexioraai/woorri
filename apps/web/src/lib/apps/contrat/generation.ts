@@ -34,7 +34,7 @@ import type { DefautPersistance } from '../juge-persistance'
 import { planifierEcrans, ROLE_GESTION as ROLE_GESTION_PLAN, type AppelerLeger, type Plan, type PlanEcran } from '../plan-ecrans'
 import { LANGUES_CONNUES } from '../squelette'
 import { ARCHETYPES, ICONE_ARCHETYPE, carte, expanser, libellesDuGabarit, type DefArchetype, type Remplissage } from './archetypes'
-import type { Spec } from './catalogue'
+import { NATURES_MEDIA, natureDeColonne, type Spec } from './catalogue'
 import { compilerApp } from './compiler'
 import { comptesDuCahier, indicatifDuPays } from './comptes-du-cahier'
 import { remplirEcran, textesDuRepli, type AppelModele, type EcranRempli, type FicheEcran, type JetonsAppel, type PrixJetons, type Voisine } from './deux-passes'
@@ -235,8 +235,13 @@ export async function genererApplication(o: {
   const tables = tablesDesEntites(o.entites)
   const nomTableDe = (n: string) => { const e = o.entites.find((x) => x.name === n || nomTable(x) === n); return e === undefined ? undefined : nomTable(e) }
   const lectureG: LectureGraphe = { ecrans: o.lecture.ecrans, roles: o.lecture.roles, parcours: o.lecture.parcours ?? [], langues: o.lecture.langues, devises: o.lecture.devises, moyensPaiement: o.lecture.moyensPaiement, pays: o.lecture.pays }
-  // ── LE GRAPHE (V2), avant tout appel.
-  const graphe = deriverPlan(lectureG, tables)
+  // ── LE GRAPHE (V2), avant tout appel. T2b : si le cahier demande des comptes individuels, la page
+  //    « Créer un compte » est une route de Deribfy (écrite par lui, aux normes, jamais par le modèle).
+  const comptesDemandes = comptesDuCahier(o.demande)
+  const graphe0 = deriverPlan(lectureG, tables)
+  const graphe: PlanGraphe = comptesDemandes.mode === 'individuels' && !graphe0.routes.some((r) => r.route === ROUTE_INSCRIPTION)
+    ? { ...graphe0, routes: [...graphe0.routes, { route: ROUTE_INSCRIPTION, nom: textesDuRepli(langueApp(lectureG.langues?.[0] ?? 'fr').code).creerCompte!, origine: 'socle', acces: 'visiteur' }] }
+    : graphe0
   const ctx: Contexte = contexteDuPlan(graphe, lectureG)
   // Un écran seul doit pouvoir viser les routes de tétrade : elles sont du plan.
   const ctxEcran: Contexte = { ...ctx, routes: graphe.routes.map((r) => r.route) }
@@ -269,8 +274,9 @@ export async function genererApplication(o: {
   // ── LES ÉCRANS DE DERIBFY, sans appel ; la composition (cartes d'accueil, gestion, couture).
   const g = libellesDuGabarit(principale)
   const langues = (ctx.langues.length > 0 ? ctx.langues : [principale]).map(langueApp)
+  const comptesPourPage = comptesDemandes.mode === 'individuels' ? { ...comptesDemandes, roleDeBase: graphe.roles.find((r) => !ROLE_GESTION_PLAN.test(r)) ?? graphe.roles[0] ?? 'utilisateur' } : null
   const ecrans = composerEcrans({
-    graphe, squelette, principale, langues, nom: o.nom,
+    graphe, squelette, principale, langues, nom: o.nom, comptes: comptesPourPage,
     lus: fiches.map((f, i) => ({ route: f.r.route, ecran: remplis[i]!.ecran, titre: titreDe(remplis[i]!.remplissage, f.r.nom), acces: f.fiche.acces, icone: ICONE_ARCHETYPE[remplis[i]!.archetype] ?? 'document' })),
   })
   const sansTraduction: Spec = { ecrans: ecrans as Spec['ecrans'], barre: [...graphe.barre] }
@@ -284,7 +290,7 @@ export async function genererApplication(o: {
   const kit = kitDuCahier(o.demande, o.nom)
   consignes.push({ quoi: 'kit de couleurs', motif: `${kit.kit} — ${kit.motif}` })
   // T2b : les comptes que le cahier demande (la demande de l'utilisateur prime ; le partage n'est qu'un repli).
-  const { motif: motifComptes, ...comptesLus } = comptesDuCahier(o.demande)
+  const { motif: motifComptes, ...comptesLus } = comptesDemandes
   // Une personne qui s'inscrit reçoit le premier rôle qui n'est pas de gestion ; l'indicatif est celui du pays lu.
   const indicatif = indicatifDuPays(o.lecture.pays)
   const comptes = comptesLus.mode === 'partage' ? comptesLus : { ...comptesLus, roleDeBase: graphe.roles.find((r) => !ROLE_GESTION_PLAN.test(r)) ?? graphe.roles[0] ?? 'utilisateur', ...(indicatif !== undefined ? { indicatif } : {}) }
@@ -353,6 +359,8 @@ export function composerEcrans(o: {
   readonly langues: readonly LangueApp[]
   readonly nom: string
   readonly lus: readonly { readonly route: string; readonly ecran: Record<string, unknown>; readonly titre: string; readonly acces: string; readonly icone?: string }[]
+  /** T2b : les comptes individuels que le cahier demande — la page « Créer un compte » et son lien depuis la connexion. */
+  readonly comptes?: (Exclude<ReturnType<typeof comptesDuCahier>, { mode: 'partage' }> & { readonly roleDeBase: string }) | null
 }): O[] {
   const g = libellesDuGabarit(o.principale)
   const rp = textesDuRepli(o.principale)
@@ -363,10 +371,20 @@ export function composerEcrans(o: {
   for (const r of o.graphe.routes) {
     if (r.tetrade !== undefined || r.origine === 'gestion') parRoute.set(r.route, (o.squelette.ecrans as unknown as O[]).find((e) => e.route === r.route)!)
   }
-  parRoute.set('accueil', accueilParEspace({ ...o, cartes, gestion, g, rp }))
+  parRoute.set('accueil', accueilParEspace({ ...o, cartes, gestion, g, rp, inscription: o.comptes !== undefined && o.comptes !== null && o.graphe.routes.some((r) => r.route === ROUTE_INSCRIPTION) }))
   parRoute.set('compte', ex({ archetype: 'compte', route: 'compte', acces: 'visiteur', slots: { titre: rp.compte! } }))
   for (const p of ['aide', 'contact', 'legal'] as const) parRoute.set(p, ex({ archetype: 'pageDuCompte', route: p, acces: 'visiteur', slots: { titre: g[p]!, texte: rp[p]!, retour: 'compte' } }))
   for (const x of o.lus) parRoute.set(x.route, voirToutVersLaListe(x.ecran, o.graphe))
+  if (o.comptes !== undefined && o.comptes !== null && o.graphe.routes.some((r) => r.route === ROUTE_INSCRIPTION)) {
+    const connexion = o.lus.find((x) => emet(x.ecran, 'connexion'))
+    const apres = o.lus.find((x) => x.acces === o.comptes!.roleDeBase && !emet(x.ecran, 'connexion'))?.route ?? 'accueil'
+    parRoute.set(ROUTE_INSCRIPTION, ecranInscription({ comptes: o.comptes, profil: tableDuProfil(o.graphe.tables), apres, connexion: connexion?.route ?? null, rp, legal: g.legal! }))
+    // L'identifiant de la connexion est CELUI QUE LE CAHIER FIXE (téléphone, courriel, l'un ou l'autre),
+    // quoi qu'ait écrit le modèle (Conterak : « Adresse e-mail » seule, le cahier dit « téléphone OU e-mail »).
+    if (connexion !== undefined) parRoute.set(connexion.route, identifiantDuCahier(parRoute.get(connexion.route)!, o.comptes, rp))
+    // La connexion mène à l'inscription (norme : « Créer un compte » sous « Se connecter »).
+    if (connexion !== undefined) { const e = parRoute.get(connexion.route)!; if (!ciblesDe(e).has(ROUTE_INSCRIPTION)) parRoute.set(connexion.route, coudre(e, [{ composant: 'Bouton', libelle: rp.creerCompte!, effets: [{ faire: 'navigate', route: ROUTE_INSCRIPTION }], genre: 'secondaire' }])) }
+  }
   for (let i = 0; i + 1 < o.graphe.parcours.length; i += 1) {
     const a = o.graphe.parcours[i]!
     const b = o.graphe.parcours[i + 1]!
@@ -397,6 +415,8 @@ function accueilParEspace(o: {
   readonly lus: readonly { readonly route: string; readonly ecran: Record<string, unknown>; readonly acces: string }[]
   readonly gestion: PlanGraphe['routes'][number] | undefined
   readonly g: Readonly<Record<string, string>>; readonly rp: Readonly<Record<string, string>>
+  /** T2b : la page « Créer un compte » existe — le visiteur y est mené depuis l'accueil. */
+  readonly inscription?: boolean
 }): O {
   const connexion = o.lus.find((x) => emet(x.ecran, 'connexion'))
   const publiques = o.cartes.filter((c) => c.role === undefined && c.route !== connexion?.route)
@@ -422,7 +442,10 @@ function accueilParEspace(o: {
   const visiteur: O[] = [
     ...(roles.length > 1 ? [{ composant: 'Phrase', texte: o.rp.choisir! }] : []),
     ...(connexion !== undefined ? [{ composant: 'Bouton', libelle: o.g.seConnecter!, effets: [{ faire: 'navigate', route: connexion.route }], genre: 'principal', icone: 'utilisateur' }]
-      : suite !== undefined ? [{ composant: 'Bouton', libelle: o.rp.commencer!, effets: [{ faire: 'navigate', route: suite }], genre: 'principal', icone: 'suivant' }] : []),
+      : suite !== undefined && o.inscription !== true ? [{ composant: 'Bouton', libelle: o.rp.commencer!, effets: [{ faire: 'navigate', route: suite }], genre: 'principal', icone: 'suivant' }] : []),
+    ...(o.inscription === true ? [{ composant: 'Bouton', libelle: o.rp.creerCompte!, effets: [{ faire: 'navigate', route: ROUTE_INSCRIPTION }], genre: connexion !== undefined ? 'secondaire' : 'principal', icone: 'ajouter' }] : []),
+    // Le parcours du cahier reste ouvert (le juge le traverse) : sans écran de connexion, « Commencer » suit « Créer un compte ».
+    ...(o.inscription === true && connexion === undefined && suite !== undefined ? [{ composant: 'Bouton', libelle: o.rp.commencer!, effets: [{ faire: 'navigate', route: suite }], genre: 'secondaire', icone: 'suivant' }] : []),
     ...(publiques.length > 0 ? [rangee(publiques.slice(0, PUBLICS_MAX).map(sansRole))] : []),
     ...(publiques.length > PUBLICS_MAX ? [{ composant: 'Pile', sens: 'ligne', espace: 's', enfants: publiques.slice(PUBLICS_MAX).map(lien) }] : []),
     ...(roles.length > 1 ? [section(o.rp.vosEspaces!), rangee(roles.map((r) => {
@@ -436,6 +459,67 @@ function accueilParEspace(o: {
     ...roles.map(espaceDe),
   ] }
 }
+/** Le champ de l'identifiant d'une connexion, aligné sur les comptes que le cahier demande. */
+function identifiantDuCahier(ecran: O, c: { readonly identifiant: string }, rp: Readonly<Record<string, string>>): O {
+  const nature = c.identifiant === 'courriel' ? 'courriel' : c.identifiant === 'telephone' ? 'telephone' : 'texte'
+  const libelle = c.identifiant === 'courriel' ? rp.idCourriel! : c.identifiant === 'telephone' ? rp.idTelephone! : rp.idLesDeux!
+  const marcher = (x: unknown): unknown => {
+    if (Array.isArray(x)) return x.map(marcher)
+    if (typeof x !== 'object' || x === null) return x
+    const n = x as O
+    if (n.composant === 'Champ' && (n.donnee as { $data?: string } | undefined)?.$data === 'etat.identifiant') return { ...n, nature, libelle }
+    return Object.fromEntries(Object.entries(n).map(([k, v]) => [k, marcher(v)]))
+  }
+  return marcher(ecran) as O
+}
+/** T2b : la route de la page d'inscription de Deribfy. */
+export const ROUTE_INSCRIPTION = 'creer-un-compte'
+/** La table du profil d'une personne, si le cahier en déclare une. */
+const NOM_PROFIL = /^(profil|profile|profils|utilisateur|utilisateurs|user|users|membre|membres|client|clients|abonne|abonnes|compte|comptes)$/u
+const PAS_DANS_LE_PROFIL = /^(id|created_at|updated_at|cree_le|modifie_le|owner_id|user_id|auth_id|statut|status|etat|role|roles)$|(^|_)(pin|mot_de_passe|motdepasse|password|secret|code_personnel|code_pin|hash)(_|$)/u
+function tableDuProfil(tables: readonly { readonly nom: string; readonly colonnes: readonly string[] }[]): { readonly nom: string; readonly colonnes: readonly string[] } | null {
+  const t = tables.find((x) => NOM_PROFIL.test(x.nom))
+  if (t === undefined) return null
+  const colonnes = t.colonnes.filter((c) => !PAS_DANS_LE_PROFIL.test(c)).slice(0, 10)
+  return colonnes.length === 0 ? null : { nom: t.nom, colonnes }
+}
+/**
+ * LA PAGE « CRÉER UN COMPTE » (T2b-3), aux normes : l'identifiant et le secret que le cahier
+ * demande, la confirmation d'un mot de passe, les champs du profil, l'acceptation des conditions
+ * (lien vers les mentions), et UN bouton qui enchaîne — créer le compte, se connecter, enregistrer
+ * le profil, aller à son espace. Une étape qui échoue arrête la suite (T2).
+ */
+function ecranInscription(o: { readonly comptes: { readonly identifiant: string; readonly secret: { readonly nature: string; readonly chiffres?: number } }; readonly profil: { readonly nom: string; readonly colonnes: readonly string[] } | null; readonly apres: string; readonly connexion: string | null; readonly rp: Readonly<Record<string, string>>; readonly legal: string }): O {
+  const { rp } = o
+  const d = (x: string) => ({ $data: x })
+  const lisible = (c: string) => c.replace(/_/gu, ' ').replace(/^./u, (x) => x.toUpperCase())
+  const mdp = o.comptes.secret.nature !== 'code'
+  const natureId = o.comptes.identifiant === 'courriel' ? 'courriel' : o.comptes.identifiant === 'telephone' ? 'telephone' : 'texte'
+  const libelleId = o.comptes.identifiant === 'courriel' ? rp.idCourriel! : o.comptes.identifiant === 'telephone' ? rp.idTelephone! : rp.idLesDeux!
+  const profil = o.profil?.colonnes.filter((c) => !/^(email|courriel|e_mail|telephone|tel|phone|mobile)$/u.test(c)) ?? []
+  return {
+    route: ROUTE_INSCRIPTION, acces: 'visiteur', titre: rp.creerCompte!,
+    etat: [{ nom: 'identifiant', nature: 'texte' }, { nom: 'secret', nature: 'texte' }, ...(mdp ? [{ nom: 'confirmation', nature: 'texte' }] : []), { nom: 'conditions', nature: 'booleen' }, ...profil.map((c) => ({ nom: `p_${c}`, nature: 'texte' }))],
+    corps: [
+      { composant: 'Titre', texte: rp.creerCompte!, niveau: 'page' },
+      { composant: 'Phrase', texte: rp.introInscription! },
+      { composant: 'Champ', libelle: libelleId, donnee: d('etat.identifiant'), nature: natureId, requis: true },
+      { composant: 'Champ', libelle: mdp ? rp.motDePasse! : rp.code!.replace('{n}', String(o.comptes.secret.chiffres ?? 4)), donnee: d('etat.secret'), nature: 'secret', requis: true },
+      ...(mdp ? [{ composant: 'Champ', libelle: rp.confirmation!, donnee: d('etat.confirmation'), nature: 'secret', requis: true }] : []),
+      ...profil.map((c) => ({ composant: 'Champ', libelle: lisible(c), donnee: d(`etat.p_${c}`), nature: natureDeColonne(c, 'texte'), ...((NATURES_MEDIA as readonly string[]).includes(natureDeColonne(c, 'texte')) ? {} : { requis: true }) })),
+      { composant: 'Champ', libelle: rp.conditions!, donnee: d('etat.conditions'), nature: 'case', requis: true },
+      { composant: 'Bouton', libelle: o.legal, effets: [{ faire: 'navigate', route: 'legal' }], genre: 'discret' },
+      { composant: 'Bouton', libelle: rp.creerMonCompte!, genre: 'principal', effets: [
+        { faire: 'emit', evenement: 'inscription', charge: [{ champ: 'identifiant', depuis: d('etat.identifiant') }, { champ: 'secret', depuis: d('etat.secret') }, ...(mdp ? [{ champ: 'confirmation', depuis: d('etat.confirmation') }] : []), { champ: 'conditions', depuis: d('etat.conditions') }] },
+        { faire: 'emit', evenement: 'connexion', charge: [{ champ: 'identifiant', depuis: d('etat.identifiant') }, { champ: 'secret', depuis: d('etat.secret') }] },
+        ...(o.profil !== null && profil.length > 0 ? [{ faire: 'submit', table: o.profil.nom, ecriture: 'creer', valeurs: profil.map((c) => ({ champ: c, depuis: d(`etat.p_${c}`) })) }] : []),
+        { faire: 'navigate', route: o.apres },
+      ] },
+      ...(o.connexion !== null ? [{ composant: 'Bouton', libelle: rp.dejaCompte!, effets: [{ faire: 'navigate', route: o.connexion }], genre: 'discret' }] : []),
+    ],
+  }
+}
+
 /** Un écran émet-il cet événement (la connexion : c'est l'écran de connexion) ? */
 function emet(x: unknown, evenement: string): boolean {
   if (Array.isArray(x)) return x.some((y) => emet(y, evenement))

@@ -39,27 +39,29 @@ describe('T2b-2 · l’inscription dans une application publiée', () => {
 
   it('③ le compte est créé rattaché à SON œuvre et à son rôle de base — dans app_metadata, jamais user_metadata', async () => {
     const { admin, crees } = adminSimule()
-    expect(await inscrire({ idOeuvre: 'oeuvre-1', comptes: CODE, identifiant: '66123456', secret: '1234', adresse: '1.2.3.4', admin, limiter: ouvert })).toEqual({ ok: true })
+    expect(await inscrire({ idOeuvre: 'oeuvre-1', comptes: CODE, identifiant: '66123456', secret: '1234', conditions: true, adresse: '1.2.3.4', admin, limiter: ouvert })).toEqual({ ok: true })
     expect(crees).toEqual([{ phone: '+23566123456', password: 'code-1234', phone_confirm: true, app_metadata: { oeuvre: 'oeuvre-1', role: 'consommateur' } }])
     expect(JSON.stringify(crees)).not.toMatch(/user_metadata/u)
   })
 
   it('④ refusé AVANT toute création : identifiant ou secret faux, limite atteinte, limiteur en panne', async () => {
     const { admin, crees } = adminSimule()
-    expect(await inscrire({ idOeuvre: 'o', comptes: CODE, identifiant: 'x', secret: '1234', adresse: 'a', admin, limiter: ouvert })).toMatchObject({ ok: false, statut: 400 })
-    expect(await inscrire({ idOeuvre: 'o', comptes: CODE, identifiant: '66123456', secret: '12', adresse: 'a', admin, limiter: ouvert })).toMatchObject({ ok: false, statut: 400 })
-    expect(await inscrire({ idOeuvre: 'o', comptes: CODE, identifiant: 42, secret: '1234', adresse: 'a', admin, limiter: ouvert })).toMatchObject({ ok: false, statut: 400 })
+    expect(await inscrire({ idOeuvre: 'o', comptes: CODE, identifiant: 'x', secret: '1234', conditions: true, adresse: 'a', admin, limiter: ouvert })).toMatchObject({ ok: false, statut: 400 })
+    expect(await inscrire({ idOeuvre: 'o', comptes: CODE, identifiant: '66123456', secret: '12', conditions: true, adresse: 'a', admin, limiter: ouvert })).toMatchObject({ ok: false, statut: 400 })
+    expect(await inscrire({ idOeuvre: 'o', comptes: CODE, identifiant: 42, secret: '1234', conditions: true, adresse: 'a', admin, limiter: ouvert })).toMatchObject({ ok: false, statut: 400 })
     const plein: Limiteur = (c) => Promise.resolve(c.portee === 'adresse' ? { ok: false, statut: 429, erreur: 'x' } : { ok: true })
-    expect(await inscrire({ idOeuvre: 'o', comptes: CODE, identifiant: '66123456', secret: '1234', adresse: 'a', admin, limiter: plein })).toMatchObject({ ok: false, statut: 429 })
+    expect(await inscrire({ idOeuvre: 'o', comptes: CODE, identifiant: '66123456', secret: '1234', conditions: true, adresse: 'a', admin, limiter: plein })).toMatchObject({ ok: false, statut: 429 })
     const panne: Limiteur = () => Promise.resolve({ ok: false, statut: 503, erreur: 'x' })
-    expect(await inscrire({ idOeuvre: 'o', comptes: CODE, identifiant: '66123456', secret: '1234', adresse: 'a', admin, limiter: panne })).toMatchObject({ ok: false, statut: 503 })
+    expect(await inscrire({ idOeuvre: 'o', comptes: CODE, identifiant: '66123456', secret: '1234', conditions: true, adresse: 'a', admin, limiter: panne })).toMatchObject({ ok: false, statut: 503 })
+    // Les conditions non acceptées : refusé, rien de créé.
+    expect(await inscrire({ idOeuvre: 'o', comptes: CODE, identifiant: '66123456', secret: '1234', conditions: false, adresse: 'a', admin, limiter: ouvert })).toMatchObject({ ok: false, statut: 400 })
     expect(crees).toHaveLength(0)
   })
 
   it('⑤ un compte qui existe déjà : « connectez-vous » ; une autre erreur : un message sans détail technique', async () => {
-    expect(await inscrire({ idOeuvre: 'o', comptes: MDP, identifiant: 'awa@exemple.td', secret: 'assez-long', adresse: 'a', admin: adminSimule('A user with this email address has already been registered').admin, limiter: ouvert }))
+    expect(await inscrire({ idOeuvre: 'o', comptes: MDP, identifiant: 'awa@exemple.td', secret: 'assez-long', conditions: true, adresse: 'a', admin: adminSimule('A user with this email address has already been registered').admin, limiter: ouvert }))
       .toEqual({ ok: false, statut: 409, message: 'Un compte existe déjà avec cet identifiant. Connectez-vous.' })
-    const r = await inscrire({ idOeuvre: 'o', comptes: MDP, identifiant: 'awa@exemple.td', secret: 'assez-long', adresse: 'a', admin: adminSimule('connection reset by peer at 10.0.0.3').admin, limiter: ouvert })
+    const r = await inscrire({ idOeuvre: 'o', comptes: MDP, identifiant: 'awa@exemple.td', secret: 'assez-long', conditions: true, adresse: 'a', admin: adminSimule('connection reset by peer at 10.0.0.3').admin, limiter: ouvert })
     expect(r).toMatchObject({ ok: false, statut: 502 })
     expect(JSON.stringify(r)).not.toMatch(/10\.0\.0\.3|peer/u)
   })

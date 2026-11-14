@@ -12,7 +12,7 @@
  * elle n'est envoyée à aucun modèle.
  */
 import {
-  ACTIONS, CHARGES, COMPOSANTS, COMPOSANTS_DE_DERIBFY, EVENEMENTS, NATURES_MEDIA, ICONES, JETONS, NATURES_ETAT, PROPS_COMMUNES, PROPS_DE_DERIBFY, PROPS_ECRAN, PROPS_ECRAN_DE_DERIBFY, ROUTES_SOCLE,
+  ACTIONS, CHARGES, COMPOSANTS, COMPOSANTS_DE_DERIBFY, EVENEMENTS, EVENEMENTS_DE_DERIBFY, NATURES_MEDIA, ICONES, JETONS, NATURES_ETAT, PROPS_COMMUNES, PROPS_DE_DERIBFY, PROPS_ECRAN, PROPS_ECRAN_DE_DERIBFY, ROUTES_SOCLE,
   SOURCES, VUES_TETRADE, type DefProp, type Genre,
 } from './catalogue'
 
@@ -24,7 +24,7 @@ function decrireGenre(g: Genre): string {
     case 'liaison': return `liaison ${q('{ "$data": … }')}`
     case 'jeton': return `jeton ${q(g.jeu)}`
     // Les natures média sont posées par la règle de Deribfy (`natureDeColonne`) : pas décrites ici.
-    case 'variante': return g.valeurs.filter((v) => !(NATURES_MEDIA as readonly string[]).includes(v)).map(q).join(' | ')
+    case 'variante': return g.valeurs.filter((v) => !(NATURES_MEDIA as readonly string[]).includes(v) && !EVENEMENTS_DE_DERIBFY.includes(v)).map(q).join(' | ')
     case 'icone': return 'une icône'
     case 'booleen': return 'true | false'
     case 'enfants': return 'liste de composants'
@@ -73,8 +73,8 @@ export function genererConsigne(): string {
     s.push(`  ${q(faire)} — ${def.aide}`)
     for (const [arg, d] of Object.entries(def.args as Readonly<Record<string, DefProp>>)) s.push(ligneProp(arg, d))
   }
-  s.push(`  Événements : ${EVENEMENTS.map(q).join(', ')}.`)
-  for (const [ev, champs] of Object.entries(CHARGES)) s.push(`  Charge de ${q(ev)} : ${Object.entries(champs).map(([k, r]) => `${q(k)} (${r})`).join(', ')} ; aucun autre événement ne porte de charge.`)
+  s.push(`  Événements : ${EVENEMENTS.filter((e) => !EVENEMENTS_DE_DERIBFY.includes(e)).map(q).join(', ')}.`)
+  for (const [ev, champs] of Object.entries(CHARGES).filter(([e]) => !EVENEMENTS_DE_DERIBFY.includes(e))) s.push(`  Charge de ${q(ev)} : ${Object.entries(champs).map(([k, r]) => `${q(k)} (${r})`).join(', ')} ; aucun autre événement ne porte de charge.`)
   s.push('')
   s.push('TEXTES : écris chaque texte EN CLAIR, dans la langue principale, sans balise ; Deribfy en fait la clé et la traduction.')
   s.push(`DONNÉES : jamais une valeur inventée — une liaison ${q('$data')} :`)

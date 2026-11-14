@@ -74,8 +74,10 @@ describe('V4 · bloc 2 · la génération branchée', () => {
     expect(r.ok, r.motif ?? '').toBe(true)
     expect(r.contrat.map((x) => `${x.classe} · ${x.chemin} · ${x.quoi}`)).toEqual([])
     expect(r.persistance).toEqual([])
-    // Les routes : 48 (V2, plus l'espace « gestion ») ; une ligne par route ; les écrans lus passent au modèle, les autres non.
-    expect(r.ecrans).toHaveLength(48)
+    // Les routes : 49 (V2, plus l'espace « gestion », plus « Créer un compte » : le cahier Hayine demande des
+    // comptes individuels — T2b) ; une ligne par route ; les écrans lus passent au modèle, les autres non.
+    expect(r.ecrans).toHaveLength(49)
+    expect(r.ecrans.find((e) => e.route === 'creer-un-compte')).toMatchObject({ choix: 'deribfy' })
     const lus = r.ecrans.filter((e) => e.choix !== 'deribfy')
     expect(lus.length).toBe(r.graphe.routes.filter((x) => x.origine === 'lecture').length)
     for (const e of lus) {
@@ -288,5 +290,30 @@ describe('V4 · bloc 2 · la génération branchée', () => {
     // Le rôle de base : le premier qui n'est pas de gestion — jamais un rôle de gestion par une inscription.
     expect(r.app.comptes).toMatchObject({ mode: 'individuels', identifiant: 'courriel-ou-telephone', secret: { nature: 'mot-de-passe' }, verification: 'exigee', roleDeBase: 'Particulier' })
     expect(r.consignes.find((c) => c.quoi === 'comptes')?.motif).toMatch(/^le cahier demande que chacun crée son compte/u)
+  })
+
+  it('⑩ le compte en base : l’inscription part à la page elle-même, la connexion par téléphone, le rôle relu du compte', async () => {
+    const appels: { email?: string; phone?: string; password: string }[] = []
+    const client = {
+      from: creerFrom({ profil: { reponse: () => ({ data: [], error: null }) } }, journalVierge()),
+      auth: {
+        signInWithPassword: (o: { email?: string; phone?: string; password: string }) => { appels.push(o); return Promise.resolve({ data: null, error: null }) },
+        getSession: () => Promise.resolve({ data: { session: { user: { phone: '+23566123456', app_metadata: { oeuvre: 'o1', role: 'abonné' } } } } }),
+      },
+    } as unknown as ClientBase
+    const m = new MagasinBase(client, ['profil'])
+    expect(await m.connecter('+23566123456', 'code-1234')).toBeNull()
+    expect(await m.connecter('awa@exemple.td', 'assez-long')).toBeNull()
+    expect(appels).toEqual([{ phone: '+23566123456', password: 'code-1234' }, { email: 'awa@exemple.td', password: 'assez-long' }])
+    // Le rôle vient du compte (app_metadata, écrit par le serveur), jamais d'un choix.
+    expect(await m.compteConnecte()).toEqual({ role: 'abonné', utilisateur: '+23566123456' })
+    // L'inscription : POST sur la page elle-même ; le message du serveur est rendu tel quel.
+    const envoyes: { url: string; corps: unknown }[] = []
+    const avant = globalThis.fetch
+    globalThis.fetch = ((url: string, o: { body: string }) => { envoyes.push({ url, corps: JSON.parse(o.body) }); return Promise.resolve(new Response(JSON.stringify({ message: 'Un compte existe déjà avec cet identifiant. Connectez-vous.' }), { status: 409 })) }) as unknown as typeof fetch
+    try {
+      expect(await m.inscrire('+23566123456', '1234', true)).toBe('Un compte existe déjà avec cet identifiant. Connectez-vous.')
+    } finally { globalThis.fetch = avant }
+    expect(envoyes).toEqual([{ url: '/', corps: { faire: 'inscrire', identifiant: '+23566123456', secret: '1234', conditions: true } }])
   })
 })

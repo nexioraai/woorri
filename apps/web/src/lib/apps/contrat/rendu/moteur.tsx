@@ -428,9 +428,12 @@ function ChampMedia({ nature, libelle, requis, aide, v, poser }: { nature: strin
 function MotDePasse({ valeur, poser, style, manque }: { valeur: string; poser: (x: unknown) => void; style: React.CSSProperties; manque: boolean }) {
   const c = useCtx()
   const [visible, poserVisible] = useState(false)
+  // Un code de N chiffres (le cahier le demande) : le pavé numérique, N chiffres au plus.
+  const code = c.app.comptes?.mode === 'individuels' && c.app.comptes.secret.nature === 'code' ? c.app.comptes.secret.chiffres : null
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 0 }}>
-      <input type={visible ? 'text' : 'password'} value={valeur} onChange={(e) => { poser(e.target.value) }} autoComplete="current-password" required aria-invalid={manque ? true : undefined}
+      <input type={visible ? 'text' : 'password'} value={valeur} onChange={(e) => { poser(code !== null ? e.target.value.replace(/\D/gu, '').slice(0, code) : e.target.value) }} autoComplete="current-password" required aria-invalid={manque ? true : undefined}
+        {...(code !== null ? { inputMode: 'numeric' as const, maxLength: code, pattern: `\\d{${String(code)}}` } : {})}
         style={{ ...style, flex: 1, width: 'auto', minWidth: 0 }} />
       <BoutonBrut libelle={visible ? c.s('masquer') : c.s('afficher')} genre="discret" presse={visible} surClic={() => { poserVisible((x) => !x) }} />
     </div>
@@ -449,7 +452,7 @@ function champsRequis(x: unknown): Set<string> {
   marcher(x)
   return s
 }
-const estVide = (v: unknown) => v === null || v === undefined || (typeof v === 'string' && v.trim() === '')
+const estVide = (v: unknown) => v === null || v === undefined || v === false || (typeof v === 'string' && v.trim() === '')
 
 function Champ({ n, portee }: { n: Noeud; portee: Portee }) {
   const c = useCtx()
@@ -463,10 +466,14 @@ function Champ({ n, portee }: { n: Noeud; portee: Portee }) {
   if (NATURES_MEDIA.has(nature)) return <ChampMedia nature={nature} libelle={libelle} requis={n.requis === true} aide={n.aide !== undefined ? c.t(n.aide) : null} v={v} poser={poser} />
   if (nature === 'case') {
     return (
-      <label style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: CIBLE }}>
-        <input type="checkbox" checked={vrai(v)} onChange={(e) => { poser(e.target.checked) }} style={{ width: CIBLE, height: CIBLE, margin: 0, accentColor: 'var(--dx-accent)' }} />
-        <span>{libelle}</span>
-      </label>
+      <div style={{ display: 'grid', gap: 4 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: CIBLE }}>
+          <input type="checkbox" checked={vrai(v)} onChange={(e) => { poser(e.target.checked) }} required={n.requis === true} aria-invalid={manque ? true : undefined}
+            style={{ width: CIBLE, height: CIBLE, margin: 0, accentColor: 'var(--dx-accent)', outline: manque ? '2px solid var(--dx-danger)' : undefined }} />
+          <span>{libelle}{n.requis === true ? ' *' : ''}</span>
+        </label>
+        {manque ? <span role="alert" style={{ fontSize: TAILLE.legende, color: 'var(--dx-danger)', fontWeight: 600 }}>{c.s('obligatoire')}</span> : null}
+      </div>
     )
   }
   const types: Readonly<Record<string, string>> = { texte: 'text', nombre: 'number', date: 'date', courriel: 'email', telephone: 'tel', secret: 'password' }
@@ -885,6 +892,16 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
           }
           case 'emit': {
             const ev = String(a.evenement)
+            if (ev === 'inscription') {
+              // T2b : créer le compte (en base, par le serveur de Deribfy) ; l'aperçu le DIT et poursuit.
+              const charge = Object.fromEntries(liste(a.charge).map(objet).filter((v): v is Readonly<Record<string, unknown>> => v !== null).map((v) => [String(v.champ), val(v.depuis)]))
+              if (arreterSiVides([...liste(a.charge).map(objet).map((v) => v?.depuis), ...[...requis].map((r) => ({ $data: r }))])) return
+              if (charge.confirmation !== undefined && charge.confirmation !== charge.secret) { poserAnnonce(s('confirmationDifferente')); return }
+              const id = identifiantDeCompte(chaine(charge.identifiant) ?? '', g.app.comptes)
+              if (magasin.inscrire === undefined) { poserAnnonce(s('apercuCompte')); break }
+              void magasin.inscrire(id, chaine(charge.secret) ?? '', charge.conditions === true).then((erreur) => { if (erreur === null) { poserAnnonce(s('compteCree')); suite() } else poserAnnonce(erreur) })
+              return
+            }
             if (ev === 'connexion') {
               const charge = Object.fromEntries(liste(a.charge).map(objet).filter((v): v is Readonly<Record<string, unknown>> => v !== null).map((v) => [String(v.champ), val(v.depuis)]))
               const identifiant = chaine(charge.identifiant)
@@ -893,9 +910,14 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
                 // En base : la vraie connexion ; la session ne change qu'après sa réponse, et la suite
                 // (la page d'après) n'avance que si elle a réussi. Le message d'échec ne dit pas
                 // lequel des deux est faux (norme : ne rien révéler).
-                void magasin.connecter(identifiant ?? '', chaine(charge.secret) ?? '').then((erreur) => {
-                  if (erreur === null) { g.poserSession((x) => ({ role: x.role, utilisateur: identifiant })); poserAnnonce(s('connecte')); suite() }
-                  else poserAnnonce(/fetch|network|réseau|timeout/iu.test(erreur) ? erreur : s('identifiantsInvalides'))
+                // T2b : le secret et l'identifiant sous la forme que l'inscription a rangée ; le rôle
+                // vient du COMPTE (écrit par le serveur), jamais d'un choix de la personne.
+                const id = identifiantDeCompte(identifiant ?? '', g.app.comptes)
+                void magasin.connecter(id, secretDeCompte(chaine(charge.secret) ?? '', g.app.comptes)).then(async (erreur) => {
+                  if (erreur !== null) { poserAnnonce(/fetch|network|réseau|timeout/iu.test(erreur) ? erreur : s('identifiantsInvalides')); return }
+                  const compte = g.app.comptes?.mode === 'individuels' ? await magasin.compteConnecte?.() : null
+                  g.poserSession((x) => ({ role: compte?.role ?? x.role, utilisateur: compte?.utilisateur || identifiant }))
+                  poserAnnonce(s('connecte')); suite()
                 })
                 return
               } else {
@@ -924,6 +946,10 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
   function retirerManquant(cle: string) { if (manquants.has(cle)) poserManquants((m) => new Set([...m].filter((x) => x !== cle))) }
 
   const garde = ecran.acces !== 'visiteur' && g.session.role !== ecran.acces
+  // T2b : une application publiée aux comptes individuels ne laisse pas CHOISIR son rôle.
+  const parCompte = g.app.comptes?.mode === 'individuels' && magasin.connecter !== undefined
+  const routeConnexion = g.app.ecrans.find((e) => emetConnexion(e.corps))?.route ?? null
+  const routeInscription = g.app.ecrans.some((e) => e.route === 'creer-un-compte') ? 'creer-un-compte' : null
   return (
     <Contexte.Provider value={ctx}>
       {annonce !== null ? <p role="status" style={{ margin: 0, padding: 12, borderRadius: 8, background: 'var(--dx-surface)', border: '1px solid var(--dx-succes)', color: 'var(--dx-succes)' }}>{annonce}</p> : null}
@@ -931,9 +957,26 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
         // La garde est une CARTE qui explique (V4.3f) — pas une question posée seule sur une page vide.
         ? <section data-deribfy="garde" className="dx-carte" style={{ display: 'grid', gap: 16, padding: 28, maxInlineSize: 520, justifySelf: 'center', inlineSize: '100%', textAlign: 'center', justifyItems: 'center' }}>
             <span aria-hidden="true" className="dx-doux" style={{ inlineSize: 56, blockSize: 56, borderRadius: 16, display: 'grid', placeItems: 'center' }}><Picto nom="utilisateur" coul="accent" /></span>
-            <h1 style={{ margin: 0, fontSize: 24 }}>{s('quiEtesVous')}</h1>
-            <p style={{ margin: 0, color: 'var(--dx-texteDiscret)', lineHeight: 1.5 }}>{s('garde').replace('{r}', ecran.acces)}</p>
-            <div data-role={ecran.acces}><BoutonBrut libelle={`${s('entrerComme')} ${ecran.acces}`} genre="principal" surClic={() => { g.poserSession((x) => ({ ...x, role: ecran.acces })) }} /></div>
+            {parCompte
+              ? g.session.utilisateur === null
+                ? <>
+                    <h1 style={{ margin: 0, fontSize: 24 }}>{s('seConnecter')}</h1>
+                    <p style={{ margin: 0, color: 'var(--dx-texteDiscret)', lineHeight: 1.5 }}>{s('connectezVous')}</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+                      {routeConnexion !== null ? <BoutonBrut libelle={s('seConnecter')} genre="principal" surClic={() => { allerA(routeConnexion) }} /> : null}
+                      {routeInscription !== null ? <BoutonBrut libelle={s('creerCompte')} genre="secondaire" surClic={() => { allerA(routeInscription) }} /> : null}
+                    </div>
+                  </>
+                : <>
+                    <h1 style={{ margin: 0, fontSize: 24 }}>{s('accueil')}</h1>
+                    <p style={{ margin: 0, color: 'var(--dx-texteDiscret)', lineHeight: 1.5 }}>{s('reserveA').replace('{r}', ecran.acces)}</p>
+                    <BoutonBrut libelle={s('accueil')} genre="principal" surClic={() => { allerA('accueil') }} />
+                  </>
+              : <>
+                  <h1 style={{ margin: 0, fontSize: 24 }}>{s('quiEtesVous')}</h1>
+                  <p style={{ margin: 0, color: 'var(--dx-texteDiscret)', lineHeight: 1.5 }}>{s('garde').replace('{r}', ecran.acces)}</p>
+                  <div data-role={ecran.acces}><BoutonBrut libelle={`${s('entrerComme')} ${ecran.acces}`} genre="principal" surClic={() => { g.poserSession((x) => ({ ...x, role: ecran.acces })) }} /></div>
+                </>}
           </section>
         : <section style={{ display: 'grid', gap: 16, minWidth: 0 }}>
             {ecran.corps.map((n, i) => <Rendu key={i} n={n} portee={null} />)}
@@ -948,7 +991,7 @@ function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; maga
   const [route, poserRoute] = useState(() => routeCourante() || 'accueil')
   const [largeur, poserLargeur] = useState<Largeur>(() => classeDeLargeur(window.innerWidth))
   const [theme, poserTheme] = useState<Theme>(() => (document.documentElement.getAttribute('data-theme') === 'sombre' ? 'sombre' : app.kit === 'nuit' ? 'sombre' : 'clair'))
-  const [session, poserSessionBrute] = useState<Session>(() => sessionInitiale(app))
+  const [session, poserSessionBrute] = useState<Session>(() => sessionInitiale(app, magasin))
   // Le rôle se choisit UNE fois : il est gardé (mémoire, et stockage quand la page en a un).
   const poserSession: React.Dispatch<React.SetStateAction<Session>> = (x) => { poserSessionBrute((avant) => { const s = typeof x === 'function' ? x(avant) : x; garderSession(app, s); return s }) }
   const [parcours, poserParcours] = useState<ReadonlyMap<string, Ligne>>(parcoursInitial)
@@ -965,6 +1008,10 @@ function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; maga
     window.__deribfy = { langue: poserLangue, theme: (t) => { poserTheme(t) }, visiteur: () => { const s = { role: 'visiteur', utilisateur: null }; garderSession(app, s); poserSessionBrute(s) } }
     return () => { window.removeEventListener('hashchange', h); window.removeEventListener('resize', r) }
   }, [app])
+  useEffect(() => {
+    if (app.comptes?.mode !== 'individuels' || magasin.compteConnecte === undefined) return
+    void magasin.compteConnecte().then((c) => { if (c !== null) poserSessionBrute({ role: c.role ?? 'visiteur', utilisateur: c.utilisateur }) })
+  }, [app, magasin])
   useEffect(() => {
     document.documentElement.lang = langue
     document.documentElement.dir = dir
@@ -1125,13 +1172,27 @@ function routesDuRole(x: unknown, role: string, herite: string | null): string[]
   return [...ici, ...Object.values(o).flatMap((v) => routesDuRole(v, role, r))]
 }
 
+/** T2b : l'identifiant tel que l'inscription l'a rangé — un numéro sans indicatif reçoit celui du pays. */
+function identifiantDeCompte(brut: string, c: AppCompilee['comptes']): string {
+  const x = brut.trim()
+  if (c?.mode !== 'individuels' || x.includes('@')) return x.toLowerCase()
+  const t = x.replace(/[\s.()-]/gu, '')
+  if (/^\+\d{8,15}$/u.test(t)) return t
+  if (/^00\d{8,15}$/u.test(t)) return `+${t.slice(2)}`
+  return c.indicatif !== undefined && /^0?\d{6,12}$/u.test(t) ? `${c.indicatif}${t.replace(/^0/u, '')}` : x
+}
+/** T2b : un code de N chiffres est rangé `code-<chiffres>` (même forme que le serveur, `inscription-oeuvre.ts`). */
+const secretDeCompte = (secret: string, c: AppCompilee['comptes']): string => (c?.mode === 'individuels' && c.secret.nature === 'code' ? `code-${secret}` : secret)
+
 /** Les rôles que l'application protège (ses écrans non publics). */
 export function rolesDeLApplication(app: AppCompilee): string[] {
   return [...new Set(app.ecrans.map((e) => e.acces).filter((r) => r !== 'visiteur'))]
 }
 const cleSession = (app: AppCompilee) => `deribfy:session:${app.nom}`
 /** UN seul rôle : pas de question, la session le porte d'emblée. Sinon : le rôle gardé, ou visiteur. */
-function sessionInitiale(app: AppCompilee): Session {
+function sessionInitiale(app: AppCompilee, magasin: Source): Session {
+  // T2b : comptes individuels en base — personne n'a de rôle avant de s'être connecté (relu au montage).
+  if (app.comptes?.mode === 'individuels' && magasin.connecter !== undefined) return { role: 'visiteur', utilisateur: null }
   const roles = rolesDeLApplication(app)
   if (roles.length === 1) return { role: roles[0]!, utilisateur: null }
   try {

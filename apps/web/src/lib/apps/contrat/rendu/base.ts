@@ -25,8 +25,8 @@ export type ClientBase = {
     [retirer: string]: unknown
   }
   readonly auth: {
-    signInWithPassword(o: { email: string; password: string }): Reponse
-    getSession?(): PromiseLike<{ readonly data: { readonly session: { readonly user: { readonly app_metadata?: Readonly<Record<string, unknown>> } } | null } }>
+    signInWithPassword(o: { email: string; password: string } | { phone: string; password: string }): Reponse
+    getSession?(): PromiseLike<{ readonly data: { readonly session: { readonly user: { readonly app_metadata?: Readonly<Record<string, unknown>>; readonly email?: string; readonly phone?: string } } | null } }>
   }
   readonly storage?: { from(espace: string): {
     upload(chemin: string, fichier: Blob, o?: { contentType?: string; upsert?: boolean }): Reponse
@@ -140,7 +140,29 @@ export class MagasinBase implements Source {
   }
 
   async connecter(identifiant: string, secret: string): Promise<string | null> {
-    const r = await this.client.auth.signInWithPassword({ email: identifiant, password: secret })
+    // Un numéro international (`+…`) se connecte par téléphone ; le reste, par courriel.
+    const r = await this.client.auth.signInWithPassword(identifiant.startsWith('+') ? { phone: identifiant, password: secret } : { email: identifiant, password: secret })
     return r.error === null ? null : r.error.message
+  }
+
+  /** T2b : l'inscription part à la page elle-même (`POST` sur son sous-domaine, mené à `/a/<nom>`). */
+  async inscrire(identifiant: string, secret: string, conditions: boolean): Promise<string | null> {
+    try {
+      const r = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ faire: 'inscrire', identifiant, secret, conditions }) })
+      if (r.ok) return null
+      const corps = await r.json().catch(() => null) as { message?: unknown } | null
+      return typeof corps?.message === 'string' ? corps.message : 'Le compte n’a pas pu être créé. Réessayez.'
+    } catch {
+      return 'Le réseau ne répond pas. Réessayez.'
+    }
+  }
+
+  /** T2b : le rôle écrit par le serveur dans app_metadata — jamais choisi par la personne. */
+  async compteConnecte(): Promise<{ readonly role: string | null; readonly utilisateur: string } | null> {
+    const s = await this.client.auth.getSession?.()
+    const u = s?.data.session?.user
+    if (u === undefined) return null
+    const role = u.app_metadata?.role
+    return { role: typeof role === 'string' && role !== '' ? role : null, utilisateur: u.email ?? u.phone ?? '' }
   }
 }

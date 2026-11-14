@@ -50,7 +50,9 @@ export const ICONES = [
 ] as const
 
 /** Les événements que le squelette sait traiter. `choisirLangue` prend un code de langue LUE. */
-export const EVENEMENTS = ['connexion', 'deconnexion', 'choisirLangue', 'rafraichir', 'partager', 'contacter'] as const
+export const EVENEMENTS = ['connexion', 'deconnexion', 'choisirLangue', 'rafraichir', 'partager', 'contacter', 'inscription'] as const
+/** Les événements que SEULE la page d'inscription de Deribfy pose (T2b) : hors de la consigne du modèle. */
+export const EVENEMENTS_DE_DERIBFY: readonly string[] = ['inscription']
 
 /**
  * LA CHARGE UTILE D'UN ÉVÉNEMENT — typée, fermée.
@@ -64,6 +66,7 @@ export const EVENEMENTS = ['connexion', 'deconnexion', 'choisirLangue', 'rafraic
  */
 export const CHARGES: Readonly<Record<string, Readonly<Record<string, 'requis' | 'facultatif'>>>> = {
   connexion: { identifiant: 'requis', secret: 'requis' },
+  inscription: { identifiant: 'requis', secret: 'requis', confirmation: 'facultatif', conditions: 'requis' },
 }
 export const CHAMPS_DE_CHARGE = [...new Set(Object.values(CHARGES).flatMap((c) => Object.keys(c)))]
 
@@ -434,7 +437,7 @@ export function identifiantsDuCatalogue(): Set<string> {
   const s = new Set<string>(['composant', 'faire', '$data', 'visiteur'])
   for (const k of Object.keys(PROPS_ECRAN)) if (!PROPS_ECRAN_DE_DERIBFY.includes(k)) s.add(k)
   for (const k of ['table', 'vue', 'nom', 'nature', 'initial', 'champ', 'egal', 'depuis', 'valeur', 'libelle']) s.add(k)
-  for (const [ev, champs] of Object.entries(CHARGES)) { s.add(ev); for (const c of Object.keys(champs)) s.add(c) }
+  for (const [ev, champs] of Object.entries(CHARGES)) { if (EVENEMENTS_DE_DERIBFY.includes(ev)) continue; s.add(ev); for (const c of Object.keys(champs)) s.add(c) }
   for (const v of VUES_TETRADE) s.add(v)
   for (const v of NATURES_ETAT) s.add(v)
   for (const r of ROUTES_SOCLE) s.add(r)
@@ -446,7 +449,7 @@ export function identifiantsDuCatalogue(): Set<string> {
     for (const [prop, d] of Object.entries(def.props)) {
       if ((PROPS_DE_DERIBFY[nom] ?? []).includes(prop)) continue
       s.add(prop)
-      if (d.genre.g === 'variante') for (const v of d.genre.valeurs) if (!(NATURES_MEDIA as readonly string[]).includes(v)) s.add(v) // les natures média : posées par la règle de Deribfy
+      if (d.genre.g === 'variante') for (const v of d.genre.valeurs) if (!(NATURES_MEDIA as readonly string[]).includes(v) && !EVENEMENTS_DE_DERIBFY.includes(v)) s.add(v) // posées par Deribfy seul : natures média, inscription
     }
   }
   for (const prop of Object.keys(PROPS_COMMUNES)) s.add(prop)
@@ -454,7 +457,7 @@ export function identifiantsDuCatalogue(): Set<string> {
     s.add(faire)
     for (const [arg, d] of Object.entries(def.args)) {
       s.add(arg)
-      if (d.genre.g === 'variante') for (const v of d.genre.valeurs) if (!(NATURES_MEDIA as readonly string[]).includes(v)) s.add(v) // les natures média : posées par la règle de Deribfy
+      if (d.genre.g === 'variante') for (const v of d.genre.valeurs) if (!(NATURES_MEDIA as readonly string[]).includes(v) && !EVENEMENTS_DE_DERIBFY.includes(v)) s.add(v) // posées par Deribfy seul : natures média, inscription
     }
   }
   return s

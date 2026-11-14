@@ -88,11 +88,14 @@ export async function inscrire(o: {
   readonly comptes: ComptesIndividuels
   readonly identifiant: unknown
   readonly secret: unknown
+  /** L'acceptation des conditions d'utilisation : exigée (norme). */
+  readonly conditions: unknown
   readonly adresse: string
   readonly admin: AdminAuth
   readonly limiter: Limiteur
 }): Promise<Resultat> {
   if (typeof o.identifiant !== 'string' || typeof o.secret !== 'string' || o.identifiant.length > 254 || o.secret.length > 128) return { ok: false, statut: 400, message: 'Demande illisible.' }
+  if (o.conditions !== true) return { ok: false, statut: 400, message: 'Acceptez les conditions d’utilisation pour créer votre compte.' }
   const id = lireIdentifiant(o.identifiant, o.comptes)
   if ('erreur' in id) return { ok: false, statut: 400, message: id.erreur }
   const mauvaisSecret = verifierSecret(o.secret, o.comptes)
