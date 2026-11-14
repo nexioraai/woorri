@@ -108,6 +108,8 @@ type Ctx = {
   readonly poserEtat: (nom: string, v: unknown) => void
   readonly poserBrouillon: (cle: string, v: unknown) => void
   readonly executer: (effets: unknown, portee: Portee) => void
+  /** Les champs obligatoires restés vides au dernier envoi (`etat.<nom>` ou chemin de brouillon). */
+  readonly manquants: ReadonlySet<string>
   readonly t: (x: unknown) => string
   readonly s: (c: CleSysteme) => string
 }
@@ -408,6 +410,33 @@ function ChampMedia({ nature, libelle, requis, aide, v, poser }: { nature: strin
   )
 }
 
+/** Un mot de passe : masqué, affichable (« Afficher » / « Masquer »), reconnu des gestionnaires de mots de passe. */
+function MotDePasse({ valeur, poser, style, manque }: { valeur: string; poser: (x: unknown) => void; style: React.CSSProperties; manque: boolean }) {
+  const c = useCtx()
+  const [visible, poserVisible] = useState(false)
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 0 }}>
+      <input type={visible ? 'text' : 'password'} value={valeur} onChange={(e) => { poser(e.target.value) }} autoComplete="current-password" required aria-invalid={manque ? true : undefined}
+        style={{ ...style, flex: 1, width: 'auto', minWidth: 0 }} />
+      <BoutonBrut libelle={visible ? c.s('masquer') : c.s('afficher')} genre="discret" presse={visible} surClic={() => { poserVisible((x) => !x) }} />
+    </div>
+  )
+}
+/** Les données que l'écran exige : chaque Champ `requis`. */
+function champsRequis(x: unknown): Set<string> {
+  const s = new Set<string>()
+  const marcher = (y: unknown) => {
+    if (Array.isArray(y)) { y.forEach(marcher); return }
+    const o = objet(y)
+    if (o === null) return
+    if (o.composant === 'Champ' && o.requis === true) { const d = liaisonDe(o.donnee); if (d !== null) s.add(d) }
+    Object.values(o).forEach(marcher)
+  }
+  marcher(x)
+  return s
+}
+const estVide = (v: unknown) => v === null || v === undefined || (typeof v === 'string' && v.trim() === '')
+
 function Champ({ n, portee }: { n: Noeud; portee: Portee }) {
   const c = useCtx()
   const d = liaisonDe(n.donnee) ?? ''
@@ -415,7 +444,8 @@ function Champ({ n, portee }: { n: Noeud; portee: Portee }) {
   const v = valeurDe(d, c, portee)
   const poser = (x: unknown) => { if (d.startsWith('etat.')) c.poserEtat(d.slice(5), x); else c.poserBrouillon(d, x) }
   const libelle = c.t(n.libelle)
-  const champ: React.CSSProperties = { minHeight: CIBLE, width: '100%', paddingInline: 12, borderRadius: 8, border: '1px solid var(--dx-bordure)', background: 'var(--dx-surface)' }
+  const manque = c.manquants.has(d)
+  const champ: React.CSSProperties = { minHeight: CIBLE, width: '100%', paddingInline: 12, borderRadius: 8, border: `1px solid ${manque ? 'var(--dx-danger)' : 'var(--dx-bordure)'}`, background: 'var(--dx-surface)', boxSizing: 'border-box' }
   if (NATURES_MEDIA.has(nature)) return <ChampMedia nature={nature} libelle={libelle} requis={n.requis === true} aide={n.aide !== undefined ? c.t(n.aide) : null} v={v} poser={poser} />
   if (nature === 'case') {
     return (
@@ -426,6 +456,8 @@ function Champ({ n, portee }: { n: Noeud; portee: Portee }) {
     )
   }
   const types: Readonly<Record<string, string>> = { texte: 'text', nombre: 'number', date: 'date', courriel: 'email', telephone: 'tel', secret: 'password' }
+  // La saisie automatique des navigateurs et des gestionnaires de mots de passe (norme WCAG 1.3.5).
+  const auto: Readonly<Record<string, string>> = { courriel: 'email', telephone: 'tel', secret: 'current-password' }
   return (
     <label style={{ display: 'grid', gap: 6, minWidth: 0 }}>
       <span style={{ fontSize: TAILLE.legende, color: 'var(--dx-texteDiscret)' }}>{libelle}{n.requis === true ? ' *' : ''}</span>
@@ -434,7 +466,12 @@ function Champ({ n, portee }: { n: Noeud; portee: Portee }) {
             <option value="">—</option>
             {liste(n.choix).map(objet).filter((o): o is Readonly<Record<string, unknown>> => o !== null).map((o) => <option key={String(o.valeur)} value={String(o.valeur)}>{c.t(o.libelle)}</option>)}
           </select>
-        : <input type={types[nature] ?? 'text'} value={String(v ?? '')} onChange={(e) => { poser(e.target.value) }} style={champ} />}
+        : nature === 'secret'
+          ? <MotDePasse valeur={String(v ?? '')} poser={poser} style={champ} manque={manque} />
+          : <input type={types[nature] ?? 'text'} value={String(v ?? '')} onChange={(e) => { poser(e.target.value) }} style={champ}
+              {...(auto[nature] !== undefined ? { autoComplete: auto[nature] } : {})} {...(nature === 'nombre' ? { inputMode: 'decimal' as const } : {})}
+              required={n.requis === true} aria-invalid={manque ? true : undefined} />}
+      {manque ? <span role="alert" style={{ fontSize: TAILLE.legende, color: 'var(--dx-danger)', fontWeight: 600 }}>{c.s('obligatoire')}</span> : null}
       {n.aide !== undefined ? <span style={{ fontSize: TAILLE.legende, color: 'var(--dx-texteDiscret)' }}>{c.t(n.aide)}</span> : null}
     </label>
   )
@@ -784,17 +821,33 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
   const [etats, poserEtats] = useState<Readonly<Record<string, unknown>>>(() => Object.fromEntries((ecran.etat ?? []).map((x) => [x.nom, x.initial ?? (x.nature === 'booleen' ? false : '')])))
   const [brouillons, poserBrouillons] = useState<Readonly<Record<string, unknown>>>({})
   const [annonce, poserAnnonce] = useState<string | null>(null)
+  const [manquants, poserManquants] = useState<ReadonlySet<string>>(new Set())
   const { magasin, s } = g
+  // Les champs obligatoires de l'écran (T2) : vérifiés AVANT l'envoi qui les emploie.
+  const requis = useMemo(() => champsRequis(ecran.corps), [ecran.corps])
 
   const ctx: Ctx = {
     app: g.app, magasin, langue: g.langue, largeur: g.largeur, session: g.session, parcours: g.parcours, etats, brouillons, t: g.t, s,
-    poserEtat: (nom, v) => { poserEtats((e) => ({ ...e, [nom]: v })) },
-    poserBrouillon: (k, v) => { poserBrouillons((b) => ({ ...b, [k]: v })) },
+    manquants,
+    poserEtat: (nom, v) => { poserEtats((e) => ({ ...e, [nom]: v })); retirerManquant(`etat.${nom}`) },
+    poserBrouillon: (k, v) => { poserBrouillons((b) => ({ ...b, [k]: v })); retirerManquant(k) },
+    // UNE SUITE D'ACTIONS (T2/T3) : chacune dans l'ordre ; un envoi refusé, une connexion refusée
+    // ou un champ obligatoire vide ARRÊTE la suite — jamais « page suivante » après un échec.
     executer: (effets, portee) => {
-      for (const brut of liste(effets)) {
-        const a = objet(brut) as Action | null
-        if (a === null) continue
-        const val = (x: unknown) => { const d = liaisonDe(x); return d !== null ? valeurDe(d, ctx, portee) : x }
+      const actions = liste(effets).map(objet).filter((a): a is Action => a !== null)
+      const val = (x: unknown) => { const d = liaisonDe(x); return d !== null ? valeurDe(d, ctx, portee) : x }
+      const vides = (sources: readonly unknown[]): string[] => sources.map((x) => liaisonDe(x)).filter((d): d is string => d !== null && requis.has(d) && estVide(valeurDe(d, ctx, portee)))
+      const arreterSiVides = (sources: readonly unknown[]): boolean => {
+        const v = vides(sources)
+        if (v.length === 0) return false
+        poserManquants(new Set(v)); poserAnnonce(s('obligatoires'))
+        window.setTimeout(() => { (document.querySelector('[aria-invalid="true"]') as HTMLElement | null)?.focus() }, 0)
+        return true
+      }
+      const derouler = (i: number): void => {
+        for (let k = i; k < actions.length; k += 1) {
+          const a = actions[k]!
+          const suite = () => { derouler(k + 1) }
         switch (a.faire) {
           case 'navigate': {
             if (a.avec !== undefined && portee !== null) g.poserParcours((p) => new Map(p).set(portee.table, portee.ligne))
@@ -806,10 +859,14 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
             const valeurs = Object.fromEntries(liste(a.valeurs).map(objet).filter((v): v is Readonly<Record<string, unknown>> => v !== null).map((v) => [String(v.champ), val(v.depuis)]))
             const cible = portee !== null && portee.table === table ? portee.ligne : g.parcours.get(table) ?? null
             const ecriture = a.ecriture === 'modifier' || a.ecriture === 'supprimer' ? a.ecriture : 'creer'
+            if (ecriture !== 'supprimer' && arreterSiVides(liste(a.valeurs).map(objet).map((v) => v?.depuis))) return
             const ecrit = magasin.ecrire(table, ecriture, ecriture === 'creer' ? null : cible, valeurs)
-            // En base l'écriture répond plus tard : l'écran ne dit « enregistré » qu'après, et dit l'échec sinon.
-            if (ecrit instanceof Promise) void ecrit.then((erreur) => { poserAnnonce(erreur === null ? s('enregistre') : erreur) })
-            else poserAnnonce(s('enregistre'))
+            // En base l'écriture répond plus tard : la suite n'avance qu'APRÈS, et s'arrête sur l'échec.
+            if (ecrit instanceof Promise) {
+              void ecrit.then((erreur) => { poserAnnonce(erreur === null ? s('enregistre') : erreur); if (erreur === null) suite() })
+              return
+            }
+            poserAnnonce(s('enregistre'))
             break
           }
           case 'emit': {
@@ -817,12 +874,16 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
             if (ev === 'connexion') {
               const charge = Object.fromEntries(liste(a.charge).map(objet).filter((v): v is Readonly<Record<string, unknown>> => v !== null).map((v) => [String(v.champ), val(v.depuis)]))
               const identifiant = chaine(charge.identifiant)
+              if (arreterSiVides(liste(a.charge).map(objet).map((v) => v?.depuis))) return
               if (magasin.connecter !== undefined) {
-                // En base : la vraie connexion ; la session ne change qu'après sa réponse.
+                // En base : la vraie connexion ; la session ne change qu'après sa réponse, et la suite
+                // (la page d'après) n'avance que si elle a réussi. Le message d'échec ne dit pas
+                // lequel des deux est faux (norme : ne rien révéler).
                 void magasin.connecter(identifiant ?? '', chaine(charge.secret) ?? '').then((erreur) => {
-                  if (erreur === null) { g.poserSession((x) => ({ role: x.role, utilisateur: identifiant })); poserAnnonce(s('connecte')) }
-                  else poserAnnonce(erreur)
+                  if (erreur === null) { g.poserSession((x) => ({ role: x.role, utilisateur: identifiant })); poserAnnonce(s('connecte')); suite() }
+                  else poserAnnonce(/fetch|network|réseau|timeout/iu.test(erreur) ? erreur : s('identifiantsInvalides'))
                 })
+                return
               } else {
                 g.poserSession((x) => ({ role: x.role, utilisateur: identifiant }))
                 poserAnnonce(s('connecte'))
@@ -841,9 +902,12 @@ function EcranVivant({ g, ecran }: { g: Global; ecran: EcranCompile }) {
           }
           default:
         }
+        }
       }
+      derouler(0)
     },
   }
+  function retirerManquant(cle: string) { if (manquants.has(cle)) poserManquants((m) => new Set([...m].filter((x) => x !== cle))) }
 
   const garde = ecran.acces !== 'visiteur' && g.session.role !== ecran.acces
   return (

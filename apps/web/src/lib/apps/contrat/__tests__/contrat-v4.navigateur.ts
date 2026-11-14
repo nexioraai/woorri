@@ -23,6 +23,10 @@ import { pageAutonome } from '../../boucle-directe'
 import { jugerExperience } from '../../juge-experience'
 import type { EntiteDeclaree } from '../../entites-declarees'
 import { genererApplication } from '../generation'
+import { expanser } from '../archetypes'
+import { compilerApp } from '../compiler'
+import { fichiersDeLOeuvre } from '../generation'
+import { assembler } from '../../bac-a-sable'
 import type { LectureGraphe } from '../graphe'
 import type { TableLue } from '../validateur'
 import { modeleSimule, planSimule } from './modele-simule-v4'
@@ -181,5 +185,48 @@ describe('V4 · l’application Hayine assemblée, dans Chromium', () => {
     expect(await p.$$eval('main img[data-media="image"]', (xs) => xs.filter((x) => (x as HTMLImageElement).naturalWidth > 0).length)).toBe(1)
     expect(await p.$$('main [data-media="fichier"]')).toHaveLength(1)
     await contexte.close()
+  }, 120_000)
+
+  it('⑥ la connexion aux normes : champs obligatoires, mot de passe affichable, « oublié » au Contact, la suite seulement après', async () => {
+    const ex = (archetype: string, route: string, slots: Record<string, unknown>) => expanser({ archetype: archetype as never, route, acces: 'visiteur', slots }, { langue: 'fr', langues: [] })
+    const ecrans = [
+      ex('accueil', 'accueil', { titre: 'Essai', raccourcis: [{ libelle: 'Connexion', route: 'connexion' }] }),
+      ex('auth', 'connexion', { titre: 'Connexion', natureIdentifiant: 'courriel', libelleIdentifiant: 'Courriel', libelleSecret: 'Mot de passe', apres: 'suite' }),
+      ex('pageDuCompte', 'contact', { titre: 'Contact', texte: 'Écrivez-nous.', retour: 'accueil' }),
+      ex('pageDuCompte', 'suite', { titre: 'Bienvenue', texte: 'Vous êtes connecté.', retour: 'accueil' }),
+      ex('compte', 'compte', { titre: 'Compte' }),
+    ]
+    const app = compilerApp({ ecrans, barre: ['accueil', 'compte'] } as never, { nom: 'Essai', langues: [{ code: 'fr', dir: 'ltr', libelle: 'Français' }], devise: null })
+    const v = await assembler(new Map(fichiersDeLOeuvre(app, [])))
+    expect(v.ok, v.ok ? '' : v.erreur).toBe(true)
+    const html = pageAutonome(v.ok ? v.code : '', 'Essai', undefined, 'apercu', null, [{ code: 'fr', dir: 'ltr' }])
+    const p = await navigateur.newPage({ viewport: { width: 390, height: 844 } })
+    await p.route('**/*', (x) => (x.request().url().startsWith(ADRESSE) ? x.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }) : x.fulfill({ status: 404, body: '' })))
+    await p.goto(`${ADRESSE}#connexion`); await p.waitForTimeout(250)
+    const hash = () => p.evaluate(() => window.location.hash)
+    // Envoyé vide : « Obligatoire » sous chaque champ, le premier en focus, et la page ne change pas.
+    await p.locator('main button').filter({ hasText: 'Se connecter' }).click(); await p.waitForTimeout(150)
+    expect(await p.$$eval('main [role="alert"]', (xs) => xs.map((x) => x.textContent))).toEqual(['Obligatoire', 'Obligatoire'])
+    expect(await p.evaluate(() => document.activeElement?.getAttribute('aria-invalid'))).toBe('true')
+    expect(await hash()).toBe('#connexion')
+    // La saisie automatique des navigateurs : courriel et mot de passe reconnus.
+    expect(await p.$eval('main input[type="email"]', (x) => x.getAttribute('autocomplete'))).toBe('email')
+    expect(await p.$eval('main input[type="password"]', (x) => x.getAttribute('autocomplete'))).toBe('current-password')
+    // Le mot de passe s'affiche, puis se masque.
+    await p.locator('main input[type="password"]').fill('secret-123')
+    await p.getByRole('button', { name: 'Afficher' }).click()
+    expect(await p.$$('main input[type="password"]')).toHaveLength(0)
+    await p.getByRole('button', { name: 'Masquer' }).click()
+    expect(await p.$$('main input[type="password"]')).toHaveLength(1)
+    // « Mot de passe oublié ? » : le Contact.
+    await p.getByRole('button', { name: 'Mot de passe oublié ?' }).click(); await p.waitForTimeout(150)
+    expect(await hash()).toBe('#contact')
+    // Rempli : la suite.
+    await p.evaluate(() => { window.location.hash = 'connexion' }); await p.waitForTimeout(200)
+    await p.locator('main input[type="email"]').fill('awa@exemple.td')
+    await p.locator('main input[type="password"]').fill('secret-123')
+    await p.locator('main button').filter({ hasText: 'Se connecter' }).click(); await p.waitForTimeout(200)
+    expect(await hash()).toBe('#suite')
+    await p.close()
   }, 120_000)
 })
