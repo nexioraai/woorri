@@ -183,6 +183,15 @@ export const COMPOSANTS: Readonly<Record<string, DefComposant>> = {
     filtre: p({ g: 'filtres' }, false, 'ne garde que les lignes dont la colonne vaut la liaison'),
     modele: p(E, true, 'ce qui est répété ; `ligne.<colonne>` y désigne la ligne'),
     vide: p(T, true, 'ce qui s’affiche quand il n’y a aucune ligne'),
+    videAction: p({ g: 'effets' }, false, 'l’appel à l’action de l’état vide'),
+    videLibelle: p(T, false, 'son libellé'),
+  } },
+  Fiche: { aide: 'la ligne en cours d’une table (choisie par navigate avec), avec ses états', props: {
+    donnee: p(L, true, '`table.<table>`'),
+    modele: p(E, true, 'ce qui est montré ; `ligne.<colonne>` y désigne la ligne'),
+    vide: p(T, true, 'ce qui s’affiche quand aucune ligne n’est choisie'),
+    videAction: p({ g: 'effets' }, false, 'l’appel à l’action de l’état vide'),
+    videLibelle: p(T, false, 'son libellé'),
   } },
   Pastille: { aide: 'une étiquette courte', props: {
     texte: p(T, true, 'l’étiquette'),

@@ -555,10 +555,11 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
         if (d !== null && d.startsWith('etat.') && declares.has(d.split('.')[1]!)) champs.push({ nom: d.split('.')[1]!, chemin: `${ch}.donnee` })
         break
       }
-      case 'Lignes': {
+      case 'Lignes':
+      case 'Fiche': {
         const d = donnee(n.donnee)
         let t: string | null = null
-        if (d !== null && !d.startsWith('table.')) c.noter('LIAISON_HORS_PORTEE', `${ch}.donnee`, `${dire(d)} : Lignes répète les lignes d’une table (table.<table>)`, null)
+        if (d !== null && !d.startsWith('table.')) c.noter('LIAISON_HORS_PORTEE', `${ch}.donnee`, `${dire(d)} : ${String(n.composant)} lit une table (table.<table>)`, null)
         // Une table inconnue est refusée UNE fois ; ses lignes ne sont pas re-jugées colonne par colonne.
         else if (d !== null) { verifierLiaison(d, `${ch}.donnee`, portee, 'visible'); t = d.split('.')[1] ?? null; if (t !== null && !tables.has(t)) t = INCONNUE }
         tableau(n.filtre).forEach((f, i) => {
@@ -574,6 +575,7 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
       default:
     }
     if ('effets' in n) effets(n.effets, `${ch}.effets`, portee, libelle)
+    if ('videAction' in n) effets(n.videAction, `${ch}.videAction`, portee, typeof n.videLibelle === 'string' ? n.videLibelle : libelle)
     tableau(n.enfants).forEach((m, i) => { parcourir(m, `${ch}.enfants[${String(i)}]`, portee) })
   }
 

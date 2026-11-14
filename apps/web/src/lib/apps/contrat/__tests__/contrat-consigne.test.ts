@@ -5,7 +5,8 @@
 //   ② rien dans la consigne (entre accents graves) n'est absent du catalogue ;
 //   ③ la consigne ne nomme aucun attribut du web, même en prose ;
 //   ④ elle est bornée (mesurée : 8 177 signes à l'étape 1, 8 728 en V2 — la charge
-//      de connexion et quatre règles revenues du jeu aveugle ; 3c-2 en faisait
+//      de connexion et quatre règles revenues du jeu aveugle —, 9 553 en V3 — la
+//      Fiche et l'appel à l'action de l'état vide ; 3c-2 en faisait
 //      4 633 — le prix d'entrée se paie une fois par écran) ;
 //   ⑤ elle est la seule consigne du contrat : aucun texte de consigne écrit à
 //      la main ne vit dans le dossier du contrat.
@@ -37,7 +38,7 @@ describe('étape 1 · la consigne générée', () => {
   })
 
   it('④ bornée', () => {
-    expect(consigne.length).toBeLessThan(9100)
+    expect(consigne.length).toBeLessThan(9900)
   })
 
   it('⑤ aucune consigne écrite à la main dans le dossier du contrat', () => {
