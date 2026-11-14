@@ -133,4 +133,46 @@ describe('V4 · l’application Hayine assemblée, dans Chromium', () => {
     expect(await lire()).toEqual({ html: ['en', 'ltr'], visibles: [['en', 'ltr', 'ltr']], deborde: false })
     await p.close()
   }, 120_000)
+
+  it('⑤ les médias : une vraie photo, un document et la position, saisis, enregistrés, MONTRÉS', async () => {
+    // Une application de relevés : la table dit photo / vidéo / reçu / position — la règle de Deribfy pose les saisies.
+    const colonnes = ['index', 'photo', 'video', 'recu', 'position_gps']
+    const plan = { ECRANS: [{ nom: 'relevé', role: 'agent', navigation: 'public', lit: ['releve'], ecrit: ['releve'], extrait: '' }] }
+    const r = await genererApplication({
+      demande: 'Les agents photographient le compteur et joignent le reçu.', nom: 'Relevés',
+      lecture: { ecrans: ['relevé'], roles: ['agent'], parcours: [], langues: [], devises: [], moyensPaiement: [], pays: [] },
+      entites: [{ id: 'ent_releve', name: 'releve', fields: colonnes.map((c) => ({ id: `fld_${c}`, name: c, type: 'string', required: false })) }],
+      devise: null, appelerModele: modeleSimule().appeler, appelerLeger: planSimule(plan).appeler, prix: { entree: 1.32, sortie: 3.96 },
+      juger: () => Promise.resolve({ monteDansSimulateur: true, erreurs: [], octetsRendus: 1, texte: '', ms: 0 }),
+    })
+    expect(r.ok, r.motif ?? '').toBe(true)
+    const html = pageAutonome(r.code!, 'Relevés', undefined, 'apercu', null, r.languesPage)
+    const contexte = await navigateur.newContext({ viewport: { width: 390, height: 844 }, permissions: ['geolocation'], geolocation: { latitude: 12.1348, longitude: 15.0557 } })
+    const p = await contexte.newPage()
+    await p.route('**/*', (x) => (x.request().url().startsWith(ADRESSE) ? x.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }) : x.fulfill({ status: 404, body: '' })))
+    // Une VRAIE photo de 2 000 × 1 500 px, dessinée puis encodée en PNG.
+    await p.goto(`${ADRESSE}#releve-creer`); await p.waitForTimeout(250)
+    const png = Buffer.from((await p.evaluate(() => { const t = document.createElement('canvas'); t.width = 2000; t.height = 1500; const g = t.getContext('2d')!; g.fillStyle = '#2a6'; g.fillRect(0, 0, 2000, 1500); g.fillStyle = '#fff'; g.fillRect(400, 300, 1200, 900); return t.toDataURL('image/png') })).split(',')[1]!, 'base64')
+    if (await p.$('[data-deribfy="garde"] [data-role] button')) { await p.click('[data-deribfy="garde"] [data-role] button'); await p.waitForTimeout(150) }
+    // Les saisies posées par la règle : photo (appareil + galerie), vidéo, fichier, position.
+    expect(await p.$$eval('[data-nature]', (xs) => xs.map((x) => x.getAttribute('data-nature')))).toEqual(['photo', 'video', 'fichier', 'localisation'])
+    const photo = p.locator('[data-nature="photo"] input[type="file"]')
+    expect(await photo.first().getAttribute('capture')).toBe('environment')
+    expect(await photo.first().getAttribute('accept')).toBe('image/*')
+    await photo.first().setInputFiles({ name: 'compteur.png', mimeType: 'image/png', buffer: png })
+    await p.waitForSelector('[data-nature="photo"] img[data-media="image"]')
+    // Réduite au téléphone avant l'envoi : 1 600 px au plus.
+    await p.waitForFunction(() => ((document.querySelector('[data-nature="photo"] img[data-media="image"]') as HTMLImageElement | null)?.naturalWidth ?? 0) > 0)
+    expect(await p.$eval('[data-nature="photo"] img[data-media="image"]', (x) => Math.max((x as HTMLImageElement).naturalWidth, (x as HTMLImageElement).naturalHeight))).toBe(1600)
+    await p.locator('[data-nature="fichier"] input[type="file"]').setInputFiles({ name: 'recu.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n%%EOF\n') })
+    await p.waitForSelector('[data-nature="fichier"] [data-media="fichier"]')
+    await p.getByRole('button', { name: 'Utiliser ma position' }).click(); await p.waitForTimeout(300)
+    expect(await p.inputValue('[data-nature="localisation"] input')).toBe('12.134800, 15.055700')
+    // Enregistrer : la liste MONTRE la photo et le document.
+    await p.locator('main button').filter({ hasText: /Enregistrer|Ajouter|Créer|Valider/u }).first().click(); await p.waitForTimeout(200)
+    await p.evaluate(() => { window.location.hash = 'releve-liste' }); await p.waitForTimeout(300)
+    expect(await p.$$eval('main img[data-media="image"]', (xs) => xs.filter((x) => (x as HTMLImageElement).naturalWidth > 0).length)).toBe(1)
+    expect(await p.$$('main [data-media="fichier"]')).toHaveLength(1)
+    await contexte.close()
+  }, 120_000)
 })

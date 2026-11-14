@@ -33,7 +33,15 @@ export interface Source {
   recharger(): void
   ecrire(t: string, e: Ecriture, ligne: Ligne | null, valeurs: Readonly<Record<string, unknown>>): void | Promise<string | null>
   connecter?(identifiant: string, secret: string): Promise<string | null>
+  /** Un média gardé en base (`media:<chemin>`) → une adresse lisible un moment ; absent en mémoire. */
+  media?(valeur: string): Promise<string | null>
 }
+
+/** Un fichier choisi (photo, vidéo, document) : en mémoire, il devient une adresse locale à la page. */
+export const estFichier = (v: unknown): v is Blob => typeof Blob !== 'undefined' && v instanceof Blob
+const enMemoire = (valeurs: Readonly<Record<string, unknown>>): Record<string, unknown> =>
+  // Le type voyage avec l'adresse (`blob:…#image/jpeg`) : la page sait la MONTRER (image, vidéo, document).
+  Object.fromEntries(Object.entries(valeurs).map(([k, v]) => [k, estFichier(v) ? `${URL.createObjectURL(v)}#${v.type}` : v]))
 
 export class Magasin implements Source {
   private lignes = new Map<string, Ligne[]>()
@@ -95,7 +103,8 @@ export class Magasin implements Source {
     for (const t of this.lignes.keys()) this.charger(t)
   }
 
-  ecrire(t: string, e: Ecriture, ligne: Ligne | null, valeurs: Readonly<Record<string, unknown>>): void {
+  ecrire(t: string, e: Ecriture, ligne: Ligne | null, brutes: Readonly<Record<string, unknown>>): void {
+    const valeurs = enMemoire(brutes)
     const l = this.lignes.get(t) ?? []
     if (e === 'creer') { this.compteur += 1; l.push({ ...valeurs, id: `nouveau-${String(this.compteur)}` }) }
     else if (ligne !== null) {

@@ -70,6 +70,33 @@ export const CHAMPS_DE_CHARGE = [...new Set(Object.values(CHARGES).flatMap((c) =
 /** Les routes que le squelette impose à toute application (le compte et ses trois pages). */
 export const ROUTES_SOCLE = ['accueil', 'compte', 'aide', 'contact', 'legal'] as const
 
+/**
+ * LES MÉDIAS, CAPACITÉ GÉNÉRALE (2026-11-14 — Conterak : « prise de photo, il n'y a pas »).
+ *
+ * Une colonne qui, par son NOM, porte une photo, une vidéo, un document joint ou une
+ * position reçoit la saisie qui va avec — quoi qu'ait écrit le modèle, dans tout
+ * formulaire (rempli, de repli, de gestion), pour tout domaine. Le modèle peut aussi
+ * choisir une nature média lui-même ; la règle n'abaisse jamais son choix.
+ * Une clé, une date, un type ou un compte n'est jamais un média (`recu_le`,
+ * `type_document`, `photo_id`, `nombre_photos`).
+ */
+export const NATURES_MEDIA = ['photo', 'video', 'fichier', 'localisation'] as const
+const PAS_UN_MEDIA = /(^|_)(id|le|date|at|type|types|statut|etat|numero|num|nb|nombre|count|total|url_externe)(_|$)/u
+const MEDIA_PAR_NOM: readonly [RegExp, (typeof NATURES_MEDIA)[number]][] = [
+  [/(^|_)(position|gps|localisation|geolocalisation|geoloc|coordonnees_gps|latlng|lat_lng|emplacement_gps)(_|$)/u, 'localisation'],
+  [/(^|_)(video|videos|film|clip)(_|$)/u, 'video'],
+  [/(^|_)(photo|photos|image|images|selfie|avatar|portrait|cliche|logo|capture|illustration|vignette)(_|$)/u, 'photo'],
+  [/(^|_)(fichier|fichiers|piece|pieces|piece_jointe|justificatif|justificatifs|recu|recus|document|documents|pdf|scan|attestation|certificat|preuve|cv|ordonnance|pj)(_|$)/u, 'fichier'],
+]
+const sansAccents = (x: string) => x.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+export function natureDeColonne(colonne: string, proposee: string): string {
+  if ((NATURES_MEDIA as readonly string[]).includes(proposee)) return proposee
+  const c = sansAccents(colonne)
+  if (PAS_UN_MEDIA.test(c)) return proposee
+  for (const [r, n] of MEDIA_PAR_NOM) if (r.test(c)) return n
+  return proposee
+}
+
 /** Les quatre vues de la tétrade d'une table. Une table journal n'a que `liste` et `detail`. */
 export const VUES_TETRADE = ['liste', 'detail', 'creer', 'editer'] as const
 
@@ -173,7 +200,7 @@ export const COMPOSANTS: Readonly<Record<string, DefComposant>> = {
   Champ: { aide: 'une saisie liée à une donnée', props: {
     libelle: p(T, true, 'ce qu’on saisit'),
     donnee: p(L, true, 'où la saisie est rangée (un `etat.<nom>` le plus souvent)'),
-    nature: p(variante('texte', 'nombre', 'date', 'courriel', 'telephone', 'secret', 'choix', 'case'), true, 'la sorte de saisie'),
+    nature: p(variante('texte', 'nombre', 'date', 'courriel', 'telephone', 'secret', 'choix', 'case', 'photo', 'video', 'fichier', 'localisation'), true, 'la sorte de saisie'),
     requis: p({ g: 'booleen' }, false, 'obligatoire'),
     choix: p({ g: 'choix' }, false, 'les valeurs possibles, pour `choix`'),
     aide: p(T, false, 'une indication sous le champ'),
@@ -419,7 +446,7 @@ export function identifiantsDuCatalogue(): Set<string> {
     for (const [prop, d] of Object.entries(def.props)) {
       if ((PROPS_DE_DERIBFY[nom] ?? []).includes(prop)) continue
       s.add(prop)
-      if (d.genre.g === 'variante') for (const v of d.genre.valeurs) s.add(v)
+      if (d.genre.g === 'variante') for (const v of d.genre.valeurs) if (!(NATURES_MEDIA as readonly string[]).includes(v)) s.add(v) // les natures média : posées par la règle de Deribfy
     }
   }
   for (const prop of Object.keys(PROPS_COMMUNES)) s.add(prop)
@@ -427,7 +454,7 @@ export function identifiantsDuCatalogue(): Set<string> {
     s.add(faire)
     for (const [arg, d] of Object.entries(def.args)) {
       s.add(arg)
-      if (d.genre.g === 'variante') for (const v of d.genre.valeurs) s.add(v)
+      if (d.genre.g === 'variante') for (const v of d.genre.valeurs) if (!(NATURES_MEDIA as readonly string[]).includes(v)) s.add(v) // les natures média : posées par la règle de Deribfy
     }
   }
   return s

@@ -26,6 +26,10 @@ import type { EntiteDeclaree } from '../../entites-declarees'
 import type { LectureGraphe } from '../graphe'
 import { genererApplication, type LectureV4 } from '../generation'
 import { MagasinBase, type ClientBase } from '../rendu/base'
+import { Magasin } from '../rendu/donnees'
+import { natureDeColonne } from '../catalogue'
+import { expanser } from '../archetypes'
+import { deriverPlan, squeletteDeSpec } from '../graphe'
 import { SOURCES_MOTEUR } from '../sources-moteur'
 import type { TableLue } from '../validateur'
 import { creerFrom, journalVierge } from '@/lib/testing/postgrest'
@@ -209,5 +213,62 @@ describe('V4 · bloc 2 · la génération branchée', () => {
     expect(await m.ecrire('offre', 'creer', null, { nom: 'Trois' })).toBe('refusé par la base')
     expect(await m.connecter('a@b.td', 'mauvais')).toBe('Identifiants invalides')
     expect(await m.connecter('a@b.td', 'bon')).toBeNull()
+  })
+
+  it('⑦ les médias, capacité générale : la colonne dit la saisie, dans tout formulaire', () => {
+    // Le nom de la colonne décide — jamais une clé, une date, un type ni un compte.
+    const cas: Record<string, string> = { photo: 'photo', photo_profil: 'photo', image_url: 'photo', logo: 'photo', video: 'video', pdf: 'fichier', recu: 'fichier', piece_identite: 'fichier', justificatif_paiement: 'fichier', document_signe: 'fichier', position_gps: 'localisation', localisation: 'localisation',
+      recu_le: 'date', type_document: 'texte', photo_id: 'texte', nombre_photos: 'nombre', coordonnees: 'texte', description: 'texte', nom: 'texte' }
+    const proposee: Record<string, string> = { recu_le: 'date', nombre_photos: 'nombre' }
+    expect(Object.fromEntries(Object.keys(cas).map((c) => [c, natureDeColonne(c, proposee[c] ?? 'texte')]))).toEqual(cas)
+    // Le choix média du modèle n'est jamais abaissé.
+    expect(natureDeColonne('remarque', 'photo')).toBe('photo')
+    // Le formulaire rempli (ou de repli) : la nature « texte » du modèle sur `photo` devient « photo ».
+    const e = expanser({ archetype: 'formulaire', route: 'releve', acces: 'visiteur', slots: { titre: 'Relevé', table: 'releve', champs: [{ colonne: 'photo', libelle: 'Photo', nature: 'texte' }, { colonne: 'video', libelle: 'Vidéo', nature: 'texte' }, { colonne: 'index', libelle: 'Index', nature: 'nombre' }], libelleEnvoi: 'Enregistrer', apres: 'accueil' } }, { langue: 'fr', langues: [] })
+    const natures = JSON.stringify(e).match(/"composant":"Champ","libelle":"[^"]+","donnee":\{"\$data":"etat\.[a-z_]+"\},"nature":"[a-z]+"/gu)?.map((x) => x.replace(/.*etat\.([a-z_]+).*"nature":"([a-z]+)"/u, '$1=$2'))
+    expect(natures).toEqual(['photo=photo', 'video=video', 'index=nombre'])
+    // Les formulaires de gestion (tétrades) aussi.
+    const graphe = deriverPlan({ ecrans: ['relevé'], roles: ['agent'], parcours: [], langues: [], devises: [], moyensPaiement: [], pays: [] }, [{ nom: 'releve', colonnes: ['index', 'photo', 'recu', 'position_gps'] }])
+    const creer = (squeletteDeSpec(graphe).ecrans as unknown as { route: string }[]).find((x) => x.route === 'releve-creer')
+    expect(JSON.stringify(creer)).toMatch(/"donnee":\{"\$data":"etat\.photo"\},"nature":"photo"/u)
+    expect(JSON.stringify(creer)).toMatch(/"donnee":\{"\$data":"etat\.recu"\},"nature":"fichier"/u)
+    expect(JSON.stringify(creer)).toMatch(/"donnee":\{"\$data":"etat\.position_gps"\},"nature":"localisation"/u)
+    expect(JSON.stringify(creer)).toMatch(/"donnee":\{"\$data":"etat\.index"\},"nature":"texte"/u)
+  })
+
+  it('⑧ un fichier enregistré : envoyé dans le dossier de l’application, la ligne garde son chemin, relu signé', async () => {
+    const journal = journalVierge()
+    const envois: { chemin: string; type: string }[] = []
+    let oeuvre: string | null = 'oeuvre-1'
+    const client = {
+      from: creerFrom({ releve: { reponse: () => ({ data: [], error: null }) } }, journal),
+      auth: {
+        signInWithPassword: () => Promise.resolve({ data: null, error: null }),
+        getSession: () => Promise.resolve({ data: { session: oeuvre === null ? null : { user: { app_metadata: { oeuvre } } } } }),
+      },
+      storage: { from: (espace: string) => ({
+        upload: (chemin: string, f: Blob, o?: { contentType?: string }) => { envois.push({ chemin: `${espace}/${chemin}`, type: o?.contentType ?? '' }); return Promise.resolve({ data: { path: chemin }, error: null }) },
+        createSignedUrl: (chemin: string) => Promise.resolve({ data: { signedUrl: `https://signe.test/${chemin}?t=1` }, error: null }),
+      }) },
+    } as unknown as ClientBase
+    const m = new MagasinBase(client, ['releve'])
+    await new Promise((f) => setTimeout(f, 0))
+    const photo = new File([new Uint8Array([1, 2, 3])], 'compteur.jpg', { type: 'image/jpeg' })
+    expect(await m.ecrire('releve', 'creer', null, { index: '12', photo })).toBeNull()
+    expect(envois).toHaveLength(1)
+    expect(envois[0]!.chemin).toMatch(/^oeuvres-medias\/oeuvre-1\/releve\/[\w-]+\.jpg$/u)
+    expect(envois[0]!.type).toBe('image/jpeg')
+    const ligne = (journal.ecritures.releve![0] as { charge: Record<string, unknown> }).charge
+    expect(ligne.index).toBe('12')
+    expect(String(ligne.photo)).toBe(`media:${envois[0]!.chemin.slice('oeuvres-medias/'.length)}`)
+    expect(await m.media(String(ligne.photo))).toBe(`https://signe.test/${String(ligne.photo).slice(6)}?t=1`)
+    // Sans session de l'application : rien n'est envoyé, l'écran le dit.
+    oeuvre = null
+    expect(await m.ecrire('releve', 'creer', null, { photo })).toBe('Connectez-vous pour envoyer un fichier.')
+    expect(envois).toHaveLength(1)
+    // En mémoire (l'aperçu) : le fichier devient une adresse de la page.
+    const mem = new Magasin({ tables: { releve: [] } })
+    mem.ecrire('releve', 'creer', null, { photo })
+    expect(String(mem.lire('releve').lignes[0]!.photo)).toMatch(/^blob:.+#image\/jpeg$/u)
   })
 })

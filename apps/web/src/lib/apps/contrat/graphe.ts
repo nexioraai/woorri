@@ -16,7 +16,7 @@
  * modèle le choisit, en 3c) — dans le squelette, un écran lu est ouvert au
  * visiteur et ne lit aucune table ; le contenu de chaque écran lu.
  */
-import { ROUTES_SOCLE } from './catalogue'
+import { natureDeColonne, ROUTES_SOCLE } from './catalogue'
 import type { Spec } from './catalogue'
 import { COLONNE_SECRETE } from './validateur'
 import type { Contexte, TableLue } from './validateur'
@@ -170,12 +170,12 @@ function ecranTetrade(r: RoutePlan, t: TableLue, journal: boolean): O {
       bouton('Retour', [nav(`${base}-liste`)]),
     ] }
     case 'creer': return { ...commun, etat: cols.map((c) => ({ nom: c, nature: 'texte' })), corps: [
-      ...cols.map((c) => ({ composant: 'Champ', libelle: lisible(c), donnee: d(`etat.${c}`), nature: 'texte' })),
+      ...cols.map((c) => ({ composant: 'Champ', libelle: lisible(c), donnee: d(`etat.${c}`), nature: natureDeColonne(c, 'texte') })),
       bouton('Enregistrer', [{ faire: 'submit', table: t.nom, ecriture: 'creer', valeurs: cols.map((c) => ({ champ: c, depuis: d(`etat.${c}`) })) }, nav(`${base}-liste`)], 'principal'),
       bouton('Retour', [nav(`${base}-liste`)]),
     ] }
     case 'editer': return { ...commun, corps: [
-      ...cols.map((c) => ({ composant: 'Champ', libelle: lisible(c), donnee: d(`ligne.${c}`), nature: 'texte' })),
+      ...cols.map((c) => ({ composant: 'Champ', libelle: lisible(c), donnee: d(`ligne.${c}`), nature: natureDeColonne(c, 'texte') })),
       bouton('Enregistrer', [{ faire: 'submit', table: t.nom, ecriture: 'modifier', valeurs: cols.map((c) => ({ champ: c, depuis: d(`ligne.${c}`) })) }, nav(`${base}-detail`)], 'principal'),
       bouton('Retour', [nav(`${base}-detail`)]),
     ] }

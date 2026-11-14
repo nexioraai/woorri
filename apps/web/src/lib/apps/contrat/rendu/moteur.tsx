@@ -16,7 +16,7 @@
  * `nav[aria-label="Navigation"]`, la route dans le fragment, `data-langue`,
  * la garde `data-deribfy="garde"` / `data-role`.
  */
-import React, { createContext, useContext, useEffect, useState, useSyncExternalStore } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { Ligne, Source } from './donnees'
 import { texteSysteme, type CleSysteme } from './textes-systeme'
@@ -164,6 +164,8 @@ const TRACES: Readonly<Record<string, string>> = {
   modifier: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4', supprimer: 'M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13', retour: 'M15 5l-7 7 7 7', suivant: 'M9 5l7 7-7 7',
   partager: 'M18 8a3 3 0 10-3-3l-7 4a3 3 0 100 6l7 4a3 3 0 103-3', telephone: 'M5 3h4l2 5-3 2a12 12 0 006 6l2-3 5 2v4a2 2 0 01-2 2A17 17 0 013 5a2 2 0 012-2z',
   courriel: 'M3 6h18v12H3zM3 6l9 7 9-7',
+  // Ceux des médias (posés par le moteur seul).
+  appareil: 'M3 8h4l2-3h6l2 3h4v12H3zM12 10a4 4 0 110 8 4 4 0 010-8z', image: 'M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6M15.5 8.5h.01',
 }
 const DIRECTIONNELLES = new Set(['retour', 'suivant'])
 function Picto({ nom, coul }: { nom: string; coul?: unknown }) {
@@ -280,6 +282,119 @@ function Fiche({ n }: { n: Noeud }) {
   )
 }
 
+// ── LES MÉDIAS (2026-11-14) : photo, vidéo, document joint, position — pour toute application.
+const NATURES_MEDIA = new Set(['photo', 'video', 'fichier', 'localisation'])
+const MO = 1024 * 1024
+const LIMITE: Readonly<Record<string, number>> = { photo: 20 * MO, video: 50 * MO, fichier: 20 * MO }
+const ACCEPTE: Readonly<Record<string, string>> = { photo: 'image/*', video: 'video/*', fichier: 'application/pdf,image/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.odt,.ods' }
+const estBlob = (v: unknown): v is Blob => typeof Blob !== 'undefined' && v instanceof Blob
+/** Une valeur est-elle un média (fichier choisi, chemin gardé en base, adresse d'image ou de vidéo) ? */
+function estMedia(v: unknown): boolean {
+  if (estBlob(v)) return true
+  return typeof v === 'string' && (/^(media:|blob:|data:(image|video|application)\/)/u.test(v) || /^https?:\/\/\S+\.(jpe?g|png|webp|gif|avif|heic|mp4|webm|mov|pdf)(\?\S*)?$/iu.test(v))
+}
+function sorteDe(v: unknown, adresse: string): 'image' | 'video' | 'fichier' {
+  const type = estBlob(v) ? v.type : /^data:([a-z]+)\//u.exec(adresse)?.[1] ?? /^blob:[^#]+#([a-z]+)\//u.exec(adresse)?.[1] ?? ''
+  if (type.startsWith('image')) return 'image'
+  if (type.startsWith('video')) return 'video'
+  const ext = /\.([a-z0-9]+)(\?|$)/iu.exec(typeof v === 'string' ? v : adresse)?.[1]?.toLowerCase() ?? ''
+  return /^(jpe?g|png|webp|gif|avif|heic)$/u.test(ext) ? 'image' : /^(mp4|webm|mov|m4v)$/u.test(ext) ? 'video' : 'fichier'
+}
+/** Une photo réduite AU TÉLÉPHONE avant l'envoi (1 600 px, JPEG) : moins de données, même lisibilité. */
+async function reduire(f: File): Promise<File> {
+  if (!f.type.startsWith('image/') || f.type === 'image/gif' || f.type === 'image/svg+xml' || typeof createImageBitmap === 'undefined') return f
+  try {
+    const b = await createImageBitmap(f)
+    const k = Math.min(1, 1600 / Math.max(b.width, b.height))
+    const toile = document.createElement('canvas')
+    toile.width = Math.round(b.width * k); toile.height = Math.round(b.height * k)
+    toile.getContext('2d')?.drawImage(b, 0, 0, toile.width, toile.height)
+    const sortie = await new Promise<Blob | null>((ok) => { toile.toBlob(ok, 'image/jpeg', 0.85) })
+    return sortie === null || sortie.size >= f.size ? f : new File([sortie], f.name.replace(/\.[^.]+$/u, '') + '.jpg', { type: 'image/jpeg' })
+  } catch { return f }
+}
+/** Ce qu'un média montre : l'image, la vidéo, ou le lien vers le document. */
+function MediaVu({ v, alternative }: { v: unknown; alternative?: string }) {
+  const c = useCtx()
+  // Un fichier choisi : son adresse locale, rendue quand il change. Un chemin gardé en base : résolu (lien signé).
+  const locale = useMemo(() => (estBlob(v) ? URL.createObjectURL(v) : null), [v])
+  useEffect(() => () => { if (locale !== null) URL.revokeObjectURL(locale) }, [locale])
+  const [resolue, poserResolue] = useState<{ readonly cle: string; readonly adresse: string | null } | null>(null)
+  useEffect(() => {
+    if (typeof v !== 'string' || !v.startsWith('media:')) return undefined
+    let vivant = true
+    void (c.magasin.media?.(v) ?? Promise.resolve(null)).then((a) => { if (vivant) poserResolue({ cle: v, adresse: a }) })
+    return () => { vivant = false }
+  }, [v, c.magasin])
+  const adresse = locale ?? (typeof v !== 'string' ? null : v.startsWith('media:') ? (resolue?.cle === v ? resolue.adresse : null) : v)
+  if (adresse === null) return <div aria-busy="true" style={{ inlineSize: '100%', maxInlineSize: 320, aspectRatio: '4 / 3', borderRadius: 8, background: 'var(--dx-squelette)' }} />
+  const sorte = sorteDe(v, adresse)
+  // Une application générée, pas une page Next : `next/image` n'y existe pas.
+  // eslint-disable-next-line @next/next/no-img-element
+  if (sorte === 'image') return <img data-media="image" src={adresse} alt={alternative ?? ''} style={{ display: 'block', maxInlineSize: '100%', inlineSize: 320, maxBlockSize: 320, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--dx-bordure)' }} />
+  if (sorte === 'video') return <video data-media="video" src={adresse} controls playsInline style={{ display: 'block', maxInlineSize: '100%', inlineSize: 320, borderRadius: 8 }} />
+  return <a data-media="fichier" href={adresse} target="_blank" rel="noreferrer" style={{ color: 'var(--dx-accent)', fontWeight: 600, overflowWrap: 'anywhere' }}>{estBlob(v) && 'name' in v ? String((v as File).name) : c.s('ouvrirFichier')}</a>
+}
+/** Un bouton qui OUVRE l'appareil ou la galerie : une étiquette de fichier (le juge ne la presse pas ; un test y dépose un vrai fichier). */
+function BoutonFichier({ libelle, accepte, capture, principal, surFichier, icone }: { libelle: string; accepte: string; capture?: 'environment'; principal: boolean; surFichier: (f: File) => void; icone: string }) {
+  const [fond, texte, bord] = FONDS[principal ? 'principal' : 'secondaire'] ?? FONDS.secondaire!
+  return (
+    <label className="dx-fichier" style={{ position: 'relative', minHeight: CIBLE, paddingInline: 16, paddingBlock: 8, borderRadius: 8, border: `1px solid ${bord}`, background: fond, color: texte, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, maxWidth: '100%' }}>
+      <Picto nom={icone} coul={principal ? 'surAccent' : 'accent'} />
+      <span>{libelle}</span>
+      <input type="file" accept={accepte} {...(capture !== undefined ? { capture } : {})} onChange={(e) => { const f = e.target.files?.[0]; if (f !== undefined) surFichier(f); e.target.value = '' }}
+        style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', inlineSize: '100%', blockSize: '100%' }} />
+    </label>
+  )
+}
+function ChampMedia({ nature, libelle, requis, aide, v, poser }: { nature: string; libelle: string; requis: boolean; aide: string | null; v: unknown; poser: (x: unknown) => void }) {
+  const c = useCtx()
+  const [erreur, poserErreur] = useState<string | null>(null)
+  const prendre = (f: File) => {
+    const limite = LIMITE[nature] ?? 20 * MO
+    if (f.size > limite) { poserErreur(c.s('tropLourd').replace('{n}', String(Math.round(limite / MO)))); return }
+    poserErreur(null)
+    void reduire(f).then(poser)
+  }
+  const localiser = () => {
+    if (typeof navigator === 'undefined' || navigator.geolocation === undefined) { poserErreur(c.s('positionIndisponible')); return }
+    navigator.geolocation.getCurrentPosition(
+      (p) => { poserErreur(null); poser(`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`) },
+      () => { poserErreur(c.s('positionIndisponible')) },
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 },
+    )
+  }
+  const plein = v !== null && v !== undefined && v !== ''
+  const champ: React.CSSProperties = { minHeight: CIBLE, width: '100%', paddingInline: 12, borderRadius: 8, border: '1px solid var(--dx-bordure)', background: 'var(--dx-surface)', boxSizing: 'border-box' }
+  return (
+    <div role="group" aria-label={libelle} data-nature={nature} style={{ display: 'grid', gap: 8, minWidth: 0 }}>
+      <span style={{ fontSize: TAILLE.legende, color: 'var(--dx-texteDiscret)' }}>{libelle}{requis ? ' *' : ''}</span>
+      {nature === 'localisation'
+        ? <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+            <input type="text" aria-label={libelle} value={typeof v === 'string' ? v : ''} onChange={(e) => { poser(e.target.value) }} style={{ ...champ, flex: '1 1 200px', width: 'auto' }} />
+            <BoutonBrut libelle={c.s('maPosition')} genre="secondaire" icone="localisation" surClic={localiser} />
+          </div>
+        : <>
+            {plein ? <MediaVu v={v} alternative={libelle} /> : null}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {nature === 'photo' ? <>
+                  <BoutonFichier libelle={c.s('prendrePhoto')} accepte={ACCEPTE.photo!} capture="environment" principal={!plein} icone="appareil" surFichier={prendre} />
+                  <BoutonFichier libelle={c.s('choisirImage')} accepte={ACCEPTE.photo!} principal={false} icone="image" surFichier={prendre} />
+                </>
+                : nature === 'video' ? <>
+                  <BoutonFichier libelle={c.s('filmer')} accepte={ACCEPTE.video!} capture="environment" principal={!plein} icone="appareil" surFichier={prendre} />
+                  <BoutonFichier libelle={c.s('choisirVideo')} accepte={ACCEPTE.video!} principal={false} icone="image" surFichier={prendre} />
+                </>
+                : <BoutonFichier libelle={c.s('joindre')} accepte={ACCEPTE.fichier!} principal={!plein} icone="document" surFichier={prendre} />}
+              {plein ? <BoutonBrut libelle={c.s('retirer')} genre="discret" surClic={() => { poser(null) }} /> : null}
+            </div>
+          </>}
+      {erreur !== null ? <span role="alert" style={{ fontSize: TAILLE.legende, color: 'var(--dx-danger)' }}>{erreur}</span> : null}
+      {aide !== null ? <span style={{ fontSize: TAILLE.legende, color: 'var(--dx-texteDiscret)' }}>{aide}</span> : null}
+    </div>
+  )
+}
+
 function Champ({ n, portee }: { n: Noeud; portee: Portee }) {
   const c = useCtx()
   const d = liaisonDe(n.donnee) ?? ''
@@ -288,6 +403,7 @@ function Champ({ n, portee }: { n: Noeud; portee: Portee }) {
   const poser = (x: unknown) => { if (d.startsWith('etat.')) c.poserEtat(d.slice(5), x); else c.poserBrouillon(d, x) }
   const libelle = c.t(n.libelle)
   const champ: React.CSSProperties = { minHeight: CIBLE, width: '100%', paddingInline: 12, borderRadius: 8, border: '1px solid var(--dx-bordure)', background: 'var(--dx-surface)' }
+  if (NATURES_MEDIA.has(nature)) return <ChampMedia nature={nature} libelle={libelle} requis={n.requis === true} aide={n.aide !== undefined ? c.t(n.aide) : null} v={v} poser={poser} />
   if (nature === 'case') {
     return (
       <label style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: CIBLE }}>
@@ -552,6 +668,13 @@ function Rendu({ n, portee }: { n: unknown; portee: Portee }) {
       const v = lien === 'session.role' && brut === 'visiteur' ? c.s('visiteur') : brut
       const format = chaine(o.format)
       if (format === 'initiales') return <Initiales texte={String(v ?? '')} />
+      // Une photo, une vidéo ou un document se MONTRE, où qu'il soit lu (liste, fiche, tableau).
+      if (estMedia(v)) return (
+        <div style={{ display: 'grid', gap: 4, minWidth: 0 }}>
+          {o.libelle !== undefined ? <span style={{ fontSize: TAILLE.legende, color: 'var(--dx-texteDiscret)' }}>{c.t(o.libelle)}</span> : null}
+          <MediaVu v={v} alternative={o.libelle !== undefined ? c.t(o.libelle) : ''} />
+        </div>
+      )
       return (
         <div style={{ display: 'grid', gap: 2, minWidth: 0 }}>
           {o.libelle !== undefined ? <span style={{ fontSize: TAILLE.legende, color: 'var(--dx-texteDiscret)' }}>{c.t(o.libelle)}</span> : null}
@@ -582,7 +705,9 @@ function Rendu({ n, portee }: { n: unknown; portee: Portee }) {
     case 'Pictogramme':
       return <Picto nom={chaine(o.icone) ?? ''} coul={o.couleur} />
     case 'Illustration': {
-      const src = chaine(valeurDe(liaisonDe(o.donnee) ?? '', c, portee))
+      const brut = valeurDe(liaisonDe(o.donnee) ?? '', c, portee)
+      if (estBlob(brut) || (typeof brut === 'string' && brut.startsWith('media:'))) return <MediaVu v={brut} alternative={c.t(o.alternative)} />
+      const src = chaine(brut)
       return src !== null && src !== ''
         // Une application générée, pas une page Next : `next/image` n'y existe pas.
         // eslint-disable-next-line @next/next/no-img-element

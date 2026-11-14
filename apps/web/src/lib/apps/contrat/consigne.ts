@@ -12,7 +12,7 @@
  * elle n'est envoyée à aucun modèle.
  */
 import {
-  ACTIONS, CHARGES, COMPOSANTS, COMPOSANTS_DE_DERIBFY, EVENEMENTS, ICONES, JETONS, NATURES_ETAT, PROPS_COMMUNES, PROPS_DE_DERIBFY, PROPS_ECRAN, PROPS_ECRAN_DE_DERIBFY, ROUTES_SOCLE,
+  ACTIONS, CHARGES, COMPOSANTS, COMPOSANTS_DE_DERIBFY, EVENEMENTS, NATURES_MEDIA, ICONES, JETONS, NATURES_ETAT, PROPS_COMMUNES, PROPS_DE_DERIBFY, PROPS_ECRAN, PROPS_ECRAN_DE_DERIBFY, ROUTES_SOCLE,
   SOURCES, VUES_TETRADE, type DefProp, type Genre,
 } from './catalogue'
 
@@ -23,7 +23,8 @@ function decrireGenre(g: Genre): string {
     case 'texte': return 'un texte en clair, dans la langue principale'
     case 'liaison': return `liaison ${q('{ "$data": … }')}`
     case 'jeton': return `jeton ${q(g.jeu)}`
-    case 'variante': return g.valeurs.map(q).join(' | ')
+    // Les natures média sont posées par la règle de Deribfy (`natureDeColonne`) : pas décrites ici.
+    case 'variante': return g.valeurs.filter((v) => !(NATURES_MEDIA as readonly string[]).includes(v)).map(q).join(' | ')
     case 'icone': return 'une icône'
     case 'booleen': return 'true | false'
     case 'enfants': return 'liste de composants'
