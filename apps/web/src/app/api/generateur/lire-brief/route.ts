@@ -36,6 +36,8 @@ import { nomProduitValide } from '@/lib/apps/nom-produit'
 import { projectAirSchema } from '@deribfy/air-schema'
 import { lireEntites } from '@/lib/apps/entites-declarees'
 import { CONSIGNE } from '@/lib/apps/consigne-lire-brief'
+import { supabaseAdmin } from '@/lib/supabase-admin'
+import { empreinteDeLecture, garderLecture, lectureGardee, reponseReutilisee, type ClientLectures } from '@/lib/apps/lecture-gardee'
 import { decouperEnTranches, fusionnerLectures, FUSIBLE_SIGNES, type LectureBrief, type LecturePartielle, type TrancheLue } from '@/lib/apps/lecture-brief'
 
 export const runtime = 'nodejs'
@@ -69,6 +71,9 @@ export const maxDuration = 60
  */
 
 
+/** La créativité de la lecture : au minimum (M13). Elle entre aussi dans l'empreinte de la lecture gardée. */
+const TEMPERATURE_LECTURE = 0
+
 export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
@@ -86,6 +91,17 @@ export async function POST(req: Request) {
       { error: 'Texte trop volumineux pour ce service.', deduites: {}, lecture: { resultat: 'erreur', tables: 0, tentatives: 0, tranches: 0, tranchesEchouees: 0, signesLus: demande.length, ...RIEN_LU, roles: [], ecrans: [], questionsOuvertes: [] } satisfies LectureBrief },
       { status: 413, headers: { 'Cache-Control': 'no-store' } },
     )
+  }
+
+  // ── M13 · MÊME CAHIER, MÊME LECTURE. La première lecture RÉUSSIE de ce texte, pour ce
+  // compte, est réutilisée telle quelle — aucun appel, coût 0, et la réponse le dit
+  // (`lectureGardee`). `LECTURE_GARDEE=non` (serveur) lit quand même : pour MESURER le modèle.
+  const client = supabaseAdmin as unknown as ClientLectures
+  const empreinte = empreinteDeLecture(demande, { consigne: CONSIGNE, modele: MODELE_LEGER, temperature: TEMPERATURE_LECTURE })
+  const garder = process.env.LECTURE_GARDEE !== 'non'
+  if (garder) {
+    const deja = await lectureGardee(client, garde.userId, empreinte)
+    if (deja !== null) { const reutilisee = reponseReutilisee(deja); return NextResponse.json({ ...reutilisee, lecture: reutilisee.lecture }) }
   }
 
   // ── LE RÉSULTAT DE LA LECTURE VOYAGE DANS TOUTES LES BRANCHES (M6, étape 1).
@@ -139,7 +155,7 @@ export async function POST(req: Request) {
         // sans température posée (donc au défaut), a rendu 8, 10 puis 7 tables. Une lecture
         // n'invente rien : elle relève. La température 0 réduit le hasard sans le supprimer
         // (calculs serveur non garantis identiques) — la stabilité se MESURE ensuite.
-        temperature: 0,
+        temperature: TEMPERATURE_LECTURE,
         system: CONSIGNE,
         messages: [{ role: 'user', content: texte }],
       })
@@ -272,7 +288,7 @@ export async function POST(req: Request) {
       moyensPaiement: fusion.moyensPaiement ?? [],
       pays: fusion.pays ?? [],
     }
-    return NextResponse.json({
+    const reponse: Record<string, unknown> = {
       questionsIA: fusion.questionsIA,
       deduites: fusion.deduites,
       ...(fusion.nomProduit === undefined ? {} : { nomProduit: fusion.nomProduit }),
@@ -283,7 +299,10 @@ export async function POST(req: Request) {
       questionsOuvertes: fusion.questionsOuvertes,
       lecture,
       ...(premierEchec === null ? {} : { illisible: true, motif: premierEchec === 'tronquee' ? 'La lecture du brief a ete coupee avant la fin : la limite de longueur est atteinte.' : 'La lecture du brief n a rien rendu d exploitable.' }),
-    })
+    }
+    // Seule une lecture ENTIÈREMENT réussie est gardée : un échec ne se fige jamais.
+    if (garder && premierEchec === null && tranchesEchouees === 0) await garderLecture(client, garde.userId, empreinte, reponse)
+    return NextResponse.json({ ...reponse, lectureGardee: false })
   } catch {
     // Ce qui a été dépensé avant l'erreur est dit quand même : une panne ne rend pas la lecture gratuite.
     return NextResponse.json({ deduites: {}, lecture: { resultat: 'erreur', tables: 0, tentatives, tranches: tranches.length, tranchesEchouees: tranches.length, signesLus: demande.length, coutUsd: coutDeLaLecture(), jetons: jetonsLus(), parTranche: [], roles: [], ecrans: [], questionsOuvertes: [] } satisfies LectureBrief })

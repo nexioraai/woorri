@@ -137,3 +137,14 @@ describe('le résultat de la lecture du brief est enregistré', () => {
     expect(src.match(/lecture: lu\.lecture,/gu)?.length).toBe(3)
   })
 })
+
+describe('M13 · l’empreinte d’une lecture', () => {
+  it('le même texte lu de la même façon → la même empreinte ; une autre consigne, un autre modèle ou une autre température → une autre', async () => {
+    const { empreinteDeLecture } = await import('../lecture-gardee')
+    const f = { consigne: 'C', modele: 'm', temperature: 0 }
+    expect(empreinteDeLecture('texte', f)).toBe(empreinteDeLecture('texte', { ...f }))
+    expect(empreinteDeLecture('texte', f)).toMatch(/^[0-9a-f]{64}$/u)
+    for (const autre of [{ ...f, consigne: 'C2' }, { ...f, modele: 'm2' }, { ...f, temperature: 1 }]) expect(empreinteDeLecture('texte', autre)).not.toBe(empreinteDeLecture('texte', f))
+    expect(empreinteDeLecture('texte ', f)).not.toBe(empreinteDeLecture('texte', f))
+  })
+})

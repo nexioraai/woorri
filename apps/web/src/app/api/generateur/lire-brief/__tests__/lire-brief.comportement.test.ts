@@ -29,6 +29,23 @@ const getUserMock = vi.fn()
 vi.mock('@/lib/supabase', () => ({
   supabase: { auth: { getUser: (...a: unknown[]) => getUserMock(...a) } },
 }))
+// M13 · LA LECTURE GARDÉE : le double PostgREST du dépôt ; la table répond ce qui y a été ÉCRIT (upsert).
+const base = vi.hoisted(() => ({ journal: null as unknown as import('@/lib/testing/postgrest').JournalPostgrest, panne: false }))
+vi.mock('@/lib/supabase-admin', async () => {
+  const { creerFrom, journalVierge } = await import('@/lib/testing/postgrest')
+  base.journal = journalVierge()
+  const ecrites = () => ((base.journal.ecritures.app_lectures ?? []) as { op: string; charge: { owner_id: string; empreinte: string; reponse: unknown } }[]).filter((e) => e.op === 'upsert').map((e) => e.charge)
+  return {
+    supabaseAdmin: {
+      from: creerFrom({ app_lectures: { reponse: (filtres) => {
+        if (base.panne) return { data: null, error: { message: 'relation "app_lectures" does not exist' } }
+        const v = (col: string) => [...filtres].reverse().find((f) => f[0] === 'eq' && f[1] === col)?.[2]
+        const l = ecrites().find((x) => x.owner_id === v('owner_id') && x.empreinte === v('empreinte'))
+        return { data: l === undefined ? null : { reponse: l.reponse }, error: null }
+      } } }, base.journal),
+    },
+  }
+})
 const messagesCreateMock = vi.fn()
 vi.mock('@anthropic-ai/sdk', () => ({
   default: class {
@@ -59,6 +76,10 @@ beforeEach(() => {
   process.env.DEEPSEEK_API_KEY = 'sk-test'
   getUserMock.mockResolvedValue({ data: { user: { id: 'u-1', email: 'a@b.c' } }, error: null })
   messagesCreateMock.mockReset()
+  // Chaque épreuve part d'une base sans lecture gardée.
+  if (base.journal !== null) { base.journal.ecritures = {}; base.journal.filtres = {}; base.journal.projections = {} }
+  base.panne = false
+  delete process.env.LECTURE_GARDEE
 })
 afterEach(() => { vi.useRealTimers() })
 
@@ -185,5 +206,46 @@ describe('la lecture du brief : réflexion coupée, reprise unique, par tranches
     expect(d.lecture.jetons).toEqual({ entree: 2000, sortie: 8400 })
     expect(d.lecture.coutUsd).toBe(attendu)
     expect(d.lecture.coutUsd).toBeGreaterThan(0)
+  })
+
+  it('⑨ M13 : même texte, même compte → la lecture est GARDÉE puis réutilisée, sans appel, et le dit', async () => {
+    messagesCreateMock.mockResolvedValue(reponseModele(JSON.stringify(LU_VALIDE)))
+    const premiere = (await (await POST(requete(CAHIER))).json()) as { lectureGardee: boolean; entites: unknown[]; lecture: Lecture & { gardee?: boolean } }
+    expect(messagesCreateMock).toHaveBeenCalledTimes(1)
+    expect(premiere.lectureGardee).toBe(false)
+    expect(base.journal.ecritures.app_lectures).toHaveLength(1)
+    const seconde = (await (await POST(requete(CAHIER))).json()) as typeof premiere
+    expect(messagesCreateMock, 'la même lecture a été repayée').toHaveBeenCalledTimes(1)
+    expect(seconde.lectureGardee).toBe(true)
+    expect(seconde.entites).toEqual(premiere.entites)
+    expect({ ...seconde.lecture, coutUsd: premiere.lecture.coutUsd, jetons: premiere.lecture.jetons, tentatives: premiere.lecture.tentatives, gardee: undefined }).toEqual({ ...premiere.lecture, gardee: undefined })
+    expect([seconde.lecture.coutUsd, seconde.lecture.tentatives, seconde.lecture.gardee]).toEqual([0, 0, true])
+  })
+
+  it('⑩ M13 : un autre compte, un autre texte → lus, chacun le sien ; jamais la lecture d’autrui', async () => {
+    messagesCreateMock.mockResolvedValue(reponseModele(JSON.stringify(LU_VALIDE)))
+    await POST(requete(CAHIER))
+    getUserMock.mockResolvedValue({ data: { user: { id: 'u-2', email: 'x@y.z' } }, error: null })
+    const autreCompte = (await (await POST(requete(CAHIER))).json()) as { lectureGardee: boolean }
+    expect(autreCompte.lectureGardee).toBe(false)
+    const autreTexte = (await (await POST(requete(`${CAHIER} Et les retouches.`))).json()) as { lectureGardee: boolean }
+    expect(autreTexte.lectureGardee).toBe(false)
+    expect(messagesCreateMock).toHaveBeenCalledTimes(3)
+  })
+
+  it('⑪ M13 : une lecture qui échoue n’est jamais gardée ; base en panne ou LECTURE_GARDEE=non → on lit, comme avant', async () => {
+    messagesCreateMock.mockResolvedValue(reponseModele('{"ENTITES":[{"id":"ent_', 'max_tokens'))
+    await POST(requete(CAHIER))
+    expect(base.journal.ecritures.app_lectures ?? []).toEqual([])
+    messagesCreateMock.mockReset()
+    messagesCreateMock.mockResolvedValue(reponseModele(JSON.stringify(LU_VALIDE)))
+    base.panne = true
+    const enPanne = (await (await POST(requete(CAHIER))).json()) as { lectureGardee: boolean; entites: unknown[] }
+    expect([enPanne.lectureGardee, enPanne.entites.length]).toEqual([false, 1])
+    base.panne = false
+    process.env.LECTURE_GARDEE = 'non'
+    await POST(requete(CAHIER))
+    await POST(requete(CAHIER))
+    expect(messagesCreateMock).toHaveBeenCalledTimes(3)
   })
 })

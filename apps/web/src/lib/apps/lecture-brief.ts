@@ -101,6 +101,8 @@ export type LectureBriefEnregistree = {
   /** Compté par la route sur les entités qu'elle a revalidées. */
   readonly tablesRecues: number
   readonly source: 'client' | 'absente'
+  /** M13 : la lecture a été RÉUTILISÉE (même texte, déjà lu) — aucun appel. Absent : lue cette fois. */
+  readonly gardee?: true
   readonly tentatives: number | null
   readonly tranches: number | null
   readonly tranchesEchouees: number | null
@@ -207,6 +209,7 @@ export function lectureAEnregistrer(brut: unknown, tablesRecues: number): Lectur
     devises: listeDeChaines(o.devises, 8).map((x) => x.toUpperCase()).filter((x) => /^[A-Z]{3}$/u.test(x)),
     moyensPaiement: listeDeChaines(o.moyensPaiement, 12),
     pays: listeDeChaines(o.pays, 30),
+    ...(o.gardee === true ? { gardee: true as const } : {}),
   }
 }
 
