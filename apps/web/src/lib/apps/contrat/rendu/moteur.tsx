@@ -18,7 +18,7 @@
  */
 import React, { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { Ligne, Source } from './donnees'
+import { EMPREINTE_A_CALCULER, type Ligne, type Source } from './donnees'
 import { texteSysteme, type CleSysteme } from './textes-systeme'
 
 export type TexteCompile = string | { readonly $k: string; readonly $t: string }
@@ -154,6 +154,8 @@ function valeurDe(d: string, c: Ctx, portee: Portee): unknown {
     case 'parcours': return a !== undefined && b !== undefined ? c.parcours.get(a)?.[b] : undefined
     case 'etat': return a !== undefined ? c.etats[a] : undefined
     case 'session': return a === 'role' ? c.session.role : a === 'utilisateur' ? c.session.utilisateur : undefined
+    // Ce que le système connaît : l'heure de l'enregistrement ; l'empreinte est calculée par le magasin, sur le fichier joint.
+    case 'systeme': return a === 'maintenant' ? new Date().toISOString() : a === 'empreinte' ? EMPREINTE_A_CALCULER : undefined
     default: return undefined
   }
 }

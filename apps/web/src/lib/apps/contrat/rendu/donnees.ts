@@ -41,11 +41,30 @@ export interface Source {
   media?(valeur: string): Promise<string | null>
 }
 
+/** Une empreinte à calculer à l'enregistrement : SHA-256 du premier fichier joint de la même écriture. */
+export const EMPREINTE_A_CALCULER = 'systeme:empreinte'
+export async function avecEmpreinte(valeurs: Readonly<Record<string, unknown>>): Promise<Record<string, unknown>> {
+  const sortie: Record<string, unknown> = { ...valeurs }
+  const cles = Object.keys(sortie).filter((k) => sortie[k] === EMPREINTE_A_CALCULER)
+  if (cles.length === 0) return sortie
+  const fichier = Object.values(valeurs).find((v): v is Blob => typeof Blob !== 'undefined' && v instanceof Blob)
+  let empreinte: string | null = null
+  try {
+    if (fichier !== undefined && typeof crypto !== 'undefined' && crypto.subtle !== undefined) {
+      const h = await crypto.subtle.digest('SHA-256', await fichier.arrayBuffer())
+      empreinte = [...new Uint8Array(h)].map((x) => x.toString(16).padStart(2, '0')).join('')
+    }
+  } catch { empreinte = null }
+  for (const k of cles) sortie[k] = empreinte
+  return sortie
+}
+
 /** Un fichier choisi (photo, vidéo, document) : en mémoire, il devient une adresse locale à la page. */
 export const estFichier = (v: unknown): v is Blob => typeof Blob !== 'undefined' && v instanceof Blob
+// En mémoire (l'aperçu, origine opaque : pas de calcul d'empreinte), l'empreinte reste vide.
 const enMemoire = (valeurs: Readonly<Record<string, unknown>>): Record<string, unknown> =>
   // Le type voyage avec l'adresse (`blob:…#image/jpeg`) : la page sait la MONTRER (image, vidéo, document).
-  Object.fromEntries(Object.entries(valeurs).map(([k, v]) => [k, estFichier(v) ? `${URL.createObjectURL(v)}#${v.type}` : v]))
+  Object.fromEntries(Object.entries(valeurs).map(([k, v]) => [k, estFichier(v) ? `${URL.createObjectURL(v)}#${v.type}` : v === EMPREINTE_A_CALCULER ? null : v]))
 
 export class Magasin implements Source {
   private lignes = new Map<string, Ligne[]>()

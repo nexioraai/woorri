@@ -97,6 +97,30 @@ export const SCRIPT_EXPERIENCE = String.raw`async (o) => {
     if (etatDe().garde && e.role) await entrerComme(e.role)
     return etatDe()
   }
+  // UN FICHIER SE JOINT COMME UNE PERSONNE LE FERAIT (2026-11-14) : une vraie petite image (ou un vrai
+  // PDF) dans le champ, puis « Valider » quand la prise attend sa confirmation (\`[data-attente]\`).
+  // Sans cela, un formulaire à photo obligatoire bloquait le parcours — et le juge ne passait que par
+  // un « Continuer » qui sautait l'étape.
+  const PNG_1PX = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+  const joindre = (c) => {
+    try {
+      if (c.files && c.files.length > 0) return
+      const accepte = (c.getAttribute('accept') || '')
+      const octets = Uint8Array.from(atob(PNG_1PX), (x) => x.charCodeAt(0))
+      const f = /image/.test(accepte) || accepte === '' ? new File([octets], 'essai.png', { type: 'image/png' })
+        : /pdf|application/.test(accepte) ? new File([new TextEncoder().encode('%PDF-1.4\n%%EOF\n')], 'essai.pdf', { type: 'application/pdf' })
+        : null
+      if (f === null) return
+      const dt = new DataTransfer(); dt.items.add(f)
+      c.files = dt.files
+      c.dispatchEvent(new Event('change', { bubbles: true }))
+    } catch (e) {}
+  }
+  const confirmerLesPrises = async () => {
+    for (let k = 0; k < 10 && zone().querySelector('[data-attente] button') === null && zone().querySelector('input[type="file"]') !== null; k += 1) await att(30)
+    for (const b of [...zone().querySelectorAll('[data-attente] button')]) { try { b.click() } catch (e) {} }
+    await att(30)
+  }
   const remplir = () => {
     for (const c of zone().querySelectorAll('input, textarea, select')) {
       try {
@@ -108,7 +132,8 @@ export const SCRIPT_EXPERIENCE = String.raw`async (o) => {
         else if (type === 'email') c.value = 'essai@exemple.td'
         else if (type === 'tel') c.value = '+23566000000'
         else if (type === 'password') c.value = 'MotDePasse123!'
-        else if (type === 'hidden' || type === 'file' || type === 'submit' || type === 'button') continue
+        else if (type === 'file') { joindre(c); continue }
+        else if (type === 'hidden' || type === 'submit' || type === 'button') continue
         else c.value = 'Essai'
         c.dispatchEvent(new Event('input', { bubbles: true }))
         c.dispatchEvent(new Event('change', { bubbles: true }))
@@ -148,7 +173,7 @@ export const SCRIPT_EXPERIENCE = String.raw`async (o) => {
       if (essayes >= max) { partiel = true; break }
       const etat2 = await ouvrir(e)
       if (etat2.garde || etat2.acompleter) break
-      remplir()
+      remplir(); await confirmerLesPrises()
       await att(40)
       const liste = controles()
       const c = liste[i]
@@ -213,10 +238,11 @@ export const SCRIPT_EXPERIENCE = String.raw`async (o) => {
         const ici = parSlug.get(o.parcours[i])
         const suivants = new Set(o.parcours.slice(i + 1))
         let avance = -1
-        const n = controles().length
-        for (let j = 0; j < n && avance < 0; j += 1) {
+        // Les contrôles se RECOMPTENT à chaque essai, SUR L'ÉCRAN DU PARCOURS (après y être revenu) : une prise
+        // validée fait apparaître « Retirer », qui décale les suivants.
+        for (let j = 0; j < 60 && avance < 0; j += 1) {
           if (slugCourant() !== ici.slug) await ouvrir(ici)
-          remplir(); await att(40)
+          remplir(); await confirmerLesPrises(); await att(40)
           const c = controles()[j]
           if (!c) break
           try { c.click() } catch (err) {}

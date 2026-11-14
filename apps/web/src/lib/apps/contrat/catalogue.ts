@@ -110,13 +110,29 @@ export const SOURCES = {
   parcours: 'une colonne de la ligne en cours du parcours : `parcours.<table>.<colonne>`',
   etat: 'une valeur d’état déclarée par l’écran : `etat.<nom>`',
   session: 'la session : `session.role` ou `session.utilisateur`',
+  systeme: 'ce que le système connaît : `systeme.maintenant` (l’heure de l’enregistrement), `systeme.empreinte` (l’empreinte du fichier joint)',
 } as const
+/** Les sources que SEUL Deribfy pose (une donnée que l'application connaît) : hors de la consigne du modèle. */
+export const SOURCES_DE_DERIBFY: readonly string[] = ['systeme']
+
+/**
+ * CE QUE LE SYSTÈME REMPLIT (2026-11-14 — edd1a7f9 demandait « Date et heure de l'appareil » et
+ * « Empreinte » à la personne). Une colonne d'horodatage reçoit l'heure de l'enregistrement ; une
+ * empreinte, celle du fichier joint. Ni l'une ni l'autre n'est jamais DEMANDÉE, dans aucun formulaire.
+ * Une date qui appartient à la personne (naissance, échéance, rendez-vous) reste une saisie.
+ */
+const HORODATAGE = /^(horodatage|timestamp|cree_le|created_at|date_creation|date_enregistrement|date_soumission|date_envoi|date_heure(_(appareil|serveur|prise|capture|envoi|enregistrement|soumission|releve|photo))?|heure_(prise|capture|envoi|enregistrement))$/u
+const EMPREINTE = /^(empreinte|hash|checksum|somme_controle|sha256)(_[a-z0-9_]+)?$/u
+export function colonneDuSysteme(colonne: string): 'maintenant' | 'empreinte' | null {
+  const c = colonne.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+  return HORODATAGE.test(c) ? 'maintenant' : EMPREINTE.test(c) ? 'empreinte' : null
+}
 
 // ── LES GRAMMAIRES : aucune chaîne libre dans le contrat.
 export const MOTIF = {
   cle: /^[a-z][a-zA-Z0-9]*(\.[a-z][a-zA-Z0-9]*)*$/u,
   // Chaque source a son arité : table.<t>, ligne.<c>, parcours.<t>.<c>, etat.<nom>, session.role|utilisateur.
-  liaison: /^(?:(?:table|ligne|etat)\.[a-zA-Z][a-zA-Z0-9_]*|parcours\.[a-zA-Z][a-zA-Z0-9_]*\.[a-zA-Z][a-zA-Z0-9_]*|session\.(?:role|utilisateur))$/u,
+  liaison: /^(?:(?:table|ligne|etat)\.[a-zA-Z][a-zA-Z0-9_]*|parcours\.[a-zA-Z][a-zA-Z0-9_]*\.[a-zA-Z][a-zA-Z0-9_]*|session\.(?:role|utilisateur)|systeme\.(?:maintenant|empreinte))$/u,
   route: /^[a-z0-9]+(-[a-z0-9]+)*$/u,
   identifiant: /^[a-z][a-zA-Z0-9_]*$/u,
   role: /^\p{L}[\p{L}\p{N} _-]{0,40}$/u,
@@ -443,7 +459,7 @@ export function identifiantsDuCatalogue(): Set<string> {
   for (const r of ROUTES_SOCLE) s.add(r)
   for (const [jeu, valeurs] of Object.entries(JETONS)) { s.add(jeu); for (const v of valeurs) s.add(v) }
   for (const i of ICONES) s.add(i)
-  for (const src of Object.keys(SOURCES)) s.add(src)
+  for (const src of Object.keys(SOURCES)) if (!SOURCES_DE_DERIBFY.includes(src)) s.add(src)
   for (const [nom, def] of Object.entries(COMPOSANTS).filter(([n]) => !COMPOSANTS_DE_DERIBFY.includes(n))) {
     s.add(nom)
     for (const [prop, d] of Object.entries(def.props)) {

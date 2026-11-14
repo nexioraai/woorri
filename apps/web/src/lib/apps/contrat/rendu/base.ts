@@ -13,7 +13,7 @@
  * l'état vide), erreur avec son message, vide, idéal. Une écriture qui échoue
  * rend son message — l'écran le dit, il ne prétend pas avoir enregistré.
  */
-import { estFichier, type Ecriture, type Lecture, type Ligne, type Source } from './donnees'
+import { avecEmpreinte, estFichier, type Ecriture, type Lecture, type Ligne, type Source } from './donnees'
 
 type Reponse = PromiseLike<{ readonly data: unknown; readonly error: { readonly message: string } | null }>
 /** Ce que le magasin emploie d'un client de base — rien de plus. */
@@ -125,7 +125,8 @@ export class MagasinBase implements Source {
   }
 
   async ecrire(t: string, e: Ecriture, ligne: Ligne | null, brutes: Readonly<Record<string, unknown>>): Promise<string | null> {
-    const envoi = e === 'supprimer' ? { valeurs: { ...brutes } } : await this.envoyer(t, brutes)
+    // L'empreinte AVANT l'envoi : elle est celle du fichier tel qu'il est parti.
+    const envoi = e === 'supprimer' ? { valeurs: { ...brutes } } : await this.envoyer(t, await avecEmpreinte(brutes))
     if ('erreur' in envoi) return envoi.erreur === 'connecter' ? 'Connectez-vous pour envoyer un fichier.' : envoi.erreur
     const valeurs = envoi.valeurs
     const table = this.client.from(t)

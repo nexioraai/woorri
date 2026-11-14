@@ -8,7 +8,7 @@
  * L'accueil (`accueil`) et la gestion d'une table (`tableAdmin`), que Deribfy
  * écrivait à part en 3c-2, sont des archétypes comme les autres.
  */
-import { natureDeColonne } from './catalogue'
+import { colonneDuSysteme, natureDeColonne } from './catalogue'
 import { lePlusProche } from './proche'
 
 export type GenreSlot = 'texte' | 'route' | 'table' | 'colonne' | 'variante' | 'colonnes' | 'liens' | 'champs' | 'textes' | 'noeuds'
@@ -269,11 +269,14 @@ export function expanser(r: Remplissage, o: OptionsGabarit): O {
         accueil]
       break
     case 'formulaire': {
-      const champs = v.champs as { colonne: string; libelle: string; nature: string; requis?: boolean }[]
+      const tous = v.champs as { colonne: string; libelle: string; nature: string; requis?: boolean }[]
+      // Ce que le système connaît (horodatage, empreinte) n'est jamais demandé : il part avec l'envoi.
+      const champs = tous.filter((c) => colonneDuSysteme(c.colonne) === null)
+      const duSysteme = tous.filter((c) => colonneDuSysteme(c.colonne) !== null).map((c) => ({ champ: c.colonne, depuis: d(`systeme.${colonneDuSysteme(c.colonne)!}`) }))
       for (const c of champs) etat.push({ nom: c.colonne, nature: c.nature === 'case' ? 'booleen' : c.nature === 'nombre' ? 'nombre' : 'texte' })
       corps = [titre(t('titre')),
         ...champs.map((c) => ({ composant: 'Champ', libelle: c.libelle, donnee: d(`etat.${c.colonne}`), nature: natureDeColonne(c.colonne, c.nature), ...(c.requis === true ? { requis: true } : {}) })),
-        bouton(t('libelleEnvoi'), [{ faire: 'submit', table: t('table'), ecriture: 'creer', valeurs: champs.map((c) => ({ champ: c.colonne, depuis: d(`etat.${c.colonne}`) })) }, nav(t('apres'))], 'principal'),
+        bouton(t('libelleEnvoi'), [{ faire: 'submit', table: t('table'), ecriture: 'creer', valeurs: [...champs.map((c) => ({ champ: c.colonne, depuis: d(`etat.${c.colonne}`) })), ...duSysteme] }, nav(t('apres'))], 'principal'),
         accueil]
       break
     }

@@ -16,7 +16,9 @@
  * modèle le choisit, en 3c) — dans le squelette, un écran lu est ouvert au
  * visiteur et ne lit aucune table ; le contenu de chaque écran lu.
  */
-import { natureDeColonne, ROUTES_SOCLE } from './catalogue'
+import { colonneDuSysteme, natureDeColonne, ROUTES_SOCLE } from './catalogue'
+/** Les colonnes que la personne saisit : jamais celles que le système remplit. */
+const saisies = (cols: readonly string[]) => cols.filter((c) => colonneDuSysteme(c) === null)
 import type { Spec } from './catalogue'
 import { COLONNE_SECRETE } from './validateur'
 import type { Contexte, TableLue } from './validateur'
@@ -169,13 +171,13 @@ function ecranTetrade(r: RoutePlan, t: TableLue, journal: boolean): O {
       ]),
       bouton('Retour', [nav(`${base}-liste`)]),
     ] }
-    case 'creer': return { ...commun, etat: cols.map((c) => ({ nom: c, nature: 'texte' })), corps: [
-      ...cols.map((c) => ({ composant: 'Champ', libelle: lisible(c), donnee: d(`etat.${c}`), nature: natureDeColonne(c, 'texte') })),
-      bouton('Enregistrer', [{ faire: 'submit', table: t.nom, ecriture: 'creer', valeurs: cols.map((c) => ({ champ: c, depuis: d(`etat.${c}`) })) }, nav(`${base}-liste`)], 'principal'),
+    case 'creer': return { ...commun, etat: saisies(cols).map((c) => ({ nom: c, nature: 'texte' })), corps: [
+      ...saisies(cols).map((c) => ({ composant: 'Champ', libelle: lisible(c), donnee: d(`etat.${c}`), nature: natureDeColonne(c, 'texte') })),
+      bouton('Enregistrer', [{ faire: 'submit', table: t.nom, ecriture: 'creer', valeurs: [...saisies(cols).map((c) => ({ champ: c, depuis: d(`etat.${c}`) })), ...cols.filter((c) => colonneDuSysteme(c) !== null).map((c) => ({ champ: c, depuis: d(`systeme.${colonneDuSysteme(c)!}`) }))] }, nav(`${base}-liste`)], 'principal'),
       bouton('Retour', [nav(`${base}-liste`)]),
     ] }
     case 'editer': return { ...commun, corps: [
-      ...cols.map((c) => ({ composant: 'Champ', libelle: lisible(c), donnee: d(`ligne.${c}`), nature: natureDeColonne(c, 'texte') })),
+      ...saisies(cols).map((c) => ({ composant: 'Champ', libelle: lisible(c), donnee: d(`ligne.${c}`), nature: natureDeColonne(c, 'texte') })),
       bouton('Enregistrer', [{ faire: 'submit', table: t.nom, ecriture: 'modifier', valeurs: cols.map((c) => ({ champ: c, depuis: d(`ligne.${c}`) })) }, nav(`${base}-detail`)], 'principal'),
       bouton('Retour', [nav(`${base}-detail`)]),
     ] }

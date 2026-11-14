@@ -12,7 +12,7 @@
  * elle n'est envoyée à aucun modèle.
  */
 import {
-  ACTIONS, CHARGES, COMPOSANTS, COMPOSANTS_DE_DERIBFY, EVENEMENTS, EVENEMENTS_DE_DERIBFY, NATURES_MEDIA, ICONES, JETONS, NATURES_ETAT, PROPS_COMMUNES, PROPS_DE_DERIBFY, PROPS_ECRAN, PROPS_ECRAN_DE_DERIBFY, ROUTES_SOCLE,
+  ACTIONS, CHARGES, COMPOSANTS, COMPOSANTS_DE_DERIBFY, EVENEMENTS, EVENEMENTS_DE_DERIBFY, SOURCES_DE_DERIBFY, NATURES_MEDIA, ICONES, JETONS, NATURES_ETAT, PROPS_COMMUNES, PROPS_DE_DERIBFY, PROPS_ECRAN, PROPS_ECRAN_DE_DERIBFY, ROUTES_SOCLE,
   SOURCES, VUES_TETRADE, type DefProp, type Genre,
 } from './catalogue'
 
@@ -78,7 +78,7 @@ export function genererConsigne(): string {
   s.push('')
   s.push('TEXTES : écris chaque texte EN CLAIR, dans la langue principale, sans balise ; Deribfy en fait la clé et la traduction.')
   s.push(`DONNÉES : jamais une valeur inventée — une liaison ${q('$data')} :`)
-  for (const [src, aide] of Object.entries(SOURCES)) s.push(`  - ${q(src)} : ${aide.replace(/`([^`]+)`/gu, '$1')}`)
+  for (const [src, aide] of Object.entries(SOURCES).filter(([x]) => !SOURCES_DE_DERIBFY.includes(x))) s.push(`  - ${q(src)} : ${aide.replace(/`([^`]+)`/gu, '$1')}`)
   s.push('')
   s.push('RÈGLES :')
   s.push('  - aucune langue, devise, moyen de paiement ni pays que la lecture du cahier ne nomme ;')

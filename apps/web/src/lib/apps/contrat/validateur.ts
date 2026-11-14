@@ -93,8 +93,9 @@ const DOM_VERS: Readonly<Record<string, string>> = {
   borderRadius: 'rayon', fontSize: 'taille', flexDirection: 'sens', alignItems: 'aligner', textAlign: 'aligner',
 }
 
-const LONGUEUR_LIAISON: Readonly<Record<string, number>> = { table: 1, ligne: 1, parcours: 2, etat: 1, session: 1 }
+const LONGUEUR_LIAISON: Readonly<Record<string, number>> = { table: 1, ligne: 1, parcours: 2, etat: 1, session: 1, systeme: 1 }
 const SESSION = ['role', 'utilisateur']
+const SYSTEME = ['maintenant', 'empreinte']
 
 /** La portée d'un modèle de Lignes dont la table est inconnue (déjà refusée). */
 const INCONNUE = '\u0000inconnue'
@@ -150,7 +151,7 @@ function liaison(c: Collecte, x: unknown, chemin: string) {
   if (typeof v !== 'string') { c.noter('TYPE_INVALIDE', `${chemin}.$data`, 'le chemin est une chaîne', null); return }
   const [source = '', ...reste] = v.split('.')
   if (!(source in SOURCES)) { c.noter('LIAISON_HORS_CONTRAT', `${chemin}.$data`, `${dire(v)} : « ${source} » n’est pas une source du contrat`, lePlusProche(source, Object.keys(SOURCES))); return }
-  if (!MOTIF.liaison.test(v) || reste.length !== LONGUEUR_LIAISON[source] || (source === 'session' && !SESSION.includes(reste[0]!))) {
+  if (!MOTIF.liaison.test(v) || reste.length !== LONGUEUR_LIAISON[source] || (source === 'session' && !SESSION.includes(reste[0]!)) || (source === 'systeme' && !SYSTEME.includes(reste[0]!))) {
     c.noter('LIAISON_HORS_CONTRAT', `${chemin}.$data`, `${dire(v)} : ${SOURCES[source as keyof typeof SOURCES]}`, null)
   }
 }

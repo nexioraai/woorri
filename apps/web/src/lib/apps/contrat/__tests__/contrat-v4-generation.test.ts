@@ -27,7 +27,8 @@ import type { LectureGraphe } from '../graphe'
 import { genererApplication, type LectureV4 } from '../generation'
 import { MagasinBase, type ClientBase } from '../rendu/base'
 import { Magasin } from '../rendu/donnees'
-import { natureDeColonne } from '../catalogue'
+import { colonneDuSysteme, natureDeColonne } from '../catalogue'
+import { avecEmpreinte, EMPREINTE_A_CALCULER } from '../rendu/donnees'
 import { comptesDuCahier } from '../comptes-du-cahier'
 import { expanser } from '../archetypes'
 import { deriverPlan, squeletteDeSpec } from '../graphe'
@@ -333,5 +334,29 @@ describe('V4 · bloc 2 · la génération branchée', () => {
     })
     expect(r.ok, r.motif ?? '').toBe(true)
     expect(r.app.comptes).toMatchObject({ sorte: 'individuels', roleDeBase: 'utilisateur' })
+  })
+
+  it('⑫ ce que le système connaît n’est jamais demandé : l’heure de l’enregistrement, l’empreinte du fichier (edd1a7f9)', async () => {
+    // Les colonnes du système ; une date qui appartient à la personne reste une saisie.
+    expect(['date_heure_appareil', 'date_heure_serveur', 'horodatage', 'created_at', 'empreinte', 'hash_photo', 'date_naissance', 'date_echeance', 'index'].map((c) => colonneDuSysteme(c)))
+      .toEqual(['maintenant', 'maintenant', 'maintenant', 'maintenant', 'empreinte', 'empreinte', null, null, null])
+    // Le formulaire rempli : ni champ, ni question — la valeur part avec l'envoi.
+    const e = expanser({ archetype: 'formulaire', route: 'prise', acces: 'visiteur', slots: { titre: 'Prise', table: 'releve', champs: [
+      { colonne: 'date_heure_appareil', libelle: 'Date et heure de l’appareil', nature: 'date', requis: true }, { colonne: 'photo', libelle: 'Photo', nature: 'photo', requis: true }, { colonne: 'empreinte', libelle: 'Empreinte', nature: 'texte' },
+    ], libelleEnvoi: 'Ajouter le relevé', apres: 'accueil' } }, { langue: 'fr', langues: [] })
+    const texte = JSON.stringify(e)
+    expect(texte).not.toMatch(/Date et heure de l’appareil|"libelle":"Empreinte"/u)
+    expect(texte).toContain('{"champ":"date_heure_appareil","depuis":{"$data":"systeme.maintenant"}}')
+    expect(texte).toContain('{"champ":"empreinte","depuis":{"$data":"systeme.empreinte"}}')
+    // Les formulaires de gestion aussi.
+    const graphe = deriverPlan({ ecrans: ['relevé'], roles: ['agent'], parcours: [], langues: [], devises: [], moyensPaiement: [], pays: [] }, [{ nom: 'releve', colonnes: ['index', 'photo', 'horodatage', 'empreinte'] }])
+    const creer = JSON.stringify((squeletteDeSpec(graphe).ecrans as unknown as { route: string }[]).find((x) => x.route === 'releve-creer'))
+    expect(creer).not.toMatch(/"libelle":"(Horodatage|Empreinte)"/u)
+    expect(creer).toContain('"depuis":{"$data":"systeme.maintenant"}')
+    // L'empreinte : le SHA-256 du fichier joint (ici de « abc »), calculé à l'enregistrement.
+    const v = await avecEmpreinte({ photo: new File([new TextEncoder().encode('abc')], 'p.jpg', { type: 'image/jpeg' }), empreinte: EMPREINTE_A_CALCULER })
+    expect(v.empreinte).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad')
+    // Sans fichier : vide, jamais inventée.
+    expect((await avecEmpreinte({ empreinte: EMPREINTE_A_CALCULER })).empreinte).toBeNull()
   })
 })
