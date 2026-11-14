@@ -111,6 +111,8 @@ describe('V4 · bloc 1 · deux passes', () => {
       expect(e.tentatives.map((t) => `${t.passe}${String(t.rang)}`), r.route).toEqual(['A1', 'B1', 'B2', 'B3'])
       expect(e.repli, r.route).toBe(true)
       expect(e.refusAvantRepli.map((x) => x.classe), r.route).toEqual(['JSON_ILLISIBLE'])
+      // Le BRUT de chaque passe B refusée est gardé (V4, bloc 3) : sans lui, le repli de notifications (cdafe7d4) restait inexpliqué.
+      expect(e.tentatives.filter((t) => t.passe === 'B').map((t) => t.brut), r.route).toEqual(['{ pas du json', '{ pas du json', '{ pas du json'])
       expect(e.refusDuRepli, r.route).toEqual([])
       expect(validerRemplissage(e.remplissage), r.route).toEqual([])
       // Le premier texte de la passe A devient le titre du repli.

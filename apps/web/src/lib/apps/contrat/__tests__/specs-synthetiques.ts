@@ -376,6 +376,10 @@ export function cas(): Cas[] {
       ;(e.corps as O[]).unshift(bouton(`${route}.titre`, [{ faire: 'setState', chemin: 'etat.onglet', valeur: 'tout' }]))
     })
   }
+  // V4, bloc 3 : le contrôle d'un état déclare quand il agit (tir cdafe7d4, « Effacer la recherche »).
+  const lignesRecherche = (s: O) => (ecranDe(s, 'recherche').corps as O[]).find((x) => x.composant === 'Lignes')!
+  m('CONTROLE_SANS_CONDITION', 'effacer la ville, sans condition', (s) => { Object.assign(lignesRecherche(s), { videAction: [{ faire: 'setState', chemin: 'etat.ville', valeur: '' }], videLibelle: t('recherche.titre') }) })
+  m('CONTROLE_SANS_CONDITION', 'deux remises à zéro, sans condition', (s) => { Object.assign(lignesRecherche(s), { videAction: [{ faire: 'setState', chemin: 'etat.ville', valeur: '' }, { faire: 'setState', chemin: 'etat.ville', valeur: 'tout' }], videLibelle: t('recherche.titre') }) })
   for (const route of ['detail', 'confirmation', 'contact']) {
     m('CHAMP_SANS_EFFET', `champ muet sur ${route}`, (s) => {
       const e = ecranDe(s, route)

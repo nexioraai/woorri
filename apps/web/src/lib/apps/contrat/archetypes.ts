@@ -150,6 +150,8 @@ const nav = (route: string, avec?: string): O => ({ faire: 'navigate', route, ..
 const bouton = (libelle: string, effets: O[], genre = 'secondaire', icone?: string): O => ({ composant: 'Bouton', libelle, effets, genre, ...(icone !== undefined ? { icone } : {}) })
 const titre = (t: string): O => ({ composant: 'Titre', texte: t, niveau: 'page' })
 type Col = { colonne: string; libelle: string; format?: string }
+/** Une carte d'accueil : un titre lisible, une destination, et — s'il y en a un — le rôle à qui elle est destinée. */
+export const carte = (x: { libelle: string; route: string; role?: string }): O => ({ composant: 'Encart', effets: [nav(x.route)], enfants: [{ composant: 'Titre', texte: x.libelle, niveau: 'encart' }], ...(x.role !== undefined && x.role !== 'visiteur' ? { pourRole: x.role } : {}) })
 const valeurs = (cols: readonly Col[], source = 'ligne', table = ''): O[] => cols.map((c) => ({ composant: 'Valeur', libelle: c.libelle, donnee: d(source === 'ligne' ? `ligne.${c.colonne}` : `parcours.${table}.${c.colonne}`), ...(c.format !== undefined ? { format: c.format } : {}) }))
 
 export type OptionsGabarit = { readonly langue: string; readonly langues: readonly { readonly code: string; readonly libelle: string }[] }
@@ -180,7 +182,8 @@ export function expanser(r: Remplissage, o: OptionsGabarit): O {
       break
     case 'accueil':
       corps = [titre(t('titre')), ...(v.intro !== undefined ? [{ composant: 'Phrase', texte: t('intro') }] : []),
-        { composant: 'Pile', espace: 's', enfants: (v.raccourcis as { libelle: string; route: string }[]).map((x) => ({ composant: 'Encart', effets: [nav(x.route)], enfants: [{ composant: 'Phrase', texte: x.libelle }] })) }]
+        // Un raccourci peut être réservé à un rôle (`role`) : l'accueil d'un rôle montre SES écrans.
+        { composant: 'Pile', espace: 's', enfants: (v.raccourcis as { libelle: string; route: string; role?: string }[]).map((x) => carte(x)) }]
       break
     case 'liste': case 'dashboard': case 'tableAdmin': {
       const cols = v.colonnes as Col[]
@@ -209,7 +212,8 @@ export function expanser(r: Remplissage, o: OptionsGabarit): O {
       corps = [titre(t('titre')),
         { composant: 'Champ', libelle: t('libelleRecherche'), donnee: d('etat.q'), nature: 'texte' },
         { composant: 'Lignes', donnee: d(`table.${t('table')}`), filtre: [{ champ: t('colonneRecherche'), egal: d('etat.q') }], vide: t('vide'),
-          videAction: [{ faire: 'setState', chemin: 'etat.q', valeur: '' }], videLibelle: g.effacer!,
+          // « Effacer » n'agit que si une recherche est saisie (tir cdafe7d4) : sa condition est déclarée.
+          videAction: [{ faire: 'setState', chemin: 'etat.q', valeur: '' }], videLibelle: g.effacer!, videSi: d('etat.q'),
           modele: [{ composant: 'Encart', ...(detail !== null ? { effets: [nav(detail, 'ligne.id')] } : {}), enfants: valeurs(v.colonnes as Col[]) }] },
         accueil]
       break

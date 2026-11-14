@@ -62,6 +62,31 @@ describe('V4 · l’application Hayine assemblée, dans Chromium', () => {
     expect(v.ecransOuverts).toBe(ecrans.length)
   }, 300_000)
 
+  it('④ l’accueil d’un rôle : ses cartes, sans la gestion ; la garde UNE fois sur le parcours', async () => {
+    const { r, html } = await hayine()
+    const p = await navigateur.newPage({ viewport: { width: 390, height: 844 } })
+    await p.route('**/*', (x) => (x.request().url().startsWith(ADRESSE) ? x.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }) : x.fulfill({ status: 404, body: '' })))
+    const cartes = () => p.evaluate(() => [...document.querySelectorAll('main [role="button"]')].map((e) => (e.textContent ?? '').trim()))
+    await p.goto(`${ADRESSE}#accueil`); await p.waitForTimeout(200)
+    const visiteur = await cartes()
+    expect(visiteur).toContain('Gestion')
+    // Le parcours lu : la garde n'apparaît qu'une fois.
+    const gardes: string[] = []
+    for (const route of r.graphe.parcours) {
+      await p.evaluate((x) => { window.location.hash = x }, route); await p.waitForTimeout(150)
+      if (await p.evaluate(() => !!document.querySelector('[data-deribfy="garde"]'))) { gardes.push(route); await p.click('[data-deribfy="garde"] [data-role] button'); await p.waitForTimeout(100) }
+    }
+    expect(gardes).toHaveLength(1)
+    // Revenu à l'accueil avec le rôle choisi : ses cartes et les publiques, sans « Gestion » (réservée au gestionnaire).
+    await p.evaluate(() => { window.location.hash = 'accueil' }); await p.waitForTimeout(150)
+    const connecte = await cartes()
+    const role = (r.spec.ecrans as unknown as { route: string; acces: string }[]).find((e) => e.route === gardes[0])!.acces
+    const attendues = (r.spec.ecrans as unknown as { route: string; acces: string }[]).filter((e) => r.couverture.lus > 0 && r.ecrans.some((l) => l.route === e.route && l.choix !== 'deribfy') && (e.acces === 'visiteur' || e.acces === role)).map((e) => String(r.remplissages[e.route]!.slots.titre))
+    expect(connecte).not.toContain('Gestion')
+    expect(connecte.length).toBe(attendues.length)
+    await p.close()
+  }, 120_000)
+
   it('③ le juge d’exécution de la route monte Hayine et la traverse dans le simulateur', async () => {
     const { r } = await hayine({ jugeReel: true })
     const x = r.execution

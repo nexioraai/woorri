@@ -36,7 +36,7 @@ const CAPTURES = process.env.CAPTURES_V3 ?? join(tmpdir(), 'deribfy-v3-captures'
 const ADRESSE = 'https://temoin.deribfy.test/'
 const AVEC_DONNEES = NOMS_ARCHETYPES.filter((a) => ARCHETYPES[a].donnees !== 'aucune')
 
-async function html(o: { visiteurPartout?: boolean; etat?: EtatSource; latenceMs?: number }): Promise<string> {
+async function html(o: { visiteurPartout?: boolean; etat?: EtatSource; latenceMs?: number; unSeulRole?: boolean }): Promise<string> {
   const v = await assembler(fichiersTemoin(MOTEUR, o))
   if (!v.ok) throw new Error(v.erreur)
   return pageAutonome(v.code, 'Témoin V3')
@@ -136,7 +136,9 @@ describe('V3 · les archétypes dans Chromium', () => {
         })()`)) as { present: boolean; bouton: boolean; statut: boolean; vide: boolean }
         if (!r.present) fautes.push(`${a} · ${etat} : aucun [data-etat="${attendu[etat]}"]`)
         if (etat === 'erreur' && !r.bouton) fautes.push(`${a} · erreur : pas de « Réessayer »`)
-        if (etat === 'vide' && !r.bouton) fautes.push(`${a} · vide : pas d’appel à l’action`)
+        // V4, bloc 3 : la recherche vide sans saisie n'a RIEN à effacer — son appel à l'action ne s'affiche pas (videSi).
+        if (etat === 'vide' && !r.bouton && a !== 'recherche') fautes.push(`${a} · vide : pas d’appel à l’action`)
+        if (etat === 'vide' && r.bouton && a === 'recherche') fautes.push('recherche · vide sans saisie : « Effacer » affiché alors qu’il n’agit pas')
         if (etat === 'partiel' && !r.statut) fautes.push(`${a} · partiel : pas de bandeau`)
         if (etat === 'attente' && r.vide) fautes.push(`${a} · attente : l’état vide est affiché`)
       }
@@ -145,19 +147,45 @@ describe('V3 · les archétypes dans Chromium', () => {
     expect(fautes).toEqual([])
   }, 300_000)
 
-  it('④ le juge d’expérience traverse le témoin des treize archétypes', async () => {
-    const doc = await html({})
+  it('④ le juge d’expérience traverse le témoin des treize archétypes — données remplies ET vides', async () => {
+    for (const etat of [undefined, 'vide'] as const) {
+    const doc = await html(etat === undefined ? {} : { etat })
     const r = await jugerExperience(doc, {
       ecrans: REMPLISSAGES.map((x) => ({ nom: x.route, slug: x.route, role: x.acces === 'visiteur' ? '' : x.acces })),
       langues: LANGUES.map((l) => ({ code: l.code, dir: l.dir, libelles: [l.libelle] })),
-      parcours: [...(CTX.parcours ?? [])],
+      // Sans données, aucun parcours fondé sur une ligne ne peut avancer (« offres » vide ne mène à aucune offre) :
+      // le témoin VIDE juge les contrôles de chaque écran ; le témoin rempli juge aussi le parcours.
+      parcours: etat === undefined ? [...(CTX.parcours ?? [])] : [],
       mode: 'application',
     })
     expect(r.aTourne, r.motif ?? '').toBe(true)
     process.stdout.write(`\n  juge : ${String(r.ecransOuverts)} écrans, ${String(r.controlesEssayes)} contrôles, ${String(r.refus.length)} refus\n`)
     expect(r.refus.map((x) => `${x.ecran} · ${x.controle} · ${x.quoi}`)).toEqual([])
     expect(r.langues.map((l) => `${l.code}:${String(l.ok)}:${l.dir}`)).toEqual(['fr:true:ltr', 'en:true:ltr', 'ar:true:rtl'])
-    expect(r.parcours).toMatchObject({ ok: true })
+    if (etat === undefined) expect(r.parcours).toMatchObject({ ok: true })
     expect(r.ecransOuverts).toBe(REMPLISSAGES.length)
+    }
+  }, 300_000)
+
+  it('⑤ la garde : le rôle se choisit UNE fois sur le parcours ; un seul rôle, aucune question', async () => {
+    const compter = async (doc: string, routes: readonly string[]) => {
+      const p = await ouvrir(doc, 390)
+      const vues: string[] = []
+      for (const r of routes) {
+        await aller(p, r)
+        if (await p.evaluate(`!!document.querySelector('[data-deribfy="garde"]')`)) {
+          vues.push(r)
+          await p.click('[data-deribfy="garde"] [data-role] button')
+          await p.waitForTimeout(80)
+        }
+      }
+      await p.close()
+      return vues
+    }
+    // Deux rôles (Client, Gérant) : le parcours client demande UNE fois, puis plus jamais.
+    const parcours = ['accueil', 'offres', 'offre', 'paiement', 'confirmation', 'profil', 'paiement']
+    expect(await compter(await html({}), parcours)).toEqual(['paiement'])
+    // Un seul rôle dans l'application : la question ne se pose pas.
+    expect(await compter(await html({ unSeulRole: true }), parcours)).toEqual([])
   }, 300_000)
 })

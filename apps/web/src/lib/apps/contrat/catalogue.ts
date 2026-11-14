@@ -116,6 +116,7 @@ export type Genre =
   | { readonly g: 'donneeOuValeur' }
   | { readonly g: 'codeLangue' }
   | { readonly g: 'charge' }
+  | { readonly g: 'role' }
 
 export type DefProp = { readonly genre: Genre; readonly requis: boolean; readonly aide: string }
 export type DefComposant = { readonly aide: string; readonly props: Readonly<Record<string, DefProp>> }
@@ -131,6 +132,7 @@ const variante = (...valeurs: string[]): Genre => ({ g: 'variante', valeurs })
 export const PROPS_COMMUNES: Readonly<Record<string, DefProp>> = {
   si: p(L, false, 'affiché seulement quand cette liaison est vraie (non vide)'),
   siNon: p(L, false, 'affiché seulement quand cette liaison est fausse (ou vide)'),
+  pourRole: p({ g: 'role' }, false, 'montré au visiteur et à ce rôle seulement (l’accueil d’un rôle)'),
 }
 
 export const COMPOSANTS: Readonly<Record<string, DefComposant>> = {
@@ -183,6 +185,7 @@ export const COMPOSANTS: Readonly<Record<string, DefComposant>> = {
     vide: p(T, true, 'ce qui s’affiche quand il n’y a aucune ligne'),
     videAction: p({ g: 'effets' }, false, 'l’appel à l’action de l’état vide'),
     videLibelle: p(T, false, 'son libellé'),
+    videSi: p(L, false, 'l’appel à l’action de l’état vide n’est montré que si cette liaison est vraie'),
   } },
   Fiche: { aide: 'la ligne en cours d’une table (choisie par navigate avec), avec ses états', props: {
     donnee: p(L, true, '`table.<table>`'),
@@ -190,6 +193,7 @@ export const COMPOSANTS: Readonly<Record<string, DefComposant>> = {
     vide: p(T, true, 'ce qui s’affiche quand aucune ligne n’est choisie'),
     videAction: p({ g: 'effets' }, false, 'l’appel à l’action de l’état vide'),
     videLibelle: p(T, false, 'son libellé'),
+    videSi: p(L, false, 'l’appel à l’action de l’état vide n’est montré que si cette liaison est vraie'),
   } },
   Pastille: { aide: 'une étiquette courte', props: {
     texte: p(T, true, 'l’étiquette'),
@@ -296,6 +300,7 @@ function schemaGenre(g: Genre): z.ZodType {
     case 'donneeOuValeur': return z.union([Liaison, Litteral])
     case 'codeLangue': return z.string().regex(MOTIF.langue)
     case 'charge': return z.array(z.strictObject({ champ: z.enum(CHAMPS_DE_CHARGE as [string, ...string[]]), depuis: Liaison }))
+    case 'role': return z.string().regex(MOTIF.role)
   }
 }
 

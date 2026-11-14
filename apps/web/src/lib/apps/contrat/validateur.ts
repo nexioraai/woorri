@@ -35,7 +35,7 @@ export const CLASSES = {
   // ── couche 2 : le contexte lu
   TABLE_INCONNUE: 2, CHAMP_INCONNU: 2, ROLE_INCONNU: 2, LANGUE_HORS_LECTURE: 2, DEVISE_HORS_LECTURE: 2,
   PAIEMENT_HORS_LECTURE: 2, PAYS_HORS_LECTURE: 2, TRADUCTION_MANQUANTE: 2, ETAT_INCONNU: 2, ECRITURE_HORS_ETAT: 2,
-  ACTION_SANS_EFFET: 2, CHAMP_SANS_EFFET: 2, LIAISON_HORS_PORTEE: 2,
+  ACTION_SANS_EFFET: 2, CHAMP_SANS_EFFET: 2, LIAISON_HORS_PORTEE: 2, CONTROLE_SANS_CONDITION: 2,
   // ── couche 2 : quatre défauts du jeu aveugle (A1) qui reviennent au contrat
   COLONNE_SECRETE: 2, DONNEE_PRIVEE_EXPOSEE: 2, SUBMIT_SANS_LIGNE: 2, MENTION_DEMO: 2, MONTANT_EN_DUR: 2,
   // ── couche 2 : le graphe
@@ -234,6 +234,9 @@ function genre(c: Collecte, g: Genre, x: unknown, chemin: string, prop: string) 
       return litteral(c, x, chemin)
     case 'codeLangue':
       if (typeof x !== 'string' || !MOTIF.langue.test(x)) c.noter('VALEUR_INVALIDE', chemin, `${dire(x)} n’est pas un code de langue`, null)
+      return
+    case 'role':
+      if (typeof x !== 'string' || !MOTIF.role.test(x)) c.noter('VALEUR_INVALIDE', chemin, `${dire(x)} n’est pas un nom de rôle`, null)
       return
     case 'charge':
       if (!Array.isArray(x)) return c.noter('TYPE_INVALIDE', chemin, 'une charge est une liste de { champ, depuis }', null)
@@ -541,6 +544,14 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
     tableau(n.choix).forEach((o, i) => { if (estObjet(o)) scanLitteral(o.valeur, `${ch}.choix[${String(i)}].valeur`) })
     verifierLiaison(donnee(n.si), `${ch}.si`, portee, 'visible')
     verifierLiaison(donnee(n.siNon), `${ch}.siNon`, portee, 'visible')
+    verifierLiaison(donnee(n.videSi), `${ch}.videSi`, portee, 'visible')
+    const pourRole = chaine(n.pourRole)
+    if (pourRole !== null && !ctx.roles.some((r) => normaliser(r) === normaliser(pourRole))) c.noter('ROLE_INCONNU', `${ch}.pourRole`, `le rôle ${dire(pourRole)} n’est pas lu dans le cahier`, lePlusProche(pourRole, [...ctx.roles]))
+    // LE CONTRÔLE D'UN ÉTAT DÉCLARE QUAND IL AGIT (V4, bloc 3) : l'appel à l'action de l'état
+    // vide qui ne fait que changer l'état s'affichait aussi quand il n'avait rien à changer —
+    // « Effacer la recherche » sur une recherche déjà vide (tir cdafe7d4, juge d'expérience).
+    const seulementEtat = (l: unknown) => tableau(l).length > 0 && tableau(l).every((a) => estObjet(a) && a.faire === 'setState')
+    if ('videAction' in n && seulementEtat(n.videAction) && !('videSi' in n)) c.noter('CONTROLE_SANS_CONDITION', `${ch}.videAction`, 'l’appel à l’action de l’état vide ne fait que changer l’état : il déclare quand il agit (videSi)', 'videSi')
     const libelle = typeof n.libelle === 'string' ? n.libelle : String(n.composant)
     switch (n.composant) {
       case 'Valeur':

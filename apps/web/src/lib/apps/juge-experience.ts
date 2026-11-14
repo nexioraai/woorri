@@ -48,6 +48,8 @@ export type ArgsExperience = {
   readonly attenteMs?: number
   /** Borne de COÛT, pas de vérité : au-delà, le verdict dit « partiel ». */
   readonly controlesMax?: number
+  /** La largeur du cadre, en px (390 : un téléphone) ; absente : 1 200. */
+  readonly largeur?: number
 }
 export type RefusExperience = { readonly ecran: string; readonly controle: string; readonly quoi: string }
 export type VerdictExperience = {
@@ -193,8 +195,11 @@ export const SCRIPT_EXPERIENCE = String.raw`async (o) => {
     if (l0) { const c0 = trouver(l0); if (c0) { c0.click(); await att(A) } }
   }
 
-  // ④ LE PARCOURS
+  // ④ LE PARCOURS — suivi comme un NOUVEL usager : le rôle choisi pendant la traversée ne
+  // le suit pas (V4 : l'accueil d'un rôle ne montre que SES écrans). Une œuvre sans ce
+  // crochet est suivie comme avant.
   let parcours = null
+  if (o.mode === 'application' && o.parcours.length > 1 && window.__deribfy && typeof window.__deribfy.visiteur === 'function') { window.__deribfy.visiteur(); await att(A) }
   if (o.mode === 'application' && o.parcours.length > 1) {
     const atteint = [o.parcours[0]]
     const e0 = parSlug.get(o.parcours[0])

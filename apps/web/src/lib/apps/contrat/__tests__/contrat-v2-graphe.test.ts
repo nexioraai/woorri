@@ -48,13 +48,22 @@ describe('V2 · le graphe dérivé de la lecture', () => {
       expect(r.plan.parcours).toHaveLength((lecture.parcours ?? []).length)
     }
     const mesures = Object.fromEntries(Object.entries(J.lectures).map(([id, x]) => [id, juger(x.lecture, x.tables).mesure]))
+    // V4, bloc 3 : +1 route par lecture — l'espace « gestion », seule entrée vers les tables.
     expect(mesures).toEqual({
-      '5b1c20bc': { tables: 7, tablesCompletes: 7, routes: 47, routesCouvertes: 47 },
-      '94cf0489': { tables: 7, tablesCompletes: 7, routes: 47, routesCouvertes: 47 },
-      'ecole-a13f8f9f': { tables: 6, tablesCompletes: 6, routes: 37, routesCouvertes: 37 },
-      'pieces-c4522e43': { tables: 7, tablesCompletes: 7, routes: 39, routesCouvertes: 39 },
-      'cpa-fa0ede2c': { tables: 7, tablesCompletes: 7, routes: 41, routesCouvertes: 41 },
+      '5b1c20bc': { tables: 7, tablesCompletes: 7, routes: 48, routesCouvertes: 48 },
+      '94cf0489': { tables: 7, tablesCompletes: 7, routes: 48, routesCouvertes: 48 },
+      'ecole-a13f8f9f': { tables: 6, tablesCompletes: 6, routes: 38, routesCouvertes: 38 },
+      'pieces-c4522e43': { tables: 7, tablesCompletes: 7, routes: 40, routesCouvertes: 40 },
+      'cpa-fa0ede2c': { tables: 7, tablesCompletes: 7, routes: 42, routesCouvertes: 42 },
     })
+    // Et l'accueil ne liste AUCUNE table à plat : une seule entrée « Gestion », réservée au rôle de gestion.
+    for (const [id, { lecture, tables }] of Object.entries(J.lectures)) {
+      const r = juger(lecture, tables)
+      const accueil = (r.spec.ecrans as unknown as { route: string; corps: unknown[] }[]).find((e) => e.route === 'accueil')!
+      const cibles = JSON.stringify(accueil.corps).match(/"route":"([a-z0-9-]+)"/gu) ?? []
+      expect(cibles.filter((x) => /-liste"$/u.test(x)), id).toEqual([])
+      expect(cibles.filter((x) => x === '"route":"gestion"'), id).toHaveLength(1)
+    }
   })
 
   it('② aucun rôle de gestion lu : Deribfy crée « Gestionnaire » et le consigne', () => {

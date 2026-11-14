@@ -69,8 +69,8 @@ describe('V4 · bloc 2 · la génération branchée', () => {
     expect(r.ok, r.motif ?? '').toBe(true)
     expect(r.contrat.map((x) => `${x.classe} · ${x.chemin} · ${x.quoi}`)).toEqual([])
     expect(r.persistance).toEqual([])
-    // Les routes : 47 (V2) ; une ligne par route ; les écrans lus passent au modèle, les autres non.
-    expect(r.ecrans).toHaveLength(47)
+    // Les routes : 48 (V2, plus l'espace « gestion ») ; une ligne par route ; les écrans lus passent au modèle, les autres non.
+    expect(r.ecrans).toHaveLength(48)
     const lus = r.ecrans.filter((e) => e.choix !== 'deribfy')
     expect(lus.length).toBe(r.graphe.routes.filter((x) => x.origine === 'lecture').length)
     for (const e of lus) {
@@ -95,6 +95,26 @@ describe('V4 · bloc 2 · la génération branchée', () => {
     const attendu = r.ecrans.reduce((a, e) => a + e.cout, 0) + r.langues.reduce((a, l) => a + l.cout, 0)
     expect(r.cout).toBeCloseTo(attendu, 12)
     expect(r.languesPage).toEqual([{ code: 'fr', dir: 'ltr' }, { code: 'en', dir: 'ltr' }, { code: 'ar', dir: 'rtl' }])
+    // L'ACCUEIL (V4, bloc 3) : une carte par écran lu — son titre RÉDIGÉ, réservée à son rôle —, UNE
+    // entrée « Gestion » au rôle de gestion, et aucune table à plat.
+    const accueil = (r.spec.ecrans as unknown as { route: string; corps: unknown[] }[]).find((e) => e.route === 'accueil')!
+    const cartes: { route: string; titre: string; pourRole?: string }[] = []
+    const marcher = (x: unknown) => {
+      if (Array.isArray(x)) { x.forEach(marcher); return }
+      if (typeof x !== 'object' || x === null) return
+      const o = x as Record<string, unknown>
+      if (o.composant === 'Encart' && Array.isArray(o.effets)) {
+        const route = String((o.effets[0] as { route: string }).route)
+        const titre = String(((o.enfants as { texte: string }[])[0]!).texte)
+        cartes.push({ route, titre, ...(typeof o.pourRole === 'string' ? { pourRole: o.pourRole } : {}) })
+      }
+      Object.values(o).forEach(marcher)
+    }
+    marcher(accueil.corps)
+    const lusSpec = (r.spec.ecrans as unknown as { route: string; acces: string }[]).filter((e) => lus.some((l) => l.route === e.route))
+    expect(cartes.filter((c) => c.route !== 'gestion')).toEqual(lusSpec.map((e) => ({ route: e.route, titre: String(r.remplissages[e.route]!.slots.titre), ...(e.acces !== 'visiteur' ? { pourRole: e.acces } : {}) })))
+    expect(cartes.filter((c) => c.route === 'gestion')).toEqual([{ route: 'gestion', titre: 'Gestion', pourRole: r.graphe.routes.find((x) => x.route === 'gestion')!.acces }])
+    expect(JSON.stringify(accueil.corps)).not.toMatch(/"route":"[a-z0-9-]+-liste"/u)
   })
 
   it('③ l’archétype : du plan s’il tient, sinon par règle — et consigné', async () => {

@@ -79,7 +79,9 @@ export const EXTRAIT_MAX = 1_500
 
 export type ClasseB = Refus['classe'] | ReturnType<typeof validerRemplissage>[number]['classe'] | 'JSON_ILLISIBLE' | 'REPONSE_COUPEE' | 'BROUILLON_VIDE'
 export type RefusB = { readonly classe: ClasseB; readonly ou: string; readonly quoi: string; readonly proche: string | null }
-export type Tentative = { readonly passe: 'A' | 'B'; readonly rang: number; readonly ms: number; readonly tronquee: boolean; readonly jetons: JetonsAppel; readonly refus: readonly RefusB[] }
+export type Tentative = { readonly passe: 'A' | 'B'; readonly rang: number; readonly ms: number; readonly tronquee: boolean; readonly jetons: JetonsAppel; readonly refus: readonly RefusB[]; readonly brut?: string }
+/** Le brut gardé d'une passe B refusée. */
+export const BRUT_MAX = 4_000
 
 export type EcranRempli = {
   readonly route: string
@@ -260,9 +262,9 @@ export function relance(refus: readonly RefusB[]): string {
 // LE REPLI — Deribfy écrit l'écran depuis la table.
 // ════════════════════════════════════════════════════════════════════════
 const REPLI: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  fr: { vide: 'Rien pour le moment.', enregistrer: 'Enregistrer', payer: 'Payer', commencer: 'Commencer', courriel: 'Courriel', secret: 'Mot de passe', rechercher: 'Rechercher', fait: 'C’est enregistré.', aide: 'Une question ? Passez par la page Contact.', contact: 'Écrivez-nous, nous vous répondrons.', legal: 'Cette application est éditée par son exploitant.', continuer: 'Continuer', compte: 'Compte' },
-  en: { vide: 'Nothing yet.', enregistrer: 'Save', payer: 'Pay', commencer: 'Start', courriel: 'Email', secret: 'Password', rechercher: 'Search', fait: 'Saved.', aide: 'A question? Use the Contact page.', contact: 'Write to us, we will answer.', legal: 'This application is published by its operator.', continuer: 'Continue', compte: 'Account' },
-  ar: { vide: 'لا شيء حاليًا.', enregistrer: 'حفظ', payer: 'ادفع', commencer: 'ابدأ', courriel: 'البريد الإلكتروني', secret: 'كلمة المرور', rechercher: 'بحث', fait: 'تم الحفظ.', aide: 'لديك سؤال؟ استخدم صفحة الاتصال.', contact: 'راسلنا وسنرد عليك.', legal: 'هذا التطبيق من نشر مشغّله.', continuer: 'متابعة', compte: 'الحساب' },
+  fr: { vide: 'Rien pour le moment.', enregistrer: 'Enregistrer', payer: 'Payer', commencer: 'Commencer', courriel: 'Courriel', secret: 'Mot de passe', rechercher: 'Rechercher', fait: 'C’est enregistré.', aide: 'Une question ? Passez par la page Contact.', contact: 'Écrivez-nous, nous vous répondrons.', legal: 'Cette application est éditée par son exploitant.', continuer: 'Continuer', compte: 'Compte', gestion: 'Gestion' },
+  en: { vide: 'Nothing yet.', enregistrer: 'Save', payer: 'Pay', commencer: 'Start', courriel: 'Email', secret: 'Password', rechercher: 'Search', fait: 'Saved.', aide: 'A question? Use the Contact page.', contact: 'Write to us, we will answer.', legal: 'This application is published by its operator.', continuer: 'Continue', compte: 'Account', gestion: 'Management' },
+  ar: { vide: 'لا شيء حاليًا.', enregistrer: 'حفظ', payer: 'ادفع', commencer: 'ابدأ', courriel: 'البريد الإلكتروني', secret: 'كلمة المرور', rechercher: 'بحث', fait: 'تم الحفظ.', aide: 'لديك سؤال؟ استخدم صفحة الاتصال.', contact: 'راسلنا وسنرد عليك.', legal: 'هذا التطبيق من نشر مشغّله.', continuer: 'متابعة', compte: 'الحساب', gestion: 'الإدارة' },
 }
 export const textesDuRepli = (langue: string): Readonly<Record<string, string>> => REPLI[langue] ?? REPLI.en!
 
@@ -399,7 +401,7 @@ export async function remplirEcran(o: {
       if (refus.length === 0 && j.ecran !== null) accepte = { remplissage, ecran: j.ecran }
     }
     if (rb.tronquee) refus = [{ classe: 'REPONSE_COUPEE', ou: '(racine)', quoi: 'ta réponse a été coupée avant la fin : rends un JSON plus court', proche: null }, ...refus]
-    tentatives.push({ passe: 'B', rang, ms: Date.now() - debut, tronquee: rb.tronquee, jetons: rb.usage, refus })
+    tentatives.push({ passe: 'B', rang, ms: Date.now() - debut, tronquee: rb.tronquee, jetons: rb.usage, refus, ...(refus.length > 0 ? { brut: rb.texte.slice(0, BRUT_MAX) } : {}) })
     if (accepte !== null && !rb.tronquee) {
       return { route: f.route, archetype: f.archetype, ...accepte, repli: false, refusAvantRepli: [], refusDuRepli: [], tentatives, appels: tentatives.length, jetons: { ...total }, cout: coutDe(total, o.prix), ms: Date.now() - debutTotal }
     }

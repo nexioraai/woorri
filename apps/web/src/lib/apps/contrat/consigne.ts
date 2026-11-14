@@ -36,6 +36,7 @@ function decrireGenre(g: Genre): string {
     case 'chemin': return `${q('etat')}.<nom>`
     case 'donneeOuValeur': return 'une valeur simple, ou une liaison'
     case 'codeLangue': return 'un code de langue lue'
+    case 'role': return 'un rôle lu'
     case 'charge': return `liste de ${q('{ "champ": …, "depuis": { "$data": … } }')}`
   }
 }

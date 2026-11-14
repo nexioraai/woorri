@@ -101,21 +101,22 @@ function traduire(ecrans: readonly unknown[]): Spec['traductions'] {
   }))
 }
 
-export function ecransTemoin(o: { visiteurPartout?: boolean } = {}): Record<string, unknown>[] {
-  return REMPLISSAGES.map((r) => expanser({ ...r, acces: o.visiteurPartout === true ? 'visiteur' : r.acces }, { langue: 'fr', langues: LANGUES }))
+export function ecransTemoin(o: { visiteurPartout?: boolean; unSeulRole?: boolean } = {}): Record<string, unknown>[] {
+  const acces = (a: string) => (o.visiteurPartout === true ? 'visiteur' : o.unSeulRole === true && a !== 'visiteur' ? 'Client' : a)
+  return REMPLISSAGES.map((r) => expanser({ ...r, acces: acces(r.acces) }, { langue: 'fr', langues: LANGUES }))
 }
 
-export function specTemoin(o: { visiteurPartout?: boolean } = {}): Spec {
+export function specTemoin(o: { visiteurPartout?: boolean; unSeulRole?: boolean } = {}): Spec {
   const ecrans = ecransTemoin(o)
   return { ecrans: ecrans as Spec['ecrans'], barre: ['accueil', 'offres', 'recherche', 'compte'], traductions: traduire(ecrans) }
 }
 
-export function appTemoin(o: { visiteurPartout?: boolean } = {}): AppCompilee {
+export function appTemoin(o: { visiteurPartout?: boolean; unSeulRole?: boolean } = {}): AppCompilee {
   return compilerApp(specTemoin(o), { nom: 'Réserver au Tchad', langues: LANGUES, devise: 'XAF' })
 }
 
 /** Les fichiers de l'application témoin, à assembler : le moteur (lu sur disque) et l'entrée. */
-export function fichiersTemoin(moteur: Readonly<Record<string, string>>, o: { visiteurPartout?: boolean; etat?: EtatSource; latenceMs?: number } = {}): Map<string, string> {
+export function fichiersTemoin(moteur: Readonly<Record<string, string>>, o: { visiteurPartout?: boolean; unSeulRole?: boolean; etat?: EtatSource; latenceMs?: number } = {}): Map<string, string> {
   const reglages: Reglages = {
     tables: DONNEES,
     ...(o.etat !== undefined ? { etats: Object.fromEntries(Object.keys(DONNEES).map((t) => [t, o.etat!])) } : {}),

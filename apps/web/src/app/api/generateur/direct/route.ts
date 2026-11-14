@@ -753,6 +753,8 @@ export async function POST(req: Request) {
           // ET LA CONFIGURATION AVEC (b, 2026-11-04).
           configuration,
           spec: resultat.spec,
+          // Les remplissages : l'œuvre se recompile EXACTEMENT avec des gabarits corrigés (V4, bloc 3).
+          remplissages: resultat.remplissages,
           // Les langues de la page : le bandeau d'aperçu les suit (V4).
           langues: resultat.languesPage,
         }

@@ -25,8 +25,9 @@ describe('étape 1 · 300 specs fautives synthétiques', () => {
   })
 
   // En trois lots de 100 : un seul test de 300 validations frôlait le plafond de marge sous la charge de la gate.
-  it.each([0, 100, 200])('② cas %i à +99 : refusés, chacun avec sa classe exacte, à sa couche, Zod d’accord', (debut) => {
-    expect(CAS).toHaveLength(300)
+  it.each([0, 100, 200, 300])('② cas %i à +99 : refusés, chacun avec sa classe exacte, à sa couche, Zod d’accord', (debut) => {
+    // 300 à l'étape 1 ; +2 au bloc 3 de V4 (CONTROLE_SANS_CONDITION).
+    expect(CAS).toHaveLength(302)
     const ecarts: string[] = []
     for (const c of CAS.slice(debut, debut + 100)) {
       const v = validerSpec(c.spec, CTX)

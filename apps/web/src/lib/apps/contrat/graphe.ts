@@ -34,7 +34,7 @@ export type LectureGraphe = {
 export type RoutePlan = {
   readonly route: string
   readonly nom: string
-  readonly origine: 'lecture' | 'socle' | 'tetrade'
+  readonly origine: 'lecture' | 'socle' | 'tetrade' | 'gestion'
   readonly acces: string
   readonly tetrade?: { readonly table: string; readonly vue: 'liste' | 'detail' | 'creer' | 'editer' }
 }
@@ -61,6 +61,8 @@ export function routeDe(nom: string): string {
  * tables ne retombe jamais sur un rôle de l'usager (pièces auto : « client »).
  */
 export const ROLE_GESTIONNAIRE = 'Gestionnaire'
+/** La route de l'espace de gestion : l'accueil y mène, elle mène aux tables. */
+export const ROUTE_GESTION = 'gestion'
 const ROLE_GESTION = /admin|gestion|g[ée]rant|direct|responsable|secr[ée]tariat|personnel/iu
 
 const NOMS_SOCLE: Readonly<Record<string, string>> = { accueil: 'Accueil', compte: 'Compte', aide: 'Aide', contact: 'Contact', legal: 'Mentions légales' }
@@ -94,6 +96,8 @@ export function deriverPlan(l: LectureGraphe, tablesDeclarees: readonly TableLue
   const gestion = lu ?? ROLE_GESTIONNAIRE
   const roles = lu !== undefined ? [...l.roles] : [...l.roles, ROLE_GESTIONNAIRE]
   if (lu === undefined) refus.push({ quoi: 'rôle de gestion', motif: `aucun rôle lu ne le dit : Deribfy crée le rôle « ${ROLE_GESTIONNAIRE} », qui gère les tables` })
+  // ── LA GESTION : UNE entrée vers les tables (V4, bloc 3) — jamais une liste de tables à plat sur l'accueil.
+  if (tables.length > 0) ajouter({ route: ROUTE_GESTION, nom: 'Gestion', origine: 'gestion', acces: gestion })
   for (const t of tables) {
     const lesVues = t.journal === true ? (['liste', 'detail'] as const) : (['liste', 'detail', 'creer', 'editer'] as const)
     for (const v of lesVues) ajouter({ route: `${routeDe(t.nom)}-${v}`, nom: `${t.nom} — ${v}`, origine: 'tetrade', acces: gestion, tetrade: { table: t.nom, vue: v } })
@@ -132,6 +136,15 @@ const d = (c: string) => ({ $data: c })
 const nav = (route: string, avec?: string): O => ({ faire: 'navigate', route, ...(avec !== undefined ? { avec: d(avec) } : {}) })
 const bouton = (libelle: string, effets: O[], genre = 'secondaire'): O => ({ composant: 'Bouton', libelle, effets, genre })
 const lisible = (c: string) => c.replace(/_/gu, ' ').replace(/^./u, (x) => x.toUpperCase())
+
+/** L'espace de gestion : une carte par table, vers sa liste. */
+function ecranGestion(r: RoutePlan, listes: readonly RoutePlan[]): O {
+  return { route: r.route, acces: r.acces, titre: 'Gestion', corps: [
+    { composant: 'Titre', texte: 'Gestion', niveau: 'page' },
+    { composant: 'Pile', espace: 's', enfants: listes.map((x) => ({ composant: 'Encart', effets: [nav(x.route)], enfants: [{ composant: 'Titre', texte: lisible(x.tetrade!.table), niveau: 'encart' }] })) },
+    bouton('Accueil', [nav('accueil')], 'discret'),
+  ] }
+}
 
 function ecranTetrade(r: RoutePlan, t: TableLue, journal: boolean): O {
   const base = routeDe(t.nom)
@@ -176,14 +189,16 @@ export function squeletteDeSpec(p: PlanGraphe): Spec {
   const tables = new Map(p.tables.map((t) => [t.nom, t]))
   const lus = p.routes.filter((r) => r.origine === 'lecture')
   const listes = p.routes.filter((r) => r.tetrade?.vue === 'liste')
+  const gestion = p.routes.find((r) => r.origine === 'gestion')
   const suivant = (route: string) => { const i = p.parcours.indexOf(route); return i >= 0 && i + 1 < p.parcours.length ? p.parcours[i + 1]! : null }
   const ecrans: O[] = p.routes.map((r): O => {
     if (r.tetrade !== undefined) { const t = tables.get(r.tetrade.table)!; return ecranTetrade(r, t, t.journal === true) }
+    if (r.origine === 'gestion') return ecranGestion(r, listes)
     const s = suivant(r.route)
     switch (r.route) {
       case 'accueil': return { route: 'accueil', acces: 'visiteur', titre: 'Accueil', corps: [
         { composant: 'Pile', espace: 's', enfants: lus.map((x) => ({ composant: 'Encart', effets: [nav(x.route)], enfants: [{ composant: 'Phrase', texte: x.nom }] })) },
-        ...(listes.length > 0 ? [{ composant: 'Pile', espace: 's', enfants: listes.map((x) => bouton(lisible(x.tetrade!.table), [nav(x.route)], 'discret')) }] : []),
+        ...(gestion !== undefined ? [{ composant: 'Encart', effets: [nav(gestion.route)], enfants: [{ composant: 'Titre', texte: 'Gestion', niveau: 'encart' }], pourRole: gestion.acces }] : []),
         ...(s !== null && !lus.some((x) => x.route === s) ? [bouton('Commencer', [nav(s)], 'principal')] : []),
       ] }
       case 'compte': return { route: 'compte', acces: 'visiteur', titre: 'Compte', corps: [

@@ -33,7 +33,7 @@ import { ATTENTE_SIMULATEUR_MS, SCRIPT_EXPERIENCE } from '../juge-experience'
 import type { DefautPersistance } from '../juge-persistance'
 import { planifierEcrans, ROLE_GESTION as ROLE_GESTION_PLAN, type AppelerLeger, type Plan, type PlanEcran } from '../plan-ecrans'
 import { LANGUES_CONNUES } from '../squelette'
-import { ARCHETYPES, expanser, libellesDuGabarit, type DefArchetype, type Remplissage } from './archetypes'
+import { ARCHETYPES, carte, expanser, libellesDuGabarit, type DefArchetype, type Remplissage } from './archetypes'
 import type { Spec } from './catalogue'
 import { compilerApp } from './compiler'
 import { remplirEcran, textesDuRepli, type AppelModele, type EcranRempli, type FicheEcran, type JetonsAppel, type PrixJetons, type Voisine } from './deux-passes'
@@ -77,6 +77,8 @@ export type LigneEcran = {
   readonly cout: number
   /** Les refus de la dernière passe B quand l'écran est en repli. */
   readonly refus: readonly string[]
+  /** Le BRUT de chaque passe B refusée (4 000 signes au plus) : sans lui, on ne sait pas ce que le modèle a écrit. */
+  readonly bruts: readonly string[]
 }
 
 export type ResultatGeneration = {
@@ -101,13 +103,14 @@ export type ResultatGeneration = {
   readonly jetons: JetonsAppel
   readonly cout: number
   readonly languesPage: readonly { readonly code: string; readonly dir: 'ltr' | 'rtl' }[]
+  /** Le remplissage de chaque écran lu : une œuvre se recompile EXACTEMENT avec des gabarits corrigés. */
+  readonly remplissages: Readonly<Record<string, Remplissage>>
 }
 
 type O = Record<string, unknown>
 const RTL = new Set(['ar', 'he', 'fa', 'ur'])
 const langueApp = (code: string): LangueApp => ({ code, dir: LANGUES_CONNUES[code]?.dir ?? (RTL.has(code) ? 'rtl' : 'ltr'), libelle: LANGUES_CONNUES[code]?.nom ?? code.toUpperCase() })
 const cleNom = (x: string) => x.normalize('NFD').replace(/[̀-ͯ]/gu, '').toLowerCase().replace(/\s+/gu, ' ').trim()
-const lisible = (c: string) => c.replace(/_/gu, ' ').replace(/^./u, (x) => x.toUpperCase())
 const sur = (t: string) => t.replace(/[<>]/gu, '').replace(/\s+/gu, ' ').trim().slice(0, 120)
 
 /** Les tables telles que le contrat les lit, depuis les entités déclarées. */
@@ -262,34 +265,13 @@ export async function genererApplication(o: {
   })
   const remplis: EcranRempli[] = await enParallele(fiches.map((f) => () => remplirEcran({ fiche: f.fiche, ctx: ctxEcran, appeler: o.appelerModele, prix: o.prix })), o.parallelisme ?? PARALLELISME_V4)
 
-  // ── LES ÉCRANS DE DERIBFY, sans appel.
+  // ── LES ÉCRANS DE DERIBFY, sans appel ; la composition (cartes d'accueil, gestion, couture).
   const g = libellesDuGabarit(principale)
-  const rp = textesDuRepli(principale)
   const langues = (ctx.langues.length > 0 ? ctx.langues : [principale]).map(langueApp)
-  const ex = (r: Remplissage) => expanser(r, { langue: principale, langues })
-  const raccourcis = lus.slice(0, 12).map((r) => ({ libelle: sur(r.nom) || r.route, route: r.route }))
-  const parRoute = new Map<string, O>()
-  for (const r of graphe.routes) {
-    if (r.tetrade !== undefined) parRoute.set(r.route, (squelette.ecrans as unknown as O[]).find((e) => e.route === r.route)!)
-  }
-  parRoute.set('accueil', ex({ archetype: 'accueil', route: 'accueil', acces: 'visiteur', slots: { titre: sur(o.nom) || g.accueil!, raccourcis: raccourcis.length > 0 ? raccourcis : [{ libelle: g.aide!, route: 'aide' }] } }))
-  parRoute.set('compte', ex({ archetype: 'compte', route: 'compte', acces: 'visiteur', slots: { titre: rp.compte! } }))
-  for (const p of ['aide', 'contact', 'legal'] as const) parRoute.set(p, ex({ archetype: 'pageDuCompte', route: p, acces: 'visiteur', slots: { titre: g[p]!, texte: rp[p]!, retour: 'compte' } }))
-  fiches.forEach((f, i) => { parRoute.set(f.r.route, remplis[i]!.ecran) })
-
-  // ── LA COUTURE : les passages que le graphe exige.
-  const listes = graphe.routes.filter((r) => r.tetrade?.vue === 'liste')
-  parRoute.set('accueil', coudre(parRoute.get('accueil')!, [
-    ...lus.slice(12).map((r) => bouton(sur(r.nom) || r.route, r.route, 'discret')),
-    ...(listes.length > 0 ? [{ composant: 'Pile', espace: 's', enfants: listes.map((x) => bouton(lisible(x.tetrade!.table), x.route, 'discret')) }] : []),
-  ]))
-  for (let i = 0; i + 1 < graphe.parcours.length; i += 1) {
-    const a = graphe.parcours[i]!
-    const b = graphe.parcours[i + 1]!
-    const e = parRoute.get(a)
-    if (e !== undefined && !ciblesDe(e).has(b)) parRoute.set(a, coudre(e, [bouton(rp.continuer!, b)]))
-  }
-  const ecrans = graphe.routes.map((r) => parRoute.get(r.route)!)
+  const ecrans = composerEcrans({
+    graphe, squelette, principale, langues, nom: o.nom,
+    lus: fiches.map((f, i) => ({ route: f.r.route, ecran: remplis[i]!.ecran, titre: titreDe(remplis[i]!.remplissage, f.r.nom), acces: f.fiche.acces })),
+  })
   const sansTraduction: Spec = { ecrans: ecrans as Spec['ecrans'], barre: [...graphe.barre] }
 
   // ── B3 : LA TRADUCTION, un appel par langue lue.
@@ -311,14 +293,15 @@ export async function genererApplication(o: {
   const lignes: LigneEcran[] = graphe.routes.map((r) => {
     const i = fiches.findIndex((f) => f.r.route === r.route)
     if (i < 0) {
-      const archetype = r.tetrade !== undefined ? `tetrade:${r.tetrade.vue}` : r.route === 'accueil' ? 'accueil' : r.route === 'compte' ? 'compte' : 'pageDuCompte'
-      return { route: r.route, nom: r.nom, archetype, choix: 'deribfy', tentativesA: 0, tentativesB: 0, repli: false, jetons: { entree: 0, sortie: 0, reflexion: 0 }, cout: 0, refus: [] }
+      const archetype = r.tetrade !== undefined ? `tetrade:${r.tetrade.vue}` : r.origine === 'gestion' ? 'gestion' : r.route === 'accueil' ? 'accueil' : r.route === 'compte' ? 'compte' : 'pageDuCompte'
+      return { route: r.route, nom: r.nom, archetype, choix: 'deribfy', tentativesA: 0, tentativesB: 0, repli: false, jetons: { entree: 0, sortie: 0, reflexion: 0 }, cout: 0, refus: [], bruts: [] }
     }
     const e = remplis[i]!
     return {
       route: r.route, nom: r.nom, archetype: e.archetype, choix: fiches[i]!.ligne.origineArchetype ?? 'regle',
       tentativesA: e.tentatives.filter((t) => t.passe === 'A').length, tentativesB: e.tentatives.filter((t) => t.passe === 'B').length,
       repli: e.repli, jetons: e.jetons, cout: e.cout, refus: e.refusAvantRepli.map((x) => `${x.classe} · ${x.ou} · ${x.quoi}`.slice(0, 400)),
+      bruts: e.tentatives.filter((t) => t.passe === 'B' && t.brut !== undefined).map((t) => t.brut!),
     }
   })
   const somme = (xs: readonly JetonsAppel[]) => xs.reduce((a, b) => ({ entree: a.entree + b.entree, sortie: a.sortie + b.sortie, reflexion: a.reflexion + b.reflexion }), { entree: 0, sortie: 0, reflexion: 0 })
@@ -336,10 +319,59 @@ export async function genererApplication(o: {
     persistance: persistanceDeLaSpec(spec, tables),
     couverture: { lus: lus.length, remplis: lus.length - replis.length, replis, taux: lus.length === 0 ? null : (lus.length - replis.length) / lus.length },
     consignes, jetons, cout, languesPage: langues.map((l) => ({ code: l.code, dir: l.dir })),
+    remplissages: Object.fromEntries(remplis.map((e) => [e.route, e.remplissage])),
   }
 }
 
 const LIBELLES_CONFIGURATION: Readonly<Record<string, string>> = { market: 'MARCHÉ VISÉ', collector_msisdn: 'NUMÉRO D’ENCAISSEMENT', logistics: 'LOGISTIQUE' }
+/** Le titre lisible d'un écran lu : celui que la passe A a rédigé (ou le repli), sinon le nom lu. */
+export function titreDe(r: Remplissage, nom: string): string {
+  return sur(typeof r.slots.titre === 'string' ? r.slots.titre : '') || sur(nom) || nom
+}
+
+/**
+ * LA COMPOSITION DE L'APPLICATION, PURE — celle de la génération ET de la recompilation
+ * d'une œuvre livrée (le re-jugement à 0 $ rejoue ce code-ci, pas une copie).
+ *   · l'accueil : une carte par écran lu, son titre lisible, réservée à son rôle ; UNE carte
+ *     « Gestion » (au rôle de gestion) — jamais une liste de tables à plat ;
+ *   · le compte et ses trois pages ; l'espace de gestion et les tétrades (squelette V2) ;
+ *   · la couture : la suite du parcours quand un écran ne la porte pas.
+ */
+export function composerEcrans(o: {
+  readonly graphe: PlanGraphe
+  readonly squelette: Spec
+  readonly principale: string
+  readonly langues: readonly LangueApp[]
+  readonly nom: string
+  readonly lus: readonly { readonly route: string; readonly ecran: Record<string, unknown>; readonly titre: string; readonly acces: string }[]
+}): O[] {
+  const g = libellesDuGabarit(o.principale)
+  const rp = textesDuRepli(o.principale)
+  const ex = (r: Remplissage) => expanser(r, { langue: o.principale, langues: o.langues })
+  const cartes = o.lus.map((x) => ({ libelle: x.titre, route: x.route, ...(x.acces !== 'visiteur' ? { role: x.acces } : {}) }))
+  const gestion = o.graphe.routes.find((r) => r.origine === 'gestion')
+  const parRoute = new Map<string, O>()
+  for (const r of o.graphe.routes) {
+    if (r.tetrade !== undefined || r.origine === 'gestion') parRoute.set(r.route, (o.squelette.ecrans as unknown as O[]).find((e) => e.route === r.route)!)
+  }
+  parRoute.set('accueil', ex({ archetype: 'accueil', route: 'accueil', acces: 'visiteur', slots: { titre: sur(o.nom) || g.accueil!, raccourcis: cartes.length > 0 ? cartes.slice(0, 12) : [{ libelle: g.aide!, route: 'aide' }] } }))
+  parRoute.set('compte', ex({ archetype: 'compte', route: 'compte', acces: 'visiteur', slots: { titre: rp.compte! } }))
+  for (const p of ['aide', 'contact', 'legal'] as const) parRoute.set(p, ex({ archetype: 'pageDuCompte', route: p, acces: 'visiteur', slots: { titre: g[p]!, texte: rp[p]!, retour: 'compte' } }))
+  for (const x of o.lus) parRoute.set(x.route, x.ecran)
+  // ── LA COUTURE : au-delà de douze, les cartes suivantes ; puis l'entrée de la gestion.
+  parRoute.set('accueil', coudre(parRoute.get('accueil')!, [
+    ...(cartes.length > 12 ? [{ composant: 'Pile', espace: 's', enfants: cartes.slice(12).map(carte) }] : []),
+    ...(gestion !== undefined ? [carte({ libelle: rp.gestion!, route: gestion.route, role: gestion.acces })] : []),
+  ]))
+  for (let i = 0; i + 1 < o.graphe.parcours.length; i += 1) {
+    const a = o.graphe.parcours[i]!
+    const b = o.graphe.parcours[i + 1]!
+    const e = parRoute.get(a)
+    if (e !== undefined && !ciblesDe(e).has(b)) parRoute.set(a, coudre(e, [bouton(rp.continuer!, b)]))
+  }
+  return o.graphe.routes.map((r) => parRoute.get(r.route)!)
+}
+
 /** La configuration du client pour la fiche : ce que Deribfy n'impose pas déjà (le nom, la devise). */
 export function texteDeConfigurationV4(c: Readonly<Record<string, string>>): string {
   return Object.entries(c).filter(([k, v]) => k !== 'nom_produit' && k !== 'currency' && v.trim() !== '').map(([k, v]) => `- ${LIBELLES_CONFIGURATION[k] ?? k.toUpperCase()} : ${sur(v)}`).join('\n')

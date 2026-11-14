@@ -188,7 +188,8 @@ function EtatErreur() {
 }
 function EtatVide({ n, portee }: { n: Noeud; portee: Portee }) {
   const c = useCtx()
-  const action = liste(n.videAction)
+  // L'appel à l'action ne s'affiche que s'il agit (videSi) : « Effacer la recherche » sur une recherche vide ne s'affiche pas.
+  const action = 'videSi' in n && !vrai(valeurDe(liaisonDe(n.videSi) ?? '', c, portee)) ? [] : liste(n.videAction)
   return (
     <div data-etat="vide" style={{ display: 'grid', gap: 12, padding: 16, borderRadius: 8, border: '1px dashed var(--dx-bordure)', background: 'var(--dx-surface)', textAlign: 'start' }}>
       <p style={{ margin: 0, color: 'var(--dx-texteDiscret)' }}>{n.vide !== undefined ? c.t(n.vide) : c.s('vide')}</p>
@@ -278,6 +279,8 @@ function Rendu({ n, portee }: { n: unknown; portee: Portee }) {
   if (o === null) return null
   if ('si' in o && !vrai(valeurDe(liaisonDe(o.si) ?? '', c, portee))) return null
   if ('siNon' in o && vrai(valeurDe(liaisonDe(o.siNon) ?? '', c, portee))) return null
+  // L'accueil d'un rôle : une fois le rôle choisi, seules ses cartes (et les publiques) restent.
+  if (typeof o.pourRole === 'string' && c.session.role !== 'visiteur' && c.session.role !== o.pourRole) return null
   const enfants = (k = 'enfants') => liste(o[k]).map((m, i) => <Rendu key={i} n={m} portee={portee} />)
   const effets = liste(o.effets)
   switch (o.composant) {
@@ -359,7 +362,7 @@ function Rendu({ n, portee }: { n: unknown; portee: Portee }) {
 const routeCourante = () => decodeURIComponent(location.hash.replace(/^#\/?/u, ''))
 
 /** Le pont des épreuves : la langue et le thème se règlent de l'extérieur (captures). */
-declare global { interface Window { __deribfy?: { langue: (code: string) => void; theme: (t: 'clair' | 'sombre') => void } } }
+declare global { interface Window { __deribfy?: { langue: (code: string) => void; theme: (t: 'clair' | 'sombre') => void; visiteur?: () => void } } }
 
 /**
  * Aller à une route : on écrit le FRAGMENT. Mesuré : dans un cadre `srcdoc` (l'aperçu,
@@ -471,7 +474,9 @@ function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; maga
   const [langue, poserLangue] = useState(app.langues[0]?.code ?? 'fr')
   const [route, poserRoute] = useState(() => routeCourante() || 'accueil')
   const [largeur, poserLargeur] = useState<Largeur>(() => classeDeLargeur(window.innerWidth))
-  const [session, poserSession] = useState<Session>({ role: 'visiteur', utilisateur: null })
+  const [session, poserSessionBrute] = useState<Session>(() => sessionInitiale(app))
+  // Le rôle se choisit UNE fois : il est gardé (mémoire, et stockage quand la page en a un).
+  const poserSession: React.Dispatch<React.SetStateAction<Session>> = (x) => { poserSessionBrute((avant) => { const s = typeof x === 'function' ? x(avant) : x; garderSession(app, s); return s }) }
   const [parcours, poserParcours] = useState<ReadonlyMap<string, Ligne>>(parcoursInitial)
   const ecran = app.ecrans.find((e) => e.route === route) ?? app.ecrans.find((e) => e.route === 'accueil') ?? app.ecrans[0]
   const dir = app.langues.find((l) => l.code === langue)?.dir ?? 'ltr'
@@ -481,10 +486,11 @@ function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; maga
     const r = () => { poserLargeur(classeDeLargeur(window.innerWidth)) }
     window.addEventListener('hashchange', h)
     window.addEventListener('resize', r)
-    window.__deribfy = { langue: poserLangue, theme: (t) => { document.documentElement.setAttribute('data-theme', t) } }
+    // `visiteur` : un nouvel usager (le juge d'expérience suit le parcours comme lui, sans le rôle d'une visite précédente).
+    window.__deribfy = { langue: poserLangue, theme: (t) => { document.documentElement.setAttribute('data-theme', t) }, visiteur: () => { const s = { role: 'visiteur', utilisateur: null }; garderSession(app, s); poserSessionBrute(s) } }
     if (!document.documentElement.hasAttribute('data-theme')) document.documentElement.setAttribute('data-theme', 'clair')
     return () => { window.removeEventListener('hashchange', h); window.removeEventListener('resize', r) }
-  }, [])
+  }, [app])
   useEffect(() => {
     document.documentElement.lang = langue
     document.documentElement.dir = dir
@@ -529,6 +535,25 @@ function Application({ app, magasin, parcoursInitial }: { app: AppCompilee; maga
       </div>
     </>
   )
+}
+
+/** Les rôles que l'application protège (ses écrans non publics). */
+export function rolesDeLApplication(app: AppCompilee): string[] {
+  return [...new Set(app.ecrans.map((e) => e.acces).filter((r) => r !== 'visiteur'))]
+}
+const cleSession = (app: AppCompilee) => `deribfy:session:${app.nom}`
+/** UN seul rôle : pas de question, la session le porte d'emblée. Sinon : le rôle gardé, ou visiteur. */
+function sessionInitiale(app: AppCompilee): Session {
+  const roles = rolesDeLApplication(app)
+  if (roles.length === 1) return { role: roles[0]!, utilisateur: null }
+  try {
+    const lu = JSON.parse(window.localStorage.getItem(cleSession(app)) ?? 'null') as Session | null
+    if (lu !== null && typeof lu.role === 'string' && (lu.role === 'visiteur' || roles.includes(lu.role))) return { role: lu.role, utilisateur: typeof lu.utilisateur === 'string' ? lu.utilisateur : null }
+  } catch { /* l'aperçu (origine opaque) n'a pas de stockage : la mémoire suffit */ }
+  return { role: 'visiteur', utilisateur: null }
+}
+function garderSession(app: AppCompilee, s: Session): void {
+  try { window.localStorage.setItem(cleSession(app), JSON.stringify(s)) } catch { /* aperçu : la mémoire suffit */ }
 }
 
 /** Monte l'application dans `#racine`. */

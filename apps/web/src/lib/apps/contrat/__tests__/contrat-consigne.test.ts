@@ -38,7 +38,9 @@ describe('étape 1 · la consigne générée', () => {
   })
 
   it('④ bornée', () => {
-    expect(consigne.length).toBeLessThan(9900)
+    // 9 553 mesurés à l'étape 1 ; 9 932 au bloc 3 de V4 (videSi, pourRole). Cette consigne n'a plus
+    // d'appelant depuis V4 (les archétypes ont leurs consignes A et B) : elle part au bloc 4.
+    expect(consigne.length).toBeLessThan(10_000)
   })
 
   it('⑤ aucune consigne écrite à la main dans le dossier du contrat', () => {
