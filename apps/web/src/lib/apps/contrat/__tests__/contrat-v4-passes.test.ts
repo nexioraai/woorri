@@ -1,7 +1,7 @@
 // V4 · BLOC 1 — UN ÉCRAN EN DEUX PASSES, MODÈLE SIMULÉ (0 $).
 //
-//   ① une spec valide du premier coup → EXACTEMENT deux appels : A (réflexion
-//      permise), puis B (réflexion COUPÉE) ; l'écran est celui de l'archétype ;
+//   ① une spec valide du premier coup → EXACTEMENT deux appels : A puis B,
+//      réflexion COUPÉE dans les deux ; l'écran est celui de l'archétype ;
 //      sur les dix-sept écrans du témoin V3 ;
 //   ② une passe B refusée reçoit, à la relance, la CLASSE exacte et le nom le
 //      plus proche ; acceptée ensuite → trois appels, pas de repli ;
@@ -13,7 +13,9 @@
 //   ⑤ une réponse illisible ou coupée est refusée par sa classe ;
 //   ⑥ la table est IMPOSÉE : celle que le modèle écrirait est écrasée ; les
 //      jetons et le coût sont ceux des appels.
-// Rouge-puis-vert : la passe B sans `reflexion: false` → ① rouge ; trois
+//   ⑧ A coupée → UNE relance de A, enregistrée ; ⑨ A vide deux fois → repli,
+//      jamais de passe B sur un brouillon vide.
+// Rouge-puis-vert : la passe A ou B sans `reflexion: false` → ① rouge ; trois
 // relances → ③ rouge ; le repli sans `vide` → ④ rouge ; la relance sans le nom
 // proche → ② rouge.
 import { readFileSync } from 'node:fs'
@@ -46,12 +48,17 @@ const slotsDuModele = (r: Remplissage) => Object.fromEntries(Object.entries(r.sl
 
 type Appel = { system: string; messages: readonly { role: string; content: string }[]; options: OptionsAppelModele }
 /** Le modèle simulé : la passe A rend un brouillon, la passe B rend, tour à tour, les réponses données. */
-function simule(r: Remplissage, reponsesB: readonly string[], o: { tronqueeB?: boolean[] } = {}): { appeler: AppelModele; appels: Appel[] } {
+function simule(r: Remplissage, reponsesB: readonly string[], o: { tronqueeB?: boolean[]; reponsesA?: string[]; tronqueeA?: boolean[] } = {}): { appeler: AppelModele; appels: Appel[] } {
   const appels: Appel[] = []
+  let a = 0
   let b = 0
   const appeler: AppelModele = (system, messages, options) => {
     appels.push({ system, messages: messages.map((m) => ({ ...m })), options })
-    if (appels.length === 1) return Promise.resolve({ texte: `### titre\n${String(r.slots.titre)}\n`, tronquee: false, usage: USAGE })
+    if (system === consigneA(ficheTemoin(r)).system) {
+      const i = a++
+      const rep = o.reponsesA ?? [`### titre\n${String(r.slots.titre)}\n`]
+      return Promise.resolve({ texte: rep[Math.min(i, rep.length - 1)]!, tronquee: o.tronqueeA?.[i] ?? false, usage: USAGE })
+    }
     const i = b++
     return Promise.resolve({ texte: reponsesB[Math.min(i, reponsesB.length - 1)]!, tronquee: o.tronqueeB?.[i] ?? false, usage: USAGE })
   }
@@ -60,14 +67,14 @@ function simule(r: Remplissage, reponsesB: readonly string[], o: { tronqueeB?: b
 const json = (slots: Record<string, unknown>) => JSON.stringify({ slots })
 
 describe('V4 · bloc 1 · deux passes', () => {
-  it('① valide du premier coup : exactement deux appels, B sans réflexion, l’écran de l’archétype', async () => {
+  it('① valide du premier coup : exactement deux appels, sans réflexion, l’écran de l’archétype', async () => {
     expect(REMPLISSAGES).toHaveLength(17)
     for (const r of REMPLISSAGES) {
       const { appeler, appels } = simule(r, [json(slotsDuModele(r))])
       const e = await remplirEcran({ fiche: ficheTemoin(r), ctx: CTX, appeler, prix: PRIX })
       expect(e.appels, r.route).toBe(2)
       expect(appels, r.route).toHaveLength(2)
-      expect(appels[0]!.options, r.route).toEqual({ maxJetons: MAX_JETONS_A })
+      expect(appels[0]!.options, r.route).toEqual({ reflexion: false, maxJetons: MAX_JETONS_A })
       expect(appels[1]!.options, r.route).toEqual({ reflexion: false, maxJetons: MAX_JETONS_B })
       expect(e.repli, r.route).toBe(false)
       expect(e.tentatives.map((t) => `${t.passe}${String(t.rang)}`), r.route).toEqual(['A1', 'B1'])
@@ -156,6 +163,41 @@ describe('V4 · bloc 1 · deux passes', () => {
     expect(e.repli).toBe(false)
     expect(appels[2]!.messages.at(-1)!.content).toContain('JSON_ILLISIBLE')
     expect(appels[3]!.messages.at(-1)!.content).toContain('REPONSE_COUPEE')
+  })
+
+  it('⑧ A coupée : UNE relance de A, enregistrée, puis B sur le nouveau brouillon', async () => {
+    const r = REMPLISSAGES.find((x) => x.archetype === 'liste')!
+    const { appeler, appels } = simule(r, [json(slotsDuModele(r))], { reponsesA: ['### titre\nToutes les', `### titre\n${String(r.slots.titre)}\n`], tronqueeA: [true, false] })
+    const e = await remplirEcran({ fiche: ficheTemoin(r), ctx: CTX, appeler, prix: PRIX })
+    expect(e.tentatives.map((t) => `${t.passe}${String(t.rang)}:${t.refus.map((x) => x.classe).join(',')}`)).toEqual(['A1:REPONSE_COUPEE', 'A2:', 'B1:'])
+    expect(e.appels).toBe(3)
+    expect(e.repli).toBe(false)
+    expect(appels[1]!.messages.at(-1)!.content).toMatch(motifTexte('A ÉTÉ COUPÉ AVANT LA FIN (REPONSE_COUPEE)'))
+    expect(appels[1]!.options).toEqual({ reflexion: false, maxJetons: MAX_JETONS_A })
+    // Coupée deux fois : pas de troisième A ; B convertit ce qui est écrit (non vide).
+    const { appeler: ap2, appels: a2 } = simule(r, [json(slotsDuModele(r))], { reponsesA: [`### titre\n${String(r.slots.titre)}`], tronqueeA: [true, true] })
+    const e2 = await remplirEcran({ fiche: ficheTemoin(r), ctx: CTX, appeler: ap2, prix: PRIX })
+    expect(e2.tentatives.map((t) => `${t.passe}${String(t.rang)}`)).toEqual(['A1', 'A2', 'B1'])
+    expect(a2).toHaveLength(3)
+  })
+
+  it('⑨ A vide : une relance ; vide encore → repli, JAMAIS une passe B sur un brouillon vide', async () => {
+    for (const r of REMPLISSAGES) {
+      const { appeler, appels } = simule(r, [json(slotsDuModele(r))], { reponsesA: ['', '   \n'] })
+      const e = await remplirEcran({ fiche: ficheTemoin(r), ctx: CTX, appeler, prix: PRIX })
+      expect(appels.map((x) => (x.system === consigneA(ficheTemoin(r)).system ? 'A' : 'B')), r.route).toEqual(['A', 'A'])
+      expect(e.repli, r.route).toBe(true)
+      expect(e.refusAvantRepli.map((x) => x.classe), r.route).toEqual(['BROUILLON_VIDE'])
+      expect(e.refusDuRepli, r.route).toEqual([])
+      expect(e.remplissage.slots.titre, r.route).toBe(String(r.slots.titre))
+    }
+    // Vide puis rédigé : B tourne sur le second brouillon.
+    const r = REMPLISSAGES[0]!
+    const { appeler, appels } = simule(r, [json(slotsDuModele(r))], { reponsesA: ['### titre\n', `### titre\n${String(r.slots.titre)}\n`] })
+    const e = await remplirEcran({ fiche: ficheTemoin(r), ctx: CTX, appeler, prix: PRIX })
+    expect(e.tentatives.map((t) => `${t.passe}${String(t.rang)}:${t.refus.map((x) => x.classe).join(',')}`)).toEqual(['A1:BROUILLON_VIDE', 'A2:', 'B1:'])
+    expect(appels[1]!.messages.at(-1)!.content).toMatch(motifTexte('ÉTAIT VIDE (BROUILLON_VIDE)'))
+    expect(appels[2]!.messages[0]!.content).toMatch(motifTexte(String(r.slots.titre)))
   })
 
   it('⑦ une fiche incohérente n’atteint jamais le modèle', async () => {

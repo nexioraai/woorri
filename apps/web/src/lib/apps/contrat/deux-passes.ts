@@ -8,8 +8,10 @@
  *
  *   PASSE A — le modèle reçoit la FICHE de l'écran (archétype imposé, table et
  *     colonnes, rôle, langues et devise fermées, routes voisines, extrait du
- *     cahier) et rédige EN TEXTE LIBRE le contenu de chaque slot. La réflexion
- *     y est permise : c'est là qu'il pense.
+ *     cahier) et rédige EN TEXTE LIBRE le contenu de chaque slot. Réflexion
+ *     COUPÉE (décision du 2026-11-14) : le brouillon EST le raisonnement ; une
+ *     réflexion cachée par-dessus, c'est 84 % de jetons perdus (M16). Coupé ou
+ *     vide → UNE relance de A ; toujours vide → repli, sans passe B.
  *   PASSE B — le même texte est CONVERTI en slots stricts (JSON), réflexion
  *     COUPÉE, puis jugé : forme de l'archétype, puis l'écran produit par le
  *     validateur du contrat (couches 1 et 2).
@@ -68,14 +70,14 @@ export type AppelModele = (
 export type PrixJetons = { readonly entree: number; readonly sortie: number }
 
 export const RELANCES_B = 2
-/** Plafond de sortie de la passe A (réflexion comprise : elle est comptée dans la sortie). */
+/** Plafond de sortie de la passe A (réflexion coupée). */
 export const MAX_JETONS_A = 4_000
 /** Plafond de sortie de la passe B (réflexion coupée) : un remplissage tient en moins de 1 000 jetons. */
 export const MAX_JETONS_B = 2_000
 /** L'extrait du cahier envoyé au modèle est borné. */
 export const EXTRAIT_MAX = 1_500
 
-export type ClasseB = Refus['classe'] | ReturnType<typeof validerRemplissage>[number]['classe'] | 'JSON_ILLISIBLE' | 'REPONSE_COUPEE'
+export type ClasseB = Refus['classe'] | ReturnType<typeof validerRemplissage>[number]['classe'] | 'JSON_ILLISIBLE' | 'REPONSE_COUPEE' | 'BROUILLON_VIDE'
 export type RefusB = { readonly classe: ClasseB; readonly ou: string; readonly quoi: string; readonly proche: string | null }
 export type Tentative = { readonly passe: 'A' | 'B'; readonly rang: number; readonly ms: number; readonly tronquee: boolean; readonly jetons: JetonsAppel; readonly refus: readonly RefusB[] }
 
@@ -237,6 +239,13 @@ export function jugerRemplissage(r: Remplissage, f: FicheEcran, ctx: Contexte): 
   return { ecran, refus }
 }
 
+/** Un brouillon vide : aucun `### <slot>` suivi d'un contenu. */
+export const brouillonVide = (t: string): boolean => !/^###[ \t]*\S[^\n]*\n[ \t]*[^\s#]/mu.test(t)
+
+/** La relance de la passe A : coupée ou vide, dit tel quel. */
+export const relanceA = (r: RefusB): string =>
+  `TON BROUILLON PRÉCÉDENT ${r.classe === 'BROUILLON_VIDE' ? 'ÉTAIT VIDE' : 'A ÉTÉ COUPÉ AVANT LA FIN'} (${r.classe}) : rends chaque slot sous \`### <slot>\`, en quelques mots, et rien d’autre.`
+
 /** Le texte de relance : chaque refus, sa classe exacte et le nom valide le plus proche. */
 export function relance(refus: readonly RefusB[]): string {
   return [
@@ -344,12 +353,31 @@ export async function remplirEcran(o: {
   const total = { entree: 0, sortie: 0, reflexion: 0 }
   const compter = (u: JetonsAppel) => { total.entree += u.entree; total.sortie += u.sortie; total.reflexion += u.reflexion }
 
-  // ── PASSE A : le texte libre, réflexion permise.
+  // ── PASSE A : le texte libre, réflexion COUPÉE (le brouillon EST le raisonnement) ;
+  //    coupée ou vide → UNE relance de A, enregistrée ; jamais une passe B sur un brouillon vide.
   const a = consigneA(f)
   let debut = Date.now()
-  const ra = await o.appeler(a.system, [{ role: 'user', content: a.user }], { maxJetons: MAX_JETONS_A })
+  let ra = await o.appeler(a.system, [{ role: 'user', content: a.user }], { reflexion: false, maxJetons: MAX_JETONS_A })
   compter(ra.usage)
-  tentatives.push({ passe: 'A', rang: 1, ms: Date.now() - debut, tronquee: ra.tronquee, jetons: ra.usage, refus: [] })
+  const defautA = (r: typeof ra): RefusB | null =>
+    brouillonVide(r.texte) ? { classe: 'BROUILLON_VIDE', ou: '(racine)', quoi: 'le brouillon ne porte aucun slot rédigé (### <slot> suivi de son contenu)', proche: null }
+      : r.tronquee ? { classe: 'REPONSE_COUPEE', ou: '(racine)', quoi: 'le brouillon a été coupé avant la fin', proche: null } : null
+  let refusA = defautA(ra)
+  tentatives.push({ passe: 'A', rang: 1, ms: Date.now() - debut, tronquee: ra.tronquee, jetons: ra.usage, refus: refusA === null ? [] : [refusA] })
+  if (refusA !== null) {
+    debut = Date.now()
+    ra = await o.appeler(a.system, [{ role: 'user', content: `${a.user}\n\n${relanceA(refusA)}` }], { reflexion: false, maxJetons: MAX_JETONS_A })
+    compter(ra.usage)
+    refusA = defautA(ra)
+    tentatives.push({ passe: 'A', rang: 2, ms: Date.now() - debut, tronquee: ra.tronquee, jetons: ra.usage, refus: refusA === null ? [] : [refusA] })
+  }
+  if (brouillonVide(ra.texte)) {
+    const r = repli(f, ctx, '')
+    return {
+      route: f.route, archetype: f.archetype, remplissage: r.remplissage, ecran: r.ecran ?? {}, repli: true,
+      refusAvantRepli: refusA === null ? [] : [refusA], refusDuRepli: r.refus, tentatives, appels: tentatives.length, jetons: { ...total }, cout: coutDe(total, o.prix), ms: Date.now() - debutTotal,
+    }
+  }
 
   // ── PASSE B : la conversion, réflexion coupée ; au plus `relancesMax` relances.
   const b = consigneB(f, ra.texte)
