@@ -187,6 +187,8 @@ export const COMPOSANTS: Readonly<Record<string, DefComposant>> = {
     videLibelle: p(T, false, 'son libellé'),
     videSi: p(L, false, 'l’appel à l’action de l’état vide n’est montré que si cette liaison est vraie'),
     disposition: p(variante('grille', 'liste', 'recents'), false, 'grille par défaut ; recents : les cinq plus récentes, en liste'),
+    titre: p(T, false, 'un titre dans la carte de la liste'),
+    voirTout: p({ g: 'effets' }, false, 'le lien « Voir tout » de la carte'),
   } },
   Fiche: { aide: 'la ligne en cours d’une table (choisie par navigate avec), avec ses états', props: {
     donnee: p(L, true, '`table.<table>`'),
@@ -218,8 +220,9 @@ export const COMPOSANTS: Readonly<Record<string, DefComposant>> = {
   Indicateur: { aide: 'un chiffre clé, calculé depuis une table', props: {
     donnee: p(L, true, '`table.<table>`'),
     libelle: p(T, true, 'ce que le chiffre compte'),
-    mesure: p(variante('nombre', 'somme'), true, 'nombre : les lignes ; somme : une colonne additionnée'),
+    mesure: p(variante('nombre', 'somme', 'mois'), true, 'nombre : les lignes ; somme : une colonne additionnée ; mois : les lignes du mois en cours'),
     colonne: p({ g: 'table' }, false, 'pour somme : la colonne additionnée'),
+    date: p({ g: 'table' }, false, 'la colonne de date : la tendance sur le mois précédent et les six derniers mois'),
     format: p(variante('nombre', 'montant'), false, 'montant : dans la devise de l’application'),
     icone: p({ g: 'icone' }, false, 'son pictogramme'),
   } },
@@ -244,7 +247,7 @@ export const COMPOSANTS_DE_DERIBFY: readonly string[] = ['Indicateur', 'Graphiqu
 /** De même pour l'écran : son pictogramme de navigation est posé par les gabarits. */
 export const PROPS_ECRAN_DE_DERIBFY: readonly string[] = ['icone']
 /** Et ces props-là d'un composant (la disposition des derniers ajouts). */
-export const PROPS_DE_DERIBFY: Readonly<Record<string, readonly string[]>> = { Lignes: ['disposition'] }
+export const PROPS_DE_DERIBFY: Readonly<Record<string, readonly string[]>> = { Lignes: ['disposition', 'titre', 'voirTout'] }
 
 /** Les quatre actions. `submit` est exécuté par le squelette en JavaScript : aucun formulaire. */
 export const ACTIONS = {

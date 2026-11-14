@@ -124,12 +124,12 @@ export function specTemoin(o: { visiteurPartout?: boolean; unSeulRole?: boolean 
   return { ecrans: ecrans as Spec['ecrans'], barre: ['accueil', 'offres', 'recherche', 'compte'], traductions: traduire(ecrans) }
 }
 
-export function appTemoin(o: { visiteurPartout?: boolean; unSeulRole?: boolean } = {}): AppCompilee {
-  return compilerApp(specTemoin(o), { nom: 'Réserver au Tchad', langues: LANGUES, devise: 'XAF' })
+export function appTemoin(o: { visiteurPartout?: boolean; unSeulRole?: boolean; kit?: string } = {}): AppCompilee {
+  return compilerApp(specTemoin(o), { nom: 'Réserver au Tchad', langues: LANGUES, devise: 'XAF', ...(o.kit !== undefined ? { kit: o.kit } : {}) })
 }
 
 /** Les fichiers de l'application témoin, à assembler : le moteur (lu sur disque) et l'entrée. */
-export function fichiersTemoin(moteur: Readonly<Record<string, string>>, o: { visiteurPartout?: boolean; unSeulRole?: boolean; etat?: EtatSource; latenceMs?: number } = {}): Map<string, string> {
+export function fichiersTemoin(moteur: Readonly<Record<string, string>>, o: { visiteurPartout?: boolean; unSeulRole?: boolean; etat?: EtatSource; latenceMs?: number; kit?: string } = {}): Map<string, string> {
   const reglages: Reglages = {
     tables: DONNEES,
     ...(o.etat !== undefined ? { etats: Object.fromEntries(Object.keys(DONNEES).map((t) => [t, o.etat!])) } : {}),

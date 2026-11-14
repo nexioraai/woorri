@@ -26,7 +26,7 @@ export function compilerEcran(ecran: unknown): EcranCompile {
   return e as unknown as EcranCompile
 }
 
-export function compilerApp(spec: Spec, o: { readonly nom: string; readonly langues: readonly LangueApp[]; readonly devise: string | null }): AppCompilee {
+export function compilerApp(spec: Spec, o: { readonly nom: string; readonly langues: readonly LangueApp[]; readonly devise: string | null; readonly kit?: string }): AppCompilee {
   const dictionnaires: Record<string, Record<string, string>> = {}
   for (const t of spec.traductions ?? []) dictionnaires[t.langue] = Object.fromEntries(t.textes.map((x) => [x.cle, x.texte]))
   return {
@@ -36,5 +36,6 @@ export function compilerApp(spec: Spec, o: { readonly nom: string; readonly lang
     ecrans: spec.ecrans.map(compilerEcran),
     barre: spec.barre,
     dictionnaires,
+    ...(o.kit !== undefined ? { kit: o.kit } : {}),
   }
 }

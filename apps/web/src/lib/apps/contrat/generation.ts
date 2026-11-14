@@ -280,7 +280,9 @@ export async function genererApplication(o: {
   const contrat = validerSpec(spec, ctx, { complet: true }).refus
 
   // ── LA COMPILATION, L'ASSEMBLAGE, LES JUGES.
-  const app = compilerApp(spec, { nom: sur(o.nom) || g.accueil!, langues, devise: o.devise })
+  const kit = kitDuCahier(o.demande, o.nom)
+  consignes.push({ quoi: 'kit de couleurs', motif: `${kit.kit} — ${kit.motif}` })
+  const app = compilerApp(spec, { nom: sur(o.nom) || g.accueil!, langues, devise: o.devise, kit: kit.kit })
   const fichiers = fichiersDeLOeuvre(app, tables.map((t) => t.nom))
   const v = await assembler(new Map(fichiers))
   let execution: VerdictExecution | null = null
@@ -357,7 +359,7 @@ export function composerEcrans(o: {
   parRoute.set('accueil', ex({ archetype: 'accueil', route: 'accueil', acces: 'visiteur', slots: { titre: sur(o.nom) || g.accueil!, raccourcis: cartes.length > 0 ? cartes.slice(0, 12) : [{ libelle: g.aide!, route: 'aide' }] } }))
   parRoute.set('compte', ex({ archetype: 'compte', route: 'compte', acces: 'visiteur', slots: { titre: rp.compte! } }))
   for (const p of ['aide', 'contact', 'legal'] as const) parRoute.set(p, ex({ archetype: 'pageDuCompte', route: p, acces: 'visiteur', slots: { titre: g[p]!, texte: rp[p]!, retour: 'compte' } }))
-  for (const x of o.lus) parRoute.set(x.route, x.ecran)
+  for (const x of o.lus) parRoute.set(x.route, voirToutVersLaListe(x.ecran, o.graphe))
   // ── LA COUTURE : au-delà de douze, les cartes suivantes ; puis l'entrée de la gestion.
   parRoute.set('accueil', coudre(parRoute.get('accueil')!, [
     ...(cartes.length > 12 ? [{ composant: 'Pile', espace: 's', enfants: cartes.slice(12).map(carte) }] : []),
@@ -370,6 +372,50 @@ export function composerEcrans(o: {
     if (e !== undefined && !ciblesDe(e).has(b)) parRoute.set(a, coudre(e, [bouton(rp.continuer!, b)]))
   }
   return o.graphe.routes.map((r) => parRoute.get(r.route)!)
+}
+
+/** « Voir tout » d'une liste de derniers ajouts : la LISTE de sa table (tétrade), jamais un détail. */
+function voirToutVersLaListe(ecran: Record<string, unknown>, graphe: PlanGraphe): Record<string, unknown> {
+  const marcher = (x: unknown): unknown => {
+    if (Array.isArray(x)) return x.map(marcher)
+    if (typeof x !== 'object' || x === null) return x
+    const n = x as O
+    const suite = Object.fromEntries(Object.entries(n).map(([k, v]) => [k, marcher(v)]))
+    if (n.composant === 'Lignes' && n.disposition === 'recents' && n.voirTout === undefined) {
+      const table = String((n.donnee as { $data?: string } | undefined)?.$data ?? '').split('.')[1]
+      const liste = graphe.routes.find((r) => r.tetrade?.table === table && r.tetrade.vue === 'liste')
+      if (liste !== undefined) return { ...suite, voirTout: [{ faire: 'navigate', route: liste.route }] }
+    }
+    return suite
+  }
+  return marcher(ecran) as Record<string, unknown>
+}
+
+/**
+ * LE KIT D'UNE APPLICATION (V4.3d) — jamais le même pour toutes : une couleur NOMMÉE dans le
+ * cahier d'abord, puis le secteur, puis une répartition stable sur le nom. Le motif est consigné.
+ */
+const KIT_PAR_COULEUR: readonly [RegExp, string][] = [
+  [/\b(vert|verte|green|nature)\b/iu, 'savane'], [/\b(bleu|bleue|blue|azur|marine)\b/iu, 'azur'],
+  [/\b(orange|terracotta|terre cuite|ocre|rouge|brique|cuivre)\b/iu, 'terracotta'], [/\b(noir|noire|sombre|dark|nuit)\b/iu, 'nuit'],
+]
+const KIT_PAR_SECTEUR: readonly [RegExp, string][] = [
+  [/agricult|élevage|elevage|environnement|santé|sante|clinique|hôpital|hopital|école|ecole|scolaire|éducation|education|pharmac/iu, 'savane'],
+  [/tourisme|voyage|hôtel|hotel|réservation|reservation|restaurant|artisan|couture|boutique|marché|marche/iu, 'terracotta'],
+  [/banque|finance|assurance|comptab|administration|ministère|ministere|mairie|institution|juridique|avocat/iu, 'azur'],
+  [/luxe|premium|intelligence artificielle|\bIA\b|logiciel|technologie|jeu|musique|événementiel|evenementiel/iu, 'nuit'],
+]
+export const KITS_ORDRE = ['azur', 'terracotta', 'nuit', 'savane'] as const
+export function kitDuCahier(cahier: string, nom: string): { readonly kit: string; readonly motif: string } {
+  const couleurs = /couleur|palette|charte|teinte|thème|theme/iu
+  for (const phrase of cahier.split(/[.\n]/u).filter((p) => couleurs.test(p))) {
+    for (const [r, kit] of KIT_PAR_COULEUR) { const m = r.exec(phrase); if (m !== null) return { kit, motif: `couleur nommée dans le cahier : « ${m[0]} »` } }
+  }
+  const scores = KIT_PAR_SECTEUR.map(([r, kit]) => ({ kit, n: (cahier.match(new RegExp(r.source, 'giu')) ?? []).length })).sort((a, b) => b.n - a.n)
+  if (scores[0]!.n > 0) return { kit: scores[0]!.kit, motif: `secteur du cahier (${String(scores[0]!.n)} mention(s))` }
+  let h = 0
+  for (const c of nom) h = (h * 31 + c.codePointAt(0)!) >>> 0
+  return { kit: KITS_ORDRE[h % KITS_ORDRE.length]!, motif: 'ni couleur ni secteur lus : répartition stable sur le nom' }
 }
 
 /** La configuration du client pour la fiche : ce que Deribfy n'impose pas déjà (le nom, la devise). */

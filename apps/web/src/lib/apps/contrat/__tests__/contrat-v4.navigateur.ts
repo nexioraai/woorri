@@ -102,7 +102,8 @@ describe('V4 · l’application Hayine assemblée, dans Chromium', () => {
     const { html } = await hayine()
     const p = await navigateur.newPage({ viewport: { width: 360, height: 800 } })
     await p.route('**/*', (x) => (x.request().url().startsWith(ADRESSE) ? x.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }) : x.fulfill({ status: 404, body: '' })))
-    await p.goto(ADRESSE)
+    // Les langues se choisissent dans le Compte (V4.3f) : le bandeau, lui, suit la page entière.
+    await p.goto(`${ADRESSE}#compte`)
     await p.waitForTimeout(200)
     const lire = () => p.evaluate(() => {
       const vis = [...document.querySelectorAll('[data-bandeau-langue]')].filter((e) => getComputedStyle(e).display !== 'none')

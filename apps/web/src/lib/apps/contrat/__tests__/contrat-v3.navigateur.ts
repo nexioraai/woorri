@@ -36,7 +36,7 @@ const CAPTURES = process.env.CAPTURES_V3 ?? join(tmpdir(), 'deribfy-v3-captures'
 const ADRESSE = 'https://temoin.deribfy.test/'
 const AVEC_DONNEES = NOMS_ARCHETYPES.filter((a) => ARCHETYPES[a].donnees !== 'aucune')
 
-async function html(o: { visiteurPartout?: boolean; etat?: EtatSource; latenceMs?: number; unSeulRole?: boolean }): Promise<string> {
+async function html(o: { visiteurPartout?: boolean; etat?: EtatSource; latenceMs?: number; unSeulRole?: boolean; kit?: string }): Promise<string> {
   const v = await assembler(fichiersTemoin(MOTEUR, o))
   if (!v.ok) throw new Error(v.erreur)
   return pageAutonome(v.code, 'Témoin V3')
@@ -198,6 +198,23 @@ describe('V3 · les archétypes dans Chromium', () => {
     expect(tel.aside).toBe(false)
     expect(tel.bas.length).toBeGreaterThanOrEqual(3)
     expect(tel.bas.every((b) => b.icone && b.libelle.length > 0 && b.libelle.length <= 14)).toBe(true)
+  }, 120_000)
+
+  it('⑦ V4.3f v2 · les langues et l’apparence sont dans le Compte ; le kit est appliqué ; la tendance vient des données', async () => {
+    const p = await ouvrir(await html({ kit: 'terracotta' }), 1280)
+    const lire = (route: string) => aller(p, route).then(() => p.evaluate(`({ langues: document.querySelectorAll('[data-langue]').length, kit: document.documentElement.getAttribute('data-kit'), theme: document.documentElement.getAttribute('data-theme') })`)) as Promise<{ langues: number; kit: string; theme: string }>
+    for (const route of ['accueil', 'offres', 'recherche']) expect((await lire(route)).langues, route).toBe(0)
+    const compte = await lire('compte')
+    expect(compte).toMatchObject({ langues: 3, kit: 'terracotta', theme: 'clair' })
+    await p.click('main [role="group"] >> nth=1 >> button >> nth=1')
+    await p.waitForTimeout(80)
+    expect(await p.evaluate(`document.documentElement.getAttribute('data-theme')`)).toBe('sombre')
+    await aller(p, 'tableau')
+    if (await p.evaluate(`!!document.querySelector('[data-deribfy="garde"]')`)) { await p.click('[data-deribfy="garde"] [data-role] button'); await p.waitForTimeout(120) }
+    // 8 réservations contre 6 à la fin du mois précédent : +33 %, calculé.
+    const total = (await p.evaluate(`[...document.querySelectorAll('main [data-mesure]')].map((e) => e.innerText.replace(/\\s+/g, ' ')).find((x) => x.startsWith('Au total'))`)) as string
+    expect(total).toMatch(/^Au total 8 ↗ \+33\s%/u)
+    await p.close()
   }, 120_000)
 
   it('⑤ la garde : le rôle se choisit UNE fois sur le parcours ; un seul rôle, aucune question', async () => {

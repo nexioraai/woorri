@@ -138,9 +138,9 @@ export function validerRemplissage(r: Remplissage): RefusArchetype[] {
 
 // ── LES LIBELLÉS DES GABARITS : des textes de Deribfy, dans la langue principale de l'application.
 const GABARIT: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  fr: { accueil: 'Accueil', seConnecter: 'Se connecter', ajouter: 'Ajouter', retour: 'Retour', modifier: 'Modifier', supprimer: 'Supprimer', effacer: 'Effacer la recherche', deconnexion: 'Se déconnecter', aide: 'Aide', contact: 'Contact', legal: 'Mentions légales', utilisateur: 'Connecté en tant que', recents: 'Les plus récents', moyen: 'Moyen de paiement', total: 'Au total', montantTotal: 'Montant total', repartition: 'Répartition', evolution: 'Évolution par mois', derniers: 'Derniers ajouts', role: 'Profil' },
-  en: { accueil: 'Home', seConnecter: 'Sign in', ajouter: 'Add', retour: 'Back', modifier: 'Edit', supprimer: 'Delete', effacer: 'Clear the search', deconnexion: 'Sign out', aide: 'Help', contact: 'Contact', legal: 'Legal notice', utilisateur: 'Signed in as', recents: 'Most recent', moyen: 'Payment method', total: 'Total', montantTotal: 'Total amount', repartition: 'Breakdown', evolution: 'Monthly trend', derniers: 'Latest additions', role: 'Profile' },
-  ar: { accueil: 'الرئيسية', seConnecter: 'تسجيل الدخول', ajouter: 'إضافة', retour: 'رجوع', modifier: 'تعديل', supprimer: 'حذف', effacer: 'مسح البحث', deconnexion: 'تسجيل الخروج', aide: 'المساعدة', contact: 'اتصل بنا', legal: 'الإشعارات القانونية', utilisateur: 'متصل باسم', recents: 'الأحدث', moyen: 'وسيلة الدفع', total: 'الإجمالي', montantTotal: 'المبلغ الإجمالي', repartition: 'التوزيع', evolution: 'التطور الشهري', derniers: 'آخر الإضافات', role: 'الملف' },
+  fr: { accueil: 'Accueil', seConnecter: 'Se connecter', ajouter: 'Ajouter', retour: 'Retour', modifier: 'Modifier', supprimer: 'Supprimer', effacer: 'Effacer la recherche', deconnexion: 'Se déconnecter', aide: 'Aide', contact: 'Contact', legal: 'Mentions légales', utilisateur: 'Connecté en tant que', recents: 'Les plus récents', moyen: 'Moyen de paiement', total: 'Au total', montantTotal: 'Montant total', repartition: 'Répartition', evolution: 'Évolution par mois', derniers: 'Derniers ajouts', role: 'Profil', ceMois: 'Ce mois-ci' },
+  en: { accueil: 'Home', seConnecter: 'Sign in', ajouter: 'Add', retour: 'Back', modifier: 'Edit', supprimer: 'Delete', effacer: 'Clear the search', deconnexion: 'Sign out', aide: 'Help', contact: 'Contact', legal: 'Legal notice', utilisateur: 'Signed in as', recents: 'Most recent', moyen: 'Payment method', total: 'Total', montantTotal: 'Total amount', repartition: 'Breakdown', evolution: 'Monthly trend', derniers: 'Latest additions', role: 'Profile', ceMois: 'This month' },
+  ar: { accueil: 'الرئيسية', seConnecter: 'تسجيل الدخول', ajouter: 'إضافة', retour: 'رجوع', modifier: 'تعديل', supprimer: 'حذف', effacer: 'مسح البحث', deconnexion: 'تسجيل الخروج', aide: 'المساعدة', contact: 'اتصل بنا', legal: 'الإشعارات القانونية', utilisateur: 'متصل باسم', recents: 'الأحدث', moyen: 'وسيلة الدفع', total: 'الإجمالي', montantTotal: 'المبلغ الإجمالي', repartition: 'التوزيع', evolution: 'التطور الشهري', derniers: 'آخر الإضافات', role: 'الملف', ceMois: 'هذا الشهر' },
 }
 export const libellesDuGabarit = (langue: string): Readonly<Record<string, string>> => GABARIT[langue] ?? GABARIT.en!
 
@@ -208,23 +208,33 @@ export function expanser(r: Remplissage, o: OptionsGabarit): O {
       const date = cols.find((c) => c.format === 'date' || EST_DATE.test(c.colonne))
       const statut = cols.find((c) => c.format === 'statut' || EST_STATUT.test(c.colonne))
       const nom = cols.find((c) => c !== montant && c !== date && c !== statut) ?? cols[0]!
+      const tbl = d(`table.${t('table')}`)
+      const parDate = date !== undefined ? { date: date.colonne } : {}
       const tableau = r.archetype === 'dashboard' ? [
+        // Trois chiffres : le total, le montant (s'il y en a un), ce mois-ci (s'il y a une date) — la tendance vient de la date.
         { composant: 'Pile', sens: 'ligne', espace: 'm', enfants: [
-          { composant: 'Indicateur', donnee: d(`table.${t('table')}`), libelle: g.total!, mesure: 'nombre', icone: 'document' },
-          ...(montant !== undefined ? [{ composant: 'Indicateur', donnee: d(`table.${t('table')}`), libelle: g.montantTotal!, mesure: 'somme', colonne: montant.colonne, format: 'montant', icone: 'paiement' }] : []),
+          { composant: 'Indicateur', donnee: tbl, libelle: g.total!, mesure: 'nombre', icone: 'document', ...parDate },
+          ...(montant !== undefined ? [{ composant: 'Indicateur', donnee: tbl, libelle: g.montantTotal!, mesure: 'somme', colonne: montant.colonne, format: 'montant', icone: 'paiement', ...parDate }] : []),
+          ...(date !== undefined ? [{ composant: 'Indicateur', donnee: tbl, libelle: g.ceMois!, mesure: 'mois', icone: 'calendrier', ...parDate }] : []),
         ] },
-        ...(date !== undefined ? [{ composant: 'Graphique', donnee: d(`table.${t('table')}`), titre: g.evolution!, forme: 'barres', par: date.colonne, ...(montant !== undefined ? { valeur: montant.colonne } : {}) }] : []),
-        ...(statut !== undefined ? [{ composant: 'Graphique', donnee: d(`table.${t('table')}`), titre: g.repartition!, forme: 'anneau', par: statut.colonne }] : []),
-        { composant: 'Titre', texte: g.derniers!, niveau: 'section' },
+        // Les graphiques côte à côte : l'évolution (2/3), la répartition (1/3).
+        ...(date !== undefined || statut !== undefined ? [{ composant: 'Pile', sens: 'ligne', espace: 'm', aligner: 'etirer', enfants: [
+          ...(date !== undefined ? [{ composant: 'Graphique', donnee: tbl, titre: g.evolution!, forme: 'barres', par: date.colonne, ...(montant !== undefined ? { valeur: montant.colonne } : {}) }] : []),
+          ...(statut !== undefined ? [{ composant: 'Graphique', donnee: tbl, titre: g.repartition!, forme: 'anneau', par: statut.colonne }] : []),
+        ] }] : []),
       ] : []
-      corps = [titre(t('titre')),
-        ...(r.archetype === 'dashboard' && Array.isArray(v.raccourcis) && v.raccourcis.length > 0
-          ? [{ composant: 'Pile', sens: 'ligne', espace: 's', enfants: (v.raccourcis as { libelle: string; route: string }[]).map((x) => ({ composant: 'Encart', effets: [nav(x.route)], enfants: [{ composant: 'Phrase', texte: x.libelle }] })) }]
-          : []),
+      // Le titre de l'écran, et à sa droite les raccourcis en petits boutons (pas de grosses boîtes).
+      const entete = r.archetype === 'dashboard' && Array.isArray(v.raccourcis) && v.raccourcis.length > 0
+        ? [{ composant: 'Pile', sens: 'ligne', espace: 'm', aligner: 'centre', enfants: [
+            { composant: 'Pile', espace: 'xs', enfants: [titre(t('titre'))] },
+            { composant: 'Pile', sens: 'ligne', espace: 's', enfants: (v.raccourcis as { libelle: string; route: string }[]).map((x, i) => bouton(x.libelle, [nav(x.route)], i === 0 ? 'principal' : 'secondaire')) },
+          ] }]
+        : [titre(t('titre'))]
+      corps = [...entete,
         ...tableau,
         ...(creation !== null ? [bouton(v.libelleCreation !== undefined ? t('libelleCreation') : g.ajouter!, [nav(creation)], 'principal', 'ajouter')] : []),
         { composant: 'Lignes', donnee: d(`table.${t('table')}`), vide: t('vide'), videAction: [nav(creation ?? 'accueil')], videLibelle: creation !== null ? (v.libelleCreation !== undefined ? t('libelleCreation') : g.ajouter!) : g.accueil!,
-          ...(r.archetype === 'dashboard' ? { disposition: 'recents', modele: [{ composant: 'Pile', sens: 'ligne', espace: 'm', aligner: 'centre', enfants: [
+          ...(r.archetype === 'dashboard' ? { disposition: 'recents', titre: g.derniers!, modele: [{ composant: 'Pile', sens: 'ligne', espace: 'm', aligner: 'centre', enfants: [
             { composant: 'Valeur', donnee: d(`ligne.${nom.colonne}`), format: 'initiales' },
             { composant: 'Pile', espace: 'xs', enfants: [{ composant: 'Valeur', donnee: d(`ligne.${nom.colonne}`) }, ...cols.filter((c) => c !== nom && c !== montant && c !== statut).slice(0, 1).map((c) => ({ composant: 'Valeur', donnee: d(`ligne.${c.colonne}`), ...(c.format !== undefined ? { format: c.format } : {}) }))] },
             ...(statut !== undefined ? [{ composant: 'Valeur', donnee: d(`ligne.${statut.colonne}`), format: 'statut' }] : []),

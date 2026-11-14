@@ -79,7 +79,8 @@ export const SCRIPT_EXPERIENCE = String.raw`async (o) => {
   const refus = []
   const vus = new Set()
   const refuser = (ecran, controle, quoi) => { const k = ecran + '|' + controle + '|' + quoi; if (vus.has(k)) return; vus.add(k); refus.push({ ecran, controle, quoi }) }
-  const etatDe = () => { const t = texte(zone()); return { t, vide: t.length < 15, acompleter: /a completer/.test(norm(t)), garde: racine.querySelector('[data-deribfy="garde"]') !== null || /qui etes-vous/.test(norm(t)) } }
+  // Ce qui se VOIT : le texte de l'écran, et l'apparence du document (un thème clair / sombre est un changement visible).
+  const etatDe = () => { const t = texte(zone()); const apparence = String(document.documentElement.getAttribute('data-theme') || ''); return { t: t + (apparence ? ' |' + apparence : ''), vide: t.length < 15, acompleter: /a completer/.test(norm(t)), garde: racine.querySelector('[data-deribfy="garde"]') !== null || /qui etes-vous/.test(norm(t)) } }
   const aller = async (slug) => {
     if (slugCourant() === slug) { location.hash = '#__deribfy__'; await att(60) }
     location.hash = '#' + slug

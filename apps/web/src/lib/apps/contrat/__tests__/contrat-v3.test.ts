@@ -98,6 +98,28 @@ describe('V3 · les archétypes', () => {
     expect(compte).toMatch(motifTexte('"donnee":{"$data":"session.utilisateur"},"si":{"$data":"session.utilisateur"}'))
   })
 
+  it('⑧ V4.3d · chaque kit, clair ET sombre, tient 4,5:1 sur chaque texte ; le kit suit le cahier', async () => {
+    const { KITS } = await import('../rendu/moteur')
+    const { kitDuCahier, KITS_ORDRE } = await import('../generation')
+    const lum = (h: string) => { const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * r! + 0.7152 * g! + 0.0722 * b! }
+    const ratio = (a: string, b: string) => { const [x, y] = [lum(a), lum(b)].sort((u, v) => v - u); return (x! + 0.05) / (y! + 0.05) }
+    const PAIRES = [['texte', 'fond'], ['texte', 'surface'], ['texteDiscret', 'surface'], ['texteDiscret', 'fond'], ['texteNav', 'barre'], ['accent', 'surface'], ['accent', 'barre'], ['surAccent', 'accent'], ['succes', 'surface'], ['alerte', 'surface'], ['danger', 'surface']] as const
+    const bas: string[] = []
+    for (const [id, k] of Object.entries(KITS)) for (const theme of ['clair', 'sombre'] as const) for (const [a, b] of PAIRES) {
+      const r = ratio(k[theme][a], k[theme][b])
+      if (r < 4.5) bas.push(`${id} · ${theme} · ${a}/${b} : ${r.toFixed(2)}`)
+    }
+    expect(bas).toEqual([])
+    expect(Object.keys(KITS).sort()).toEqual([...KITS_ORDRE].sort())
+    // Le choix : une couleur NOMMÉE d'abord, puis le secteur, puis le nom — et des noms différents ne tombent pas tous sur le même.
+    expect(kitDuCahier('Charte graphique : couleurs vert et blanc. Une boutique de tissus.', 'X').kit).toBe('savane')
+    expect(kitDuCahier('Un hôtel et des réservations de chambres à N’Djamena.', 'X').kit).toBe('terracotta')
+    expect(kitDuCahier('Une banque et ses comptes.', 'X').kit).toBe('azur')
+    const parNom = new Set(['Hayine', 'Logone Pièces', 'La Renaissance', 'CPA', 'Tontine', 'Mariam Couture', 'SNE', 'Kanem'].map((n) => kitDuCahier('', n).kit))
+    expect(parNom.size).toBeGreaterThanOrEqual(3)
+    expect(kitDuCahier('', 'Hayine')).toEqual(kitDuCahier('', 'Hayine'))
+  })
+
   it('⑥ le moteur est ÉMIS, jamais exécuté par Deribfy : aucun module ne l’importe autrement qu’en type', () => {
     const racine = join(__dirname, '..', '..', '..', '..')
     const fautifs: string[] = []

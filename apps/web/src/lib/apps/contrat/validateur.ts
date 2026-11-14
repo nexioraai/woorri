@@ -590,7 +590,7 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
         verifierLiaison(d, `${ch}.donnee`, portee, 'visible')
         const t = d?.split('.')[1]
         if (t === undefined || !tables.has(t)) break
-        for (const k of ['colonne', 'par', 'valeur'] as const) {
+        for (const k of ['colonne', 'par', 'valeur', 'date'] as const) {
           const col = chaine(n[k])
           if (col === null) continue
           if (secrete(col, `${ch}.${k}`)) continue
@@ -603,6 +603,7 @@ function contexteEcran(c: Collecte, e: Record<string, unknown>, chemin: string, 
     }
     if ('effets' in n) effets(n.effets, `${ch}.effets`, portee, libelle)
     if ('videAction' in n) effets(n.videAction, `${ch}.videAction`, portee, typeof n.videLibelle === 'string' ? n.videLibelle : libelle)
+    if ('voirTout' in n) effets(n.voirTout, `${ch}.voirTout`, portee, 'voirTout')
     tableau(n.enfants).forEach((m, i) => { parcourir(m, `${ch}.enfants[${String(i)}]`, portee) })
   }
 
