@@ -90,6 +90,7 @@ const EXEMPTES: Readonly<Record<string, string>> = {
   'lib/apps/contrat/textes.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
   'lib/apps/contrat/graphe.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
   'lib/apps/contrat/archetypes.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
+  'lib/apps/contrat/deux-passes.ts': 'V4, bloc 1 (2026-11-14) : les deux passes et le repli sont prouvés SEULS, modèle simulé, à 0 $ ; le bloc 2 les branche sur la route de génération — il SORT alors de cette liste',
   'lib/apps/contrat/compiler.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
   'lib/apps/contrat/rendu/moteur.tsx': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
   'lib/apps/contrat/rendu/donnees.ts': 'étape 1 du plan « assembler » (2026-11-13) : le contrat est prouvé SEUL, à 0 $, par ses tests ; l’étape 4 (deux passes + repli) le branche — il SORT alors de cette liste',
