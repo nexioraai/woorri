@@ -96,7 +96,7 @@ Elle est **écrite une fois, jamais mise à jour** : c'est un journal en ajout s
 - `owner_id`, `demande`, `nom` : portés par l'œuvre, sans intérêt à les dupliquer.
 - `battement`, `jeton_travailleur`, `reprises` : la mécanique asynchrone, pas la trace.
 
-**Taille :** une `trace` simulée pèse environ 1,5 Ko. En production, c'est **UNKNOWN**, à mesurer avant de fixer une borne :
+**Taille :** une `trace` simulée pèse environ 1,5 Ko. Relevé de production du 2026-11-15 18:05 (propriétaire) : **75 lignes, moyenne 15 059 octets, maximum 54 140 octets** (`pg_column_size`). Requête :
 
 ```sql
 select count(*), avg(pg_column_size(sections_acquises))::int as moy, max(pg_column_size(sections_acquises)) as maxi
@@ -174,13 +174,41 @@ Ce qui n'est pas compté : un écran utilisateur des tentatives. `mes-applicatio
 
 ---
 
-## 3. Décisions attendues
+## 3. Décisions du propriétaire (2026-11-15)
+
+1. Table de tentatives écrite une fois, jamais modifiée : **OUI**. « Une trace qu'on peut réécrire n'est pas une trace. »
+2. En échec, la ligne de l'œuvre n'est plus touchée du tout : **OUI**.
+3. La carte `refusee` sans nom du chemin `catch` : **GARDÉE** pour l'instant. Elle prévient l'utilisateur ; l'affichage des échecs sera repris quand la table existera.
+4. Colonne du manque 1 (`consigne`) dans la même migration : **OUI**.
+5. DDL dans un fichier SQL et un module neuf, hors de `journal.ts` : **OUI**.
+
+Plan validé. La migration est éprouvée en local, **pas** appliquée en production : le propriétaire l'applique lui-même.
+
+## 3 bis. Questions initialement posées
 
 1. Valider la forme : une table de tentatives en ajout seul, avec les colonnes du §2.1.
 2. En échec, la ligne de l'œuvre n'est plus touchée (§2.2.2) : oui ou non.
 3. La carte `refusee` orpheline du chemin `catch` : la garder (par défaut) ou la retirer (§2.2.3).
 4. Créer dès maintenant les colonnes du manque 1 (§2.3) : recommandé.
 5. Le DDL hors de `journal.ts` (§2.5).
+
+## 5. Point ouvert consigné, NON traité : une génération à 16 $
+
+L'œuvre `c0fdab64-7241-471b-a54e-78eeaaa0af6f` (« Cahier des charges », 2026-10-10 22:36 UTC), relevée par le propriétaire le 2026-11-15 :
+- `statut refusee`, `diagnostics ["SCHEMA"]`, `document` NULL : jamais livrée ;
+- `duree_ms = 3 173 933`, soit environ 53 minutes ;
+- `cout_usd = 16.0338`.
+
+Pour comparaison : une génération réussie dure 70 à 80 s (chiffre du propriétaire), et l'échec simulé de cet état des lieux coûtait 0,0226 $.
+
+Deux questions, **sans réponse ici** :
+1. Existe-t-il un chemin où la génération boucle sans garde-fou de durée ou de coût ?
+2. Le montant de 16,0338 $ est-il fiable ?
+   - Le coût de la ligne est écrasé à chaque tentative (§1.2).
+   - Un nom de modèle est écrit en dur dans `ai_usage_log` (`journal.ts:215`, `:353`).
+   - La date précède `cf4f09cf`, donc le tarif est un plancher (`journal.ts`, commentaire de `cout_usd`).
+
+Ce point rejoint la liste des chantiers à part.
 
 ## 4. UNKNOWN
 

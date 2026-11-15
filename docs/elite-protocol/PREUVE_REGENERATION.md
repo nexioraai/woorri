@@ -460,6 +460,28 @@ order by g.created_at;
 - L'échec sur une œuvre sans version reste **UNKNOWN**, en attente de la requête ci-dessus.
 - Le dossier est clos sous cette seule réserve.
 
+### 8.4 bis Le dernier angle mort est fermé (propriétaire, 2026-11-15 18:05 Toronto)
+
+**Requête des œuvres anciennes `refusee` sans version : 1 ligne.**
+
+| id | created_at | nom | statut | diagnostics |
+|---|---|---|---|---|
+| c0fdab64-7241-471b-a54e-78eeaaa0af6f | 2026-10-10 22:36:57.25418+00 | Cahier des charges | refusee | `["SCHEMA"]` |
+
+**Requête complémentaire sur cette ligne** (18:07) : `jamais_livree = true`, `taille_document = NULL`, `cout_usd = 16.0338`, `duree_ms = 3173933`.
+
+**Lecture**
+- `document` est nul : l'œuvre n'a **jamais été livrée**.
+- La régénération suppose une livraison antérieure : le bouton n'apparaît que sur une œuvre qui a des fichiers.
+- Ce n'est donc pas une re-clé. C'est une **première génération échouée le 2026-10-10**, trois semaines avant `3d4663aa`.
+
+**Verdict final**
+- Les trois cas du tableau §8.3 ter sont couverts par des observations de production.
+- **Le nombre d'utilisateurs affectés par le défaut de régénération est établi à 0** [OBSERVÉ-PROD].
+- **Le dossier est clos.**
+
+**Constat séparé, renvoyé à un chantier à part, NON traité ici :** la même ligne montre une génération de 53 minutes (3 173 933 ms) qui a coûté 16,0338 $ pour aucun document. Voir `PLAN_MANQUE4.md` §5.
+
 ### 8.4 Effet sur la réparation déployée [LU]
 
 - **Aucun changement nécessaire.** La réparation (`idOeuvre = idExistant !== '' ? idExistant : randomUUID()`, `REPARATION_REGENERATION.md`) rétablit pour la régénération le comportement d'avant `3d4663aa` : l'identifiant reste le même.
