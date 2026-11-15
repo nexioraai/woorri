@@ -4,7 +4,7 @@ import DessinDeMenu from './DessinDeMenu'
 import MenuSurvol from './MenuSurvol'
 import { ATTRIBUT_SURVOL } from './menuSurvolAttribut'
 import { resolveSiteBaseUrl } from './shared'
-import type { EntreeMenu } from '../pages/fetchPage'
+import type { EntreeMenu } from '../pages/typesPage'
 
 // ============================================================
 // LOT 2 -- LE MENU A PLUSIEURS NIVEAUX.

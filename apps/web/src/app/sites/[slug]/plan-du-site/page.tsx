@@ -1,12 +1,12 @@
 import { ogDePage } from '../themes/metadonneesDuSite'
 import { pageWeb } from '../themes/filDAriane'
 import JsonLdScript from '../themes/JsonLdScript'
-import { fetchSite } from '../themes/shared'
+import { lireSite } from '../themes/lireSite'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { lecteurDuSite } from '@/lib/lecteurDuSite'
 import { resolveSiteBaseUrl } from '../themes/shared'
 import HtmlLang from '../themes/HtmlLang'
 import { fetchMenu } from '../pages/fetchPage'
@@ -40,6 +40,7 @@ type SitePlan = {
 }
 
 async function site(slug: string): Promise<SitePlan | null> {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('sites_public')
     .select('id,slug,name,primary_color,lang,custom_domain,publishes_tenders')
@@ -55,7 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
   const title = `Plan du site — ${s.name}`
   const description = `Toutes les pages publiées de ${s.name}, en une seule page.`
-  const complet = await fetchSite(slug)
+  const complet = await lireSite(slug)
   return {
     title,
     description,
@@ -66,6 +67,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PlanDuSitePage({ params }: Props) {
+  const supabase = await lecteurDuSite()
   const { slug } = await params
   const s = await site(slug)
   if (!s) notFound()

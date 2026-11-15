@@ -1,5 +1,5 @@
 import { ogDePage } from '../../themes/metadonneesDuSite'
-import { fetchSite } from '../../themes/shared'
+import { lireSite } from '../../themes/lireSite'
 import { generateMetadata as metadonneesPageDeclaree } from '../../[...rest]/page'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${p.denomination} — ${s.name}`
   const description = [p.denomination, p.dosage, p.forme, p.conditionnement].filter(Boolean).join(' · ')
   const url = `${base}/catalogue/${encodeURIComponent(p.reference)}`
-  const complet = await fetchSite(slug)
+  const complet = await lireSite(slug)
   return {
     title,
     description,

@@ -4,14 +4,15 @@
 // /robots.txt sur un domaine personnalise (rewrite src/proxy.ts) tombe dans
 // le catch-all [...rest]/page.tsx qui appelle notFound(). Generique : ne
 // connait aucun site en particulier, fonctionne pour n'importe quel slug.
-import { fetchSite, resolveSiteBaseUrl } from '../themes/shared'
+import { resolveSiteBaseUrl } from '../themes/shared'
+import { lireSite } from '../themes/lireSite'
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params
-  const site = await fetchSite(slug)
+  const site = await lireSite(slug)
 
   if (!site) {
     return new Response('Not found', { status: 404 })

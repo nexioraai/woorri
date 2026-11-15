@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import type { LienLegal } from './pagesLegales'
+import type { LienLegal } from './typesLegaux'
 
 // ============================================================================
 // LOT 17 — LES PAGES LÉGALES ONT UN CHEMIN D'ACCÈS.

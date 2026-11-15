@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Metadata } from 'next'
 import { metadonneesDuSite, descriptionDuSite } from './themes/metadonneesDuSite'
-import { supabase } from '@/lib/supabase'
+import { lecteurDuSite, estEnApercu } from '@/lib/lecteurDuSite'
 import SurvolVivant from './themes/SurvolVivant'
 import Assistant from './themes/Assistant'
 import PiedLegal from './themes/PiedLegal'
@@ -10,7 +10,8 @@ import { CHEMIN_ASSISTANT, textesDepuisPage, type TextesAssistant } from './them
 import { ECRANS_DU_COMPTE } from '@/lib/assistant/liens'
 import { lireBlocs } from './pages/blocs'
 import { headers } from 'next/headers'
-import { resolveSiteBaseUrl, fetchSite } from './themes/shared'
+import { resolveSiteBaseUrl } from './themes/shared'
+import { lireSite } from './themes/lireSite'
 
 // ============================================================================
 // LOT 3c — UN SITE GÉNÉRÉ N'EST PAS LE TABLEAU DE BORD.
@@ -62,7 +63,7 @@ import { resolveSiteBaseUrl, fetchSite } from './themes/shared'
  */
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
-  const site = await fetchSite(slug)
+  const site = await lireSite(slug)
   if (!site) return {}
   const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
   return {
@@ -74,12 +75,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     description: descriptionDuSite(site),
     alternates: { canonical: null },
     ...metadonneesDuSite(site, base, slug),
+    // 2026-11-15 — un site lu en APERÇU (non publié, cookie du propriétaire)
+    // n'est jamais indexable, même si l'adresse fuit.
+    ...((await estEnApercu(slug)) ? { robots: { index: false, follow: false } } : {}),
   }
 }
 
 export default async function SiteLayout({
   children, params,
 }: { children: ReactNode; params: Promise<{ slug: string }> }) {
+  const supabase = await lecteurDuSite()
   const { slug } = await params
   const { data } = await supabase
     .from('sites_public').select('id,primary_color,name,lang').eq('slug', slug).maybeSingle()
@@ -140,8 +145,32 @@ export default async function SiteLayout({
     >
       <SurvolVivant primary={primary} />
       {children}
+      {(await estEnApercu(slug)) && <ReperApercu />}
       <PiedLegal liens={liensLegaux} />
       {assistant && <Assistant slug={slug} base={base} primary={primary} nom={nomDuSite} textes={textesAssistant} />}
+    </div>
+  )
+}
+
+
+/**
+ * 2026-11-15 — LE REPÈRE D'APERÇU. Le site est montré avec le jeton de son
+ * propriétaire : un visiteur ne le voit pas. En bas À GAUCHE : en haut, l'en-tête
+ * fixe des thèmes le recouvrait (l'ancien bandeau de /preview était invisible) ;
+ * à droite se trouve le bouton WhatsApp.
+ */
+function ReperApercu() {
+  return (
+    <div
+      role="status"
+      data-apercu-non-publie=""
+      style={{
+        position: 'fixed', left: 16, bottom: 16, zIndex: 2147483000, maxWidth: 'calc(100vw - 112px)',
+        background: '#FA5D1E', color: '#ffffff', borderRadius: 999, padding: '8px 14px',
+        font: '600 13px/1.3 system-ui, sans-serif', boxShadow: '0 6px 20px rgba(0,0,0,.25)',
+      }}
+    >
+      Aperçu — ce site n’est pas encore publié
     </div>
   )
 }

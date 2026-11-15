@@ -3,7 +3,7 @@ import { Quote, Phone, Mail, MapPin, ChevronRight, ShieldCheck, Network, ArrowLe
 import type { Bloc } from './blocs'
 import BlocsDePage from './BlocsDePage'
 import { photoValable } from './photoValable'
-import type { EntreeMenu } from './fetchPage'
+import type { EntreeMenu } from './typesPage'
 
 // ============================================================================
 // LA FICHE D'UN RESPONSABLE (demande CPA, 2026-11-11).

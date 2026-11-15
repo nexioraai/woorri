@@ -32,9 +32,11 @@ const lire = (p: string) => readFileSync(join(RACINE, p), 'utf-8');
 const sansCommentaires = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\{\/\*[\s\S]*?\*\/\}/g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
 
+// 2026-11-15 — `preview/[slug]/page.tsx` sort de la liste : il ne monte plus
+// la barre de recherche, il ne rend plus de copie du site (cookie d'aperçu
+// puis `/sites/<slug>`, src/lib/apercu.ts). Restent les deux vrais montages.
 const MONTAGES = [
   'src/app/sites/[slug]/page.tsx',
-  'src/app/preview/[slug]/page.tsx',
   'src/app/sites/[slug]/themes/AuroraTheme.tsx',
 ] as const;
 

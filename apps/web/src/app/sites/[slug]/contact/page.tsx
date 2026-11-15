@@ -3,7 +3,8 @@ import { lienTel } from '@/lib/telephone'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { fetchSite, resolveSiteBaseUrl } from '../themes/shared'
+import { resolveSiteBaseUrl } from '../themes/shared'
+import { lireSite } from '../themes/lireSite'
 import { getDict } from '../themes/i18n'
 import HtmlLang from '../themes/HtmlLang'
 import JsonLdScript from '../themes/JsonLdScript'
@@ -26,7 +27,7 @@ type Props = { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const site = await fetchSite(slug)
+  const site = await lireSite(slug)
   if (!site) return {}
   const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
   const t = getDict(site.lang)
@@ -45,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PageContact({ params }: Props) {
   const { slug } = await params
-  const site = await fetchSite(slug)
+  const site = await lireSite(slug)
   if (!site) notFound()
   const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
   const t = getDict(site.lang)

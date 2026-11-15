@@ -8,6 +8,7 @@ import {
   Search, Image as ImageIcon, LayoutGrid, Settings, Plus, ArrowUp, ArrowDown, Trash2, Eye, EyeOff,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { poserCookieApercu } from '@/lib/poserApercu'
 import { fetchOwnedSite, updateOwnedSite } from '@/lib/supabase-owned-site'
 import { lireBlocs, TYPES_DE_BLOC, type Bloc } from '@/app/sites/[slug]/pages/blocs'
 import { champsDuBloc, champEstUnFichier, poser, type Chemin } from '@/components/edit/champsDeBloc'
@@ -91,6 +92,12 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
   const [televerse, setTeleverse] = useState<string | null>(null)
   const [ajout, setAjout] = useState(false)
   const [version, setVersion] = useState(0)
+  // 2026-11-15 — L'APERÇU EST LE SITE (src/lib/apercu.ts). Avant chaque
+  // chargement du cadre, le cookie d'aperçu est reposé avec un jeton frais :
+  // `/sites/<slug>` sert alors le site, publié ou non, avec TOUTES ses pages.
+  // `cookiePour` = la version du cadre pour laquelle le cookie est posé.
+  const [cookiePour, setCookiePour] = useState<number | null>(null)
+  const [erreurApercu, setErreurApercu] = useState<string | null>(null)
   const cadre = useRef<HTMLIFrameElement | null>(null)
   const zoneApercu = useRef<HTMLDivElement | null>(null)
   const [echelle, setEchelle] = useState(1)
@@ -132,13 +139,26 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
   const pageSel = sel && sel.quoi !== 'section' ? (pages ?? []).find((p) => p.id === sel.id) ?? null : null
   const blocsSel = useMemo(() => (pageSel && Array.isArray(pageSel.blocs) ? (pageSel.blocs as unknown[]) : []), [pageSel])
 
-  // L'adresse de l'aperçu suit la sélection.
+  // L'adresse de l'aperçu suit la sélection. Une seule adresse, publiée ou
+  // non : le VRAI site. Une page non publiée reste sans aperçu (la vue
+  // publique ne la rend pas — le public non plus).
   const apercu = (() => {
-    const base = site?.published ? `/sites/${slug}` : `/preview/${slug}`
+    if (cookiePour !== version) return null
+    const base = `/sites/${slug}`
     if (!sel || sel.quoi === 'section' || (pageSel && pageSel.chemin === CHEMIN_HERO)) return base
-    if (pageSel && pageSel.publie && site?.published) return `${base}/${pageSel.chemin}`
+    if (pageSel && pageSel.publie) return `${base}/${pageSel.chemin}`
     return null
   })()
+
+  useEffect(() => {
+    if (!site) return
+    let vivant = true
+    void poserCookieApercu(slug).then((r) => {
+      if (!vivant) return
+      if (r.ok) { setErreurApercu(null); setCookiePour(version) } else setErreurApercu(r.erreur)
+    })
+    return () => { vivant = false }
+  }, [site, slug, version])
   const ancre = sel?.quoi === 'section' ? (sel.i === 0 ? 'services' : `section-${sel.i}`) : (pageSel?.chemin === CHEMIN_HERO ? 'home' : null)
 
   // ── L'APERÇU : clic → sélection, surlignage de la sélection ────────────────
@@ -340,6 +360,10 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
         ? { width: LARGEUR_ORDINATEUR, height: `${100 / echelle}%`, transform: `scale(${echelle})`, transformOrigin: '0 0' }
         : { width: '100%', height: '100%' }}
     />
+  ) : cookiePour !== version ? (
+    <div className="flex h-full items-center justify-center p-8 text-center text-sm text-[#111]/70">
+      {erreurApercu ?? 'Ouverture de l’aperçu…'}
+    </div>
   ) : (
     <div className="flex h-full items-center justify-center p-8 text-center text-sm text-[#111]/70">
       Cette page n’est pas publiée : elle n’a pas encore d’aperçu.<br />Publiez-la depuis le panneau de droite pour la voir ici.

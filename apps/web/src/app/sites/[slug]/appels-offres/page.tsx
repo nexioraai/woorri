@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { lienTel } from '@/lib/telephone'
 import { ogDePage } from '../themes/metadonneesDuSite'
-import { fetchSite } from '../themes/shared'
+import { lireSite } from '../themes/lireSite'
 import { filDAriane } from '../themes/filDAriane'
 import Link from 'next/link'
 import { headers } from 'next/headers'
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // de l'accueil : deux pages, une description, c'est un doublon pour Google).
   const description = tronquer(`${t.sousTitre} — ${site.name}`)
   const url = `${resolveSiteBaseUrl(site, (await headers()).get('host'))}/appels-offres`
-  const complet = await fetchSite(slug)
+  const complet = await lireSite(slug)
 
   return {
     title,

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { lecteurDuSite } from '@/lib/lecteurDuSite'
 import { resolveSiteBaseUrl } from '../../themes/shared'
 import HtmlLang from '../../themes/HtmlLang'
 import { lireBlocs } from '../../pages/blocs'
@@ -28,6 +28,7 @@ import FormulaireSuivi from '../FormulaireSuivi'
 type Props = { params: Promise<{ slug: string }> }
 
 async function site(slug: string) {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('sites_public')
     .select('id,slug,name,primary_color,lang,custom_domain')
@@ -63,6 +64,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function SuiviPage({ params }: Props) {
+  const supabase = await lecteurDuSite()
   const { slug } = await params
   const s = await site(slug)
   if (!s) notFound()

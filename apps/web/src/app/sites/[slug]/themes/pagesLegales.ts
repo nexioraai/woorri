@@ -1,15 +1,17 @@
-import { supabase } from '@/lib/supabase'
+import { lecteurDuSite } from '@/lib/lecteurDuSite'
 import { PAGES_LEGALES } from './PiedLegal'
 
 // LOT 17 — les pages légales que le site a RÉELLEMENT déclarées, dans
 // l'ordre voulu, plus le plan du site (écran du moteur). Lu une fois ici,
 // par la gabarit commun ET par l'accueil, pour que le bandeau et le pied de
 // page du thème ne puissent pas lister deux choses différentes.
-export type LienLegal = { href: string; titre: string }
+import type { LienLegal } from './typesLegaux'
+export type { LienLegal } from './typesLegaux'
 
 const PLAN: Record<string, string> = { fr: 'Plan du site', en: 'Site map', ar: 'خريطة الموقع', es: 'Mapa del sitio' }
 
 export async function lirePagesLegales(siteId: string, base: string, lang: string | null | undefined): Promise<LienLegal[]> {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('site_pages_public').select('chemin,titre').eq('site_id', siteId)
     .in('chemin', [...PAGES_LEGALES, 'plan-du-site'])

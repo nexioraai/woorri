@@ -143,7 +143,12 @@ describe('AUDIT GLOBAL — l’authentification des routes API ne depend pas du 
       // que le motif exigeait `req.cookies` : `(req as any).cookies` -- la
       // forme la plus courante du depot pour contourner un type -- passait au
       // travers. Meme angle mort que le cliquet de projection (chaine D).
-      return /\bcookies\s*\(\s*\)|\.\s*cookies\b|get\s*\(\s*['"]cookie['"]/i.test(code)
+      // LIRE, PAS ÉCRIRE (2026-11-15). `reponse.cookies.set(…)` POSE un cookie
+      // dans la réponse — la route s'authentifie toujours par le Bearer
+      // (/api/sites/<slug>/apercu : cookie d'aperçu pour les PAGES du site).
+      // Seule l'écriture `.cookies.set` est soustraite ; toute autre forme
+      // d'accès, dont `(req as any).cookies` et `cookies()`, reste attrapée.
+      return /\bcookies\s*\(\s*\)|\.\s*cookies\b(?!\s*\.\s*set\s*\()|get\s*\(\s*['"]cookie['"]/i.test(code)
     })
     expect(avecCookie, `route(s) dependant d'un cookie : ${avecCookie.join(', ')}`).toEqual([])
   })

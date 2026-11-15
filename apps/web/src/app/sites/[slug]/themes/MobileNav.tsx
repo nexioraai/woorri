@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { EntreeMenu } from '../pages/fetchPage';
+import type { EntreeMenu } from '../pages/typesPage';
 import { resolveSiteBaseUrl } from './shared';
 import { getAvisLabels } from '../appels-offres/labels'
 import DessinDeMenu from './DessinDeMenu'
