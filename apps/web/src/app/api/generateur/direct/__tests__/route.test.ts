@@ -23,6 +23,7 @@ import { join } from 'node:path'
 // dépôt l'exige, et il a raison — un nom recopié survit au jour où la vraie
 // table change, et le test passerait au vert contre du vide.
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
+import { TABLE_TENTATIVES } from '@/lib/apps/tentatives'
 
 const { reponses, journal } = vi.hoisted(() => ({
   reponses: { texte: [] as string[], i: 0 },
@@ -60,6 +61,8 @@ vi.mock('@/lib/supabase-admin', async () => {
           // table, sinon il jette « table non prevue » et le test accuse la
           // route d'un defaut qui est le sien.
           [TABLE_VERSIONS]: { reponse: { data: null, error: null } },
+          // CHAQUE TENTATIVE ÉCRIT SA LIGNE (manque 4, 2026-11-15).
+          [TABLE_TENTATIVES]: { reponse: { data: null, error: null } },
         },
         j,
       ),

@@ -43,6 +43,7 @@ import { projectAirSchema } from '@deribfy/air-schema'
 import { lireEntites } from '@/lib/apps/entites-declarees'
 import { FUSIBLE_SIGNES, lectureAEnregistrer } from '@/lib/apps/lecture-brief'
 import { deploiementQuiSert } from '@/lib/apps/deploiement'
+import { ecrireTentative, type Issue } from '@/lib/apps/tentatives'
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { TEMOIN_FICHIERS } from '@/lib/apps/temoin-sonde'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
@@ -511,6 +512,49 @@ export async function POST(req: Request) {
   /** Le travail lui-même, inchangé — il rend l'objet que le flux publiera. */
   async function travailler() {
   const debut = Date.now()
+  // ── CHAQUE TENTATIVE LAISSE SA LIGNE, ET ELLE N'EST JAMAIS RÉÉCRITE
+  // (manque 4, 2026-11-15 — docs/elite-protocol/PLAN_MANQUE4.md).
+  //
+  // Une tentative non écrite ne fait pas échouer la génération (même
+  // décision que pour les versions : l'œuvre payée prime sur sa trace),
+  // mais elle n'est jamais muette : journal du serveur ET alerte.
+  const consignerTentative = async (t: {
+    generationId: string
+    issue: Issue
+    versionRang: number | null
+    coutUsd: number
+    tirages: number
+    diagnostics: readonly string[]
+    trace: Record<string, unknown>
+  }): Promise<void> => {
+    const r = await ecrireTentative(supabaseAdmin as unknown as Parameters<typeof ecrireTentative>[0], {
+      generationId: t.generationId,
+      nature: idExistant !== '' ? 'regeneration' : 'generation',
+      issue: t.issue,
+      debut: new Date(debut),
+      fin: new Date(),
+      versionRang: t.versionRang,
+      fournisseur,
+      deploiement,
+      coutUsd: t.coutUsd,
+      jetonsEntree: entree,
+      jetonsSortie: sortie,
+      tirages: t.tirages,
+      diagnostics: t.diagnostics,
+      trace: t.trace,
+    }).catch((e: unknown) => ({ ok: false as const, cause: e instanceof Error ? e.message : String(e) }))
+    if (!r.ok) {
+      console.error(`[tentatives] tentative ${t.issue} non ecrite pour ${t.generationId} — ${r.cause}`)
+      await alerter({
+        sujet: 'oeuvre',
+        sujetId: t.generationId,
+        motif: `trace : tentative « ${t.issue} » non écrite`,
+        etape: 'ecriture',
+        detail: r.cause,
+        coutUsd: Number(t.coutUsd.toFixed(4)),
+      }).catch(() => undefined)
+    }
+  }
   let resultat
   try {
     // LES ENTITES VONT AU JUGE DE PERSISTANCE : une table absente du code
@@ -554,9 +598,26 @@ export async function POST(req: Request) {
         duree_ms: Date.now() - debut,
         diagnostics: [`la construction a ete interrompue — ${message.slice(0, 300)}`],
         sections_acquises: { lectureBrief, deploiement },
-      })
+      }).select('id').maybeSingle()
       if (trace.error !== null) {
         console.error(`[direct] trace de l'echec non ecrite dans ${TABLE_GENERATIONS} — ${trace.error.message}`)
+      }
+      // LA CARTE « refusee » CI-DESSUS EST GARDÉE (décision du propriétaire,
+      // 2026-11-15) ; la tentative, elle, va à l'ŒUVRE quand c'est une
+      // régénération — c'est là qu'on la cherchera.
+      const rattachement =
+        idExistant !== '' ? idExistant : typeof trace.data?.id === 'string' ? trace.data.id : ''
+      if (rattachement !== '') {
+        const tarifEchec = tarifDe(config.prix, new Date())
+        await consignerTentative({
+          generationId: rattachement,
+          issue: 'interrompue',
+          versionRang: null,
+          coutUsd: (entree * tarifEchec.entree + sortie * tarifEchec.sortie) / 1e6,
+          tirages: 0,
+          diagnostics: [`la construction a ete interrompue — ${message.slice(0, 300)}`],
+          trace: { lectureBrief, deploiement, configuration, erreur: message.slice(0, 2_000) },
+        })
       }
     } catch {
       /* le journal peut manquer ; l'alerte, elle, doit partir quand meme */
@@ -831,16 +892,31 @@ export async function POST(req: Request) {
   // Elle ne l'était pas : la charge d'échec portait `document: null` et
   // `statut: refusee`, et l'œuvre livrée disparaissait de l'écran.
   //
-  // En échec de régénération, on n'écrit donc que la TRACE de la tentative
-  // (coût, durée, jetons, tours, diagnostics) — jamais `document`, `statut`
-  // ni `ok`, qui décrivent l'œuvre livrée. Que la trace de la tentative
-  // remplace celle de la génération précédente est un défaut CONNU et
-  // séparé (ETUDE_LANGSMITH.md §2e, trou 4) : il n'est pas traité ici.
-  const COLONNES_DE_L_OEUVRE = new Set(['document', 'statut', 'ok'])
-  const charge: Record<string, unknown> =
-    idExistant !== '' && !resultat.ok
-      ? Object.fromEntries(Object.entries(ligne).filter(([cle]) => !COLONNES_DE_L_OEUVRE.has(cle)))
-      : ligne
+  // ── ET ELLE N'Y TOUCHE PLUS DU TOUT (manque 4, 2026-11-15).
+  //
+  // Le correctif du matin n'écrivait plus que la trace de la tentative sur
+  // la ligne : observé ensuite (PLAN_MANQUE4.md §1.3), la ligne disait
+  // « livrée » avec le coût et le journal de l'ÉCHEC. Décision du
+  // propriétaire : en échec, la ligne de l'œuvre n'est plus touchée. Elle
+  // porte toujours la mesure de la tentative qui a produit son `document` ;
+  // l'échec vit dans sa tentative, et nulle part ailleurs.
+  const tracePourTentative = ligne.sections_acquises as unknown as Record<string, unknown>
+  if (idExistant !== '' && !resultat.ok) {
+    await consignerTentative({
+      generationId: idExistant,
+      issue: 'non_convergee',
+      versionRang: null,
+      coutUsd,
+      tirages: resultat.tours.length,
+      diagnostics: ligne.diagnostics,
+      trace: tracePourTentative,
+    })
+    const phraseEchec =
+      `${resultat.motif} Le code produit ne s'est pas assemblé ` +
+      `(${String(resultat.tours.length)} essai(s), ${String(Math.round(dureeMs / 1000))} s).`
+    return { ok: false as const, error: phraseEchec, motif: phraseEchec, tours: resultat.tours, coutUsd, dureeMs }
+  }
+  const charge: Record<string, unknown> = ligne
   const ecrit =
     idExistant === ''
       ? await supabaseAdmin.from(TABLE_GENERATIONS).insert(charge).select('id').maybeSingle()
@@ -871,6 +947,20 @@ export async function POST(req: Request) {
       detail: cause,
       coutUsd: Number(coutUsd.toFixed(4)),
     }).catch(() => undefined)
+    // L'ŒUVRE EXISTE (régénération) : sa tentative peut s'écrire, et c'est
+    // la seule trace de ce qui a été payé. Une œuvre neuve refusée n'a pas
+    // de ligne à laquelle se rattacher : l'alerte ci-dessus est sa trace.
+    if (idExistant !== '') {
+      await consignerTentative({
+        generationId: idExistant,
+        issue: 'ecriture_echouee',
+        versionRang: null,
+        coutUsd,
+        tirages: resultat.tours.length,
+        diagnostics: [`ecriture refusee — ${cause.slice(0, 300)}`, ...ligne.diagnostics],
+        trace: tracePourTentative,
+      })
+    }
     const phrase =
       'Le résultat n’a pas pu être enregistré. ' +
       (idExistant !== '' ? 'Votre version actuelle n’a pas été modifiée.' : 'Rien n’a été conservé.')
@@ -908,6 +998,7 @@ export async function POST(req: Request) {
       detail: cause,
     }).catch(() => undefined)
   }
+  let versionEcrite: number | null = null
   if (resultat.ok && ecrit.data?.id !== undefined) {
     const version: VersionDocument = {
       forme: 'document',
@@ -940,6 +1031,7 @@ export async function POST(req: Request) {
     if (vEcrit.error !== null) {
       await direEchecHistorique(`rang ${String(rangNeuf)} non écrit`, vEcrit.error.message)
     } else {
+    versionEcrite = rangNeuf
     // ── LE POINTEUR SUIT LE TRAVAIL (2026-11-02).
     //
     // Sans cette ligne, régénérer DEPUIS une version ancienne laisserait le
@@ -972,6 +1064,18 @@ export async function POST(req: Request) {
     }
     }
     }
+  }
+
+  if (typeof ecrit.data?.id === 'string') {
+    await consignerTentative({
+      generationId: ecrit.data.id,
+      issue: resultat.ok ? 'livree' : 'non_convergee',
+      versionRang: versionEcrite,
+      coutUsd,
+      tirages: resultat.tours.length,
+      diagnostics: ligne.diagnostics,
+      trace: tracePourTentative,
+    })
   }
 
   if (!resultat.ok) {
