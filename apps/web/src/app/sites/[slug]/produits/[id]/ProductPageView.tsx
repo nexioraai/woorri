@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import type { ProductPage } from './fetchProduct'
+import type { ProductPage } from './typesProduit'
 import AddToCartButton from '../../themes/AddToCartButton'
 import { achatPossible, choixDeVarianteRequis } from '../../themes/variantRequirement'
 import DesignCanvas from '../../themes/DesignCanvas'

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { lecteurDuSite } from '@/lib/lecteurDuSite'
 
 // ============================================================
 // LOT 6 — LE CATALOGUE PUBLIC.
@@ -31,6 +31,7 @@ const COLS_FICHE = `${COLS},note`
 
 /** Le site public. Meme lecture legere que les autres surfaces. */
 export async function fetchSiteCatalogue(slug: string) {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('sites_public')
     .select('id,slug,name,primary_color,lang,custom_domain')
@@ -51,6 +52,7 @@ export async function fetchSiteCatalogue(slug: string) {
  * le DIT.
  */
 export async function fetchCatalogue(siteId: string): Promise<ProduitCatalogue[]> {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('catalogue_produits_public')
     .select(COLS)
@@ -72,6 +74,7 @@ export async function fetchFicheProduit(
   siteId: string,
   reference: string,
 ): Promise<ProduitCatalogue | null> {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('catalogue_produits_public')
     .select(COLS_FICHE)

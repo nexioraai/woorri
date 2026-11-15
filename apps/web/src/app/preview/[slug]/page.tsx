@@ -2,117 +2,56 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import {
-  fetchSitePreview,
-  type Site,
-} from '@/app/sites/[slug]/themes/shared';
-import EditorialTheme from '@/app/sites/[slug]/themes/EditorialTheme';
-import { avisDuSite } from '@/app/sites/[slug]/themes/avisDuSite';
-import { fetchAvisEntries } from '@/app/sites/[slug]/appels-offres/fetchAvis';
-import NoirTheme from '@/app/sites/[slug]/themes/NoirTheme';
-import VifTheme from '@/app/sites/[slug]/themes/VifTheme';
-import AuroraTheme from '@/app/sites/[slug]/themes/AuroraTheme';
-import CartShell from '@/app/sites/[slug]/themes/CartShell';
-import CatalogSearch, { type ThemeKey } from '@/app/sites/[slug]/themes/CatalogSearch';
-// LOT 1 / L1-02 -- la montee de la barre de recherche etait une NEGATION
-// (`!== 'pod_brand'`) recopiee ici, dans l'apercu et dans AuroraTheme : un
-// sous-type ABSENT y passait. Regle unique, allowlist positive. Et le repli
-// `|| 'reseller'` sur la prop est retire : il fabriquait un sous-type que la
-// base ne porte pas.
-import { showsVisitorCatalogSearch } from '@/app/sites/[slug]/themes/catalogSearchVisibility'
-import PromoBanner from '@/app/sites/[slug]/themes/PromoBanner';
-import { getCartLabels } from '@/app/sites/[slug]/themes/cartLabels';
-import { resolveShopCurrency } from '@/app/sites/[slug]/themes/shopCurrency';
-import ScrollRevealInit from '@/app/sites/[slug]/themes/ScrollRevealInit';
+import { poserCookieApercu } from '@/lib/poserApercu';
 
-const themes = {
-  editorial: EditorialTheme,
-  noir: NoirTheme,
-  vif: VifTheme,
-  aurora: AuroraTheme,
-};
+// ============================================================================
+// L'APERÇU N'EST PLUS UNE COPIE — 2026-11-15.
+//
+// LE DÉFAUT MESURÉ. Cette page rendait le thème DANS LE NAVIGATEUR, sans
+// aucune sous-page. Depuis les LOT 18 et 21 (2026-11-10), le menu mène à de
+// vraies pages `/sites/<slug>/…` : sur un site non publié, chaque entrée
+// tombait sur un 404 (Goura Doula, 2026-11-15). La copie mentait aussi
+// autrement : ni menu déclaré, ni partenaires, ni hero vitrine.
+//
+// LA RÈGLE. Cette adresse ne rend plus rien elle-même : elle pose le cookie
+// d'aperçu (propriétaire ou administrateur, src/lib/apercu.ts) puis ouvre
+// le VRAI site, `/sites/<slug>`, servi par le même rendu que pour le public.
+// ============================================================================
 
 export default function PreviewPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
-  const [site, setSite] = useState<Site | null>(null);
-  // ── A2 d2 — L'APERÇU NE DOIT PAS MENTIR.
-  //
-  // Arbitrage du propriétaire, 2026-11-06 : « un écart entre l'aperçu et le
-  // servi nous a coûté deux heures ce matin — l'aperçu affichait une barre du
-  // bas que l'œuvre servie n'avait pas, et j'ai accusé le mauvais composant.
-  // Fail-closed ou pas, un aperçu qui ment est un instrument de plus qui
-  // ment. »
-  //
-  // MÊME LECTEUR QUE LE RENDEUR PUBLIC. `fetchAvisEntries` passe par la VUE
-  // `appels_offres_public`, jointe à `sites_public` : l'aperçu d'un site NON
-  // PUBLIÉ ne verra donc aucun avis, et n'affichera pas la section. Ce n'est
-  // pas un écart de plus — c'est le MÊME invariant appliqué, et le servi se
-  // comporterait pareil. Écrit ici pour que personne ne le prenne pour un
-  // bogue.
-  const [hasAvis, setHasAvis] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [erreur, setErreur] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        router.push('/login');
-        return;
-      }
-      fetchSitePreview(slug, data.user.email!).then((s) => {
-        setSite(s);
-        setLoading(false);
-        // L'identifiant n'existe qu'une fois le site résolu. Une panne de
-        // lecture laisse `hasAvis` à `false` : fail-closed, comme le défaut.
-        if (s?.id) fetchAvisEntries(s.id).then((e) => setHasAvis(avisDuSite(e).hasAvis));
-      });
+    let vivant = true;
+    poserCookieApercu(slug).then((r) => {
+      if (!vivant) return;
+      if (r.ok) { window.location.replace(r.adresse); return; }
+      if (r.statut === 401) { router.push('/login'); return; }
+      setErreur(r.erreur);
     });
+    return () => { vivant = false; };
   }, [slug, router]);
 
-  if (loading) {
+  if (!erreur) {
     return (
       <div className="min-h-screen nexiora-bg flex items-center justify-center">
-        <div className="text-white/40 text-lg">Chargement de l&apos;aperçu…</div>
+        <div className="text-white/40 text-lg">Ouverture de l&apos;aperçu…</div>
       </div>
     );
   }
-
-  if (!site) {
-    return (
-      <div className="min-h-screen nexiora-bg flex flex-col items-center justify-center gap-4 px-6 text-center">
-        <p className="text-white/70 text-lg">Aperçu indisponible.</p>
-        <p className="text-white/40 text-sm">Ce site est introuvable ou ne vous appartient pas.</p>
-        <button
-          onClick={() => router.push('/dashboard')}
-          className="mt-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-white/15 text-white/80 hover:text-white hover:border-white/30 transition"
-        >
-          ← Retour au tableau de bord
-        </button>
-      </div>
-    );
-  }
-
-  const key = (site.theme as keyof typeof themes) || 'editorial';
-  const Theme = themes[key] ?? EditorialTheme;
-  const primary = site.primary_color || '#111111';
-  const cartLabels = getCartLabels(site.lang);
 
   return (
-    <>
-      <div className="sticky top-0 z-50 bg-[#FA5D1E] text-white text-sm font-medium text-center py-2 px-4">
-        Mode aperçu — ce site n&apos;est pas encore publié. Publiez-le depuis votre tableau de bord pour le rendre public.
-      </div>
-      <PromoBanner slug={site.slug} primary={primary} mode={site.mode} labels={cartLabels} currency={resolveShopCurrency(site.products)} />
-      <CartShell primary={primary} labels={cartLabels} slug={site.slug} mode={site.mode} products={site.products} shippingFlat={site.shipping_flat} variant={key === 'noir' ? 'dark' : 'light'}>
-        <Theme
-          site={site}
-          hasAvis={hasAvis}
-          host={typeof window === 'undefined' ? null : window.location.host}
-        />
-        {site.mode === 3 && showsVisitorCatalogSearch(site.dropship_type) && site.theme !== 'aurora' && <CatalogSearch slug={site.slug} primary={primary} lang={site.lang} theme={key as ThemeKey} dropshipType={site.dropship_type} />}
-      </CartShell>
-      <ScrollRevealInit />
-    </>
+    <div className="min-h-screen nexiora-bg flex flex-col items-center justify-center gap-4 px-6 text-center">
+      <p className="text-white/70 text-lg">Aperçu indisponible.</p>
+      <p className="text-white/40 text-sm">{erreur}</p>
+      <button
+        onClick={() => router.push('/dashboard')}
+        className="mt-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-white/15 text-white/80 hover:text-white hover:border-white/30 transition"
+      >
+        ← Retour au tableau de bord
+      </button>
+    </div>
   );
 }

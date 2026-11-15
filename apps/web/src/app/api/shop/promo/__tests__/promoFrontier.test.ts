@@ -182,7 +182,10 @@ describe('🔒 CLIQUET — TOUT point de montage de PromoBanner passe `mode`', (
     // la garde, chacun ignorant l'autre. Ce cliquet est indexe sur le DISQUE :
     // un troisieme montage ajoute demain entre dans le denominateur parce
     // qu'il existe, et echoue tant qu'il ne passe pas `mode`.
-    expect(montages.length).toBeGreaterThanOrEqual(2);
+    // 2026-11-15 — UN SEUL montage désormais : `preview/[slug]/page.tsx` ne
+    // rend plus de copie du site (il pose le cookie d'aperçu et ouvre
+    // `/sites/<slug>`, src/lib/apercu.ts). Le plancher suit le disque.
+    expect(montages.length).toBeGreaterThanOrEqual(1);
   });
 
   for (const { f, balise } of montages) {

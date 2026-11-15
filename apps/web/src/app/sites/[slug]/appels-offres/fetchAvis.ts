@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { lecteurDuSite } from '@/lib/lecteurDuSite'
 import { lireBlocs, type Bloc } from '../pages/blocs'
 
 // ============================================================
@@ -132,6 +132,7 @@ const COLS_DETAIL = `${COLS_LISTE},id,description,methode_detail,valeur,devise,q
 
 /** Resout le site public. `sites_public` applique deja `published = true AND archived_at IS NULL`. */
 async function fetchAvisSite(slug: string): Promise<AvisSite | null> {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('sites_public')
     .select('id,slug,name,slogan,about,primary_color,lang,custom_domain,contact')
@@ -155,6 +156,7 @@ async function fetchAvisSite(slug: string): Promise<AvisSite | null> {
 export async function fetchAvisIndex(
   slug: string
 ): Promise<{ site: AvisSite; avis: AvisCarte[] } | null> {
+  const supabase = await lecteurDuSite()
   const site = await fetchAvisSite(slug)
   if (!site) return null
 
@@ -211,6 +213,7 @@ export function lirePieces(brut: unknown): PieceJointe[] {
  * page telle qu'elle est aujourd'hui.
  */
 export async function fetchTextesAvis(siteId: string): Promise<Bloc[]> {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('site_pages_public')
     .select('blocs')
@@ -224,6 +227,7 @@ export async function fetchAvis(
   slug: string,
   referenceSlug: string
 ): Promise<{ site: AvisSite; avis: AvisDetail } | null> {
+  const supabase = await lecteurDuSite()
   const site = await fetchAvisSite(slug)
   if (!site) return null
 
@@ -250,6 +254,7 @@ export async function fetchAvis(
 export async function fetchAvisEntries(
   siteId: string
 ): Promise<{ reference_slug: string; objet: string; cree_le: string | null }[]> {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('appels_offres_public')
     .select('reference_slug,objet,cree_le')

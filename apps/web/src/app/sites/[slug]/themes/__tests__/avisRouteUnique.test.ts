@@ -18,16 +18,18 @@ import { avisDuSite } from '../avisDuSite'
 
 const THEMES_DIR = join(__dirname, '..')
 const SITES_DIR = join(THEMES_DIR, '..')
-const RACINE = join(SITES_DIR, '..', '..')
 
 const sansCommentaires = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
 const lire = (p: string) => sansCommentaires(readFileSync(p, 'utf-8'))
 
 const THEMES = ['EditorialTheme', 'NoirTheme', 'VifTheme', 'AuroraTheme']
+// 2026-11-15 — UN SEUL rendeur : `preview/[slug]/page.tsx` ne rend plus de
+// copie du site (il pose le cookie d'aperçu et ouvre `/sites/<slug>`,
+// src/lib/apercu.ts) ; `src/lib/__tests__/apercuChemins.test.ts` garde
+// qu'il n'importe plus aucun thème.
 const RENDEURS = [
   join(SITES_DIR, 'page.tsx'),
-  join(RACINE, 'preview', '[slug]', 'page.tsx'),
 ]
 
 describe('d2 — l’impossibilité tient encore', () => {
@@ -66,10 +68,11 @@ describe('d2 — l’impossibilité tient encore', () => {
 })
 
 describe('d2 — les deux rendeurs passent les deux faits', () => {
-  it('le dénominateur est réel : les deux fichiers existent', () => {
+  it('le dénominateur est réel : le rendeur existe, et il est le seul', () => {
     // Un rendeur ajouté sans entrer ici échapperait au contrôle suivant.
     for (const r of RENDEURS) expect(() => readFileSync(r, 'utf-8'), r).not.toThrow()
-    expect(RENDEURS).toHaveLength(2)
+    // 2026-11-15 — un seul depuis que /preview n'est plus une copie.
+    expect(RENDEURS).toHaveLength(1)
   })
 
   it('chacun fournit `hasAvis` ET `host` au thème', () => {

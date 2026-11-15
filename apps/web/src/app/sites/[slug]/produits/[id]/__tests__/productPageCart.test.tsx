@@ -211,7 +211,9 @@ describe('M2-05 — 🟠 TOUT montage de CartShell transmet `products`', () => {
     );
 
   it('il en existe reellement — un ensemble vide passerait aussi', () => {
-    expect(montages.length).toBeGreaterThanOrEqual(3);
+    // 2026-11-15 — 2 montages, plus 3 : `preview/[slug]/page.tsx` ne rend plus
+    // de copie du site (cookie d'aperçu puis `/sites/<slug>`, src/lib/apercu.ts).
+    expect(montages.length).toBeGreaterThanOrEqual(2);
   });
 
   for (const { f, balise } of montages) {

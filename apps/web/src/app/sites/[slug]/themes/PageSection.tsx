@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import type { ReactNode } from 'react'
-import { fetchSite, resolveSiteBaseUrl, type Site } from './shared'
+import { resolveSiteBaseUrl, type Site } from './shared'
+import { lireSite } from './lireSite'
 import { getDict } from './i18n'
 import HtmlLang from './HtmlLang'
 import JsonLdScript from './JsonLdScript'
@@ -26,7 +27,7 @@ export type SectionPage = 'a-propos' | 'services'
 
 /** Le site et son adresse, ou `null` si la page n'a pas lieu d'exister. */
 export async function lireSectionPage(slug: string, quoi: SectionPage) {
-  const site = await fetchSite(slug)
+  const site = await lireSite(slug)
   if (!site) return null
   const masquees = (site.hidden_sections ?? []) as string[]
   const vide = quoi === 'a-propos'

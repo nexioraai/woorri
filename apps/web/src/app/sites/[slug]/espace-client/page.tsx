@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { lecteurDuSite } from '@/lib/lecteurDuSite'
 import { resolveSiteBaseUrl } from '../themes/shared'
 import HtmlLang from '../themes/HtmlLang'
 import { lireBlocs } from '../pages/blocs'
@@ -39,6 +39,7 @@ export async function generateMetadata({ params }: PropsAcces): Promise<Metadata
 }
 
 export default async function Page({ params }: PropsAcces) {
+  const supabase = await lecteurDuSite()
   const { slug } = await params
   const s = await siteDe(slug)
   if (!s) notFound()
