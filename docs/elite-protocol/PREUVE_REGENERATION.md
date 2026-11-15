@@ -253,7 +253,7 @@ Il n'est affiché dans aucun des deux échecs essayés.
 
 ### Observation hors hypothèse (C) : **VÉRIFIÉ en simulation**
 
-Toute régénération, **même réussie**, change l'identifiant et coupe l'historique des versions. C'est consigné ici parce que c'est la même cause (§3, points 1 à 3). Ce n'est pas une conclusion sur le défaut demandé.
+Avec le code éprouvé (`27e83891`), toute régénération, **même réussie**, change l'identifiant et coupe l'historique des versions. **Ce n'est vrai que du code postérieur au commit `3d4663aa`** : avant lui, l'identifiant ne changeait pas (§8). C'est consigné ici parce que c'est la même cause (§3, points 1 à 3). Ce n'est pas une conclusion sur le défaut demandé.
 
 ---
 
@@ -301,6 +301,7 @@ Les trois requêtes ci-dessous ont été lancées par le propriétaire dans le p
 **4. Aucun orphelin constaté à ce jour** (requête 3).
 - Ce n'est **pas** « le défaut ne se produit pas en production ».
 - Le bouton « Régénérer » est fermé depuis le 2026-11-14 (`P:840-851`), et le nombre de régénérations réelles est inconnu, possiblement nul.
+- Précision du 2026-11-15 (§8) : le défaut n'a été servi en production qu'à partir du 2026-11-03. Les régénérations antérieures, dont celles de l'œuvre `fa0ede2c…` (2026-11-02), ont gardé leur identifiant.
 
 **5. Conséquence opérationnelle.**
 - Le risque est **gelé par la fermeture du bouton, pas écarté**.
@@ -345,3 +346,71 @@ Les trois requêtes ci-dessous ont été lancées par le propriétaire dans le p
 3. Le comportement de l'atelier (`app/atelier/[id]/page.tsx`) sur une œuvre re-clé. Il n'a pas été exécuté : il lit `GET /direct/[id]` (`atelier/[id]/page.tsx:164`), et l'on s'attend donc au même 404, mais ce n'est pas observé.
 4. L'effet sur une œuvre **publiée**. `publication_slug` et `publication_jeton` vivent sur la même ligne et suivent donc la ligne re-clé ; la page publique n'a pas été essayée.
 5. La reproduction en production. Elle est impossible sans rouvrir la génération, et elle serait payante ; elle n'est pas demandée.
+
+---
+
+## 8. Requalification — la période réelle du défaut (2026-11-15, soir)
+
+**Déclencheur.** Le propriétaire a relevé en production l'œuvre `fa0ede2c-8db9-40eb-9fad-8ed174c14bfe`. Elle porte 8 versions sous **un seul** identifiant, dont deux `regeneration` (rangs 2 et 4, 2026-11-02 01:26 et 01:45 UTC). Une seconde œuvre, `56dbd09d…`, en porte 3. Cela semblait contredire le scénario C.
+
+**Verdict : il n'y a pas de contradiction. Le scénario C est confirmé pour le code éprouvé, mais il doit être daté.** Le texte de §5 laissait croire que le défaut était de tout temps. Il ne l'était pas.
+
+### 8.1 Le commit d'introduction [LU, git]
+
+- `git log -S randomUUID -- D` donne un seul commit : **`3d4663aa`**, daté du **2026-11-02 15:43:45 -0500, soit 20:43 UTC**. Titre : « La porte verifie l'APPARTENANCE ».
+- Ce commit ajoute `const idOeuvre = randomUUID()` et met `id: idOeuvre` dans la charge `ligne`. Le but est de cuire l'identifiant dans la politique RLS avant l'insertion.
+- Il n'a pas distingué la régénération : la même `ligne` part dans le `update(...).eq('id', idExistant)`.
+- **Le code d'avant** (`3d4663aa^`), passage d'écriture `:536-655` : la `ligne` ne porte **pas** de champ `id`. Le `update` ne réécrivait donc pas la clé primaire, et les versions restaient sous le même identifiant.
+- C'est **exactement** ce que montre `fa0ede2c…` : 8 versions entre le 2026-11-01 23:49 et le 2026-11-02 11:11 UTC, toutes antérieures à `3d4663aa`.
+
+### 8.2 La période réelle en production
+
+**Début** [LU, git + message de commit]
+- `3d4663aa` est sur `main`, en historique linéaire.
+- Le commit `623cc05b` (2026-11-03 09:37 -0500) dit : « Quatre deploiements de suite ont echoue. La production a continue de servir `aec3e20` ».
+- Or `aec3e20` (2026-11-02 13:08 -0500) **ne contient pas** `3d4663aa` (`git merge-base --is-ancestor` : faux).
+- Le défaut n'a donc pu être servi **qu'à partir du déploiement de `623cc05b`**, soit le **2026-11-03 vers 14:37 UTC** au plus tôt. L'heure exacte du déploiement réussi n'a pas été relevée sur Vercel : **UNKNOWN** à la minute près.
+
+**Fin**
+- Le bouton est masqué par `27e83891` (2026-11-14 19:55 -0500, soit 2026-11-15 00:55 UTC). Fin de l'exposition **par l'écran**.
+- La route elle-même acceptait encore `?id=` jusqu'au déploiement de `e233a4b` le 2026-11-15. Seul un appel direct authentifié aurait pu l'atteindre entre-temps : non observé, **UNKNOWN**.
+
+**Durée** : environ **11,4 jours**, du 2026-11-03 ≈14:37 UTC au 2026-11-15 00:55 UTC.
+
+### 8.3 Combien de régénérations ont pu le subir
+
+**Ce qui est établi** [DÉDUIT du relevé §6, 0 orphelin]
+- Aucune régénération **réussie** d'une œuvre **qui avait déjà des versions** n'a eu lieu pendant la fenêtre.
+- La raison : elle aurait laissé ses anciennes versions sous l'ancien identifiant, donc orphelines.
+
+**Ce que le 0 orphelin ne couvre pas**
+1. Une œuvre **sans version** : les versions existent depuis `5574cbb5`, le 2026-11-01. Une régénération réussie d'une telle œuvre la re-clé sans laisser d'orphelin.
+2. Un échec par non-convergence (A) d'une œuvre sans version : re-clé, `document` vidé, aucun orphelin non plus.
+
+**Signature mesurable du cas 1** [DÉDUIT]
+- `created_at` n'est pas dans la charge, donc un `update` le conserve.
+- Une œuvre re-clé par une régénération réussie porte donc une version **rang 1, `livraison`**, créée longtemps après sa propre `created_at`.
+
+Requête de lecture seule, **à lancer par le propriétaire** (non lancée) :
+
+```sql
+-- Régénérations re-clées : rang 1 « livraison » écrit bien après la naissance de la ligne
+select g.id, g.created_at, v.cree_le, v.cree_le - g.created_at as ecart
+from public.app_generations g
+join public.app_generation_versions v on v.generation_id = g.id and v.rang = 1
+where v.cree_le - g.created_at > interval '10 minutes'
+order by v.cree_le;
+-- Régénérations SAINES pendant la fenêtre (attendu : 0 si le défaut était servi)
+select count(*) from public.app_generation_versions
+where etape = 'regeneration'
+  and cree_le between '2026-11-03 14:30+00' and '2026-11-15 01:00+00';
+```
+
+Le **nombre** de régénérations pendant la fenêtre reste **UNKNOWN** tant que ces deux requêtes n'ont pas été lancées.
+
+### 8.4 Effet sur la réparation déployée [LU]
+
+- **Aucun changement nécessaire.** La réparation (`idOeuvre = idExistant !== '' ? idExistant : randomUUID()`, `REPARATION_REGENERATION.md`) rétablit pour la régénération le comportement d'avant `3d4663aa` : l'identifiant reste le même.
+- Elle garde ce que `3d4663aa` voulait : un identifiant connu **avant** d'émettre la porte, pour une œuvre neuve.
+- La clé étrangère RESTRICT posée le 2026-11-15 interdit désormais à la base de laisser repasser la même régression.
+
