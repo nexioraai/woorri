@@ -1,5 +1,5 @@
 import { lireBlocs, type Bloc } from './blocs'
-import { supabase } from '@/lib/supabase'
+import { lecteurDuSite } from '@/lib/lecteurDuSite'
 
 // ============================================================
 // LOT 1 -- LA RESOLUTION D'UNE ADRESSE.
@@ -26,24 +26,10 @@ import { supabase } from '@/lib/supabase'
 
 /** Ce qu'une page porte. `publie` n'existe pas dans la vue : toute ligne
  *  rendue est publiee par construction. */
-export type PageSite = {
-  chemin: string
-  parent: string | null
-  titre: string
-  chapeau: string | null
-  corps: string | null
-  maj_le: string | null
-  /** LOT 4 — le corps STRUCTURE. `[]` tant que la colonne n'est pas posee. */
-  blocs: Bloc[]
-}
+import type { PageSite, EntreeMenu } from './typesPage'
+export type { PageSite, EntreeMenu } from './typesPage'
 
 /** Le strict necessaire pour le menu -- jamais le corps des pages. */
-export type EntreeMenu = {
-  chemin: string
-  parent: string | null
-  titre: string
-  ordre: number
-}
 
 // Colonnes reellement consommees -- jamais `select('*')`. Une projection large
 // ferait transiter des champs que l'ecran n'affiche pas, et un champ qui
@@ -61,6 +47,7 @@ const COLS_MENU = 'chemin,parent,titre,ordre'
  * code de retour.
  */
 export async function fetchPage(siteId: string, chemin: string): Promise<PageSite | null> {
+  const supabase = await lecteurDuSite()
   const lire = (cols: string) =>
     supabase
       .from('site_pages_public')
@@ -102,6 +89,7 @@ export async function fetchPage(siteId: string, chemin: string): Promise<PageSit
  * fail-closed -- une panne masque le menu au lieu d'en afficher un faux.
  */
 export async function fetchMenu(siteId: string): Promise<EntreeMenu[]> {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('site_pages_public')
     .select(COLS_MENU)
@@ -121,6 +109,7 @@ export async function fetchMenu(siteId: string): Promise<EntreeMenu[]> {
  * d'Ariane public, et surtout pas y devenir un lien mort.
  */
 export async function fetchFilDAriane(siteId: string, chemin: string): Promise<EntreeMenu[]> {
+  const supabase = await lecteurDuSite()
   const segments = chemin.split('/')
   if (segments.length < 2) return []
   const ancetres = segments.slice(0, -1).map((_, i) => segments.slice(0, i + 1).join('/'))
@@ -137,6 +126,7 @@ export async function fetchFilDAriane(siteId: string, chemin: string): Promise<E
 
 /** Les enfants directs d'une page, pour les cartes d'une page d'entree. */
 export async function fetchEnfants(siteId: string, chemin: string): Promise<EntreeMenu[]> {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('site_pages_public')
     .select(COLS_MENU)

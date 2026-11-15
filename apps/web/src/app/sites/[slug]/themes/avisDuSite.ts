@@ -45,10 +45,10 @@
  * loi A2 ③ interdit. Le jour ou une surface aura besoin du compte, elle le
  * demandera -- et ce sera une decision, pas une derive.
  */
-import type { EntreeMenu } from '../pages/fetchPage'
+import type { EntreeMenu } from '../pages/typesPage'
 
 import type { Partenaire } from '../pages/Partenaires'
-import type { LienLegal } from './pagesLegales'
+import type { LienLegal } from './typesLegaux'
 
 export type AvisDuSite = {
   /**

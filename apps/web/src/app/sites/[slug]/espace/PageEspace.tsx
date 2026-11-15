@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { lecteurDuSite } from '@/lib/lecteurDuSite'
 import { resolveSiteBaseUrl } from '../themes/shared'
 import HtmlLang from '../themes/HtmlLang'
 import { lireBlocs } from '../pages/blocs'
@@ -41,6 +41,7 @@ type SitePublic = {
 }
 
 export async function siteDeLEspace(slug: string): Promise<SitePublic | null> {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('sites_public')
     .select('id,slug,name,primary_color,lang,custom_domain')
@@ -75,6 +76,7 @@ export default async function PageEspace({
   phrase?: (lang: string | null) => string
   rendu: (ctx: { slug: string; base: string; accent: string; lang: string | null }) => React.ReactNode
 } & PropsEspace) {
+  const supabase = await lecteurDuSite()
   const { slug } = await params
   const s = await siteDeLEspace(slug)
   if (!s) notFound()

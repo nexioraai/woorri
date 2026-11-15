@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import type { EntreeMenu } from './fetchPage'
+import type { EntreeMenu } from './typesPage'
 
 // LES SOUS-PAGES D'UNE PAGE — une carte par enfant, rien si aucun enfant.
 //

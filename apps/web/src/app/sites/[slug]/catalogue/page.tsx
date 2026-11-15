@@ -1,7 +1,7 @@
 import { ogDePage } from '../themes/metadonneesDuSite'
 import { pageWeb } from '../themes/filDAriane'
 import JsonLdScript from '../themes/JsonLdScript'
-import { fetchSite } from '../themes/shared'
+import { lireSite } from '../themes/lireSite'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
@@ -12,7 +12,7 @@ import { lireBlocs } from '../pages/blocs'
 import BlocsDePage from '../pages/BlocsDePage'
 import SousPages from '../pages/SousPages'
 import { fetchEnfants } from '../pages/fetchPage'
-import { supabase } from '@/lib/supabase'
+import { lecteurDuSite } from '@/lib/lecteurDuSite'
 import {
   fetchSiteCatalogue, fetchCatalogue, famillesPresentes, parFamille, lireFamille, chercher,
 } from './fetchCatalogue'
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
   const title = `Catalogue — ${s.name}`
   const description = `Les produits mis à disposition des structures sanitaires par ${s.name}.`
-  const complet = await fetchSite(slug)
+  const complet = await lireSite(slug)
   return {
     title,
     description,
@@ -56,6 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CataloguePage({ params, searchParams }: Props) {
+  const supabase = await lecteurDuSite()
   const { slug } = await params
   const s = await fetchSiteCatalogue(slug)
   if (!s) notFound()

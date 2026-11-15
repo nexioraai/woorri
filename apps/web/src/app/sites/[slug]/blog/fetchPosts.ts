@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { lecteurDuSite } from '@/lib/lecteurDuSite'
 
 // ============================================================
 // LOT BLOG 6 -- LECTURE PUBLIQUE DES ARTICLES.
@@ -82,6 +82,7 @@ const COLS_ARTICLE = `${COLS_CARTE},content,updated_at`
  * `sites_public` applique deja `published = true AND archived_at IS NULL`.
  */
 async function fetchBlogSite(slug: string): Promise<BlogSite | null> {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('sites_public')
     .select('id,slug,name,slogan,about,primary_color,lang,custom_domain')
@@ -96,6 +97,7 @@ export async function fetchBlogIndex(
   /** `null` rend TOUT le fonds — c'est ce que fait `/blog`. */
   categorie: CategorieArticle | null = null
 ): Promise<{ site: BlogSite; posts: BlogPostCard[] } | null> {
+  const supabase = await lecteurDuSite()
   const site = await fetchBlogSite(slug)
   if (!site) return null
 
@@ -120,6 +122,7 @@ export async function fetchBlogPost(
   slug: string,
   postSlug: string
 ): Promise<{ site: BlogSite; post: BlogPostPage } | null> {
+  const supabase = await lecteurDuSite()
   const site = await fetchBlogSite(slug)
   if (!site) return null
 
@@ -151,6 +154,7 @@ export async function fetchBlogPost(
 export async function fetchBlogEntries(siteId: string): Promise<
   { slug: string; title: string; published_at: string | null; updated_at: string | null }[]
 > {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('site_blog_posts_public')
     .select('slug,title,published_at,updated_at')
@@ -173,6 +177,7 @@ export async function fetchBlogEntries(siteId: string): Promise<
  * qui decide.
  */
 export async function compterArticlesPublies(siteId: string): Promise<number> {
+  const supabase = await lecteurDuSite()
   const { count } = await supabase
     .from('site_blog_posts_public')
     .select('slug', { count: 'exact', head: true })

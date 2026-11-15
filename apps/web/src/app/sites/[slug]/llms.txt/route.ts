@@ -1,5 +1,6 @@
 // src/app/sites/[slug]/llms.txt/route.ts
-import { fetchSite, resolveSiteBaseUrl, WOORRI_SITE_URL } from '../themes/shared'
+import { resolveSiteBaseUrl, WOORRI_SITE_URL } from '../themes/shared'
+import { lireSite } from '../themes/lireSite'
 import { resolveSiteFreshness } from '../themes/siteFreshness'
 import { logAnomaly } from '@/lib/anomaly'
 import { getLlmsTxtLabels } from '@/lib/i18n/llmsTxtLabels'
@@ -18,7 +19,7 @@ export async function GET(
 // donc par un tableau `diagnostics`, et seuls les appelants SERVEUR
 // journalisent.
   const diagnostics: string[] = []
-  const site = await fetchSite(slug, false, diagnostics)
+  const site = await lireSite(slug, false, diagnostics)
 
   if (!site) {
     return new Response('Not found', { status: 404 })

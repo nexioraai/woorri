@@ -2,7 +2,8 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { fetchSite, resolveSiteBaseUrl } from './themes/shared'
+import { resolveSiteBaseUrl } from './themes/shared'
+import { lireSite } from './themes/lireSite'
 import { metadonneesDuSite } from './themes/metadonneesDuSite'
 import { logAnomaly } from '@/lib/anomaly'
 import JsonLd from './themes/JsonLd'
@@ -50,7 +51,7 @@ type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ [key: 
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const site = await fetchSite(slug)
+  const site = await lireSite(slug)
 
   if (!site) {
     return { title: 'Site introuvable' }
@@ -86,7 +87,7 @@ export default async function SitePage({ params, searchParams }: Props) {
 // donc par un tableau `diagnostics`, et seuls les appelants SERVEUR
 // journalisent.
   const diagnostics: string[] = []
-  const site = await fetchSite(slug, sp.paid === '1', diagnostics)
+  const site = await lireSite(slug, sp.paid === '1', diagnostics)
   // `notFound()` reste conditionne au SEUL site introuvable. Une panne de
   // catalogue n'a jamais produit de 404 et ne doit pas commencer.
   if (!site) notFound()

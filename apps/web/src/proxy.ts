@@ -8,6 +8,7 @@ import {
 import { varianteHote, cibleCanonique } from './lib/domains/canonicalHost'
 import { EN_TETE_LANGUE, EN_TETE_SITE, normaliserLangue } from './lib/seo/langueServie'
 import { NOMS_RESERVES } from './lib/apps/sous-domaine'
+import { COOKIE_APERCU } from './lib/apercu'
 
 const INTERNAL_HOSTS = ['nexiora.ca', 'www.nexiora.ca', 'woorri.com', 'www.woorri.com', 'deribfy.com', 'www.deribfy.com', 'localhost']
 
@@ -136,7 +137,17 @@ export async function proxy(req: NextRequest) {
     const siteMatch = CHEMIN_SITE_PLATEFORME.exec(pathname)
     if (siteMatch) {
       const lang = await fetchLangueParSlug(siteMatch[1]!)
-      return NextResponse.next(avecLangue(req, lang))
+      const reponse = NextResponse.next(avecLangue(req, lang))
+      // 2026-11-15 — UNE PAGE LUE EN APERÇU N'EST NI INDEXÉE NI MISE EN CACHE.
+      // Le cookie d'aperçu (src/lib/apercu.ts) fait lire la page avec le
+      // jeton du propriétaire : elle peut montrer un site NON PUBLIÉ. Google
+      // n'a jamais ce cookie, mais un cache partagé ou un robot qui le
+      // recevrait ne doit rien en garder. Sans cookie : réponse inchangée.
+      if (req.cookies.has(COOKIE_APERCU)) {
+        reponse.headers.set('X-Robots-Tag', 'noindex, nofollow')
+        reponse.headers.set('Cache-Control', 'private, no-store')
+      }
+      return reponse
     }
     // Page de la plateforme, mais anglophone : la langue est imposée, et la
     // marque « site marchand » reste ABSENTE — ces pages gardent donc le

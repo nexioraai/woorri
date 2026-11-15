@@ -1,6 +1,7 @@
 // src/app/sites/[slug]/themes/shared.tsx
 
 import { supabase } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { selectionServable } from '@/lib/dropship/catalogAdmission'
 import { calcSellPrice, sitePricing, resolveDisplayPrice } from '@/lib/pricing'
 import { canTransact } from '@/lib/commerce-admission/canTransact'
@@ -410,7 +411,12 @@ data.products = mapShopProducts(shopProducts, data?.social_links?.whatsapp || da
 export async function fetchSite(
 slug: string,
 allowUnpublished = false,
-diagnostics?: string[]
+diagnostics?: string[],
+// 2026-11-15 — L'APERÇU EST LE SITE : côté serveur, l'appelant passe le
+// lecteur de la requête (`lireSite`, themes/lireSite.ts), qui porte le jeton
+// du propriétaire quand un cookie d'aperçu existe. Par défaut : le client
+// anonyme, comportement inchangé (proxy, routes API, navigateur).
+db: SupabaseClient = supabase
 ): Promise<Site | null> {
 // Audit Mode 3/POD BRAND, LOT 1 : sites_public (vue, colonnes = PUBLIC_COLS,
 // WHERE published=true AND archived_at IS NULL déjà appliqué par la vue
@@ -423,7 +429,7 @@ diagnostics?: string[]
 // authentifié réel n'en étant pas propriétaire (prouvé en direct, comptes
 // jetables). La vue ne peut par construction jamais renvoyer de ligne non
 // publiée -- comportement inchangé, pas une régression.
-const { data, error } = await supabase
+const { data, error } = await db
 .from('sites_public')
 .select('*')
 .eq('slug', slug)
@@ -434,7 +440,7 @@ console.error(error)
 return null
 }
 
-let { data: shopProducts, error: shopProductsError } = await supabase
+let { data: shopProducts, error: shopProductsError } = await db
 .from('shop_products')
 .select('id,name,description,price,currency,compare_at_price,sizes,images,cj_vid,for_sale')
 .eq('site_id', (data as any).id)
@@ -445,7 +451,7 @@ let { data: shopProducts, error: shopProductsError } = await supabase
 // en base, on retombe sur la liste d'avant. AUCUNE boutique ne se vide en
 // attendant l'exécution du SQL — la panne serait pire que la nouveauté.
 if (shopProductsError && /compare_at_price/.test(shopProductsError.message)) {
-const repli = await supabase
+const repli = await db
 .from('shop_products')
 .select('id,name,description,price,currency,sizes,images,cj_vid,for_sale')
 .eq('site_id', (data as any).id)
@@ -464,8 +470,8 @@ signalQueryFailure('fetchSite/shop_products', shopProductsError.message, diagnos
 // modes 2/3 obtiennent un catalogue vide). Seul le SIGNAL est nouveau.
 applyShopProducts(data as any, shopProducts)
 
-await loadCatalogSelections(data as any, diagnostics)
-await loadPodBrandCatalogPrices(data as any, diagnostics)
+await loadCatalogSelections(data as any, diagnostics, db)
+await loadPodBrandCatalogPrices(data as any, diagnostics, db)
 
 return data as Site
 }
@@ -502,7 +508,7 @@ return data as Site
 // transitoire serait pire que d'afficher un prix non reverifie -- le checkout
 // reste de toute facon la seule autorite sur le montant debite.
 // ============================================================
-async function loadPodBrandCatalogPrices(data: any, diagnostics?: string[]) {
+async function loadPodBrandCatalogPrices(data: any, diagnostics?: string[], db: SupabaseClient = supabase) {
 if (data.dropship_type !== 'pod_brand') return
 const designs = Array.isArray(data.pod_designs) ? data.pod_designs : []
 if (designs.length === 0) return
@@ -534,7 +540,7 @@ type PrixPublic = { id: string; price: number; currency: string }
 // ENUMERABLE (`select=*` sans filtre), donc la meme forme en plus petit.
 // Ce chemin lit PAR LISTE D'IDENTIFIANTS -- il les connait deja. Une
 // fonction prend ses ids en parametre et ne s'enumere pas du tout.
-const { data: rows, error } = await supabase
+const { data: rows, error } = await db
 .rpc('prix_publics', { ids })
 if (error) {
 signalQueryFailure('loadPodBrandCatalogPrices/catalog_products', error.message, diagnostics)
@@ -558,9 +564,9 @@ return { ...m, price: r.price, currency: r.currency }
 }))
 }
 
-async function loadCatalogSelections(data: any, diagnostics?: string[]) {
+async function loadCatalogSelections(data: any, diagnostics?: string[], db: SupabaseClient = supabase) {
 if (data.mode === 3 && (data.dropship_type === 'reseller' || data.dropship_type === 'pod_custom')) {
-const { data: catSels, error: catSelsError } = await supabase
+const { data: catSels, error: catSelsError } = await db
 .from('site_catalog_selections')
 .select('id, sell_price, custom_name, custom_description, catalog_product_id, catalog_products:catalog_products_public(name, description, price, currency, images, supplier_id, supplier_product_id, supplier_parent_id, shipping_days_min, shipping_days_max, in_stock, category)')
 .eq('site_id', data.id)

@@ -4,7 +4,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { fetchSite, resolveSiteBaseUrl } from '../themes/shared'
+import { resolveSiteBaseUrl } from '../themes/shared'
+import { lireSite } from '../themes/lireSite'
 import BlocsDePage from '../pages/BlocsDePage'
 import SousPages from '../pages/SousPages'
 import FicheResponsable, { estUneFiche } from '../pages/FicheResponsable'
@@ -59,7 +60,7 @@ function cheminDe(rest: string[]): string {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, rest } = await params
-  const site = await fetchSite(slug)
+  const site = await lireSite(slug)
   if (!site) return { title: 'Page introuvable' }
 
   const page = await fetchPage(site.id, cheminDe(rest))
@@ -99,7 +100,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  */
 export default async function PageDeclaree({ params }: Props) {
   const { slug, rest } = await params
-  const site = await fetchSite(slug)
+  const site = await lireSite(slug)
   if (!site) notFound()
 
   const chemin = cheminDe(rest)

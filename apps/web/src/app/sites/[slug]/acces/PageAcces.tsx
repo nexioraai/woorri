@@ -3,7 +3,7 @@ import { retourValable } from './retour'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { lecteurDuSite } from '@/lib/lecteurDuSite'
 import { resolveSiteBaseUrl } from '../themes/shared'
 import HtmlLang from '../themes/HtmlLang'
 import { lireBlocs } from '../pages/blocs'
@@ -42,6 +42,7 @@ type SitePublic = {
 }
 
 export async function siteDe(slug: string): Promise<SitePublic | null> {
+  const supabase = await lecteurDuSite()
   const { data } = await supabase
     .from('sites_public')
     .select('id,slug,name,primary_color,lang,custom_domain')
@@ -73,6 +74,7 @@ export async function metadonneesAcces(ecran: EcranAcces, { params }: PropsAcces
 }
 
 export default async function PageAcces({ ecran, params, searchParams }: { ecran: EcranAcces } & PropsAcces) {
+  const supabase = await lecteurDuSite()
   const { slug } = await params
   const s = await siteDe(slug)
   if (!s) notFound()

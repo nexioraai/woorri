@@ -150,7 +150,9 @@ describe('M2-03 / M2-04 — 🔒 CLIQUET : plus aucun litteral sur ces surfaces'
     // Verifier la seule PRESENCE du prop ne suffit pas : une mutation
     // `currency={undefined}` a survecu a une premiere version de ce test.
     // On exige donc que l'AUTORITE soit appelee, pas qu'un attribut existe.
-    for (const p of ['src/app/sites/[slug]/page.tsx', 'src/app/preview/[slug]/page.tsx']) {
+    // 2026-11-15 — `preview/[slug]/page.tsx` ne monte plus la banniere : il ne
+    // rend plus de copie du site (cookie d'apercu puis `/sites/<slug>`).
+    for (const p of ['src/app/sites/[slug]/page.tsx']) {
       const src = lire(p);
       const balise = src.match(/<PromoBanner\b[^>]*\/>/)![0];
       expect(balise, `${p} / labels`).toMatch(/\blabels=\{cartLabels\}/);
