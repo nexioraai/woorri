@@ -408,6 +408,58 @@ where etape = 'regeneration'
 
 Le **nombre** de régénérations pendant la fenêtre reste **UNKNOWN** tant que ces deux requêtes n'ont pas été lancées.
 
+### 8.3 bis Résultats en production (propriétaire, 2026-11-15 17:47 Toronto)
+
+**Requête des œuvres re-clées : 8 lignes.**
+
+| id | created_at | cree_le (rang 1) | écart |
+|---|---|---|---|
+| 56dbd09d-4ebc-46a6-ac37-4762cfb43847 | 2026-10-14 12:11:28+00 | 2026-10-14 12:31:13+00 | 00:19:45 |
+| b3a37d92-5653-429f-94a1-47c629f4e97c | 2026-10-15 08:48:11+00 | 2026-10-15 09:01:18+00 | 00:13:06 |
+| 38071852-5578-46a3-8e10-5420ca16e0d3 | 2026-10-15 20:51:09+00 | 2026-10-15 21:03:18+00 | 00:12:09 |
+| fe0f539b-a09f-4071-b699-6117789bfcdc | 2026-10-15 21:32:58+00 | 2026-10-15 22:01:19+00 | 00:28:20 |
+| 6560ff75-f45f-4c20-b5d6-8a2df2c0e887 | 2026-10-15 22:30:12+00 | 2026-10-15 22:58:18+00 | 00:28:05 |
+| bac4579f-c124-4548-8641-9fd179eb6d48 | 2026-10-19 21:14:17+00 | 2026-10-19 21:42:56+00 | 00:28:38 |
+| fa0ede2c-8db9-40eb-9fad-8ed174c14bfe | 2026-11-01 23:28:01+00 | 2026-11-01 23:49:47+00 | 00:21:45 |
+| d09d921d-e82f-4661-9c12-df06a63358cc | 2026-11-01 23:14:08+00 | 2026-11-01 23:50:18+00 | 00:36:09 |
+
+**Requête des régénérations saines pendant la fenêtre :** `count = 0`.
+- Contrôle de cohérence : sans le filtre de dates, le compte serait au moins 2, à cause des rangs 2 et 4 de `fa0ede2c`. Le 0 montre donc que le filtre a bien porté.
+
+**Limite de la première requête** (relevée par le propriétaire)
+- Le seuil de 10 minutes capture aussi le **temps de génération normal** : la ligne naît, puis sa version de rang 1 s'écrit à la livraison, 12 à 36 minutes plus tard.
+- Les 8 lignes **ne sont donc pas des œuvres re-clées** : ce sont des générations ordinaires.
+- Ce qui tranche, ce sont les dates. La plus récente est du 2026-11-01 23:50 UTC, soit environ 21 h avant `3d4663aa`, et deux jours avant sa mise en production. **Aucune ligne ne tombe dans la fenêtre** (2026-11-03 ≈14:37 → 2026-11-15 00:55 UTC).
+
+### 8.3 ter Ce qui est établi, et l'angle mort restant
+
+| Cas pendant la fenêtre | Signature en base | Couvert par | Résultat |
+|---|---|---|---|
+| Régénération **réussie**, œuvre avec ou sans versions | une version rang 1 `livraison` écrite après la naissance de la ligne, puisque `created_at` est conservé | requête des re-clées | **0** dans la fenêtre [OBSERVÉ-PROD] |
+| Échec par non-convergence (A), œuvre **avec** versions | versions orphelines | relevé §6 (0 orphelin) + clé étrangère posée sans refus | **0** [OBSERVÉ-PROD] |
+| Échec par non-convergence (A), œuvre **sans** version | ligne re-clé, `refusee`, `document` vide, **aucune version** | **aucune des requêtes** | **UNKNOWN** |
+
+La requête des régénérations saines ne ferme aucun angle mort. Elle confirme seulement qu'aucune régénération n'a suivi le chemin sain pendant la fenêtre, ce qui était attendu.
+
+**L'angle mort restant**
+- Ce sont les œuvres nées **avant** l'arrivée des versions (`5574cbb5`, 2026-11-02 00:19 UTC) et qui portent aujourd'hui `refusee` sans aucune version.
+- La table n'a pas de colonne de dernière modification. Pour une telle ligne, on ne distingue donc pas un échec d'origine d'un échec de régénération.
+- La requête ci-dessous liste les candidates. **Si elle rend 0 ligne, le cas est fermé** et le nombre d'utilisateurs affectés est établi à **0**. Si elle rend des lignes, il faut les examiner une à une (`nom`, `diagnostics`, `sections_acquises`).
+
+```sql
+select g.id, g.created_at, g.nom, g.statut, g.diagnostics
+from public.app_generations g
+where g.created_at < '2026-11-02 00:20+00'
+  and g.statut = 'refusee'
+  and not exists (select 1 from public.app_generation_versions v where v.generation_id = g.id)
+order by g.created_at;
+```
+
+**Verdict d'étape :**
+- **0** régénération réussie a subi le défaut, **0** échec sur une œuvre versionnée [OBSERVÉ-PROD].
+- L'échec sur une œuvre sans version reste **UNKNOWN**, en attente de la requête ci-dessus.
+- Le dossier est clos sous cette seule réserve.
+
 ### 8.4 Effet sur la réparation déployée [LU]
 
 - **Aucun changement nécessaire.** La réparation (`idOeuvre = idExistant !== '' ? idExistant : randomUUID()`, `REPARATION_REGENERATION.md`) rétablit pour la régénération le comportement d'avant `3d4663aa` : l'identifiant reste le même.
