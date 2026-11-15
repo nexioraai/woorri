@@ -241,12 +241,45 @@ Résultat :
 - `SQL_VERSIONS` (`journal.ts:716`) n'a aucun appelant [LU].
 - Le fichier de migration est donc la seule source de cette contrainte, tant qu'on ne décide pas d'aligner le DDL.
 
+
+### Application en production — 2026-11-15 [OBSERVÉ-PROD, captures du propriétaire]
+
+- **Qui :** le propriétaire, dans l'éditeur SQL Supabase, projet `nexiora-ai`, branche `main` (PRODUCTION). Je n'ai rien appliqué moi-même.
+- **Code servi à ce moment-là :** `e233a4b` (déploiement `dpl_38xn8tN26ohba4F2npcbcnEnPrNv`). L'ordre de déploiement est donc respecté : code d'abord, clé ensuite.
+- **Source :** les heures viennent de l'horloge macOS visible sur chaque capture, à la minute près.
+
+| Heure | Bloc | Résultat affiché | Lecture |
+|---|---|---|---|
+| 17:18 | 3a (contrôle) | `Success. No rows returned` (0 ligne) | aucune clé étrangère à cet instant |
+| 17:19 | 3b (comptes) | `oeuvres = 75`, `versions = 51` | comptes de référence |
+| 17:19 | **4 (annulation)** | `Success. No rows returned` | lancé hors séquence ; `drop constraint if exists` sans effet sur les données |
+| 17:20 | 1 (orphelins) | `orphelins = 0` | conforme, la pose est permise |
+| 17:20 | 2 (migration) | `Success. No rows returned` | conforme, pas de « MIGRATION ARRÊTÉE » |
+| 17:23 | 3a (contrôle) | 1 ligne : `app_generation_versions_generation_fk`, `FOREIGN KEY (generation_id) REFERENCES app_generations(id) ON UPDATE …` | **clé posée** |
+| 17:24 | 3b (comptes) | `oeuvres = 75`, `versions = 51` | **identiques à 17:19 : aucune donnée touchée** |
+
+**Lecture de la séquence.** Le premier 3a (17:18) et l'annulation (17:19) sont antérieurs à la migration de 17:20. Avant cette migration, la clé n'existait pas. L'annulation n'a donc rien retiré. L'ordre exact du 3a et de l'annulation dans la même minute ne change rien à l'état final. [DÉDUIT des heures]
+
+**Verdict :** la clé étrangère est **posée en production** [OBSERVÉ-PROD] et les données sont **inchangées** (75 / 51, avant et après) [OBSERVÉ-PROD].
+
+**Réserve sur la définition.** La colonne `definition` est tronquée à l'écran après `ON UPDATE`. Les mots `RESTRICT` et `ON DELETE RESTRICT` ne sont **pas visibles**.
+- Ce qui la rend très probable [DÉDUIT] : le nom est celui de la migration, il n'y a qu'une seule clé, et le seul texte qui la crée dit `restrict` dans les deux sens.
+- La preuve directe tient en une requête de lecture, rendue `confupdtype = r`, `confdeltype = r` si c'est bon :
+  `select confupdtype, confdeltype from pg_constraint where conname = 'app_generation_versions_generation_fk';`
+
+**Non observé en production [UNKNOWN] :** le refus effectif d'un changement d'identifiant (essai 4 du tableau local). On ne le provoque pas sur des données réelles.
+
+**Annulation disponible :** `app_generation_versions_fk_generation_annulation.sql` (bloc 4). Elle n'est **pas** à lancer.
+
 ---
 
 ## Ce qui n'a pas été fait (périmètre)
 
 - Bouton « Régénérer » **non rouvert**.
-- **Aucune** donnée réécrite en base. **Aucune** migration appliquée en production. **Aucun** déploiement, **aucun** push.
+- **Aucune** donnée réécrite en base.
+- **Aucune** migration appliquée par moi. Au moment du rapport, il n'y avait eu aucun déploiement ni aucun push. Ensuite, sur validation du propriétaire :
+  - le code a été déployé (`e233a4b`) ;
+  - le propriétaire a lui-même posé la clé (voir « Application en production »).
 - Les quatre trous de la trace : **non traités**.
 - Scénario B : la carte « refusee » sans nom ajoutée à côté de l'œuvre (`D:548-557`, chemin `catch`) est **inchangée**, comme demandé. Elle reste un comportement discutable, consigné ici.
 
