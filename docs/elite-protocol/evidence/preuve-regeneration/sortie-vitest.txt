@@ -1,0 +1,15 @@
+
+ RUN  v4.1.11 /private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/wt-main/apps/web
+
+ ✓ src/app/api/generateur/direct/__tests__/preuve-regeneration.test.ts > PREUVE — régénération qui échoue > scénario A_non_convergence 778ms
+stderr | src/app/api/generateur/direct/__tests__/preuve-regeneration.test.ts > PREUVE — régénération qui échoue > scénario B_erreur_fournisseur
+[direct] la boucle a jete apres 0 ms — 503 {"error":{"message":"Service unavailable"}}
+
+ ✓ src/app/api/generateur/direct/__tests__/preuve-regeneration.test.ts > PREUVE — régénération qui échoue > scénario B_erreur_fournisseur 667ms
+ ✓ src/app/api/generateur/direct/__tests__/preuve-regeneration.test.ts > PREUVE — régénération qui échoue > scénario C_regeneration_reussie 1276ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  12:19:59
+   Duration  3.84s (transform 722ms, setup 24ms, import 988ms, tests 2.72s, environment 0ms)
+
