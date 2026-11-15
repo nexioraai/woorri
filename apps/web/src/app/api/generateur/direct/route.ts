@@ -543,7 +543,9 @@ export async function POST(req: Request) {
     // une ligne écrite survit à un canal de notification en panne.
     console.error(`[direct] la boucle a jete apres ${String(Date.now() - debut)} ms — ${message}`)
     try {
-      await supabaseAdmin.from(TABLE_GENERATIONS).insert({
+      // L'ERREUR RENDUE EST LUE (2026-11-15) : `supabase-js` ne lève pas,
+      // le `catch` ci-dessous ne voyait donc jamais une insertion refusée.
+      const trace = await supabaseAdmin.from(TABLE_GENERATIONS).insert({
         owner_id: proprietaire,
         demande,
         moteur: 'direct',
@@ -553,6 +555,9 @@ export async function POST(req: Request) {
         diagnostics: [`la construction a ete interrompue — ${message.slice(0, 300)}`],
         sections_acquises: { lectureBrief, deploiement },
       })
+      if (trace.error !== null) {
+        console.error(`[direct] trace de l'echec non ecrite dans ${TABLE_GENERATIONS} — ${trace.error.message}`)
+      }
     } catch {
       /* le journal peut manquer ; l'alerte, elle, doit partir quand meme */
     }
@@ -603,7 +608,21 @@ export async function POST(req: Request) {
   // pas, on la precede. C'est le seul moyen que le document et la base
   // portent le MEME identifiant -- sinon la porte d'une oeuvre nommerait une
   // autre oeuvre, et personne n'entrerait jamais.
-  const idOeuvre = randomUUID()
+  //
+  // ── UNE RÉGÉNÉRATION GARDE L'IDENTIFIANT DE L'ŒUVRE (2026-11-15).
+  //
+  // Défaut prouvé (docs/elite-protocol/PREUVE_REGENERATION.md) : un UUID
+  // neuf était tiré À CHAQUE génération, puis écrit par `update` sur
+  // l'ANCIENNE ligne — la clé primaire changeait. Les versions restaient
+  // rattachées à l'ancien identifiant, que plus aucune ligne ne portait :
+  // aperçu 404, historique vide, retour impossible.
+  //
+  // La raison d'être de l'identifiant tiré ici reste entière — la porte le
+  // cuit, le schéma publié (`nomSchemaOeuvre`) et les comptes
+  // (`app_metadata.oeuvre`) le portent. C'est précisément pourquoi une
+  // régénération doit cuire l'identifiant EXISTANT : un identifiant neuf
+  // fermerait la porte à tous les comptes déjà ouverts sur cette œuvre.
+  const idOeuvre = idExistant !== '' ? idExistant : randomUUID()
   const politiquesDeLOeuvre = emettrePolitiquesSql(entitesCourantes, idOeuvre)
 
   // ── LE TARIF DE L'HEURE OÙ L'APPEL A EU LIEU (2026-11-02).
@@ -805,16 +824,58 @@ export async function POST(req: Request) {
   // La version, elle, s'AJOUTE dans les deux cas — c'est ce qui rend le
   // retour possible, et c'est pourquoi l'ancienne version n'est jamais
   // écrasée : elle garde ses fichiers, intacts.
+  //
+  // ── UNE RÉGÉNÉRATION QUI ÉCHOUE NE TOUCHE PAS À L'ŒUVRE (2026-11-15).
+  //
+  // La boîte de confirmation promet : « La version actuelle est conservée ».
+  // Elle ne l'était pas : la charge d'échec portait `document: null` et
+  // `statut: refusee`, et l'œuvre livrée disparaissait de l'écran.
+  //
+  // En échec de régénération, on n'écrit donc que la TRACE de la tentative
+  // (coût, durée, jetons, tours, diagnostics) — jamais `document`, `statut`
+  // ni `ok`, qui décrivent l'œuvre livrée. Que la trace de la tentative
+  // remplace celle de la génération précédente est un défaut CONNU et
+  // séparé (ETUDE_LANGSMITH.md §2e, trou 4) : il n'est pas traité ici.
+  const COLONNES_DE_L_OEUVRE = new Set(['document', 'statut', 'ok'])
+  const charge: Record<string, unknown> =
+    idExistant !== '' && !resultat.ok
+      ? Object.fromEntries(Object.entries(ligne).filter(([cle]) => !COLONNES_DE_L_OEUVRE.has(cle)))
+      : ligne
   const ecrit =
     idExistant === ''
-      ? await supabaseAdmin.from(TABLE_GENERATIONS).insert(ligne).select('id').maybeSingle()
+      ? await supabaseAdmin.from(TABLE_GENERATIONS).insert(charge).select('id').maybeSingle()
       : await supabaseAdmin
           .from(TABLE_GENERATIONS)
-          .update(ligne)
+          .update(charge)
           .eq('id', idExistant)
           .eq('owner_id', proprietaire)
           .select('id')
           .maybeSingle()
+
+  // ── L'ÉCRITURE EST LUE, PLUS SEULEMENT LANCÉE (2026-11-15).
+  //
+  // `supabase-js` NE LÈVE PAS sur une contrainte violée : il REND
+  // `{ error }`. Cette route ne regardait jamais la valeur rendue — une
+  // écriture refusée (par `app_generations_publie_a_document`, par exemple)
+  // passait pour réussie, et l'écran annonçait une version qui n'existait
+  // nulle part. Zéro ligne touchée sans erreur (ligne d'un autre, ou
+  // supprimée entre-temps) est le même échec : rien n'a été enregistré.
+  if (ecrit.error !== null || ecrit.data === null) {
+    const cause = ecrit.error?.message ?? 'aucune ligne écrite'
+    console.error(`[direct] ecriture refusee dans ${TABLE_GENERATIONS} (${idOeuvre}) — ${cause}`)
+    await alerter({
+      sujet: 'oeuvre',
+      sujetId: idOeuvre,
+      motif: 'la génération a abouti mais sa ligne n’a pas pu être écrite',
+      etape: 'ecriture',
+      detail: cause,
+      coutUsd: Number(coutUsd.toFixed(4)),
+    }).catch(() => undefined)
+    const phrase =
+      'Le résultat n’a pas pu être enregistré. ' +
+      (idExistant !== '' ? 'Votre version actuelle n’a pas été modifiée.' : 'Rien n’a été conservé.')
+    return { ok: false as const, error: phrase, motif: phrase, coutUsd, dureeMs }
+  }
 
   // ── LA LIVRAISON EST UNE VERSION, ET C'EST CE QUI REND L'ANNULATION
   // POSSIBLE (lot 1 de la modification, 2026-11-01).
@@ -829,6 +890,24 @@ export async function POST(req: Request) {
   // ET SON ÉCHEC NE FAIT PAS ÉCHOUER LA LIVRAISON : l'œuvre est payée et
   // écrite ; perdre son historique est regrettable, perdre l'œuvre serait
   // pire. On le DIT en journal plutôt que de le taire.
+  //
+  // ── CHAQUE ÉCRITURE DE L'HISTORIQUE EST LUE (2026-11-15).
+  //
+  // Ces écritures ne font toujours pas échouer la livraison (décision
+  // ci-dessus, inchangée) — mais une écriture refusée n'est plus muette :
+  // elle part au journal du serveur ET en alerte. Et le pointeur ne bouge
+  // plus vers un rang qui n'a pas été écrit : l'écran dirait « actuelle »
+  // sur une version qui n'existe pas.
+  const direEchecHistorique = async (quoi: string, cause: string): Promise<void> => {
+    console.error(`[versions] ${quoi} pour ${idOeuvre} — ${cause}`)
+    await alerter({
+      sujet: 'oeuvre',
+      sujetId: idOeuvre,
+      motif: `historique : ${quoi}`,
+      etape: 'ecriture',
+      detail: cause,
+    }).catch(() => undefined)
+  }
   if (resultat.ok && ecrit.data?.id !== undefined) {
     const version: VersionDocument = {
       forme: 'document',
@@ -844,6 +923,11 @@ export async function POST(req: Request) {
       .from(TABLE_VERSIONS)
       .select('rang')
       .eq('generation_id', ecrit.data.id)
+    // UN RANG CALCULÉ SUR UNE LECTURE RATÉE SERAIT FAUX : sans les rangs
+    // existants, on écrirait « 1 » par-dessus une histoire. On s'arrête.
+    if (tous.error !== null) {
+      await direEchecHistorique('rangs illisibles, version non écrite', tous.error.message)
+    } else {
     const rangsVus = (tous.data ?? []).map((x: { rang: number }) => Number(x.rang))
     const rangNeuf = Math.max(0, ...rangsVus) + 1
     const vEcrit = await supabaseAdmin.from(TABLE_VERSIONS).insert({
@@ -854,8 +938,8 @@ export async function POST(req: Request) {
       etat: version,
     })
     if (vEcrit.error !== null) {
-      console.error('[versions] rang', rangNeuf, 'non ecrit pour', ecrit.data.id, vEcrit.error)
-    }
+      await direEchecHistorique(`rang ${String(rangNeuf)} non écrit`, vEcrit.error.message)
+    } else {
     // ── LE POINTEUR SUIT LE TRAVAIL (2026-11-02).
     //
     // Sans cette ligne, régénérer DEPUIS une version ancienne laisserait le
@@ -865,16 +949,28 @@ export async function POST(req: Request) {
     //
     // L'HISTORIQUE RESTE LINÉAIRE : la neuve s'ajoute EN FIN de liste et le
     // pointeur s'y place. Pas de branche.
-    await supabaseAdmin
+    const pointeur = await supabaseAdmin
       .from(TABLE_GENERATIONS)
       .update({ version_courante: rangNeuf })
       .eq('id', ecrit.data.id)
       .eq('owner_id', proprietaire)
+    if (pointeur.error !== null) {
+      await direEchecHistorique(`pointeur non déplacé vers le rang ${String(rangNeuf)}`, pointeur.error.message)
+    }
 
     // LA PURGE EN DERNIER, ET LE RANG 1 N'EN FAIT JAMAIS PARTIE (EP-315).
     const aPurger = rangsAPurger([...rangsVus, rangNeuf])
     if (aPurger.length > 0) {
-      await supabaseAdmin.from(TABLE_VERSIONS).delete().eq('generation_id', ecrit.data.id).in('rang', aPurger)
+      const purge = await supabaseAdmin
+        .from(TABLE_VERSIONS)
+        .delete()
+        .eq('generation_id', ecrit.data.id)
+        .in('rang', aPurger)
+      if (purge.error !== null) {
+        await direEchecHistorique(`purge des rangs ${aPurger.join(', ')} refusée`, purge.error.message)
+      }
+    }
+    }
     }
   }
 
