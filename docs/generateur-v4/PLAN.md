@@ -1,5 +1,7 @@
 # Plan V4 « assembler » — progression
 
+> **⏸ EN PAUSE depuis le 2026-11-14, décision du propriétaire** (« pas de résultat concret »). État exact, défauts et pistes : [`RAPPORT-PAUSE-2026-11-14.md`](RAPPORT-PAUSE-2026-11-14.md). Ne pas reprendre sans nouvelle instruction.
+
 Source de vérité du plan de génération V4 (propriétaire + Claude Code). Mise à
 jour à chaque étape, avec le commit qui la ferme. Règle : toute application de
 preuve se génère **par l'interface**, déposée par le propriétaire.
