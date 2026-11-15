@@ -1,0 +1,96 @@
+#!/bin/zsh
+# Essai local de app_generation_attempts.sql — Postgres jetable, port 5498, aucune base réelle.
+# Schéma de départ = DDL versionné de journal.ts (ddl.sql, extrait par extraire-ddl.mts)
+# + la clé étrangère des versions, POSÉE EN PRODUCTION le 2026-11-15.
+set -u
+ICI=${0:A:h}
+DEPOT=$1
+SQLD=$DEPOT/apps/web/supabase/sql
+MIG=$SQLD/app_generation_attempts.sql
+ANN=$SQLD/app_generation_attempts_annulation.sql
+FKV=$SQLD/app_generation_versions_fk_generation.sql
+DATA=$ICI/data-tentatives
+rm -rf $DATA
+initdb -D $DATA -U essai --auth=trust >/dev/null
+pg_ctl -D $DATA -o "-p 5498 -k $ICI" -l $ICI/pg-tentatives.log start >/dev/null
+sleep 2
+Q=(psql -h $ICI -p 5498 -U essai -d postgres -v ON_ERROR_STOP=1 -X -q)
+QA=(psql -h $ICI -p 5498 -U anon -d postgres -v ON_ERROR_STOP=1 -X -q)
+
+etape() { print -- "\n### $1" }
+refuse() {
+  local lib=$1; shift
+  if "${Q[@]}" -c "$*" 2>$ICI/err.txt; then print "ÉCHEC DE L'ESSAI : « $lib » a été ACCEPTÉ"; else print "refusé comme attendu ($lib) : $(grep -m1 ERROR $ICI/err.txt)"; fi
+}
+comptes() { print "œuvres=$("${Q[@]}" -At -c 'select count(*) from public.app_generations') versions=$("${Q[@]}" -At -c 'select count(*) from public.app_generation_versions')" }
+G=11111111-1111-1111-1111-111111111111
+T="insert into public.app_generation_attempts (generation_id, rang, nature, issue, debut_le, fin_le) values"
+
+etape "0. Rôles Supabase factices, privilèges par défaut comme chez Supabase, schéma versionné + clé des versions"
+"${Q[@]}" -c "create role anon login; create role authenticated; alter default privileges in schema public grant all on tables to anon, authenticated; grant usage on schema public to anon, authenticated;"
+"${Q[@]}" -f $ICI/ddl.sql >/dev/null && print "DDL posé"
+"${Q[@]}" -c "insert into public.app_generations (id, demande, statut, document) values ('$G', 'essai', 'livree', '{}'::jsonb);
+insert into public.app_generation_versions (generation_id, rang, etat) values ('$G', 1, '{}'::jsonb), ('$G', 2, '{}'::jsonb);"
+"${Q[@]}" -f $FKV && print "clé des versions posée"
+print "avant migration : $(comptes)"
+"${Q[@]}" -At -c "select md5(string_agg(t::text, '|' order by t.id)) from public.app_generations t" > $ICI/empreinte-avant.txt
+"${Q[@]}" -At -c "select md5(string_agg(v::text, '|' order by v.id)) from public.app_generation_versions v" >> $ICI/empreinte-avant.txt
+
+etape "1. Migration"
+"${Q[@]}" -f $MIG && print "migration appliquée"
+print "table vide à la naissance : $("${Q[@]}" -At -c 'select count(*) from public.app_generation_attempts') ligne(s)"
+
+etape "2. Idempotence : relancer la migration"
+"${Q[@]}" -f $MIG && print "relancée sans erreur"
+
+etape "3. L'existant n'a pas bougé (comptes ET contenu, empreinte md5 ligne à ligne)"
+print "après migration : $(comptes)"
+"${Q[@]}" -At -c "select md5(string_agg(t::text, '|' order by t.id)) from public.app_generations t" > $ICI/empreinte-apres.txt
+"${Q[@]}" -At -c "select md5(string_agg(v::text, '|' order by v.id)) from public.app_generation_versions v" >> $ICI/empreinte-apres.txt
+if cmp -s $ICI/empreinte-avant.txt $ICI/empreinte-apres.txt; then print "empreintes identiques : aucune ligne réécrite"; else print "ÉCHEC DE L'ESSAI : une ligne existante a changé"; fi
+
+etape "4. Ce qui doit passer"
+"${Q[@]}" -c "$T ('$G', 1, 'generation', 'livree', now() - interval '80 seconds', now());" && print "tentative 1 (generation / livree) : acceptée"
+"${Q[@]}" -c "$T ('$G', 2, 'regeneration', 'non_convergee', now() - interval '20 seconds', now());" && print "tentative 2 (regeneration / non_convergee) : acceptée"
+print "colonnes par défaut de la 2 : $("${Q[@]}" -At -c "select cout_usd||' '||tirages||' '||trace::text||' '||trace_tronquee||' '||coalesce(consigne,'NULL') from public.app_generation_attempts where rang = 2")"
+
+etape "5. AJOUT SEUL : toute mise à jour est refusée"
+refuse "update trace" "update public.app_generation_attempts set trace = '{\"x\":1}' where rang = 1"
+refuse "update cout" "update public.app_generation_attempts set cout_usd = 0 where rang = 2"
+
+etape "6. Intégrité"
+refuse "tentative sans œuvre" "$T (gen_random_uuid(), 1, 'generation', 'livree', now(), now())"
+refuse "rang en double" "$T ('$G', 2, 'regeneration', 'livree', now(), now())"
+refuse "fin avant début" "$T ('$G', 3, 'regeneration', 'livree', now(), now() - interval '1 second')"
+refuse "issue inconnue" "$T ('$G', 3, 'regeneration', 'peut_etre', now(), now())"
+refuse "nature inconnue" "$T ('$G', 3, 'retouche', 'livree', now(), now())"
+refuse "rang zéro" "$T ('$G', 0, 'regeneration', 'livree', now(), now())"
+# DISCRIMINANT : une œuvre SANS version, pour que seule la clé des TENTATIVES puisse refuser.
+G2=22222222-2222-2222-2222-222222222222
+"${Q[@]}" -c "insert into public.app_generations (id, demande) values ('$G2', 'sans version'); $T ('$G2', 1, 'generation', 'non_convergee', now(), now());" && print "œuvre $G2 : 0 version, 1 tentative"
+refuse "changer l'identifiant d'une œuvre qui a des tentatives (sans version)" "update public.app_generations set id = gen_random_uuid() where id = '$G2'"
+refuse "supprimer une œuvre qui a des tentatives (sans version)" "delete from public.app_generations where id = '$G2'"
+"${Q[@]}" -c "delete from public.app_generation_attempts where generation_id = '$G2'; delete from public.app_generations where id = '$G2';" && print "témoin : sans tentative, la même œuvre se supprime (la clé seule refusait)"
+
+etape "7. Fermée au navigateur (rôle anon, privilèges par défaut Supabase)"
+if "${QA[@]}" -c "select count(*) from public.app_generation_attempts" 2>$ICI/err.txt; then print "ÉCHEC DE L'ESSAI : anon LIT la table"; else print "anon refusé : $(grep -m1 ERROR $ICI/err.txt)"; fi
+if "${QA[@]}" -c "$T ('$G', 9, 'generation', 'livree', now(), now())" 2>$ICI/err.txt; then print "ÉCHEC DE L'ESSAI : anon ÉCRIT"; else print "anon refusé en écriture : $(grep -m1 ERROR $ICI/err.txt)"; fi
+print "RLS : $("${Q[@]}" -At -c "select relrowsecurity||' force='||relforcerowsecurity from pg_class where oid = 'public.app_generation_attempts'::regclass")"
+
+etape "8. La suppression reste possible (la rétention appartient au chantier de la purge)"
+"${Q[@]}" -c "delete from public.app_generation_attempts where rang = 2;" && print "suppression d'une tentative : acceptée"
+
+etape "9. Annulation"
+print "à perdre : $("${Q[@]}" -At -c 'select count(*) from public.app_generation_attempts') tentative(s)"
+"${Q[@]}" -f $ANN && print "annulation appliquée ; table présente : $("${Q[@]}" -At -c "select count(*) from pg_class where relname = 'app_generation_attempts'")"
+"${Q[@]}" -f $ANN && print "annulation relancée sans erreur (idempotente)"
+print "après annulation : $(comptes)"
+"${Q[@]}" -At -c "select md5(string_agg(t::text, '|' order by t.id)) from public.app_generations t" > $ICI/empreinte-fin.txt
+"${Q[@]}" -At -c "select md5(string_agg(v::text, '|' order by v.id)) from public.app_generation_versions v" >> $ICI/empreinte-fin.txt
+if cmp -s $ICI/empreinte-avant.txt $ICI/empreinte-fin.txt; then print "empreintes identiques à l'état d'avant la migration"; else print "ÉCHEC DE L'ESSAI : l'annulation a touché l'existant"; fi
+
+etape "10. Ré-application après annulation"
+"${Q[@]}" -f $MIG && print "ré-appliquée ; table vide : $("${Q[@]}" -At -c 'select count(*) from public.app_generation_attempts') ligne(s)"
+
+pg_ctl -D $DATA stop >/dev/null
+print "\nPostgres $(postgres --version | awk '{print $3}') arrêté."

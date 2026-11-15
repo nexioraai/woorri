@@ -212,6 +212,81 @@ Ce point rejoint la liste des chantiers à part.
 
 ## 4. UNKNOWN
 
-- La taille réelle de `sections_acquises` en production (requête au §2.1).
-- L'affichage réel de `/admin/applications` sur une ligne incohérente (§1.3.1) : déduit, pas vu.
+- ~~La taille réelle de `sections_acquises` en production.~~ Relevée le 2026-11-15 (§2.1). La taille **brute** (non compressée) reste non mesurée : `select max(octet_length(sections_acquises::text)) from public.app_generations;`
+- L'affichage réel de `/admin/applications` sur une ligne incohérente (§1.3.1) : déduit, pas vu. Rendu sans objet par §6, puisqu'en échec la ligne n'est plus touchée.
 - Le coût d'un tir de preuve réel.
+
+---
+
+## 6. Réalisation (2026-11-15) — code et migration prêts, NON appliqués en production
+
+Branche `feat/tentatives-generation`, non poussée.
+
+### 6.1 Ce qui a été écrit
+
+| Fichier | Rôle |
+|---|---|
+| `apps/web/supabase/sql/app_generation_attempts.sql` | la migration (SHA-256 `fb18a5cc…94fa`) |
+| `apps/web/supabase/sql/app_generation_attempts_annulation.sql` | son annulation (SHA-256 `256b4ad0…a539`) |
+| `apps/web/src/lib/apps/tentatives.ts` | nom, colonnes, issues, borne de la trace, construction et écriture d'une ligne |
+| `apps/web/src/app/api/generateur/direct/route.ts` | une tentative par issue ; en échec de régénération, la ligne de l'œuvre n'est plus touchée |
+| `apps/web/src/app/api/admin/applications/route.ts` + `admin/applications/page.tsx` | le lecteur : les tentatives de chaque œuvre ; si la table manque, la page le dit |
+| `src/lib/apps/__tests__/tentatives.test.ts` | cliquet : colonnes du module = colonnes du SQL, issues, ajout seul, aucune réécriture de l'existant, borne |
+| `src/app/api/generateur/direct/__tests__/tentatives-comportement.test.ts` | **test permanent** : les 5 suites de l'état des lieux, plus S0 et S6 |
+| `src/app/api/generateur/direct/__tests__/route.test.ts` | son double connaît la nouvelle table |
+
+### 6.2 Écarts au plan validé, à arbitrer s'ils ne conviennent pas
+
+1. **L'issue `erreur_fournisseur` s'appelle `interrompue`.** Le chemin `catch` attrape toute exception de la boucle, pas seulement le fournisseur : le nom ne doit pas affirmer une cause qu'il ne connaît pas.
+2. **Deux colonnes du manque 1, pas une** : `consigne` et `consigne_empreinte`, comme au §2.3. Toutes deux sont nulles et non écrites.
+3. **La génération initiale écrit aussi sa tentative** (`nature generation`). C'est nécessaire pour que la première exécution d'une œuvre ne soit pas la seule sans trace.
+4. **La table refuse les mises à jour par déclencheur**, et non par droits : la clé de service contourne la RLS et les droits ordinaires. La **suppression** reste possible : la rétention appartient au chantier de la purge.
+5. **Une œuvre neuve dont l'écriture est refusée n'a pas de tentative** : elle n'a pas de ligne à laquelle se rattacher (clé étrangère). Son alerte reste sa trace, comme avant.
+
+### 6.3 Preuves
+
+**Le critère du propriétaire** [OBSERVÉ-SIMULATION] : après un échec suivi d'une réussite, il existe 2 tentatives de régénération ; la première garde ses 3 tours et `cout_usd 0.0226`.
+- Test permanent S3 au vert.
+- Relevé à l'identique de l'état des lieux : `evidence/manque4-etat-des-lieux/releves-apres.json`.
+
+**Avant / après, mêmes suites, même harnais** (colonnes de la ligne de l'œuvre changées par la régénération)
+
+| Suite | Avant (`releves.json`) | Après (`releves-apres.json`) | Tentatives après |
+|---|---|---|---|
+| S2 échec | `cout_usd`, `diagnostics`, `duree_ms`, jetons, `sections_acquises`, `tirages` | **aucune** | 2 : `livree` puis `non_convergee`, 3 tours, 0,0226 $ |
+| S3 échec puis réussite | l'échec effacé par la réussite | échec : **aucune** ; réussite : `duree_ms`, `sections_acquises`, `version_courante` | 3 ; l'échec garde 3 tours et 0,0226 $ |
+| S5 boucle qui jette | aucune ; carte `refusee` ajoutée | aucune ; carte `refusee` **gardée** | 2 : `livree` puis `interrompue`, rattachée à l'œuvre |
+
+**Les tests mordent** (mutations, toutes restaurées, octet pour octet) :
+- route d'avant restaurée → 7 tests sur 7 rouges ;
+- ligne de l'œuvre de nouveau écrite en échec → S2 et S3 rouges ;
+- colonne ajoutée au SQL seul → cliquet ① rouge.
+
+**Migration éprouvée en local** [OBSERVÉ-LOCAL] : Postgres 17.11 jetable, schéma = DDL versionné de `journal.ts` + la clé des versions posée en production. Sortie : `essai-migration-tentatives.txt`.
+- La table naît vide. Relance sans erreur.
+- **Empreinte md5 ligne à ligne de l'existant identique** avant migration, après migration et après annulation.
+- Mise à jour d'une tentative : **refusée** par le déclencheur.
+- Refusés : tentative sans œuvre, rang en double, fin avant début, issue ou nature inconnue, rang 0.
+- Changer l'identifiant ou supprimer une œuvre qui a des tentatives : **refusé par la clé des tentatives**. L'essai est discriminant, sur une œuvre sans version. Témoin : sans tentative, la même suppression passe.
+- Rôle `anon` sous privilèges par défaut à la Supabase : lecture et écriture refusées. RLS active et forcée.
+- Suppression d'une tentative : acceptée. Annulation idempotente ; ré-application après annulation : table vide.
+- 0 « ÉCHEC DE L'ESSAI ».
+
+**Vérification** : `npm run verifier` → exit 0, 30 étapes en succès, seul rouge `socle/npx eslint .` (absorbé, préexistant). `npx tsc --noEmit` propre ; `rm -rf .next && npm run build` → exit 0.
+
+Les cinq cliquets du dépôt qui ont mordu en cours de route ont été satisfaits **sans abaisser aucun seuil** :
+- `rpcVersioning` : révocation sur la fonction du déclencheur ;
+- `postgrestProjectionFidelity` : le double du test ⑧ vérifie la projection et le filtre ;
+- `travailleur-isolation` : le nom de la table des œuvres vient de `journal.ts` ;
+- `ep364` : `motifTexte`.
+
+### 6.4 Ordre d'application, et ce qui reste à prouver
+
+1. **Le propriétaire applique** `app_generation_attempts.sql` dans `nexiora-ai / main`. Les comptes de contrôle restent à 75 / 51 (blocs SQL fournis séparément).
+2. **Ensuite seulement**, le code est poussé et déployé. Dans l'ordre inverse, chaque génération partirait en alerte « tentative non écrite ».
+3. **Preuve en production** : une génération neuve faite par l'interface, puis `select … from app_generation_attempts where generation_id = …` doit rendre 1 ligne `generation / livree / version_rang 1`. Coût du tir à annoncer avant ; feu vert requis.
+4. La preuve sur une **régénération réelle** attend la réouverture du bouton, décision du propriétaire.
+
+**Non vérifié :**
+- le rendu de `/admin/applications` avec des tentatives, sans session administrateur ;
+- le comportement sous Postgres de production (version non relevée).

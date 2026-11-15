@@ -1,0 +1,73 @@
+
+### 0. Rôles Supabase factices, privilèges par défaut comme chez Supabase, schéma versionné + clé des versions
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:55: NOTICE:  column "owner_id" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:56: NOTICE:  column "statut" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:57: NOTICE:  column "etape" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:58: NOTICE:  column "sections_acquises" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:59: NOTICE:  column "niveaux_sondes" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:60: NOTICE:  column "document" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:61: NOTICE:  column "battement" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:62: NOTICE:  column "jeton_travailleur" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:63: NOTICE:  column "reprises" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:205: NOTICE:  constraint "app_generations_statut_valide" of relation "app_generations" does not exist, skipping
+DDL posé
+clé des versions posée
+avant migration : œuvres=1 versions=2
+
+### 1. Migration
+psql:/Users/yia/dev/woorri/apps/web/supabase/sql/app_generation_attempts.sql:110: NOTICE:  trigger "app_generation_attempts_ajout_seul" for relation "public.app_generation_attempts" does not exist, skipping
+migration appliquée
+table vide à la naissance : 0 ligne(s)
+
+### 2. Idempotence : relancer la migration
+psql:/Users/yia/dev/woorri/apps/web/supabase/sql/app_generation_attempts.sql:85: NOTICE:  relation "app_generation_attempts" already exists, skipping
+psql:/Users/yia/dev/woorri/apps/web/supabase/sql/app_generation_attempts.sql:88: NOTICE:  relation "app_generation_attempts_par_date" already exists, skipping
+relancée sans erreur
+
+### 3. L'existant n'a pas bougé (comptes ET contenu, empreinte md5 ligne à ligne)
+après migration : œuvres=1 versions=2
+empreintes identiques : aucune ligne réécrite
+
+### 4. Ce qui doit passer
+tentative 1 (generation / livree) : acceptée
+tentative 2 (regeneration / non_convergee) : acceptée
+colonnes par défaut de la 2 : 0.0000 0 {} false NULL
+
+### 5. AJOUT SEUL : toute mise à jour est refusée
+refusé comme attendu (update trace) : ERROR:  app_generation_attempts est en ajout seul : une tentative ne se modifie pas (id 85463a71-8915-4177-afd9-510be9ee201f).
+refusé comme attendu (update cout) : ERROR:  app_generation_attempts est en ajout seul : une tentative ne se modifie pas (id af324b6b-4627-41f1-b270-4672fde124ba).
+
+### 6. Intégrité
+refusé comme attendu (tentative sans œuvre) : ERROR:  insert or update on table "app_generation_attempts" violates foreign key constraint "app_generation_attempts_generation_id_fkey"
+refusé comme attendu (rang en double) : ERROR:  duplicate key value violates unique constraint "app_generation_attempts_rang_unique"
+refusé comme attendu (fin avant début) : ERROR:  new row for relation "app_generation_attempts" violates check constraint "app_generation_attempts_fin_apres_debut"
+refusé comme attendu (issue inconnue) : ERROR:  new row for relation "app_generation_attempts" violates check constraint "app_generation_attempts_issue_check"
+refusé comme attendu (nature inconnue) : ERROR:  new row for relation "app_generation_attempts" violates check constraint "app_generation_attempts_nature_check"
+refusé comme attendu (rang zéro) : ERROR:  new row for relation "app_generation_attempts" violates check constraint "app_generation_attempts_rang_check"
+œuvre 22222222-2222-2222-2222-222222222222 : 0 version, 1 tentative
+refusé comme attendu (changer l'identifiant d'une œuvre qui a des tentatives (sans version)) : ERROR:  update or delete on table "app_generations" violates foreign key constraint "app_generation_attempts_generation_id_fkey" on table "app_generation_attempts"
+refusé comme attendu (supprimer une œuvre qui a des tentatives (sans version)) : ERROR:  update or delete on table "app_generations" violates foreign key constraint "app_generation_attempts_generation_id_fkey" on table "app_generation_attempts"
+témoin : sans tentative, la même œuvre se supprime (la clé seule refusait)
+
+### 7. Fermée au navigateur (rôle anon, privilèges par défaut Supabase)
+anon refusé : ERROR:  permission denied for table app_generation_attempts
+anon refusé en écriture : ERROR:  permission denied for table app_generation_attempts
+RLS : true force=true
+
+### 8. La suppression reste possible (la rétention appartient au chantier de la purge)
+suppression d'une tentative : acceptée
+
+### 9. Annulation
+à perdre : 1 tentative(s)
+annulation appliquée ; table présente : 0
+psql:/Users/yia/dev/woorri/apps/web/supabase/sql/app_generation_attempts_annulation.sql:17: NOTICE:  table "app_generation_attempts" does not exist, skipping
+psql:/Users/yia/dev/woorri/apps/web/supabase/sql/app_generation_attempts_annulation.sql:18: NOTICE:  function public.app_generation_attempts_refuser_mise_a_jour() does not exist, skipping
+annulation relancée sans erreur (idempotente)
+après annulation : œuvres=1 versions=2
+empreintes identiques à l'état d'avant la migration
+
+### 10. Ré-application après annulation
+psql:/Users/yia/dev/woorri/apps/web/supabase/sql/app_generation_attempts.sql:110: NOTICE:  trigger "app_generation_attempts_ajout_seul" for relation "public.app_generation_attempts" does not exist, skipping
+ré-appliquée ; table vide : 0 ligne(s)
+
+Postgres 17.11 arrêté.
