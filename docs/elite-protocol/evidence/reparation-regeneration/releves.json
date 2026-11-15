@@ -1,0 +1,1025 @@
+{
+  "A_non_convergence": {
+    "avant": {
+      "base": {
+        "app_generations": {
+          "nombre_de_lignes": 1,
+          "ligne": {
+            "id": "2865f888-f5b8-423f-894a-1cfb49552ef3",
+            "created_at": "2026-11-15T17:55:34.546Z",
+            "cree_le": "2026-11-15T17:55:34.548Z",
+            "owner_id": "u-1",
+            "demande": "calcule ma facture SNE",
+            "nom": "Facture SNE",
+            "moteur": "direct",
+            "fournisseur": "deepseek",
+            "ok": true,
+            "statut": "livree",
+            "cout_usd": 0.0075,
+            "duree_ms": 757,
+            "jetons_entree": 1200,
+            "jetons_sortie": 3400,
+            "tirages": 1,
+            "diagnostics": [],
+            "version_courante": 1,
+            "document": {
+              "cles": [
+                "fichiers",
+                "schema",
+                "politiques",
+                "entites",
+                "configuration"
+              ],
+              "fichiers": [
+                "index.tsx",
+                "calcul.ts",
+                "systeme/jetons.ts",
+                "systeme/argent.ts",
+                "systeme/ui.tsx",
+                "systeme/donnees.ts"
+              ]
+            },
+            "sections_acquises": {
+              "cles": [
+                "configuration",
+                "lectureBrief",
+                "deploiement",
+                "tours",
+                "jetons",
+                "execution",
+                "vivacite",
+                "couverture",
+                "persistance",
+                "dernierTexte"
+              ],
+              "tours": [
+                {
+                  "rang": 1,
+                  "ok": true,
+                  "motif": null,
+                  "sourceFichiers": null
+                }
+              ],
+              "dernierTexte": null
+            }
+          },
+          "autres_lignes": []
+        },
+        "app_generation_versions": [
+          {
+            "rang": 1,
+            "etape": "livraison",
+            "cout_usd": 0.0075,
+            "fichiers": [
+              "index.tsx",
+              "calcul.ts",
+              "systeme/jetons.ts",
+              "systeme/argent.ts",
+              "systeme/ui.tsx",
+              "systeme/donnees.ts"
+            ]
+          }
+        ]
+      },
+      "ecran": {
+        "apercu_GET_direct_id": {
+          "statut": 200,
+          "type": "text/html; charset=utf-8",
+          "corps": "HTML (11894 car.)"
+        },
+        "carte_mes_applications": [
+          {
+            "statut": "livree",
+            "revoyable": true,
+            "fichiers": 6,
+            "coutUsd": 0.0075
+          }
+        ],
+        "toutes_les_cartes": [
+          {
+            "id": "2865f888-f5b8-423f-894a-1cfb49552ef3",
+            "statut": "livree",
+            "revoyable": true,
+            "nom": "Facture SNE"
+          }
+        ],
+        "historiques_de_chaque_carte": [
+          {
+            "id": "2865f888-f5b8-423f-894a-1cfb49552ef3",
+            "versions": {
+              "versions": [
+                {
+                  "rang": 1,
+                  "etape": "livraison",
+                  "creeIl": "2026-11-15T17:55:34.548Z",
+                  "restaurable": true,
+                  "coutUsd": 0.0075
+                }
+              ],
+              "courante": 1
+            }
+          }
+        ],
+        "historique_GET_version": {
+          "versions": [
+            {
+              "rang": 1,
+              "etape": "livraison",
+              "creeIl": "2026-11-15T17:55:34.548Z",
+              "restaurable": true,
+              "coutUsd": 0.0075
+            }
+          ],
+          "courante": 1
+        }
+      }
+    },
+    "regeneration": {
+      "appels_au_fournisseur": 3,
+      "http_statut": 200,
+      "corps_rendu": {
+        "ok": false,
+        "error": "Non convergé en 3 tours. Le code produit ne s'est pas assemblé (3 essai(s), 0 s).",
+        "motif": "Non convergé en 3 tours. Le code produit ne s'est pas assemblé (3 essai(s), 0 s).",
+        "tours": [
+          {
+            "rang": 1,
+            "fichiers": 1,
+            "ok": false,
+            "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found `EOF`\n   \u001b[38;5;246m╭\u001b[0m\u001b[38;5;246m─\u001b[0m\u001b[38;5;246m[\u001b[0m index.tsx:1:29 \u001b[38;5;246m]\u001b[0m\n   \u001b[38;5;246m│\u001b[0m\n \u001b[38;5;246m1 │\u001b[0m \u001b[38;5;249me\u001b[0m\u001b[38;5;249mx\u001b[0m\u001b[38;5;249mp\u001b[0m\u001b[38;5;249mo\u001b[0m\u001b[38;5;249mr\u001b[0m\u001b[38;5;249mt\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249mc\u001b[0m\u001b[38;5;249mo\u001b[0m\u001b[38;5;249mn\u001b[0m\u001b[38;5;249ms\u001b[0m\u001b[38;5;249mt\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249mt\u001b[0m\u001b[38;5;249mo\u001b[0m\u001b[38;5;249mt\u001b[0m\u001b[38;5;249ma\u001b[0m\u001b[38;5;249ml\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249m=\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249m{\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249ma\u001b[0m\u001b[38;5;249m:\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249m1\u001b[0m\u001b[38;5;249m,\u001b[0m\n \u001b[38;5;240m  │\u001b[0m                             │ \n \u001b[38;5;240m  │\u001b[0m                             ╰─ `}` expected",
+            "tronquee": false,
+            "ms": 2,
+            "source": {
+              "index.tsx": "export const total = { a: 1,"
+            }
+          },
+          {
+            "rang": 2,
+            "fichiers": 1,
+            "ok": false,
+            "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found `EOF`\n   \u001b[38;5;246m╭\u001b[0m\u001b[38;5;246m─\u001b[0m\u001b[38;5;246m[\u001b[0m index.tsx:1:29 \u001b[38;5;246m]\u001b[0m\n   \u001b[38;5;246m│\u001b[0m\n \u001b[38;5;246m1 │\u001b[0m \u001b[38;5;249me\u001b[0m\u001b[38;5;249mx\u001b[0m\u001b[38;5;249mp\u001b[0m\u001b[38;5;249mo\u001b[0m\u001b[38;5;249mr\u001b[0m\u001b[38;5;249mt\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249mc\u001b[0m\u001b[38;5;249mo\u001b[0m\u001b[38;5;249mn\u001b[0m\u001b[38;5;249ms\u001b[0m\u001b[38;5;249mt\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249mt\u001b[0m\u001b[38;5;249mo\u001b[0m\u001b[38;5;249mt\u001b[0m\u001b[38;5;249ma\u001b[0m\u001b[38;5;249ml\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249m=\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249m{\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249ma\u001b[0m\u001b[38;5;249m:\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249m1\u001b[0m\u001b[38;5;249m,\u001b[0m\n \u001b[38;5;240m  │\u001b[0m                             │ \n \u001b[38;5;240m  │\u001b[0m                             ╰─ `}` expected",
+            "tronquee": false,
+            "ms": 1,
+            "source": {
+              "index.tsx": "export const total = { a: 1,"
+            }
+          },
+          {
+            "rang": 3,
+            "fichiers": 1,
+            "ok": false,
+            "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found `EOF`\n   \u001b[38;5;246m╭\u001b[0m\u001b[38;5;246m─\u001b[0m\u001b[38;5;246m[\u001b[0m index.tsx:1:29 \u001b[38;5;246m]\u001b[0m\n   \u001b[38;5;246m│\u001b[0m\n \u001b[38;5;246m1 │\u001b[0m \u001b[38;5;249me\u001b[0m\u001b[38;5;249mx\u001b[0m\u001b[38;5;249mp\u001b[0m\u001b[38;5;249mo\u001b[0m\u001b[38;5;249mr\u001b[0m\u001b[38;5;249mt\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249mc\u001b[0m\u001b[38;5;249mo\u001b[0m\u001b[38;5;249mn\u001b[0m\u001b[38;5;249ms\u001b[0m\u001b[38;5;249mt\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249mt\u001b[0m\u001b[38;5;249mo\u001b[0m\u001b[38;5;249mt\u001b[0m\u001b[38;5;249ma\u001b[0m\u001b[38;5;249ml\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249m=\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249m{\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249ma\u001b[0m\u001b[38;5;249m:\u001b[0m\u001b[38;5;249m \u001b[0m\u001b[38;5;249m1\u001b[0m\u001b[38;5;249m,\u001b[0m\n \u001b[38;5;240m  │\u001b[0m                             │ \n \u001b[38;5;240m  │\u001b[0m                             ╰─ `}` expected",
+            "tronquee": false,
+            "ms": 1,
+            "source": {
+              "index.tsx": "export const total = { a: 1,"
+            }
+          }
+        ],
+        "coutUsd": 0.022572,
+        "dureeMs": 4
+      },
+      "message_ecran_dashboard_213": "Non convergé en 3 tours. Le code produit ne s'est pas assemblé (3 essai(s), 0 s)."
+    },
+    "apres": {
+      "base": {
+        "app_generations": {
+          "nombre_de_lignes": 1,
+          "ligne": {
+            "id": "2865f888-f5b8-423f-894a-1cfb49552ef3",
+            "created_at": "2026-11-15T17:55:34.546Z",
+            "cree_le": "2026-11-15T17:55:34.548Z",
+            "owner_id": "u-1",
+            "demande": "calcule ma facture SNE",
+            "nom": "Facture SNE",
+            "moteur": "direct",
+            "fournisseur": "deepseek",
+            "ok": true,
+            "statut": "livree",
+            "cout_usd": 0.0226,
+            "duree_ms": 4,
+            "jetons_entree": 3600,
+            "jetons_sortie": 10200,
+            "tirages": 3,
+            "diagnostics": [
+              "Non convergé en 3 tours."
+            ],
+            "version_courante": 1,
+            "document": {
+              "cles": [
+                "fichiers",
+                "schema",
+                "politiques",
+                "entites",
+                "configuration"
+              ],
+              "fichiers": [
+                "index.tsx",
+                "calcul.ts",
+                "systeme/jetons.ts",
+                "systeme/argent.ts",
+                "systeme/ui.tsx",
+                "systeme/donnees.ts"
+              ]
+            },
+            "sections_acquises": {
+              "cles": [
+                "configuration",
+                "lectureBrief",
+                "deploiement",
+                "tours",
+                "jetons",
+                "execution",
+                "vivacite",
+                "couverture",
+                "persistance",
+                "dernierTexte"
+              ],
+              "tours": [
+                {
+                  "rang": 1,
+                  "ok": false,
+                  "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found `EOF`\n   \u001b[38;5;246",
+                  "sourceFichiers": [
+                    "index.tsx"
+                  ]
+                },
+                {
+                  "rang": 2,
+                  "ok": false,
+                  "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found `EOF`\n   \u001b[38;5;246",
+                  "sourceFichiers": [
+                    "index.tsx"
+                  ]
+                },
+                {
+                  "rang": 3,
+                  "ok": false,
+                  "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found `EOF`\n   \u001b[38;5;246",
+                  "sourceFichiers": [
+                    "index.tsx"
+                  ]
+                }
+              ],
+              "dernierTexte": "=== index.tsx ===\nexport const total = { a: 1,"
+            }
+          },
+          "autres_lignes": []
+        },
+        "app_generation_versions": [
+          {
+            "rang": 1,
+            "etape": "livraison",
+            "cout_usd": 0.0075,
+            "fichiers": [
+              "index.tsx",
+              "calcul.ts",
+              "systeme/jetons.ts",
+              "systeme/argent.ts",
+              "systeme/ui.tsx",
+              "systeme/donnees.ts"
+            ]
+          }
+        ]
+      },
+      "ecran": {
+        "apercu_GET_direct_id": {
+          "statut": 200,
+          "type": "text/html; charset=utf-8",
+          "corps": "HTML (11894 car.)"
+        },
+        "carte_mes_applications": [
+          {
+            "statut": "livree",
+            "revoyable": true,
+            "fichiers": 6,
+            "coutUsd": 0.0226
+          }
+        ],
+        "toutes_les_cartes": [
+          {
+            "id": "2865f888-f5b8-423f-894a-1cfb49552ef3",
+            "statut": "livree",
+            "revoyable": true,
+            "nom": "Facture SNE"
+          }
+        ],
+        "historiques_de_chaque_carte": [
+          {
+            "id": "2865f888-f5b8-423f-894a-1cfb49552ef3",
+            "versions": {
+              "versions": [
+                {
+                  "rang": 1,
+                  "etape": "livraison",
+                  "creeIl": "2026-11-15T17:55:34.548Z",
+                  "restaurable": true,
+                  "coutUsd": 0.0075
+                }
+              ],
+              "courante": 1
+            }
+          }
+        ],
+        "historique_GET_version": {
+          "versions": [
+            {
+              "rang": 1,
+              "etape": "livraison",
+              "creeIl": "2026-11-15T17:55:34.548Z",
+              "restaurable": true,
+              "coutUsd": 0.0075
+            }
+          ],
+          "courante": 1
+        }
+      }
+    },
+    "identifiants": {
+      "avant": "2865f888-f5b8-423f-894a-1cfb49552ef3",
+      "presents_apres": [
+        "2865f888-f5b8-423f-894a-1cfb49552ef3"
+      ],
+      "ancien_id_encore_present": true
+    }
+  },
+  "B_erreur_fournisseur": {
+    "avant": {
+      "base": {
+        "app_generations": {
+          "nombre_de_lignes": 1,
+          "ligne": {
+            "id": "94fc4669-3b4e-4005-b707-81861879b25b",
+            "created_at": "2026-11-15T17:55:35.205Z",
+            "cree_le": "2026-11-15T17:55:35.205Z",
+            "owner_id": "u-1",
+            "demande": "calcule ma facture SNE",
+            "nom": "Facture SNE",
+            "moteur": "direct",
+            "fournisseur": "deepseek",
+            "ok": true,
+            "statut": "livree",
+            "cout_usd": 0.0075,
+            "duree_ms": 640,
+            "jetons_entree": 1200,
+            "jetons_sortie": 3400,
+            "tirages": 1,
+            "diagnostics": [],
+            "version_courante": 1,
+            "document": {
+              "cles": [
+                "fichiers",
+                "schema",
+                "politiques",
+                "entites",
+                "configuration"
+              ],
+              "fichiers": [
+                "index.tsx",
+                "calcul.ts",
+                "systeme/jetons.ts",
+                "systeme/argent.ts",
+                "systeme/ui.tsx",
+                "systeme/donnees.ts"
+              ]
+            },
+            "sections_acquises": {
+              "cles": [
+                "configuration",
+                "lectureBrief",
+                "deploiement",
+                "tours",
+                "jetons",
+                "execution",
+                "vivacite",
+                "couverture",
+                "persistance",
+                "dernierTexte"
+              ],
+              "tours": [
+                {
+                  "rang": 1,
+                  "ok": true,
+                  "motif": null,
+                  "sourceFichiers": null
+                }
+              ],
+              "dernierTexte": null
+            }
+          },
+          "autres_lignes": []
+        },
+        "app_generation_versions": [
+          {
+            "rang": 1,
+            "etape": "livraison",
+            "cout_usd": 0.0075,
+            "fichiers": [
+              "index.tsx",
+              "calcul.ts",
+              "systeme/jetons.ts",
+              "systeme/argent.ts",
+              "systeme/ui.tsx",
+              "systeme/donnees.ts"
+            ]
+          }
+        ]
+      },
+      "ecran": {
+        "apercu_GET_direct_id": {
+          "statut": 200,
+          "type": "text/html; charset=utf-8",
+          "corps": "HTML (11894 car.)"
+        },
+        "carte_mes_applications": [
+          {
+            "statut": "livree",
+            "revoyable": true,
+            "fichiers": 6,
+            "coutUsd": 0.0075
+          }
+        ],
+        "toutes_les_cartes": [
+          {
+            "id": "94fc4669-3b4e-4005-b707-81861879b25b",
+            "statut": "livree",
+            "revoyable": true,
+            "nom": "Facture SNE"
+          }
+        ],
+        "historiques_de_chaque_carte": [
+          {
+            "id": "94fc4669-3b4e-4005-b707-81861879b25b",
+            "versions": {
+              "versions": [
+                {
+                  "rang": 1,
+                  "etape": "livraison",
+                  "creeIl": "2026-11-15T17:55:35.206Z",
+                  "restaurable": true,
+                  "coutUsd": 0.0075
+                }
+              ],
+              "courante": 1
+            }
+          }
+        ],
+        "historique_GET_version": {
+          "versions": [
+            {
+              "rang": 1,
+              "etape": "livraison",
+              "creeIl": "2026-11-15T17:55:35.206Z",
+              "restaurable": true,
+              "coutUsd": 0.0075
+            }
+          ],
+          "courante": 1
+        }
+      }
+    },
+    "regeneration": {
+      "appels_au_fournisseur": 1,
+      "http_statut": 200,
+      "corps_rendu": {
+        "ok": false,
+        "error": "503 {\"error\":{\"message\":\"Service unavailable\"}}"
+      },
+      "message_ecran_dashboard_213": "503 {\"error\":{\"message\":\"Service unavailable\"}}"
+    },
+    "apres": {
+      "base": {
+        "app_generations": {
+          "nombre_de_lignes": 2,
+          "ligne": {
+            "id": "94fc4669-3b4e-4005-b707-81861879b25b",
+            "created_at": "2026-11-15T17:55:35.205Z",
+            "cree_le": "2026-11-15T17:55:35.205Z",
+            "owner_id": "u-1",
+            "demande": "calcule ma facture SNE",
+            "nom": "Facture SNE",
+            "moteur": "direct",
+            "fournisseur": "deepseek",
+            "ok": true,
+            "statut": "livree",
+            "cout_usd": 0.0075,
+            "duree_ms": 640,
+            "jetons_entree": 1200,
+            "jetons_sortie": 3400,
+            "tirages": 1,
+            "diagnostics": [],
+            "version_courante": 1,
+            "document": {
+              "cles": [
+                "fichiers",
+                "schema",
+                "politiques",
+                "entites",
+                "configuration"
+              ],
+              "fichiers": [
+                "index.tsx",
+                "calcul.ts",
+                "systeme/jetons.ts",
+                "systeme/argent.ts",
+                "systeme/ui.tsx",
+                "systeme/donnees.ts"
+              ]
+            },
+            "sections_acquises": {
+              "cles": [
+                "configuration",
+                "lectureBrief",
+                "deploiement",
+                "tours",
+                "jetons",
+                "execution",
+                "vivacite",
+                "couverture",
+                "persistance",
+                "dernierTexte"
+              ],
+              "tours": [
+                {
+                  "rang": 1,
+                  "ok": true,
+                  "motif": null,
+                  "sourceFichiers": null
+                }
+              ],
+              "dernierTexte": null
+            }
+          },
+          "autres_lignes": [
+            {
+              "id": "f3af8ad3-4362-45e6-bc01-a79840067a61",
+              "statut": "refusee",
+              "ok": false,
+              "demande": "calcule ma facture SNE",
+              "document": null,
+              "diagnostics": [
+                "la construction a ete interrompue — 503 {\"error\":{\"message\":\"Service unavailable\"}}"
+              ]
+            }
+          ]
+        },
+        "app_generation_versions": [
+          {
+            "rang": 1,
+            "etape": "livraison",
+            "cout_usd": 0.0075,
+            "fichiers": [
+              "index.tsx",
+              "calcul.ts",
+              "systeme/jetons.ts",
+              "systeme/argent.ts",
+              "systeme/ui.tsx",
+              "systeme/donnees.ts"
+            ]
+          }
+        ]
+      },
+      "ecran": {
+        "apercu_GET_direct_id": {
+          "statut": 200,
+          "type": "text/html; charset=utf-8",
+          "corps": "HTML (11894 car.)"
+        },
+        "carte_mes_applications": [
+          {
+            "statut": "livree",
+            "revoyable": true,
+            "fichiers": 6,
+            "coutUsd": 0.0075
+          }
+        ],
+        "toutes_les_cartes": [
+          {
+            "id": "94fc4669-3b4e-4005-b707-81861879b25b",
+            "statut": "livree",
+            "revoyable": true,
+            "nom": "Facture SNE"
+          },
+          {
+            "id": "f3af8ad3-4362-45e6-bc01-a79840067a61",
+            "statut": "refusee",
+            "revoyable": false,
+            "nom": null
+          }
+        ],
+        "historiques_de_chaque_carte": [
+          {
+            "id": "94fc4669-3b4e-4005-b707-81861879b25b",
+            "versions": {
+              "versions": [
+                {
+                  "rang": 1,
+                  "etape": "livraison",
+                  "creeIl": "2026-11-15T17:55:35.206Z",
+                  "restaurable": true,
+                  "coutUsd": 0.0075
+                }
+              ],
+              "courante": 1
+            }
+          },
+          {
+            "id": "f3af8ad3-4362-45e6-bc01-a79840067a61",
+            "versions": {
+              "versions": [],
+              "courante": 0
+            }
+          }
+        ],
+        "historique_GET_version": {
+          "versions": [
+            {
+              "rang": 1,
+              "etape": "livraison",
+              "creeIl": "2026-11-15T17:55:35.206Z",
+              "restaurable": true,
+              "coutUsd": 0.0075
+            }
+          ],
+          "courante": 1
+        }
+      }
+    },
+    "identifiants": {
+      "avant": "94fc4669-3b4e-4005-b707-81861879b25b",
+      "presents_apres": [
+        "94fc4669-3b4e-4005-b707-81861879b25b",
+        "f3af8ad3-4362-45e6-bc01-a79840067a61"
+      ],
+      "ancien_id_encore_present": true
+    }
+  },
+  "C_regeneration_reussie": {
+    "avant": {
+      "base": {
+        "app_generations": {
+          "nombre_de_lignes": 1,
+          "ligne": {
+            "id": "fbce576d-2b04-4feb-a650-44235ec170da",
+            "created_at": "2026-11-15T17:55:35.864Z",
+            "cree_le": "2026-11-15T17:55:35.864Z",
+            "owner_id": "u-1",
+            "demande": "calcule ma facture SNE",
+            "nom": "Facture SNE",
+            "moteur": "direct",
+            "fournisseur": "deepseek",
+            "ok": true,
+            "statut": "livree",
+            "cout_usd": 0.0075,
+            "duree_ms": 636,
+            "jetons_entree": 1200,
+            "jetons_sortie": 3400,
+            "tirages": 1,
+            "diagnostics": [],
+            "version_courante": 1,
+            "document": {
+              "cles": [
+                "fichiers",
+                "schema",
+                "politiques",
+                "entites",
+                "configuration"
+              ],
+              "fichiers": [
+                "index.tsx",
+                "calcul.ts",
+                "systeme/jetons.ts",
+                "systeme/argent.ts",
+                "systeme/ui.tsx",
+                "systeme/donnees.ts"
+              ]
+            },
+            "sections_acquises": {
+              "cles": [
+                "configuration",
+                "lectureBrief",
+                "deploiement",
+                "tours",
+                "jetons",
+                "execution",
+                "vivacite",
+                "couverture",
+                "persistance",
+                "dernierTexte"
+              ],
+              "tours": [
+                {
+                  "rang": 1,
+                  "ok": true,
+                  "motif": null,
+                  "sourceFichiers": null
+                }
+              ],
+              "dernierTexte": null
+            }
+          },
+          "autres_lignes": []
+        },
+        "app_generation_versions": [
+          {
+            "rang": 1,
+            "etape": "livraison",
+            "cout_usd": 0.0075,
+            "fichiers": [
+              "index.tsx",
+              "calcul.ts",
+              "systeme/jetons.ts",
+              "systeme/argent.ts",
+              "systeme/ui.tsx",
+              "systeme/donnees.ts"
+            ]
+          }
+        ]
+      },
+      "ecran": {
+        "apercu_GET_direct_id": {
+          "statut": 200,
+          "type": "text/html; charset=utf-8",
+          "corps": "HTML (11894 car.)"
+        },
+        "carte_mes_applications": [
+          {
+            "statut": "livree",
+            "revoyable": true,
+            "fichiers": 6,
+            "coutUsd": 0.0075
+          }
+        ],
+        "toutes_les_cartes": [
+          {
+            "id": "fbce576d-2b04-4feb-a650-44235ec170da",
+            "statut": "livree",
+            "revoyable": true,
+            "nom": "Facture SNE"
+          }
+        ],
+        "historiques_de_chaque_carte": [
+          {
+            "id": "fbce576d-2b04-4feb-a650-44235ec170da",
+            "versions": {
+              "versions": [
+                {
+                  "rang": 1,
+                  "etape": "livraison",
+                  "creeIl": "2026-11-15T17:55:35.865Z",
+                  "restaurable": true,
+                  "coutUsd": 0.0075
+                }
+              ],
+              "courante": 1
+            }
+          }
+        ],
+        "historique_GET_version": {
+          "versions": [
+            {
+              "rang": 1,
+              "etape": "livraison",
+              "creeIl": "2026-11-15T17:55:35.865Z",
+              "restaurable": true,
+              "coutUsd": 0.0075
+            }
+          ],
+          "courante": 1
+        }
+      }
+    },
+    "regeneration": {
+      "appels_au_fournisseur": 1,
+      "http_statut": 200,
+      "corps_rendu": {
+        "ok": true,
+        "id": "fbce576d-2b04-4feb-a650-44235ec170da",
+        "html": "<!doctype html><html lang=\"fr\"><head><meta charset=\"utf-8\" /><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /><title>Facture SNE</title><link rel=\"manifest\" href=\"data:application/manifest+json,%7B%22name%22%3A%22Facture%20SNE%22%2C%22short_name%22%3A%22Facture%20SNE%22%2C%22display%22%3A%22standalone%22%2C%22start_url%22%3A%22.%22%2C%22background_color%22%3A%22%23f7f8fb%22%2C%22theme_color%22%3A%22%232a5bd7%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABZElEQVR42u3SQQ0AAAjEsNODJYRjBwuEd5MqWJbqgbdIgIEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDgYEwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAwEAbCQBgIA4GBMBAGwkBgIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkAYCAyEgTAQBgIDYSAMhIHAQBgIA2EgMBAGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIDAQBsJAGAgDgYEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAMpAIGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIAwEBsJAGAgDwdUCr6bLbgmsov8AAAAASUVORK5CYII%3D%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22any%20maskable%22%7D%2C%7B%22src%22%3A%22data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAFn0lEQVR42u3VMQ0AAAgEsdeDJYRjBw%2BsNKmCWy7VA8BDkQDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADADAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADADAAFQAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAMAAVAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAwAAkADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADADAAFQAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAMQAUAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADADAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADADAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAgJsFHTpRkbhBA2kAAAAASUVORK5CYII%3D%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D\" /><meta name=\"theme-color\" content=\"#2a5bd7\" /><meta name=\"apple-mobile-web-app-capable\" content=\"yes\" /><meta name=\"apple-mobile-web-app-status-bar-style\" content=\"default\" /><meta name=\"apple-mobile-web-app-title\" content=\"Facture SNE\" /><link rel=\"apple-touch-icon\" href=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABZElEQVR42u3SQQ0AAAjEsNODJYRjBwuEd5MqWJbqgbdIgIEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDgYEwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAwEAbCQBgIA4GBMBAGwkBgIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkAYCAyEgTAQBgIDYSAMhIHAQBgIA2EgMBAGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIDAQBsJAGAgDgYEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAMpAIGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIAwEBsJAGAgDwdUCr6bLbgmsov8AAAAASUVORK5CYII=\" /><style>:root{\n--background:#ffffff;--foreground:#171c26;\n--card:#ffffff;--card-foreground:#171c26;\n--popover:#ffffff;--popover-foreground:#171c26;\n--primary:#2a5bd7;--primary-foreground:#ffffff;\n--secondary:#eef0f5;--secondary-foreground:#3a4354;\n--muted:#f7f8fb;--muted-foreground:#67718a;\n--accent:#e7f0ff;--accent-foreground:#1d3f96;\n--destructive:#b3261e;--destructive-foreground:#ffffff;\n--success:#1a7f4e;--success-foreground:#ffffff;\n--warning:#9a6b00;--warning-foreground:#ffffff;\n--border:#e3e7ef;--input:#e3e7ef;--ring:#2a5bd7;\n--sidebar:#f7f8fb;--sidebar-foreground:#171c26;\n--sidebar-primary:#2a5bd7;--sidebar-primary-foreground:#ffffff;\n--sidebar-accent:#e7f0ff;--sidebar-accent-foreground:#1d3f96;\n--sidebar-border:#e3e7ef;--sidebar-ring:#2a5bd7;\n--chart-1:#2a5bd7;--chart-2:#1a7f4e;--chart-3:#9a6b00;--chart-4:#b3261e;--chart-5:#67718a;\n--radius:0.625rem;\n--radius-sm:calc(var(--radius) * 0.6);--radius-md:calc(var(--radius) * 0.8);\n--radius-lg:var(--radius);--radius-xl:calc(var(--radius) * 1.4);\n--text-xs:0.75rem;--text-sm:0.875rem;--text-base:1rem;--text-lg:1.125rem;\n--text-xl:1.25rem;--text-2xl:1.5rem;--text-3xl:1.875rem;\n--vedette:#22303a;--vedette-foreground:#f4f1ea;\n}\nhtml:root[data-style=\"chaleureux\"]{\n--radius:1rem;--primary:#c8552f;--ring:#c8552f;--sidebar-primary:#c8552f;--chart-1:#c8552f;--chart-2:#3e8a60;\n--accent:#f6e3d8;--accent-foreground:#8e3a1f;--sidebar-accent:#eadfd2;--sidebar-accent-foreground:#2b2620;--vedette:#2f3a33;\n}\nhtml:root[data-style=\"institutionnel\"]{\n--radius:0.375rem;--primary:#1d3a6e;--ring:#1d3a6e;--sidebar-primary:#1d3a6e;--chart-1:#1d3a6e;--chart-2:#b8901f;\n--accent:#e6edf7;--accent-foreground:#13284d;--sidebar:#13284d;--sidebar-foreground:#e8eef8;--sidebar-accent:#26487f;\n--sidebar-accent-foreground:#ffffff;--sidebar-border:#13284d;--vedette:#13284d;\n}\nhtml:root[data-style=\"nature\"]{\n--radius:1.25rem;--primary:#2f7d4f;--ring:#2f7d4f;--sidebar-primary:#2f7d4f;--chart-1:#2f7d4f;--chart-2:#c7902b;\n--accent:#e3f1e8;--accent-foreground:#1f5a37;--sidebar:#eef6f0;--sidebar-accent:#d5ebdd;--sidebar-accent-foreground:#1f5a37;\n--sidebar-border:#dcebe1;--vedette:#1f4d34;\n}\nhtml:root[data-fond=\"nuit\"][data-style]{\n--accent:#233250;--accent-foreground:#c7d6ff;--sidebar:#171a21;--sidebar-foreground:#e9ecf2;\n--sidebar-accent:#233250;--sidebar-accent-foreground:#c7d6ff;--sidebar-border:#2c313d;--vedette:#2a3550;\n}\n:root[data-fond=\"beige\"]{\n--background:#f6f1ea;--card:#fbf8f3;--popover:#fbf8f3;--muted:#efe8de;\n--secondary:#ede5da;--accent:#f4e4d8;--border:#e6ddd1;--input:#e6ddd1;\n--sidebar:#f3ede4;--sidebar-border:#e6ddd1;--sidebar-accent:#eadfd2;--sidebar-accent-foreground:#2b2620;\n--foreground:#2b2620;--card-foreground:#2b2620;--muted-foreground:#7a7064;--vedette:#2f3a33;\n}\n:root[data-fond=\"gris\"]{\n--background:#eef0f4;--card:#ffffff;--muted:#e7eaf0;--secondary:#e4e7ee;\n--border:#dde1e9;--input:#dde1e9;--sidebar:#e7eaf0;--sidebar-border:#dde1e9;\n}\n:root[data-fond=\"nuit\"]{\n--background:#14161c;--foreground:#e9ecf2;--card:#1c1f27;--card-foreground:#e9ecf2;\n--popover:#1c1f27;--popover-foreground:#e9ecf2;--muted:#232733;--muted-foreground:#9aa3b5;\n--secondary:#262a35;--secondary-foreground:#c9cfdb;--accent:#233250;--accent-foreground:#c7d6ff;\n--border:#2c313d;--input:#2c313d;--sidebar:#171a21;--sidebar-foreground:#e9ecf2;\n--sidebar-accent:#233250;--sidebar-accent-foreground:#c7d6ff;--sidebar-border:#2c313d;\n--vedette:#2a3550;--vedette-foreground:#f4f1ea;\n}*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--foreground);font-family:system-ui,-apple-system,sans-serif}</style><script>(function(){\ntry{window.localStorage.getItem(\"_\")}catch(e){\nvar M={},S={};\nfunction faux(m){return{getItem:function(k){return k in m?m[k]:null},\nsetItem:function(k,v){m[k]=String(v)},removeItem:function(k){delete m[k]},\nclear:function(){for(var k in m)delete m[k]},\nkey:function(i){return Object.keys(m)[i]||null},\nget length(){return Object.keys(m).length}}}\ntry{Object.defineProperty(window,\"localStorage\",{value:faux(M),configurable:true});\nObject.defineProperty(window,\"sessionStorage\",{value:faux(S),configurable:true})}catch(e2){}}\nfunction montrer(titre,detail){\nvar p=document.createElement(\"div\");\np.setAttribute(\"data-deribfy-erreur\",\"1\");\np.style.cssText=\"padding:18px;font:14px/1.5 system-ui,-apple-system,sans-serif;color:#7f1d1d;background:#fef2f2;border-bottom:2px solid #dc2626\";\nvar h=document.createElement(\"strong\");h.textContent=titre;\nvar d=document.createElement(\"details\");d.style.marginTop=\"8px\";\nvar r=document.createElement(\"summary\");r.textContent=\"Detail technique\";r.style.cursor=\"pointer\";\nvar c=document.createElement(\"pre\");\nc.style.cssText=\"white-space:pre-wrap;font:12px ui-monospace,monospace;margin:8px 0 0\";\nc.textContent=detail;d.appendChild(r);d.appendChild(c);\np.appendChild(h);p.appendChild(d);\n(document.body||document.documentElement).insertBefore(p,(document.body||document.documentElement).firstChild)}\nwindow.__deribfyErreur=function(e){\nmontrer(\"Cette application s'est arretee en cours d'execution.\",\nString((e&&e.message)||e)+\"\\n\\n\"+String((e&&e.stack)||\"\"))};\nwindow.addEventListener(\"error\",function(e){\nmontrer(\"Cette application s'est arretee en cours d'execution.\",\nString(e.message||\"\")+\"\\n\\n\"+String((e.error&&e.error.stack)||\"\"))});\nwindow.addEventListener(\"unhandledrejection\",function(e){\nmontrer(\"Cette application s'est arretee en cours d'execution.\",\nString((e.reason&&e.reason.stack)||e.reason))});\n// LIBELLES ET CHAMPS RELIES (2026-11-12) : mesure sur une vraie generation,\n// aucun <label> n etait relie a son champ - le lecteur d ecran lisait des\n// champs sans nom, et un clic sur le libelle ne placait pas le curseur.\nvar N=0;function lier(){var ls=document.querySelectorAll(\"label:not([for])\");\nfor(var i=0;i<ls.length;i++){var l=ls[i];if(l.querySelector(\"input,select,textarea\"))continue;\nvar c=l.nextElementSibling,k=0,t=null;while(c&&k<2&&!t){if(/^(INPUT|SELECT|TEXTAREA)$/.test(c.tagName))t=c;\nelse if(c.tagName!==\"LABEL\"&&c.querySelector)t=c.querySelector(\"input,select,textarea\");c=c.nextElementSibling;k++}\nif(!t)continue;if(!t.id)t.id=\"deribfy-champ-\"+(++N);l.setAttribute(\"for\",t.id)}\n// Et le libelle ecrit dans un simple <span> juste avant le champ (mesure :\n// c est la forme que le modele ecrit le plus) : il devient son nom.\nvar fs=document.querySelectorAll(\"input,select,textarea\");\nfor(var j=0;j<fs.length;j++){var f=fs[j];if(f.type===\"hidden\"||f.getAttribute(\"aria-label\")||f.getAttribute(\"aria-labelledby\"))continue;\nif(f.labels&&f.labels.length>0)continue;var p=f.previousElementSibling;if(!p||p.querySelector(\"input,select,textarea\"))continue;\nvar x=(p.textContent||\"\").replace(/\\s+/g,\" \").trim();if(x===\"\"||x.length>60)continue;\nif(!p.id)p.id=\"deribfy-libelle-\"+(++N);f.setAttribute(\"aria-labelledby\",p.id)}}\ndocument.addEventListener(\"DOMContentLoaded\",function(){lier();\ntry{new MutationObserver(lier).observe(document.body,{childList:true,subtree:true})}catch(e){}});\n})()</script><script>window.DERIBFY_BASE=Object.freeze({\"url\":\"\",\"clePubliable\":\"\",\"schema\":\"\",\"options\":{\"db\":{\"schema\":\"\"},\"auth\":{\"persistSession\":true}}});</script></head><body><div role=\"status\" style=\"background:#fff4e5;border-bottom:1px solid #f0c48a;color:#7a4a00;padding:10px 14px;font:14px/1.5 system-ui,-apple-system,sans-serif\"><strong>Votre base de données sera créée à la publication.</strong> Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas conservé.</div><div id=\"racine\"></div><script type=\"module\">try{\n//#region calcul.ts\nconst facture = (k) => Math.min(k, 150) * 85 + Math.max(0, k - 150) * 125 + 402;\nfacture(159);\n//#endregion\n\n}catch(e){window.__deribfyErreur&&window.__deribfyErreur(e)}</script></body></html>",
+        "fichiers": 6,
+        "tours": [
+          {
+            "rang": 1,
+            "fichiers": 2,
+            "ok": true,
+            "ms": 642
+          }
+        ],
+        "jetons": [],
+        "execution": {
+          "monteDansSimulateur": true,
+          "erreurs": [],
+          "octetsRendus": 0,
+          "texte": "",
+          "ecransVisites": 0,
+          "ecransDecouverts": 0,
+          "ecransDistincts": 1,
+          "controlesMuets": [],
+          "ecrans": [
+            {
+              "texte": "",
+              "exerce": false
+            }
+          ],
+          "ms": 638
+        },
+        "vivacite": [],
+        "couverture": {
+          "exigences": [
+            {
+              "exigence": "calcule",
+              "cahier": 1,
+              "code": 0,
+              "statut": "absente",
+              "source": "demande"
+            }
+          ],
+          "absentes": [],
+          "muettesDerivees": [
+            {
+              "exigence": "calcule",
+              "cahier": 1,
+              "code": 0,
+              "statut": "absente",
+              "source": "demande"
+            }
+          ],
+          "taux": 0,
+          "ecartes": 0
+        },
+        "persistance": [],
+        "coutUsd": 0.007524,
+        "dureeMs": 642
+      },
+      "message_ecran_dashboard_213": "Nouvelle version créée."
+    },
+    "apres": {
+      "base": {
+        "app_generations": {
+          "nombre_de_lignes": 1,
+          "ligne": {
+            "id": "fbce576d-2b04-4feb-a650-44235ec170da",
+            "created_at": "2026-11-15T17:55:35.864Z",
+            "cree_le": "2026-11-15T17:55:35.864Z",
+            "owner_id": "u-1",
+            "demande": "calcule ma facture SNE",
+            "nom": "Facture SNE",
+            "moteur": "direct",
+            "fournisseur": "deepseek",
+            "ok": true,
+            "statut": "livree",
+            "cout_usd": 0.0075,
+            "duree_ms": 642,
+            "jetons_entree": 1200,
+            "jetons_sortie": 3400,
+            "tirages": 1,
+            "diagnostics": [],
+            "version_courante": 2,
+            "document": {
+              "cles": [
+                "fichiers",
+                "schema",
+                "politiques",
+                "entites",
+                "configuration"
+              ],
+              "fichiers": [
+                "index.tsx",
+                "calcul.ts",
+                "systeme/jetons.ts",
+                "systeme/argent.ts",
+                "systeme/ui.tsx",
+                "systeme/donnees.ts"
+              ]
+            },
+            "sections_acquises": {
+              "cles": [
+                "configuration",
+                "lectureBrief",
+                "deploiement",
+                "tours",
+                "jetons",
+                "execution",
+                "vivacite",
+                "couverture",
+                "persistance",
+                "dernierTexte"
+              ],
+              "tours": [
+                {
+                  "rang": 1,
+                  "ok": true,
+                  "motif": null,
+                  "sourceFichiers": null
+                }
+              ],
+              "dernierTexte": null
+            }
+          },
+          "autres_lignes": []
+        },
+        "app_generation_versions": [
+          {
+            "rang": 1,
+            "etape": "livraison",
+            "cout_usd": 0.0075,
+            "fichiers": [
+              "index.tsx",
+              "calcul.ts",
+              "systeme/jetons.ts",
+              "systeme/argent.ts",
+              "systeme/ui.tsx",
+              "systeme/donnees.ts"
+            ]
+          },
+          {
+            "rang": 2,
+            "etape": "regeneration",
+            "cout_usd": 0.0075,
+            "fichiers": [
+              "index.tsx",
+              "calcul.ts",
+              "systeme/jetons.ts",
+              "systeme/argent.ts",
+              "systeme/ui.tsx",
+              "systeme/donnees.ts"
+            ]
+          }
+        ]
+      },
+      "ecran": {
+        "apercu_GET_direct_id": {
+          "statut": 200,
+          "type": "text/html; charset=utf-8",
+          "corps": "HTML (11894 car.)"
+        },
+        "carte_mes_applications": [
+          {
+            "statut": "livree",
+            "revoyable": true,
+            "fichiers": 6,
+            "coutUsd": 0.0075
+          }
+        ],
+        "toutes_les_cartes": [
+          {
+            "id": "fbce576d-2b04-4feb-a650-44235ec170da",
+            "statut": "livree",
+            "revoyable": true,
+            "nom": "Facture SNE"
+          }
+        ],
+        "historiques_de_chaque_carte": [
+          {
+            "id": "fbce576d-2b04-4feb-a650-44235ec170da",
+            "versions": {
+              "versions": [
+                {
+                  "rang": 1,
+                  "etape": "livraison",
+                  "creeIl": "2026-11-15T17:55:35.865Z",
+                  "restaurable": true,
+                  "coutUsd": 0.0075
+                },
+                {
+                  "rang": 2,
+                  "etape": "regeneration",
+                  "creeIl": "2026-11-15T17:55:36.512Z",
+                  "restaurable": true,
+                  "coutUsd": 0.0075
+                }
+              ],
+              "courante": 2
+            }
+          }
+        ],
+        "historique_GET_version": {
+          "versions": [
+            {
+              "rang": 1,
+              "etape": "livraison",
+              "creeIl": "2026-11-15T17:55:35.865Z",
+              "restaurable": true,
+              "coutUsd": 0.0075
+            },
+            {
+              "rang": 2,
+              "etape": "regeneration",
+              "creeIl": "2026-11-15T17:55:36.512Z",
+              "restaurable": true,
+              "coutUsd": 0.0075
+            }
+          ],
+          "courante": 2
+        }
+      }
+    },
+    "identifiants": {
+      "avant": "fbce576d-2b04-4feb-a650-44235ec170da",
+      "presents_apres": [
+        "fbce576d-2b04-4feb-a650-44235ec170da"
+      ],
+      "ancien_id_encore_present": true
+    }
+  }
+}

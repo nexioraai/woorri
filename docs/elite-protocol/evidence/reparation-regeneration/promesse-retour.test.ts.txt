@@ -1,0 +1,224 @@
+/**
+ * PREUVE — une régénération qui échoue efface-t-elle l'œuvre ?
+ *
+ * Essai d'observation, pas un cliquet. Il appelle les VRAIES poignées de
+ * `main` (27e83891) : POST /api/generateur/direct, GET /direct/[id],
+ * GET /mes-applications, GET /version. Seuls trois bords sont remplacés :
+ *   - l'authentification (un utilisateur fixe) ;
+ *   - Supabase, par une base EN MÉMOIRE À ÉTAT (les écritures d'une poignée
+ *     sont lues par la suivante, comme en production) ;
+ *   - le réseau vers DeepSeek (`fetch` global), au format de sa réponse
+ *     /chat/completions. L'adaptateur `appelerFournisseur` réel s'exécute.
+ * Aucun appel payant, aucune écriture en base réelle.
+ */
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { writeFileSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
+import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
+
+type Ligne = Record<string, unknown>
+const { base } = vi.hoisted(() => ({ base: { tables: new Map<string, Ligne[]>() } }))
+
+vi.mock('@/lib/auth/require-authenticated-user', () => ({
+  requireAuthenticatedUser: () => ({ ok: true, userId: 'u-1', email: 'a@b.c' }),
+}))
+
+/** Base PostgREST minimale À ÉTAT : select/insert/update/delete + eq/neq/in/order. */
+vi.mock('@/lib/supabase-admin', () => {
+  const table = (nom: string): Ligne[] => {
+    if (!base.tables.has(nom)) base.tables.set(nom, [])
+    return base.tables.get(nom)!
+  }
+  const from = (nom: string) => {
+    let op: 'select' | 'insert' | 'update' | 'delete' = 'select'
+    let charge: Ligne | Ligne[] | null = null
+    let colonnes: string | null = null
+    const filtres: ((l: Ligne) => boolean)[] = []
+    const projeter = (l: Ligne): Ligne => {
+      if (colonnes === null || colonnes.trim() === '*') return structuredClone(l)
+      const o: Ligne = {}
+      for (const c of colonnes.split(',').map((x) => x.trim())) o[c] = structuredClone(l[c] ?? null)
+      return o
+    }
+    const executer = (): { data: Ligne[]; error: null } => {
+      const t = table(nom)
+      if (op === 'insert') {
+        const lignes = (Array.isArray(charge) ? charge : [charge!]).map((c) => ({
+          id: randomUUID(),
+          created_at: new Date().toISOString(),
+          cree_le: new Date().toISOString(),
+          ...structuredClone(c),
+        }))
+        t.push(...lignes)
+        return { data: lignes.map(projeter), error: null }
+      }
+      const touchees = t.filter((l) => filtres.every((f) => f(l)))
+      if (op === 'update') {
+        for (const l of touchees) Object.assign(l, structuredClone(charge as Ligne))
+        return { data: touchees.map(projeter), error: null }
+      }
+      if (op === 'delete') {
+        base.tables.set(nom, t.filter((l) => !touchees.includes(l)))
+        return { data: [], error: null }
+      }
+      return { data: touchees.map(projeter), error: null }
+    }
+    const b = {
+      select(c?: string) { colonnes = c ?? '*'; return b },
+      insert(c: Ligne | Ligne[]) { op = 'insert'; charge = c; return b },
+      update(c: Ligne) { op = 'update'; charge = c; return b },
+      delete() { op = 'delete'; return b },
+      eq(k: string, v: unknown) { filtres.push((l) => l[k] === v); return b },
+      neq(k: string, v: unknown) { filtres.push((l) => l[k] !== v); return b },
+      in(k: string, v: unknown[]) { filtres.push((l) => v.includes(l[k])); return b },
+      order() { return b },
+      limit() { return b },
+      maybeSingle() { const r = executer(); return Promise.resolve({ data: r.data[0] ?? null, error: null }) },
+      single() { const r = executer(); return Promise.resolve({ data: r.data[0] ?? null, error: null }) },
+      then(ok: (r: unknown) => unknown, ko?: (e: unknown) => unknown) {
+        return Promise.resolve(executer()).then(ok, ko)
+      },
+    }
+    return b
+  }
+  return { supabaseAdmin: { from } }
+})
+
+// ── FAUX DEEPSEEK, au niveau du réseau : l'adaptateur réel tourne.
+const reseau = { reponses: [] as (() => Response)[], i: 0, appels: 0 }
+const deepseek = (contenu: string, finish = 'stop') => () =>
+  new Response(
+    JSON.stringify({
+      choices: [{ message: { content: contenu }, finish_reason: finish }],
+      usage: { prompt_tokens: 1200, completion_tokens: 3400 },
+    }),
+    { status: 200, headers: { 'content-type': 'application/json' } },
+  )
+vi.stubGlobal('fetch', async (url: unknown) => {
+  if (!String(url).startsWith('https://api.deepseek.com/')) throw new Error(`réseau inattendu : ${String(url)}`)
+  reseau.appels += 1
+  const f = reseau.reponses[Math.min(reseau.i++, reseau.reponses.length - 1)]
+  return f!()
+})
+
+import { POST } from '../route'
+import { GET as APERCU } from '../[id]/route'
+import { GET as LISTE } from '../../mes-applications/route'
+import { GET as VERSIONS } from '../../version/route'
+
+const BON = [
+  '=== index.tsx ===',
+  "import { facture } from './calcul'",
+  'export const total = facture(159)',
+  '=== calcul.ts ===',
+  'export const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402',
+].join('\n')
+// Code qui ne s'assemble pas : la forme d'échec réellement mesurée
+// (« Expected } but found EOF », fournisseur.ts:32-40).
+const CASSE = ['=== index.tsx ===', 'export const total = { a: 1,'].join('\n')
+
+const H = { 'Content-Type': 'application/json', Authorization: 'Bearer j' }
+const generer = (id?: string) =>
+  POST(new Request(`https://deribfy.test/api/generateur/direct${id === undefined ? '' : `?id=${id}`}`, {
+    method: 'POST', headers: H,
+    // dashboard/page.tsx:208 envoie `{ demande: '' }` pour régénérer.
+    body: JSON.stringify(id === undefined ? { demande: 'calcule ma facture SNE', nom: 'Facture SNE' } : { demande: '' }),
+  }))
+
+/** Le message que l'écran afficherait — expression recopiée de dashboard/page.tsx:210-213. */
+const messageEcran = (resOk: boolean, d: { ok?: boolean; error?: string; motif?: string }) =>
+  !resOk || d.ok !== true
+    ? String(d.error ?? d.motif ?? 'La régénération a échoué — votre version actuelle n’a pas bougé.')
+    : 'Nouvelle version créée.'
+
+async function releve(id: string) {
+  const lignes = base.tables.get(TABLE_GENERATIONS) ?? []
+  const l = lignes.find((x) => x.id === id) ?? null
+  const doc = (l?.document ?? null) as { fichiers?: Record<string, string> } | null
+  const sa = (l?.sections_acquises ?? {}) as Record<string, unknown>
+  const ap = await APERCU(new Request(`https://deribfy.test/api/generateur/direct/${id}`, { headers: H }), { params: Promise.resolve({ id }) })
+  const apCorps = await ap.text()
+  const li = await (await LISTE(new Request('https://deribfy.test/api/generateur/mes-applications', { headers: H }))).json() as { applications?: Ligne[] }
+  const vs = await (await VERSIONS(new Request(`https://deribfy.test/api/generateur/version?id=${id}`, { headers: H }))).json()
+  return {
+    base: {
+      app_generations: {
+        nombre_de_lignes: lignes.length,
+        ligne: l === null ? null : {
+          ...Object.fromEntries(Object.entries(l).filter(([k]) => !['document', 'sections_acquises'].includes(k))),
+          document: doc === null ? null : { cles: Object.keys(doc), fichiers: Object.keys(doc.fichiers ?? {}) },
+          sections_acquises: {
+            cles: Object.keys(sa),
+            tours: ((sa.tours ?? []) as Ligne[]).map((t) => ({ rang: t.rang, ok: t.ok, motif: typeof t.motif === 'string' ? t.motif.slice(0, 120) : null, sourceFichiers: t.source === undefined ? null : Object.keys(t.source as object) })),
+            dernierTexte: typeof sa.dernierTexte === 'string' ? sa.dernierTexte.slice(0, 80) : sa.dernierTexte ?? null,
+          },
+        },
+        autres_lignes: lignes.filter((x) => x.id !== id).map((x) => ({ id: x.id, statut: x.statut, ok: x.ok, demande: String(x.demande ?? '').slice(0, 40), document: x.document === null || x.document === undefined ? null : 'présent', diagnostics: x.diagnostics })),
+      },
+      app_generation_versions: (base.tables.get(TABLE_VERSIONS) ?? []).filter((v) => v.generation_id === id).map((v) => ({
+        rang: v.rang, etape: v.etape, cout_usd: v.cout_usd,
+        fichiers: Object.keys(((v.etat ?? {}) as { fichiers?: object }).fichiers ?? {}),
+      })),
+    },
+    ecran: {
+      apercu_GET_direct_id: { statut: ap.status, type: ap.headers.get('content-type'), corps: apCorps.startsWith('<') ? `HTML (${String(apCorps.length)} car.)` : apCorps.slice(0, 200) },
+      carte_mes_applications: (li.applications ?? []).filter((a) => a.id === id).map((a) => ({ statut: a.statut, revoyable: a.revoyable, fichiers: a.fichiers, coutUsd: a.coutUsd })),
+      toutes_les_cartes: (li.applications ?? []).map((a) => ({ id: a.id, statut: a.statut, revoyable: a.revoyable, nom: a.nom })),
+      historiques_de_chaque_carte: await Promise.all((li.applications ?? []).map(async (a) => ({ id: a.id, versions: await (await VERSIONS(new Request(`https://deribfy.test/api/generateur/version?id=${String(a.id)}`, { headers: H }))).json() }))),
+      historique_GET_version: vs,
+    },
+  }
+}
+
+const SORTIE = process.env.PREUVE_SORTIE ?? '/dev/null'
+const releves: Record<string, unknown> = {}
+
+beforeEach(() => {
+  base.tables = new Map()
+  reseau.reponses = []
+  reseau.i = 0
+  reseau.appels = 0
+  process.env.GENERATEUR_MOTEUR = 'direct'
+  process.env.GENERATEUR_FOURNISSEUR = 'deepseek'
+  process.env.DEEPSEEK_API_KEY = 'cle-de-test'
+  delete process.env.RESEND_API_KEY
+})
+
+// ── ESSAI SÉPARÉ (2026-11-15) — la promesse « vous revenez dessus en un clic ».
+// Mêmes doubles que l'essai identique ; seul ce bloc diffère. La régénération
+// rend un code DIFFÉRENT de la v1, pour qu'un retour se voie dans l'aperçu.
+import { POST as REVENIR } from '../../version/route'
+
+const BON_V2 = BON.replace('facture(159)', 'facture(42)')
+
+describe('PROMESSE — revenir à la version précédente en un clic', () => {
+  it('C puis « revenir à celle-ci » (rang 1)', async () => {
+    reseau.reponses = [deepseek(BON)]
+    const d1 = (await (await generer()).json()) as { ok?: boolean; id?: string }
+    expect(d1.ok).toBe(true)
+    const id = d1.id!
+    const apercuV1 = await (await APERCU(new Request(`https://deribfy.test/api/generateur/direct/${id}`, { headers: H }), { params: Promise.resolve({ id }) })).text()
+
+    reseau.i = 0
+    reseau.reponses = [deepseek(BON_V2)]
+    const d2 = (await (await generer(id)).json()) as { ok?: boolean }
+    const apercuV2 = await (await APERCU(new Request(`https://deribfy.test/api/generateur/direct/${id}`, { headers: H }), { params: Promise.resolve({ id }) })).text()
+
+    // Le clic : dashboard/page.tsx:260-261 — POST /version?id=…&rang=1.
+    const r = await REVENIR(new Request(`https://deribfy.test/api/generateur/version?id=${id}&rang=1`, { method: 'POST', headers: H }))
+    const corps = await r.json()
+    const apercuApres = await (await APERCU(new Request(`https://deribfy.test/api/generateur/direct/${id}`, { headers: H }), { params: Promise.resolve({ id }) })).text()
+    const historique = await (await VERSIONS(new Request(`https://deribfy.test/api/generateur/version?id=${id}`, { headers: H }))).json()
+
+    releves.promesse = {
+      regeneration_ok: d2.ok,
+      v1_contient_159: apercuV1.includes('159'),
+      v2_contient_42: apercuV2.includes('42'),
+      v2_differe_de_v1: apercuV2 !== apercuV1,
+      clic_revenir: { http: r.status, corps },
+      apercu_apres_clic_egal_v1: apercuApres === apercuV1,
+      historique_apres_clic: historique,
+    }
+    writeFileSync(SORTIE, JSON.stringify(releves, null, 2))
+  }, 120_000)
+})

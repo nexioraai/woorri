@@ -1,0 +1,5 @@
+// Imprime le DDL versionné des deux tables, tel que journal.ts le porte.
+import { writeFileSync } from 'node:fs'
+const j = await import(process.argv[2]!)
+writeFileSync(process.argv[3]!, j.SQL_TABLE + '\n' + j.SQL_VERSIONS + '\n')
+console.log('DDL ecrit :', j.TABLE_GENERATIONS, j.TABLE_VERSIONS)

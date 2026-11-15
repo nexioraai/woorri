@@ -1,0 +1,70 @@
+#!/bin/zsh
+# Essai local de la migration — Postgres jetable, port 5499, aucune base réelle.
+set -u
+ICI=${0:A:h}
+DEPOT=$1
+MIG=$DEPOT/apps/web/supabase/sql/app_generation_versions_fk_generation.sql
+ANN=$DEPOT/apps/web/supabase/sql/app_generation_versions_fk_generation_annulation.sql
+DATA=$ICI/data
+rm -rf $DATA
+initdb -D $DATA -U essai --auth=trust >/dev/null
+pg_ctl -D $DATA -o "-p 5499 -k $ICI" -l $ICI/pg.log start >/dev/null
+sleep 2
+Q=(psql -h $ICI -p 5499 -U essai -d postgres -v ON_ERROR_STOP=1 -X -q)
+
+etape() { print -- "\n### $1" }
+attendu_echec() {
+  # $1 = libellé, reste = SQL ; réussit si et seulement si le SQL échoue
+  local lib=$1; shift
+  if "${Q[@]}" -c "$*" 2>$ICI/err.txt; then print "ÉCHEC DE L'ESSAI : « $lib » a été ACCEPTÉ"; else print "refusé comme attendu ($lib) : $(head -1 $ICI/err.txt)"; fi
+}
+fk() { "${Q[@]}" -At -c "select coalesce(string_agg(conname || ' ' || pg_get_constraintdef(oid), ' | '), 'AUCUNE') from pg_constraint where contype='f' and conrelid='public.app_generation_versions'::regclass" }
+
+etape "0. Schéma versionné (journal.ts) + rôles Supabase factices"
+"${Q[@]}" -c "create role anon; create role authenticated;"
+"${Q[@]}" -f $ICI/ddl.sql >/dev/null && print "DDL posé"
+print "clé étrangère avant : $(fk)"
+
+etape "1. Un orphelin présent → la migration doit s'arrêter et ne rien poser"
+"${Q[@]}" -c "insert into public.app_generation_versions (generation_id, rang, etat) values (gen_random_uuid(), 1, '{}'::jsonb);"
+if "${Q[@]}" -f $MIG 2>$ICI/err.txt; then print "ÉCHEC DE L'ESSAI : migration passée malgré un orphelin"; else print "arrêtée : $(grep -o 'MIGRATION ARRÊTÉE.*' $ICI/err.txt)"; fi
+print "clé étrangère après refus : $(fk)"
+print "orphelin toujours là (rien effacé) : $("${Q[@]}" -At -c 'select count(*) from public.app_generation_versions')"
+"${Q[@]}" -c "delete from public.app_generation_versions;"
+
+etape "2. Base saine (une œuvre, deux versions) → la migration passe"
+"${Q[@]}" -c "insert into public.app_generations (id, demande, statut, document) values ('11111111-1111-1111-1111-111111111111', 'essai', 'livree', '{}'::jsonb);
+insert into public.app_generation_versions (generation_id, rang, etat) values ('11111111-1111-1111-1111-111111111111', 1, '{}'::jsonb), ('11111111-1111-1111-1111-111111111111', 2, '{}'::jsonb);"
+"${Q[@]}" -f $MIG && print "migration appliquée"
+print "clé étrangère : $(fk)"
+
+etape "3. Idempotence : relancer la migration"
+"${Q[@]}" -f $MIG && print "relancée sans erreur ; clé(s) : $(fk)"
+
+etape "4. Le DÉFAUT lui-même : réécrire l'identifiant d'une œuvre qui a des versions"
+attendu_echec "update id" "update public.app_generations set id = gen_random_uuid() where id = '11111111-1111-1111-1111-111111111111'"
+
+etape "5. Supprimer physiquement une œuvre qui a des versions"
+attendu_echec "delete parent" "delete from public.app_generations where id = '11111111-1111-1111-1111-111111111111'"
+
+etape "6. Une version qui ne désigne aucune œuvre"
+attendu_echec "insert orphelin" "insert into public.app_generation_versions (generation_id, rang, etat) values (gen_random_uuid(), 1, '{}'::jsonb)"
+
+etape "7. Ce qui doit rester permis"
+"${Q[@]}" -c "update public.app_generations set document = '{\"a\":1}'::jsonb, version_courante = 2 where id = '11111111-1111-1111-1111-111111111111';" && print "mise à jour ordinaire d'une œuvre : acceptée"
+"${Q[@]}" -c "insert into public.app_generation_versions (generation_id, rang, etat) values ('11111111-1111-1111-1111-111111111111', 3, '{}'::jsonb);" && print "nouvelle version d'une œuvre existante : acceptée"
+"${Q[@]}" -c "delete from public.app_generation_versions where generation_id = '11111111-1111-1111-1111-111111111111' and rang = 3;" && print "purge d'une version : acceptée"
+"${Q[@]}" -c "insert into public.app_generations (id, demande) values ('22222222-2222-2222-2222-222222222222', 'sans version'); delete from public.app_generations where id = '22222222-2222-2222-2222-222222222222';" && print "suppression d'une œuvre SANS version (tirs) : acceptée"
+print "lignes intactes : œuvres=$("${Q[@]}" -At -c 'select count(*) from public.app_generations') versions=$("${Q[@]}" -At -c 'select count(*) from public.app_generation_versions')"
+
+etape "8. Annulation"
+"${Q[@]}" -f $ANN && print "annulation appliquée ; clé(s) : $(fk)"
+"${Q[@]}" -f $ANN && print "annulation relancée sans erreur (idempotente)"
+"${Q[@]}" -c "update public.app_generations set id = '33333333-3333-3333-3333-333333333333' where id = '11111111-1111-1111-1111-111111111111';" && print "après annulation, le changement d'identifiant redevient possible (comportement d'avant)"
+print "données après annulation : versions=$("${Q[@]}" -At -c 'select count(*) from public.app_generation_versions')"
+
+etape "9. Ré-application après annulation (avec l'orphelin que l'étape 8 vient de créer)"
+if "${Q[@]}" -f $MIG 2>$ICI/err.txt; then print "ÉCHEC DE L'ESSAI : passée malgré orphelins"; else print "arrêtée : $(grep -o 'MIGRATION ARRÊTÉE.*' $ICI/err.txt)"; fi
+
+pg_ctl -D $DATA stop >/dev/null
+print "\nPostgres $(postgres --version | awk '{print $3}') arrêté."

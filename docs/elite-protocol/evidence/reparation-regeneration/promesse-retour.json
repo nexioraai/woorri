@@ -1,0 +1,35 @@
+{
+  "promesse": {
+    "regeneration_ok": true,
+    "v1_contient_159": true,
+    "v2_contient_42": true,
+    "v2_differe_de_v1": true,
+    "clic_revenir": {
+      "http": 200,
+      "corps": {
+        "ok": true,
+        "courante": 1
+      }
+    },
+    "apercu_apres_clic_egal_v1": true,
+    "historique_apres_clic": {
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "creeIl": "2026-11-15T17:56:12.164Z",
+          "restaurable": true,
+          "coutUsd": 0.0075
+        },
+        {
+          "rang": 2,
+          "etape": "regeneration",
+          "creeIl": "2026-11-15T17:56:12.804Z",
+          "restaurable": true,
+          "coutUsd": 0.0075
+        }
+      ],
+      "courante": 1
+    }
+  }
+}

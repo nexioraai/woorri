@@ -1,0 +1,54 @@
+
+### 0. Schéma versionné (journal.ts) + rôles Supabase factices
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:55: NOTICE:  column "owner_id" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:56: NOTICE:  column "statut" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:57: NOTICE:  column "etape" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:58: NOTICE:  column "sections_acquises" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:59: NOTICE:  column "niveaux_sondes" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:60: NOTICE:  column "document" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:61: NOTICE:  column "battement" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:62: NOTICE:  column "jeton_travailleur" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:63: NOTICE:  column "reprises" of relation "app_generations" already exists, skipping
+psql:/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/pgtest/ddl.sql:205: NOTICE:  constraint "app_generations_statut_valide" of relation "app_generations" does not exist, skipping
+DDL posé
+clé étrangère avant : AUCUNE
+
+### 1. Un orphelin présent → la migration doit s'arrêter et ne rien poser
+arrêtée : MIGRATION ARRÊTÉE : 1 version(s) orpheline(s) dans app_generation_versions. Rien n'a été posé.
+clé étrangère après refus : AUCUNE
+orphelin toujours là (rien effacé) : 1
+
+### 2. Base saine (une œuvre, deux versions) → la migration passe
+migration appliquée
+clé étrangère : app_generation_versions_generation_fk FOREIGN KEY (generation_id) REFERENCES app_generations(id) ON UPDATE RESTRICT ON DELETE RESTRICT
+
+### 3. Idempotence : relancer la migration
+relancée sans erreur ; clé(s) : app_generation_versions_generation_fk FOREIGN KEY (generation_id) REFERENCES app_generations(id) ON UPDATE RESTRICT ON DELETE RESTRICT
+
+### 4. Le DÉFAUT lui-même : réécrire l'identifiant d'une œuvre qui a des versions
+refusé comme attendu (update id) : ERROR:  update or delete on table "app_generations" violates foreign key constraint "app_generation_versions_generation_fk" on table "app_generation_versions"
+
+### 5. Supprimer physiquement une œuvre qui a des versions
+refusé comme attendu (delete parent) : ERROR:  update or delete on table "app_generations" violates foreign key constraint "app_generation_versions_generation_fk" on table "app_generation_versions"
+
+### 6. Une version qui ne désigne aucune œuvre
+refusé comme attendu (insert orphelin) : ERROR:  insert or update on table "app_generation_versions" violates foreign key constraint "app_generation_versions_generation_fk"
+
+### 7. Ce qui doit rester permis
+mise à jour ordinaire d'une œuvre : acceptée
+nouvelle version d'une œuvre existante : acceptée
+purge d'une version : acceptée
+suppression d'une œuvre SANS version (tirs) : acceptée
+lignes intactes : œuvres=1 versions=2
+
+### 8. Annulation
+annulation appliquée ; clé(s) : AUCUNE
+psql:/Users/yia/dev/woorri/apps/web/supabase/sql/app_generation_versions_fk_generation_annulation.sql:14: NOTICE:  constraint "app_generation_versions_generation_fk" of relation "app_generation_versions" does not exist, skipping
+annulation relancée sans erreur (idempotente)
+après annulation, le changement d'identifiant redevient possible (comportement d'avant)
+données après annulation : versions=2
+
+### 9. Ré-application après annulation (avec l'orphelin que l'étape 8 vient de créer)
+arrêtée : MIGRATION ARRÊTÉE : 2 version(s) orpheline(s) dans app_generation_versions. Rien n'a été posé.
+
+Postgres 17.11 arrêté.
