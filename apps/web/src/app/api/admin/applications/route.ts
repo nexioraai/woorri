@@ -15,6 +15,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
+import { TABLE_TENTATIVES } from '@/lib/apps/tentatives'
 // LA LISTE DES ADMINISTRATEURS VIENT D'UN SEUL ENDROIT. J'avais recopie une
 // adresse en dur ici — exactement le defaut que `admin-emails.ts` a ferme le
 // 2026-10-02, apres l'avoir trouve dans SIX routes. Le cliquet m'a attrape
@@ -68,12 +69,34 @@ export async function GET(req: Request) {
     delete (reste as Record<string, unknown>).sections_acquises
     return { ...reste, journal: Array.isArray(sa.tirages) ? sa.tirages : [] }
   })
+  // ── LES TENTATIVES DE CHAQUE ŒUVRE (manque 4, 2026-11-15).
+  //
+  // La ligne ne porte que la mesure de la tentative qui a produit l'œuvre
+  // courante ; les échecs et les régénérations précédentes vivent dans
+  // `app_generation_attempts`. Une lecture refusée (table pas encore posée)
+  // ne casse pas la page : elle le DIT (`tentativesLisibles: false`).
+  const ids = lignes.map((x) => x.id as string)
+  const t = ids.length === 0
+    ? { data: [] as Record<string, unknown>[], error: null }
+    : await supabaseAdmin
+        .from(TABLE_TENTATIVES)
+        .select('generation_id, rang, nature, issue, debut_le, fin_le, version_rang, cout_usd, duree_ms, tirages, diagnostics, trace_tronquee')
+        .in('generation_id', ids)
+        .order('rang', { ascending: true })
+  const parOeuvre = new Map<string, Record<string, unknown>[]>()
+  for (const x of (t.error === null ? t.data ?? [] : []) as Record<string, unknown>[]) {
+    const cle = String(x.generation_id)
+    parOeuvre.set(cle, [...(parOeuvre.get(cle) ?? []), x])
+  }
+  const lignesAvecTentatives = lignes.map((x) => ({ ...x, tentatives: parOeuvre.get(x.id as string) ?? [] }))
+
   const somme = (f: (x: (typeof lignes)[number]) => number): number =>
     lignes.reduce((a, x) => a + f(x), 0)
 
   return NextResponse.json({
     tableAbsente: false,
-    lignes,
+    tentativesLisibles: t.error === null,
+    lignes: lignesAvecTentatives,
     total: {
       generations: lignes.length,
       reussies: lignes.filter((x) => x.ok === true).length,

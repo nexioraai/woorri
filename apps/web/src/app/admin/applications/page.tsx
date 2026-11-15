@@ -49,9 +49,23 @@ interface Ligne {
     details?: readonly string[];
     reparations?: readonly string[];
   }[];
+  /** UNE LIGNE PAR TENTATIVE, jamais réécrite (manque 4, 2026-11-15). */
+  tentatives?: readonly {
+    rang: number;
+    nature: string;
+    issue: string;
+    debut_le: string;
+    version_rang: number | null;
+    cout_usd: number;
+    duree_ms: number;
+    tirages: number;
+    diagnostics: readonly string[] | null;
+    trace_tronquee: boolean;
+  }[];
 }
 interface Data {
   tableAbsente: boolean;
+  tentativesLisibles?: boolean;
   detail?: string;
   lignes: Ligne[];
   total: { generations: number; reussies: number; coutUsd: number; coutPerdu: number };
@@ -112,6 +126,12 @@ export default function ApplicationsPage() {
               vit avec le code, dans <code className="text-slate-300">lib/apps/journal.ts</code>.
             </p>
           </div>
+        )}
+
+        {data !== null && !data.tableAbsente && data.tentativesLisibles === false && (
+          <p className="text-xs text-amber-300/80 mb-4">
+            Les tentatives ne sont pas lisibles : la table <code>app_generation_attempts</code> n’est pas encore posée.
+          </p>
         )}
 
         {data !== null && !data.tableAbsente && (
@@ -203,6 +223,28 @@ export default function ApplicationsPage() {
                                       réparé : {r}
                                     </span>
                                   ))}
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                          {/* LES TENTATIVES : l'échec d'une régénération ne
+                              réécrit plus la ligne, il vit ici. */}
+                          {(l.tentatives ?? []).length > 0 && (
+                            <ol className="mt-2 flex flex-col gap-1 border-t border-white/5 pt-2">
+                              {(l.tentatives ?? []).map((t) => (
+                                <li key={t.rang} className="text-xs">
+                                  <span className="text-slate-300 tabular-nums">T{String(t.rang)}</span>{" "}
+                                  <span className="text-slate-500">{t.nature === "regeneration" ? "régénération" : "génération"}</span>{" "}
+                                  <span className={t.issue === "livree" ? "text-emerald-400" : "text-amber-300/90"}>{t.issue}</span>
+                                  <span className="text-slate-400 tabular-nums">
+                                    {" "}· {usd(Number(t.cout_usd))} · {secondes(t.duree_ms)} · {String(t.tirages)} tour(s)
+                                    {t.version_rang !== null ? ` · version ${String(t.version_rang)}` : ""}
+                                  </span>
+                                  {t.trace_tronquee && <span className="text-amber-300/70"> · trace abrégée</span>}
+                                  <span className="block text-slate-600 tabular-nums">{new Date(t.debut_le).toLocaleString("fr-FR")}</span>
+                                  {(t.diagnostics ?? []).length > 0 && (
+                                    <span className="block text-slate-500">{(t.diagnostics ?? []).slice(0, 2).join(", ")}</span>
+                                  )}
                                 </li>
                               ))}
                             </ol>
