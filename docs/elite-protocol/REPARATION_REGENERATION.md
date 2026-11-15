@@ -262,10 +262,9 @@ Résultat :
 
 **Verdict :** la clé étrangère est **posée en production** [OBSERVÉ-PROD] et les données sont **inchangées** (75 / 51, avant et après) [OBSERVÉ-PROD].
 
-**Réserve sur la définition.** La colonne `definition` est tronquée à l'écran après `ON UPDATE`. Les mots `RESTRICT` et `ON DELETE RESTRICT` ne sont **pas visibles**.
-- Ce qui la rend très probable [DÉDUIT] : le nom est celui de la migration, il n'y a qu'une seule clé, et le seul texte qui la crée dit `restrict` dans les deux sens.
-- La preuve directe tient en une requête de lecture, rendue `confupdtype = r`, `confdeltype = r` si c'est bon :
-  `select confupdtype, confdeltype from pg_constraint where conname = 'app_generation_versions_generation_fk';`
+**Comportement de la clé : levée de la réserve.** La colonne `definition` du 3a était tronquée à l'écran après `ON UPDATE`. Une requête de lecture l'a établi directement :
+- requête : `select confupdtype, confdeltype from pg_constraint where conname = 'app_generation_versions_generation_fk';`
+- résultat à 17:25 : `confupdtype = r`, `confdeltype = r`, soit **ON UPDATE RESTRICT, ON DELETE RESTRICT** [OBSERVÉ-PROD].
 
 **Non observé en production [UNKNOWN] :** le refus effectif d'un changement d'identifiant (essai 4 du tableau local). On ne le provoque pas sur des données réelles.
 
