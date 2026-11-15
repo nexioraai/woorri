@@ -1,0 +1,1977 @@
+{
+  "S1_regeneration_reussie": [
+    {
+      "etape": "generation_initiale",
+      "ligne": {
+        "id": "a27c8fd7-5ff4-4455-8d2f-c6fe01edc610",
+        "created_at": "2026-11-15T23:00:53.576Z",
+        "cree_le": "2026-11-15T23:00:53.577Z",
+        "owner_id": "u-1",
+        "demande": "calcule ma facture SNE",
+        "nom": "Facture SNE",
+        "moteur": "direct",
+        "fournisseur": "deepseek",
+        "ok": true,
+        "statut": "livree",
+        "cout_usd": 0.0075,
+        "duree_ms": 613,
+        "jetons_entree": 1200,
+        "jetons_sortie": 3400,
+        "tirages": 1,
+        "diagnostics": [],
+        "document": {
+          "fichiers": {
+            "index.tsx": "import { facture } from './calcul'\nexport const total = facture(159)",
+            "calcul.ts": "export const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402",
+            "systeme/jetons.ts": "/** JETONS — fournis par Deribfy, ne pas modifier.\n *\n * LES COULEURS, LES RAYONS ET LES TAILLES DE … (1492 car.)",
+            "systeme/argent.ts": "/** L'ARGENT — fourni par Deribfy. La devise vient de la configuration du\n * client : AUCUN code mon… (704 car.)",
+            "systeme/ui.tsx": "/** BIBLIOTHÈQUE D'INTERFACE — fournie par Deribfy, ne pas réécrire. */\nimport React from 'react'\nim… (46910 car.)",
+            "systeme/donnees.ts": "/** LES DONNÉES DU TABLEAU DE BORD — fournies par Deribfy, ne pas réécrire.\n *\n * Chaque chiffre et … (6733 car.)"
+          },
+          "schema": "-- AUCUNE DONNÉE DÉCLARÉE POUR CETTE APPLICATION.\n--\n-- Ce fichier est vide de tables, et ce n’est p… (363 car.)",
+          "politiques": "-- AUCUNE DONNÉE DÉCLARÉE : AUCUNE PORTE À POSER.\n--\n-- Il n’y a pas de table, donc rien à protéger.… (174 car.)",
+          "entites": [],
+          "configuration": {
+            "nom_produit": "Facture SNE"
+          }
+        },
+        "sections_acquises": {
+          "configuration": {
+            "nom_produit": "Facture SNE"
+          },
+          "lectureBrief": {
+            "resultat": "non_transmise",
+            "tablesLues": null,
+            "tablesRecues": 0,
+            "source": "absente",
+            "tentatives": null,
+            "tranches": null,
+            "tranchesEchouees": null,
+            "signesLus": null,
+            "coutUsd": null,
+            "jetonsEntree": null,
+            "jetonsSortie": null,
+            "parTranche": [],
+            "roles": [],
+            "ecrans": [],
+            "questionsOuvertes": []
+          },
+          "deploiement": {
+            "commit": "inconnu",
+            "environnement": "inconnu",
+            "branche": "inconnu"
+          },
+          "tours": [
+            {
+              "rang": 1,
+              "fichiers": 2,
+              "ok": true,
+              "ms": 613
+            }
+          ],
+          "jetons": [],
+          "execution": {
+            "monteDansSimulateur": true,
+            "erreurs": [],
+            "octetsRendus": 0,
+            "texte": "",
+            "ecransVisites": 0,
+            "ecransDecouverts": 0,
+            "ecransDistincts": 1,
+            "controlesMuets": [],
+            "ecrans": [
+              {
+                "texte": "",
+                "exerce": false
+              }
+            ],
+            "ms": 587
+          },
+          "vivacite": [],
+          "couverture": {
+            "exigences": [
+              {
+                "exigence": "calcule",
+                "cahier": 1,
+                "code": 0,
+                "statut": "absente",
+                "source": "demande"
+              }
+            ],
+            "absentes": [],
+            "muettesDerivees": [
+              {
+                "exigence": "calcule",
+                "cahier": 1,
+                "code": 0,
+                "statut": "absente",
+                "source": "demande"
+              }
+            ],
+            "taux": 0,
+            "ecartes": 0
+          },
+          "persistance": [],
+          "dernierTexte": null
+        },
+        "version_courante": 1
+      },
+      "tours": 1,
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        }
+      ]
+    },
+    {
+      "etape": "regeneration_1_ok",
+      "corps_rendu": {
+        "ok": true,
+        "error": null,
+        "coutUsd": 0.007524
+      },
+      "comparaison_avec_l_etat_precedent": {
+        "inchangees": [
+          "cout_usd",
+          "created_at",
+          "cree_le",
+          "demande",
+          "diagnostics",
+          "document",
+          "fournisseur",
+          "id",
+          "jetons_entree",
+          "jetons_sortie",
+          "moteur",
+          "nom",
+          "ok",
+          "owner_id",
+          "statut",
+          "tirages"
+        ],
+        "changees": {
+          "duree_ms": {
+            "avant": 613,
+            "apres": 543
+          },
+          "sections_acquises": {
+            "avant": {
+              "configuration": {
+                "nom_produit": "Facture SNE"
+              },
+              "lectureBrief": {
+                "resultat": "non_transmise",
+                "tablesLues": null,
+                "tablesRecues": 0,
+                "source": "absente",
+                "tentatives": null,
+                "tranches": null,
+                "tranchesEchouees": null,
+                "signesLus": null,
+                "coutUsd": null,
+                "jetonsEntree": null,
+                "jetonsSortie": null,
+                "parTranche": [],
+                "roles": [],
+                "ecrans": [],
+                "questionsOuvertes": []
+              },
+              "deploiement": {
+                "commit": "inconnu",
+                "environnement": "inconnu",
+                "branche": "inconnu"
+              },
+              "tours": [
+                {
+                  "rang": 1,
+                  "fichiers": 2,
+                  "ok": true,
+                  "ms": 613
+                }
+              ],
+              "jetons": [],
+              "execution": {
+                "monteDansSimulateur": true,
+                "erreurs": [],
+                "octetsRendus": 0,
+                "texte": "",
+                "ecransVisites": 0,
+                "ecransDecouverts": 0,
+                "ecransDistincts": 1,
+                "controlesMuets": [],
+                "ecrans": [
+                  {
+                    "texte": "",
+                    "exerce": false
+                  }
+                ],
+                "ms": 587
+              },
+              "vivacite": [],
+              "couverture": {
+                "exigences": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "absentes": [],
+                "muettesDerivees": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "taux": 0,
+                "ecartes": 0
+              },
+              "persistance": [],
+              "dernierTexte": null
+            },
+            "apres": {
+              "configuration": {
+                "nom_produit": "Facture SNE"
+              },
+              "lectureBrief": {
+                "resultat": "non_transmise",
+                "tablesLues": null,
+                "tablesRecues": 0,
+                "source": "absente",
+                "tentatives": null,
+                "tranches": null,
+                "tranchesEchouees": null,
+                "signesLus": null,
+                "coutUsd": null,
+                "jetonsEntree": null,
+                "jetonsSortie": null,
+                "parTranche": [],
+                "roles": [],
+                "ecrans": [],
+                "questionsOuvertes": []
+              },
+              "deploiement": {
+                "commit": "inconnu",
+                "environnement": "inconnu",
+                "branche": "inconnu"
+              },
+              "tours": [
+                {
+                  "rang": 1,
+                  "fichiers": 2,
+                  "ok": true,
+                  "ms": 542
+                }
+              ],
+              "jetons": [],
+              "execution": {
+                "monteDansSimulateur": true,
+                "erreurs": [],
+                "octetsRendus": 0,
+                "texte": "",
+                "ecransVisites": 0,
+                "ecransDecouverts": 0,
+                "ecransDistincts": 1,
+                "controlesMuets": [],
+                "ecrans": [
+                  {
+                    "texte": "",
+                    "exerce": false
+                  }
+                ],
+                "ms": 537
+              },
+              "vivacite": [],
+              "couverture": {
+                "exigences": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "absentes": [],
+                "muettesDerivees": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "taux": 0,
+                "ecartes": 0
+              },
+              "persistance": [],
+              "dernierTexte": null
+            }
+          },
+          "version_courante": {
+            "avant": 1,
+            "apres": 2
+          }
+        }
+      },
+      "tours_dans_la_ligne": 1,
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        },
+        {
+          "rang": 2,
+          "etape": "regeneration",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        }
+      ],
+      "lignes_app_generations": [
+        {
+          "id": "ID_OEUVRE",
+          "statut": "livree",
+          "ok": true
+        }
+      ]
+    }
+  ],
+  "S2_regeneration_non_convergee": [
+    {
+      "etape": "generation_initiale",
+      "ligne": {
+        "id": "863a46cc-4428-40ff-8819-7ca3bf3ae4d3",
+        "created_at": "2026-11-15T23:00:54.669Z",
+        "cree_le": "2026-11-15T23:00:54.669Z",
+        "owner_id": "u-1",
+        "demande": "calcule ma facture SNE",
+        "nom": "Facture SNE",
+        "moteur": "direct",
+        "fournisseur": "deepseek",
+        "ok": true,
+        "statut": "livree",
+        "cout_usd": 0.0075,
+        "duree_ms": 543,
+        "jetons_entree": 1200,
+        "jetons_sortie": 3400,
+        "tirages": 1,
+        "diagnostics": [],
+        "document": {
+          "fichiers": {
+            "index.tsx": "import { facture } from './calcul'\nexport const total = facture(159)",
+            "calcul.ts": "export const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402",
+            "systeme/jetons.ts": "/** JETONS — fournis par Deribfy, ne pas modifier.\n *\n * LES COULEURS, LES RAYONS ET LES TAILLES DE … (1492 car.)",
+            "systeme/argent.ts": "/** L'ARGENT — fourni par Deribfy. La devise vient de la configuration du\n * client : AUCUN code mon… (704 car.)",
+            "systeme/ui.tsx": "/** BIBLIOTHÈQUE D'INTERFACE — fournie par Deribfy, ne pas réécrire. */\nimport React from 'react'\nim… (46910 car.)",
+            "systeme/donnees.ts": "/** LES DONNÉES DU TABLEAU DE BORD — fournies par Deribfy, ne pas réécrire.\n *\n * Chaque chiffre et … (6733 car.)"
+          },
+          "schema": "-- AUCUNE DONNÉE DÉCLARÉE POUR CETTE APPLICATION.\n--\n-- Ce fichier est vide de tables, et ce n’est p… (363 car.)",
+          "politiques": "-- AUCUNE DONNÉE DÉCLARÉE : AUCUNE PORTE À POSER.\n--\n-- Il n’y a pas de table, donc rien à protéger.… (174 car.)",
+          "entites": [],
+          "configuration": {
+            "nom_produit": "Facture SNE"
+          }
+        },
+        "sections_acquises": {
+          "configuration": {
+            "nom_produit": "Facture SNE"
+          },
+          "lectureBrief": {
+            "resultat": "non_transmise",
+            "tablesLues": null,
+            "tablesRecues": 0,
+            "source": "absente",
+            "tentatives": null,
+            "tranches": null,
+            "tranchesEchouees": null,
+            "signesLus": null,
+            "coutUsd": null,
+            "jetonsEntree": null,
+            "jetonsSortie": null,
+            "parTranche": [],
+            "roles": [],
+            "ecrans": [],
+            "questionsOuvertes": []
+          },
+          "deploiement": {
+            "commit": "inconnu",
+            "environnement": "inconnu",
+            "branche": "inconnu"
+          },
+          "tours": [
+            {
+              "rang": 1,
+              "fichiers": 2,
+              "ok": true,
+              "ms": 543
+            }
+          ],
+          "jetons": [],
+          "execution": {
+            "monteDansSimulateur": true,
+            "erreurs": [],
+            "octetsRendus": 0,
+            "texte": "",
+            "ecransVisites": 0,
+            "ecransDecouverts": 0,
+            "ecransDistincts": 1,
+            "controlesMuets": [],
+            "ecrans": [
+              {
+                "texte": "",
+                "exerce": false
+              }
+            ],
+            "ms": 539
+          },
+          "vivacite": [],
+          "couverture": {
+            "exigences": [
+              {
+                "exigence": "calcule",
+                "cahier": 1,
+                "code": 0,
+                "statut": "absente",
+                "source": "demande"
+              }
+            ],
+            "absentes": [],
+            "muettesDerivees": [
+              {
+                "exigence": "calcule",
+                "cahier": 1,
+                "code": 0,
+                "statut": "absente",
+                "source": "demande"
+              }
+            ],
+            "taux": 0,
+            "ecartes": 0
+          },
+          "persistance": [],
+          "dernierTexte": null
+        },
+        "version_courante": 1
+      },
+      "tours": 1,
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        }
+      ]
+    },
+    {
+      "etape": "regeneration_1_A",
+      "corps_rendu": {
+        "ok": false,
+        "error": "Non convergé en 3 tours. Le code produit ne s'est pas assemblé (3 essai(s), 0 s).",
+        "coutUsd": 0.022572
+      },
+      "comparaison_avec_l_etat_precedent": {
+        "inchangees": [
+          "created_at",
+          "cree_le",
+          "demande",
+          "document",
+          "fournisseur",
+          "id",
+          "moteur",
+          "nom",
+          "ok",
+          "owner_id",
+          "statut",
+          "version_courante"
+        ],
+        "changees": {
+          "cout_usd": {
+            "avant": 0.0075,
+            "apres": 0.0226
+          },
+          "diagnostics": {
+            "avant": [],
+            "apres": [
+              "Non convergé en 3 tours."
+            ]
+          },
+          "duree_ms": {
+            "avant": 543,
+            "apres": 13
+          },
+          "jetons_entree": {
+            "avant": 1200,
+            "apres": 3600
+          },
+          "jetons_sortie": {
+            "avant": 3400,
+            "apres": 10200
+          },
+          "sections_acquises": {
+            "avant": {
+              "configuration": {
+                "nom_produit": "Facture SNE"
+              },
+              "lectureBrief": {
+                "resultat": "non_transmise",
+                "tablesLues": null,
+                "tablesRecues": 0,
+                "source": "absente",
+                "tentatives": null,
+                "tranches": null,
+                "tranchesEchouees": null,
+                "signesLus": null,
+                "coutUsd": null,
+                "jetonsEntree": null,
+                "jetonsSortie": null,
+                "parTranche": [],
+                "roles": [],
+                "ecrans": [],
+                "questionsOuvertes": []
+              },
+              "deploiement": {
+                "commit": "inconnu",
+                "environnement": "inconnu",
+                "branche": "inconnu"
+              },
+              "tours": [
+                {
+                  "rang": 1,
+                  "fichiers": 2,
+                  "ok": true,
+                  "ms": 543
+                }
+              ],
+              "jetons": [],
+              "execution": {
+                "monteDansSimulateur": true,
+                "erreurs": [],
+                "octetsRendus": 0,
+                "texte": "",
+                "ecransVisites": 0,
+                "ecransDecouverts": 0,
+                "ecransDistincts": 1,
+                "controlesMuets": [],
+                "ecrans": [
+                  {
+                    "texte": "",
+                    "exerce": false
+                  }
+                ],
+                "ms": 539
+              },
+              "vivacite": [],
+              "couverture": {
+                "exigences": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "absentes": [],
+                "muettesDerivees": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "taux": 0,
+                "ecartes": 0
+              },
+              "persistance": [],
+              "dernierTexte": null
+            },
+            "apres": {
+              "configuration": {
+                "nom_produit": "Facture SNE"
+              },
+              "lectureBrief": {
+                "resultat": "non_transmise",
+                "tablesLues": null,
+                "tablesRecues": 0,
+                "source": "absente",
+                "tentatives": null,
+                "tranches": null,
+                "tranchesEchouees": null,
+                "signesLus": null,
+                "coutUsd": null,
+                "jetonsEntree": null,
+                "jetonsSortie": null,
+                "parTranche": [],
+                "roles": [],
+                "ecrans": [],
+                "questionsOuvertes": []
+              },
+              "deploiement": {
+                "commit": "inconnu",
+                "environnement": "inconnu",
+                "branche": "inconnu"
+              },
+              "tours": [
+                {
+                  "rang": 1,
+                  "fichiers": 1,
+                  "ok": false,
+                  "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found… (794 car.)",
+                  "tronquee": false,
+                  "ms": 4,
+                  "source": {
+                    "index.tsx": "export const total = { a: 1,"
+                  }
+                },
+                {
+                  "rang": 2,
+                  "fichiers": 1,
+                  "ok": false,
+                  "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found… (794 car.)",
+                  "tronquee": false,
+                  "ms": 7,
+                  "source": {
+                    "index.tsx": "export const total = { a: 1,"
+                  }
+                },
+                {
+                  "rang": 3,
+                  "fichiers": 1,
+                  "ok": false,
+                  "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found… (794 car.)",
+                  "tronquee": false,
+                  "ms": 2,
+                  "source": {
+                    "index.tsx": "export const total = { a: 1,"
+                  }
+                }
+              ],
+              "jetons": null,
+              "execution": null,
+              "vivacite": null,
+              "couverture": null,
+              "persistance": null,
+              "dernierTexte": "=== index.tsx ===\nexport const total = { a: 1,"
+            }
+          },
+          "tirages": {
+            "avant": 1,
+            "apres": 3
+          }
+        }
+      },
+      "tours_dans_la_ligne": 3,
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        }
+      ],
+      "lignes_app_generations": [
+        {
+          "id": "ID_OEUVRE",
+          "statut": "livree",
+          "ok": true
+        }
+      ]
+    }
+  ],
+  "S3_echec_puis_reussite": [
+    {
+      "etape": "generation_initiale",
+      "ligne": {
+        "id": "fd88aaff-9162-4fce-a9a1-ae849b385d9e",
+        "created_at": "2026-11-15T23:00:55.221Z",
+        "cree_le": "2026-11-15T23:00:55.221Z",
+        "owner_id": "u-1",
+        "demande": "calcule ma facture SNE",
+        "nom": "Facture SNE",
+        "moteur": "direct",
+        "fournisseur": "deepseek",
+        "ok": true,
+        "statut": "livree",
+        "cout_usd": 0.0075,
+        "duree_ms": 536,
+        "jetons_entree": 1200,
+        "jetons_sortie": 3400,
+        "tirages": 1,
+        "diagnostics": [],
+        "document": {
+          "fichiers": {
+            "index.tsx": "import { facture } from './calcul'\nexport const total = facture(159)",
+            "calcul.ts": "export const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402",
+            "systeme/jetons.ts": "/** JETONS — fournis par Deribfy, ne pas modifier.\n *\n * LES COULEURS, LES RAYONS ET LES TAILLES DE … (1492 car.)",
+            "systeme/argent.ts": "/** L'ARGENT — fourni par Deribfy. La devise vient de la configuration du\n * client : AUCUN code mon… (704 car.)",
+            "systeme/ui.tsx": "/** BIBLIOTHÈQUE D'INTERFACE — fournie par Deribfy, ne pas réécrire. */\nimport React from 'react'\nim… (46910 car.)",
+            "systeme/donnees.ts": "/** LES DONNÉES DU TABLEAU DE BORD — fournies par Deribfy, ne pas réécrire.\n *\n * Chaque chiffre et … (6733 car.)"
+          },
+          "schema": "-- AUCUNE DONNÉE DÉCLARÉE POUR CETTE APPLICATION.\n--\n-- Ce fichier est vide de tables, et ce n’est p… (363 car.)",
+          "politiques": "-- AUCUNE DONNÉE DÉCLARÉE : AUCUNE PORTE À POSER.\n--\n-- Il n’y a pas de table, donc rien à protéger.… (174 car.)",
+          "entites": [],
+          "configuration": {
+            "nom_produit": "Facture SNE"
+          }
+        },
+        "sections_acquises": {
+          "configuration": {
+            "nom_produit": "Facture SNE"
+          },
+          "lectureBrief": {
+            "resultat": "non_transmise",
+            "tablesLues": null,
+            "tablesRecues": 0,
+            "source": "absente",
+            "tentatives": null,
+            "tranches": null,
+            "tranchesEchouees": null,
+            "signesLus": null,
+            "coutUsd": null,
+            "jetonsEntree": null,
+            "jetonsSortie": null,
+            "parTranche": [],
+            "roles": [],
+            "ecrans": [],
+            "questionsOuvertes": []
+          },
+          "deploiement": {
+            "commit": "inconnu",
+            "environnement": "inconnu",
+            "branche": "inconnu"
+          },
+          "tours": [
+            {
+              "rang": 1,
+              "fichiers": 2,
+              "ok": true,
+              "ms": 536
+            }
+          ],
+          "jetons": [],
+          "execution": {
+            "monteDansSimulateur": true,
+            "erreurs": [],
+            "octetsRendus": 0,
+            "texte": "",
+            "ecransVisites": 0,
+            "ecransDecouverts": 0,
+            "ecransDistincts": 1,
+            "controlesMuets": [],
+            "ecrans": [
+              {
+                "texte": "",
+                "exerce": false
+              }
+            ],
+            "ms": 533
+          },
+          "vivacite": [],
+          "couverture": {
+            "exigences": [
+              {
+                "exigence": "calcule",
+                "cahier": 1,
+                "code": 0,
+                "statut": "absente",
+                "source": "demande"
+              }
+            ],
+            "absentes": [],
+            "muettesDerivees": [
+              {
+                "exigence": "calcule",
+                "cahier": 1,
+                "code": 0,
+                "statut": "absente",
+                "source": "demande"
+              }
+            ],
+            "taux": 0,
+            "ecartes": 0
+          },
+          "persistance": [],
+          "dernierTexte": null
+        },
+        "version_courante": 1
+      },
+      "tours": 1,
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        }
+      ]
+    },
+    {
+      "etape": "regeneration_1_A",
+      "corps_rendu": {
+        "ok": false,
+        "error": "Non convergé en 3 tours. Le code produit ne s'est pas assemblé (3 essai(s), 0 s).",
+        "coutUsd": 0.022572
+      },
+      "comparaison_avec_l_etat_precedent": {
+        "inchangees": [
+          "created_at",
+          "cree_le",
+          "demande",
+          "document",
+          "fournisseur",
+          "id",
+          "moteur",
+          "nom",
+          "ok",
+          "owner_id",
+          "statut",
+          "version_courante"
+        ],
+        "changees": {
+          "cout_usd": {
+            "avant": 0.0075,
+            "apres": 0.0226
+          },
+          "diagnostics": {
+            "avant": [],
+            "apres": [
+              "Non convergé en 3 tours."
+            ]
+          },
+          "duree_ms": {
+            "avant": 536,
+            "apres": 3
+          },
+          "jetons_entree": {
+            "avant": 1200,
+            "apres": 3600
+          },
+          "jetons_sortie": {
+            "avant": 3400,
+            "apres": 10200
+          },
+          "sections_acquises": {
+            "avant": {
+              "configuration": {
+                "nom_produit": "Facture SNE"
+              },
+              "lectureBrief": {
+                "resultat": "non_transmise",
+                "tablesLues": null,
+                "tablesRecues": 0,
+                "source": "absente",
+                "tentatives": null,
+                "tranches": null,
+                "tranchesEchouees": null,
+                "signesLus": null,
+                "coutUsd": null,
+                "jetonsEntree": null,
+                "jetonsSortie": null,
+                "parTranche": [],
+                "roles": [],
+                "ecrans": [],
+                "questionsOuvertes": []
+              },
+              "deploiement": {
+                "commit": "inconnu",
+                "environnement": "inconnu",
+                "branche": "inconnu"
+              },
+              "tours": [
+                {
+                  "rang": 1,
+                  "fichiers": 2,
+                  "ok": true,
+                  "ms": 536
+                }
+              ],
+              "jetons": [],
+              "execution": {
+                "monteDansSimulateur": true,
+                "erreurs": [],
+                "octetsRendus": 0,
+                "texte": "",
+                "ecransVisites": 0,
+                "ecransDecouverts": 0,
+                "ecransDistincts": 1,
+                "controlesMuets": [],
+                "ecrans": [
+                  {
+                    "texte": "",
+                    "exerce": false
+                  }
+                ],
+                "ms": 533
+              },
+              "vivacite": [],
+              "couverture": {
+                "exigences": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "absentes": [],
+                "muettesDerivees": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "taux": 0,
+                "ecartes": 0
+              },
+              "persistance": [],
+              "dernierTexte": null
+            },
+            "apres": {
+              "configuration": {
+                "nom_produit": "Facture SNE"
+              },
+              "lectureBrief": {
+                "resultat": "non_transmise",
+                "tablesLues": null,
+                "tablesRecues": 0,
+                "source": "absente",
+                "tentatives": null,
+                "tranches": null,
+                "tranchesEchouees": null,
+                "signesLus": null,
+                "coutUsd": null,
+                "jetonsEntree": null,
+                "jetonsSortie": null,
+                "parTranche": [],
+                "roles": [],
+                "ecrans": [],
+                "questionsOuvertes": []
+              },
+              "deploiement": {
+                "commit": "inconnu",
+                "environnement": "inconnu",
+                "branche": "inconnu"
+              },
+              "tours": [
+                {
+                  "rang": 1,
+                  "fichiers": 1,
+                  "ok": false,
+                  "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found… (794 car.)",
+                  "tronquee": false,
+                  "ms": 1,
+                  "source": {
+                    "index.tsx": "export const total = { a: 1,"
+                  }
+                },
+                {
+                  "rang": 2,
+                  "fichiers": 1,
+                  "ok": false,
+                  "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found… (794 car.)",
+                  "tronquee": false,
+                  "ms": 1,
+                  "source": {
+                    "index.tsx": "export const total = { a: 1,"
+                  }
+                },
+                {
+                  "rang": 3,
+                  "fichiers": 1,
+                  "ok": false,
+                  "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found… (794 car.)",
+                  "tronquee": false,
+                  "ms": 1,
+                  "source": {
+                    "index.tsx": "export const total = { a: 1,"
+                  }
+                }
+              ],
+              "jetons": null,
+              "execution": null,
+              "vivacite": null,
+              "couverture": null,
+              "persistance": null,
+              "dernierTexte": "=== index.tsx ===\nexport const total = { a: 1,"
+            }
+          },
+          "tirages": {
+            "avant": 1,
+            "apres": 3
+          }
+        }
+      },
+      "tours_dans_la_ligne": 3,
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        }
+      ],
+      "lignes_app_generations": [
+        {
+          "id": "ID_OEUVRE",
+          "statut": "livree",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "etape": "regeneration_2_ok",
+      "corps_rendu": {
+        "ok": true,
+        "error": null,
+        "coutUsd": 0.007524
+      },
+      "comparaison_avec_l_etat_precedent": {
+        "inchangees": [
+          "created_at",
+          "cree_le",
+          "demande",
+          "document",
+          "fournisseur",
+          "id",
+          "moteur",
+          "nom",
+          "ok",
+          "owner_id",
+          "statut"
+        ],
+        "changees": {
+          "cout_usd": {
+            "avant": 0.0226,
+            "apres": 0.0075
+          },
+          "diagnostics": {
+            "avant": [
+              "Non convergé en 3 tours."
+            ],
+            "apres": []
+          },
+          "duree_ms": {
+            "avant": 3,
+            "apres": 536
+          },
+          "jetons_entree": {
+            "avant": 3600,
+            "apres": 1200
+          },
+          "jetons_sortie": {
+            "avant": 10200,
+            "apres": 3400
+          },
+          "sections_acquises": {
+            "avant": {
+              "configuration": {
+                "nom_produit": "Facture SNE"
+              },
+              "lectureBrief": {
+                "resultat": "non_transmise",
+                "tablesLues": null,
+                "tablesRecues": 0,
+                "source": "absente",
+                "tentatives": null,
+                "tranches": null,
+                "tranchesEchouees": null,
+                "signesLus": null,
+                "coutUsd": null,
+                "jetonsEntree": null,
+                "jetonsSortie": null,
+                "parTranche": [],
+                "roles": [],
+                "ecrans": [],
+                "questionsOuvertes": []
+              },
+              "deploiement": {
+                "commit": "inconnu",
+                "environnement": "inconnu",
+                "branche": "inconnu"
+              },
+              "tours": [
+                {
+                  "rang": 1,
+                  "fichiers": 1,
+                  "ok": false,
+                  "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found… (794 car.)",
+                  "tronquee": false,
+                  "ms": 1,
+                  "source": {
+                    "index.tsx": "export const total = { a: 1,"
+                  }
+                },
+                {
+                  "rang": 2,
+                  "fichiers": 1,
+                  "ok": false,
+                  "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found… (794 car.)",
+                  "tronquee": false,
+                  "ms": 1,
+                  "source": {
+                    "index.tsx": "export const total = { a: 1,"
+                  }
+                },
+                {
+                  "rang": 3,
+                  "fichiers": 1,
+                  "ok": false,
+                  "motif": "La construction a échoué :\nBuild failed with 1 error:\n\n\u001b[31m[PARSE_ERROR] \u001b[0mExpected `}` but found… (794 car.)",
+                  "tronquee": false,
+                  "ms": 1,
+                  "source": {
+                    "index.tsx": "export const total = { a: 1,"
+                  }
+                }
+              ],
+              "jetons": null,
+              "execution": null,
+              "vivacite": null,
+              "couverture": null,
+              "persistance": null,
+              "dernierTexte": "=== index.tsx ===\nexport const total = { a: 1,"
+            },
+            "apres": {
+              "configuration": {
+                "nom_produit": "Facture SNE"
+              },
+              "lectureBrief": {
+                "resultat": "non_transmise",
+                "tablesLues": null,
+                "tablesRecues": 0,
+                "source": "absente",
+                "tentatives": null,
+                "tranches": null,
+                "tranchesEchouees": null,
+                "signesLus": null,
+                "coutUsd": null,
+                "jetonsEntree": null,
+                "jetonsSortie": null,
+                "parTranche": [],
+                "roles": [],
+                "ecrans": [],
+                "questionsOuvertes": []
+              },
+              "deploiement": {
+                "commit": "inconnu",
+                "environnement": "inconnu",
+                "branche": "inconnu"
+              },
+              "tours": [
+                {
+                  "rang": 1,
+                  "fichiers": 2,
+                  "ok": true,
+                  "ms": 536
+                }
+              ],
+              "jetons": [],
+              "execution": {
+                "monteDansSimulateur": true,
+                "erreurs": [],
+                "octetsRendus": 0,
+                "texte": "",
+                "ecransVisites": 0,
+                "ecransDecouverts": 0,
+                "ecransDistincts": 1,
+                "controlesMuets": [],
+                "ecrans": [
+                  {
+                    "texte": "",
+                    "exerce": false
+                  }
+                ],
+                "ms": 533
+              },
+              "vivacite": [],
+              "couverture": {
+                "exigences": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "absentes": [],
+                "muettesDerivees": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "taux": 0,
+                "ecartes": 0
+              },
+              "persistance": [],
+              "dernierTexte": null
+            }
+          },
+          "tirages": {
+            "avant": 3,
+            "apres": 1
+          },
+          "version_courante": {
+            "avant": 1,
+            "apres": 2
+          }
+        }
+      },
+      "tours_dans_la_ligne": 1,
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        },
+        {
+          "rang": 2,
+          "etape": "regeneration",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        }
+      ],
+      "lignes_app_generations": [
+        {
+          "id": "ID_OEUVRE",
+          "statut": "livree",
+          "ok": true
+        }
+      ]
+    }
+  ],
+  "S4_deux_reussites": [
+    {
+      "etape": "generation_initiale",
+      "ligne": {
+        "id": "cb897983-c820-485f-b99d-f150228e9f34",
+        "created_at": "2026-11-15T23:00:56.312Z",
+        "cree_le": "2026-11-15T23:00:56.312Z",
+        "owner_id": "u-1",
+        "demande": "calcule ma facture SNE",
+        "nom": "Facture SNE",
+        "moteur": "direct",
+        "fournisseur": "deepseek",
+        "ok": true,
+        "statut": "livree",
+        "cout_usd": 0.0075,
+        "duree_ms": 547,
+        "jetons_entree": 1200,
+        "jetons_sortie": 3400,
+        "tirages": 1,
+        "diagnostics": [],
+        "document": {
+          "fichiers": {
+            "index.tsx": "import { facture } from './calcul'\nexport const total = facture(159)",
+            "calcul.ts": "export const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402",
+            "systeme/jetons.ts": "/** JETONS — fournis par Deribfy, ne pas modifier.\n *\n * LES COULEURS, LES RAYONS ET LES TAILLES DE … (1492 car.)",
+            "systeme/argent.ts": "/** L'ARGENT — fourni par Deribfy. La devise vient de la configuration du\n * client : AUCUN code mon… (704 car.)",
+            "systeme/ui.tsx": "/** BIBLIOTHÈQUE D'INTERFACE — fournie par Deribfy, ne pas réécrire. */\nimport React from 'react'\nim… (46910 car.)",
+            "systeme/donnees.ts": "/** LES DONNÉES DU TABLEAU DE BORD — fournies par Deribfy, ne pas réécrire.\n *\n * Chaque chiffre et … (6733 car.)"
+          },
+          "schema": "-- AUCUNE DONNÉE DÉCLARÉE POUR CETTE APPLICATION.\n--\n-- Ce fichier est vide de tables, et ce n’est p… (363 car.)",
+          "politiques": "-- AUCUNE DONNÉE DÉCLARÉE : AUCUNE PORTE À POSER.\n--\n-- Il n’y a pas de table, donc rien à protéger.… (174 car.)",
+          "entites": [],
+          "configuration": {
+            "nom_produit": "Facture SNE"
+          }
+        },
+        "sections_acquises": {
+          "configuration": {
+            "nom_produit": "Facture SNE"
+          },
+          "lectureBrief": {
+            "resultat": "non_transmise",
+            "tablesLues": null,
+            "tablesRecues": 0,
+            "source": "absente",
+            "tentatives": null,
+            "tranches": null,
+            "tranchesEchouees": null,
+            "signesLus": null,
+            "coutUsd": null,
+            "jetonsEntree": null,
+            "jetonsSortie": null,
+            "parTranche": [],
+            "roles": [],
+            "ecrans": [],
+            "questionsOuvertes": []
+          },
+          "deploiement": {
+            "commit": "inconnu",
+            "environnement": "inconnu",
+            "branche": "inconnu"
+          },
+          "tours": [
+            {
+              "rang": 1,
+              "fichiers": 2,
+              "ok": true,
+              "ms": 547
+            }
+          ],
+          "jetons": [],
+          "execution": {
+            "monteDansSimulateur": true,
+            "erreurs": [],
+            "octetsRendus": 0,
+            "texte": "",
+            "ecransVisites": 0,
+            "ecransDecouverts": 0,
+            "ecransDistincts": 1,
+            "controlesMuets": [],
+            "ecrans": [
+              {
+                "texte": "",
+                "exerce": false
+              }
+            ],
+            "ms": 542
+          },
+          "vivacite": [],
+          "couverture": {
+            "exigences": [
+              {
+                "exigence": "calcule",
+                "cahier": 1,
+                "code": 0,
+                "statut": "absente",
+                "source": "demande"
+              }
+            ],
+            "absentes": [],
+            "muettesDerivees": [
+              {
+                "exigence": "calcule",
+                "cahier": 1,
+                "code": 0,
+                "statut": "absente",
+                "source": "demande"
+              }
+            ],
+            "taux": 0,
+            "ecartes": 0
+          },
+          "persistance": [],
+          "dernierTexte": null
+        },
+        "version_courante": 1
+      },
+      "tours": 1,
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        }
+      ]
+    },
+    {
+      "etape": "regeneration_1_ok",
+      "corps_rendu": {
+        "ok": true,
+        "error": null,
+        "coutUsd": 0.007524
+      },
+      "comparaison_avec_l_etat_precedent": {
+        "inchangees": [
+          "cout_usd",
+          "created_at",
+          "cree_le",
+          "demande",
+          "diagnostics",
+          "document",
+          "duree_ms",
+          "fournisseur",
+          "id",
+          "jetons_entree",
+          "jetons_sortie",
+          "moteur",
+          "nom",
+          "ok",
+          "owner_id",
+          "sections_acquises",
+          "statut",
+          "tirages"
+        ],
+        "changees": {
+          "version_courante": {
+            "avant": 1,
+            "apres": 2
+          }
+        }
+      },
+      "tours_dans_la_ligne": 1,
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        },
+        {
+          "rang": 2,
+          "etape": "regeneration",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        }
+      ],
+      "lignes_app_generations": [
+        {
+          "id": "ID_OEUVRE",
+          "statut": "livree",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "etape": "regeneration_2_ok",
+      "corps_rendu": {
+        "ok": true,
+        "error": null,
+        "coutUsd": 0.007524
+      },
+      "comparaison_avec_l_etat_precedent": {
+        "inchangees": [
+          "cout_usd",
+          "created_at",
+          "cree_le",
+          "demande",
+          "diagnostics",
+          "document",
+          "fournisseur",
+          "id",
+          "jetons_entree",
+          "jetons_sortie",
+          "moteur",
+          "nom",
+          "ok",
+          "owner_id",
+          "statut",
+          "tirages"
+        ],
+        "changees": {
+          "duree_ms": {
+            "avant": 547,
+            "apres": 554
+          },
+          "sections_acquises": {
+            "avant": {
+              "configuration": {
+                "nom_produit": "Facture SNE"
+              },
+              "lectureBrief": {
+                "resultat": "non_transmise",
+                "tablesLues": null,
+                "tablesRecues": 0,
+                "source": "absente",
+                "tentatives": null,
+                "tranches": null,
+                "tranchesEchouees": null,
+                "signesLus": null,
+                "coutUsd": null,
+                "jetonsEntree": null,
+                "jetonsSortie": null,
+                "parTranche": [],
+                "roles": [],
+                "ecrans": [],
+                "questionsOuvertes": []
+              },
+              "deploiement": {
+                "commit": "inconnu",
+                "environnement": "inconnu",
+                "branche": "inconnu"
+              },
+              "tours": [
+                {
+                  "rang": 1,
+                  "fichiers": 2,
+                  "ok": true,
+                  "ms": 547
+                }
+              ],
+              "jetons": [],
+              "execution": {
+                "monteDansSimulateur": true,
+                "erreurs": [],
+                "octetsRendus": 0,
+                "texte": "",
+                "ecransVisites": 0,
+                "ecransDecouverts": 0,
+                "ecransDistincts": 1,
+                "controlesMuets": [],
+                "ecrans": [
+                  {
+                    "texte": "",
+                    "exerce": false
+                  }
+                ],
+                "ms": 542
+              },
+              "vivacite": [],
+              "couverture": {
+                "exigences": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "absentes": [],
+                "muettesDerivees": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "taux": 0,
+                "ecartes": 0
+              },
+              "persistance": [],
+              "dernierTexte": null
+            },
+            "apres": {
+              "configuration": {
+                "nom_produit": "Facture SNE"
+              },
+              "lectureBrief": {
+                "resultat": "non_transmise",
+                "tablesLues": null,
+                "tablesRecues": 0,
+                "source": "absente",
+                "tentatives": null,
+                "tranches": null,
+                "tranchesEchouees": null,
+                "signesLus": null,
+                "coutUsd": null,
+                "jetonsEntree": null,
+                "jetonsSortie": null,
+                "parTranche": [],
+                "roles": [],
+                "ecrans": [],
+                "questionsOuvertes": []
+              },
+              "deploiement": {
+                "commit": "inconnu",
+                "environnement": "inconnu",
+                "branche": "inconnu"
+              },
+              "tours": [
+                {
+                  "rang": 1,
+                  "fichiers": 2,
+                  "ok": true,
+                  "ms": 554
+                }
+              ],
+              "jetons": [],
+              "execution": {
+                "monteDansSimulateur": true,
+                "erreurs": [],
+                "octetsRendus": 0,
+                "texte": "",
+                "ecransVisites": 0,
+                "ecransDecouverts": 0,
+                "ecransDistincts": 1,
+                "controlesMuets": [],
+                "ecrans": [
+                  {
+                    "texte": "",
+                    "exerce": false
+                  }
+                ],
+                "ms": 548
+              },
+              "vivacite": [],
+              "couverture": {
+                "exigences": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "absentes": [],
+                "muettesDerivees": [
+                  {
+                    "exigence": "calcule",
+                    "cahier": 1,
+                    "code": 0,
+                    "statut": "absente",
+                    "source": "demande"
+                  }
+                ],
+                "taux": 0,
+                "ecartes": 0
+              },
+              "persistance": [],
+              "dernierTexte": null
+            }
+          },
+          "version_courante": {
+            "avant": 2,
+            "apres": 3
+          }
+        }
+      },
+      "tours_dans_la_ligne": 1,
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        },
+        {
+          "rang": 2,
+          "etape": "regeneration",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        },
+        {
+          "rang": 3,
+          "etape": "regeneration",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        }
+      ],
+      "lignes_app_generations": [
+        {
+          "id": "ID_OEUVRE",
+          "statut": "livree",
+          "ok": true
+        }
+      ]
+    }
+  ],
+  "S5_erreur_fournisseur": [
+    {
+      "etape": "generation_initiale",
+      "ligne": {
+        "id": "33033e86-6205-4f6d-a97b-687ee06f07df",
+        "created_at": "2026-11-15T23:00:57.969Z",
+        "cree_le": "2026-11-15T23:00:57.969Z",
+        "owner_id": "u-1",
+        "demande": "calcule ma facture SNE",
+        "nom": "Facture SNE",
+        "moteur": "direct",
+        "fournisseur": "deepseek",
+        "ok": true,
+        "statut": "livree",
+        "cout_usd": 0.0075,
+        "duree_ms": 550,
+        "jetons_entree": 1200,
+        "jetons_sortie": 3400,
+        "tirages": 1,
+        "diagnostics": [],
+        "document": {
+          "fichiers": {
+            "index.tsx": "import { facture } from './calcul'\nexport const total = facture(159)",
+            "calcul.ts": "export const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402",
+            "systeme/jetons.ts": "/** JETONS — fournis par Deribfy, ne pas modifier.\n *\n * LES COULEURS, LES RAYONS ET LES TAILLES DE … (1492 car.)",
+            "systeme/argent.ts": "/** L'ARGENT — fourni par Deribfy. La devise vient de la configuration du\n * client : AUCUN code mon… (704 car.)",
+            "systeme/ui.tsx": "/** BIBLIOTHÈQUE D'INTERFACE — fournie par Deribfy, ne pas réécrire. */\nimport React from 'react'\nim… (46910 car.)",
+            "systeme/donnees.ts": "/** LES DONNÉES DU TABLEAU DE BORD — fournies par Deribfy, ne pas réécrire.\n *\n * Chaque chiffre et … (6733 car.)"
+          },
+          "schema": "-- AUCUNE DONNÉE DÉCLARÉE POUR CETTE APPLICATION.\n--\n-- Ce fichier est vide de tables, et ce n’est p… (363 car.)",
+          "politiques": "-- AUCUNE DONNÉE DÉCLARÉE : AUCUNE PORTE À POSER.\n--\n-- Il n’y a pas de table, donc rien à protéger.… (174 car.)",
+          "entites": [],
+          "configuration": {
+            "nom_produit": "Facture SNE"
+          }
+        },
+        "sections_acquises": {
+          "configuration": {
+            "nom_produit": "Facture SNE"
+          },
+          "lectureBrief": {
+            "resultat": "non_transmise",
+            "tablesLues": null,
+            "tablesRecues": 0,
+            "source": "absente",
+            "tentatives": null,
+            "tranches": null,
+            "tranchesEchouees": null,
+            "signesLus": null,
+            "coutUsd": null,
+            "jetonsEntree": null,
+            "jetonsSortie": null,
+            "parTranche": [],
+            "roles": [],
+            "ecrans": [],
+            "questionsOuvertes": []
+          },
+          "deploiement": {
+            "commit": "inconnu",
+            "environnement": "inconnu",
+            "branche": "inconnu"
+          },
+          "tours": [
+            {
+              "rang": 1,
+              "fichiers": 2,
+              "ok": true,
+              "ms": 550
+            }
+          ],
+          "jetons": [],
+          "execution": {
+            "monteDansSimulateur": true,
+            "erreurs": [],
+            "octetsRendus": 0,
+            "texte": "",
+            "ecransVisites": 0,
+            "ecransDecouverts": 0,
+            "ecransDistincts": 1,
+            "controlesMuets": [],
+            "ecrans": [
+              {
+                "texte": "",
+                "exerce": false
+              }
+            ],
+            "ms": 545
+          },
+          "vivacite": [],
+          "couverture": {
+            "exigences": [
+              {
+                "exigence": "calcule",
+                "cahier": 1,
+                "code": 0,
+                "statut": "absente",
+                "source": "demande"
+              }
+            ],
+            "absentes": [],
+            "muettesDerivees": [
+              {
+                "exigence": "calcule",
+                "cahier": 1,
+                "code": 0,
+                "statut": "absente",
+                "source": "demande"
+              }
+            ],
+            "taux": 0,
+            "ecartes": 0
+          },
+          "persistance": [],
+          "dernierTexte": null
+        },
+        "version_courante": 1
+      },
+      "tours": 1,
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        }
+      ]
+    },
+    {
+      "etape": "regeneration_1_B",
+      "corps_rendu": {
+        "ok": false,
+        "error": "503 {\"error\":{\"message\":\"Service unavailable\"}}"
+      },
+      "comparaison_avec_l_etat_precedent": {
+        "inchangees": [
+          "cout_usd",
+          "created_at",
+          "cree_le",
+          "demande",
+          "diagnostics",
+          "document",
+          "duree_ms",
+          "fournisseur",
+          "id",
+          "jetons_entree",
+          "jetons_sortie",
+          "moteur",
+          "nom",
+          "ok",
+          "owner_id",
+          "sections_acquises",
+          "statut",
+          "tirages",
+          "version_courante"
+        ],
+        "changees": {}
+      },
+      "tours_dans_la_ligne": 1,
+      "versions": [
+        {
+          "rang": 1,
+          "etape": "livraison",
+          "cout_usd": 0.0075,
+          "cles_etat": [
+            "forme",
+            "fichiers",
+            "nom",
+            "coutUsd",
+            "schema",
+            "politiques"
+          ]
+        }
+      ],
+      "lignes_app_generations": [
+        {
+          "id": "ID_OEUVRE",
+          "statut": "livree",
+          "ok": true
+        },
+        {
+          "id": "AUTRE",
+          "statut": "refusee",
+          "ok": false
+        }
+      ]
+    }
+  ]
+}

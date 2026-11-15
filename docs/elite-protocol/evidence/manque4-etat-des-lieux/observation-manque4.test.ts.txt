@@ -1,0 +1,215 @@
+/**
+ * PREUVE — une régénération qui échoue efface-t-elle l'œuvre ?
+ *
+ * Essai d'observation, pas un cliquet. Il appelle les VRAIES poignées de
+ * `main` (27e83891) : POST /api/generateur/direct, GET /direct/[id],
+ * GET /mes-applications, GET /version. Seuls trois bords sont remplacés :
+ *   - l'authentification (un utilisateur fixe) ;
+ *   - Supabase, par une base EN MÉMOIRE À ÉTAT (les écritures d'une poignée
+ *     sont lues par la suivante, comme en production) ;
+ *   - le réseau vers DeepSeek (`fetch` global), au format de sa réponse
+ *     /chat/completions. L'adaptateur `appelerFournisseur` réel s'exécute.
+ * Aucun appel payant, aucune écriture en base réelle.
+ */
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { writeFileSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
+import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
+
+type Ligne = Record<string, unknown>
+const { base } = vi.hoisted(() => ({ base: { tables: new Map<string, Ligne[]>() } }))
+
+vi.mock('@/lib/auth/require-authenticated-user', () => ({
+  requireAuthenticatedUser: () => ({ ok: true, userId: 'u-1', email: 'a@b.c' }),
+}))
+
+/** Base PostgREST minimale À ÉTAT : select/insert/update/delete + eq/neq/in/order. */
+vi.mock('@/lib/supabase-admin', () => {
+  const table = (nom: string): Ligne[] => {
+    if (!base.tables.has(nom)) base.tables.set(nom, [])
+    return base.tables.get(nom)!
+  }
+  const from = (nom: string) => {
+    let op: 'select' | 'insert' | 'update' | 'delete' = 'select'
+    let charge: Ligne | Ligne[] | null = null
+    let colonnes: string | null = null
+    const filtres: ((l: Ligne) => boolean)[] = []
+    const projeter = (l: Ligne): Ligne => {
+      if (colonnes === null || colonnes.trim() === '*') return structuredClone(l)
+      const o: Ligne = {}
+      for (const c of colonnes.split(',').map((x) => x.trim())) o[c] = structuredClone(l[c] ?? null)
+      return o
+    }
+    const executer = (): { data: Ligne[]; error: null } => {
+      const t = table(nom)
+      if (op === 'insert') {
+        const lignes = (Array.isArray(charge) ? charge : [charge!]).map((c) => ({
+          id: randomUUID(),
+          created_at: new Date().toISOString(),
+          cree_le: new Date().toISOString(),
+          ...structuredClone(c),
+        }))
+        t.push(...lignes)
+        return { data: lignes.map(projeter), error: null }
+      }
+      const touchees = t.filter((l) => filtres.every((f) => f(l)))
+      if (op === 'update') {
+        for (const l of touchees) Object.assign(l, structuredClone(charge as Ligne))
+        return { data: touchees.map(projeter), error: null }
+      }
+      if (op === 'delete') {
+        base.tables.set(nom, t.filter((l) => !touchees.includes(l)))
+        return { data: [], error: null }
+      }
+      return { data: touchees.map(projeter), error: null }
+    }
+    const b = {
+      select(c?: string) { colonnes = c ?? '*'; return b },
+      insert(c: Ligne | Ligne[]) { op = 'insert'; charge = c; return b },
+      update(c: Ligne) { op = 'update'; charge = c; return b },
+      delete() { op = 'delete'; return b },
+      eq(k: string, v: unknown) { filtres.push((l) => l[k] === v); return b },
+      neq(k: string, v: unknown) { filtres.push((l) => l[k] !== v); return b },
+      in(k: string, v: unknown[]) { filtres.push((l) => v.includes(l[k])); return b },
+      order() { return b },
+      limit() { return b },
+      maybeSingle() { const r = executer(); return Promise.resolve({ data: r.data[0] ?? null, error: null }) },
+      single() { const r = executer(); return Promise.resolve({ data: r.data[0] ?? null, error: null }) },
+      then(ok: (r: unknown) => unknown, ko?: (e: unknown) => unknown) {
+        return Promise.resolve(executer()).then(ok, ko)
+      },
+    }
+    return b
+  }
+  return { supabaseAdmin: { from } }
+})
+
+// ── FAUX DEEPSEEK, au niveau du réseau : l'adaptateur réel tourne.
+const reseau = { reponses: [] as (() => Response)[], i: 0, appels: 0 }
+const deepseek = (contenu: string, finish = 'stop') => () =>
+  new Response(
+    JSON.stringify({
+      choices: [{ message: { content: contenu }, finish_reason: finish }],
+      usage: { prompt_tokens: 1200, completion_tokens: 3400 },
+    }),
+    { status: 200, headers: { 'content-type': 'application/json' } },
+  )
+vi.stubGlobal('fetch', async (url: unknown) => {
+  if (!String(url).startsWith('https://api.deepseek.com/')) throw new Error(`réseau inattendu : ${String(url)}`)
+  reseau.appels += 1
+  const f = reseau.reponses[Math.min(reseau.i++, reseau.reponses.length - 1)]
+  return f!()
+})
+
+import { POST } from '../route'
+import { GET as APERCU } from '../[id]/route'
+import { GET as LISTE } from '../../mes-applications/route'
+import { GET as VERSIONS } from '../../version/route'
+
+const BON = [
+  '=== index.tsx ===',
+  "import { facture } from './calcul'",
+  'export const total = facture(159)',
+  '=== calcul.ts ===',
+  'export const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402',
+].join('\n')
+// Code qui ne s'assemble pas : la forme d'échec réellement mesurée
+// (« Expected } but found EOF », fournisseur.ts:32-40).
+const CASSE = ['=== index.tsx ===', 'export const total = { a: 1,'].join('\n')
+
+
+// ── OBSERVATION MANQUE 4 (2026-11-15) — code de main @9e46d9e6, réparation incluse.
+// Question : après la réparation, qu'est-ce qu'une régénération ÉCRASE encore ?
+// Méthode : ligne app_generations BRUTE avant / après, comparée colonne par colonne.
+
+const H = { 'Content-Type': 'application/json', Authorization: 'Bearer j' }
+const generer = (id?: string) =>
+  POST(new Request(`https://deribfy.test/api/generateur/direct${id === undefined ? '' : `?id=${id}`}`, {
+    method: 'POST', headers: H,
+    body: JSON.stringify(id === undefined ? { demande: 'calcule ma facture SNE', nom: 'Facture SNE' } : { demande: '' }),
+  }))
+
+const resume = (v: unknown): unknown => {
+  if (v === null || v === undefined) return v ?? null
+  if (typeof v === 'string') return v.length > 100 ? `${v.slice(0, 100)}… (${String(v.length)} car.)` : v
+  if (Array.isArray(v)) return v.map(resume)
+  if (typeof v === 'object') return Object.fromEntries(Object.entries(v as Ligne).map(([k, x]) => [k, resume(x)]))
+  return v
+}
+const brute = (id: string): Ligne | null => {
+  const l = (base.tables.get(TABLE_GENERATIONS) ?? []).find((x) => x.id === id)
+  return l === undefined ? null : structuredClone(l)
+}
+const versions = (id: string) => (base.tables.get(TABLE_VERSIONS) ?? [])
+  .filter((v) => v.generation_id === id)
+  .map((v) => ({ rang: v.rang, etape: v.etape, cout_usd: v.cout_usd, cles_etat: Object.keys((v.etat ?? {}) as object) }))
+const comparer = (a: Ligne | null, b: Ligne | null) => {
+  const cles = [...new Set([...Object.keys(a ?? {}), ...Object.keys(b ?? {})])].sort()
+  const inchangees: string[] = []
+  const changees: Record<string, { avant: unknown; apres: unknown }> = {}
+  for (const k of cles) {
+    if (JSON.stringify(a?.[k]) === JSON.stringify(b?.[k])) inchangees.push(k)
+    else changees[k] = { avant: resume(a?.[k]), apres: resume(b?.[k]) }
+  }
+  return { inchangees, changees }
+}
+const toursDe = (l: Ligne | null) => (((l?.sections_acquises ?? {}) as Ligne).tours ?? []) as Ligne[]
+
+const SORTIE = process.env.PREUVE_SORTIE ?? '/dev/null'
+const releves: Record<string, unknown> = {}
+
+beforeEach(() => {
+  base.tables = new Map()
+  reseau.reponses = []
+  reseau.i = 0
+  reseau.appels = 0
+  process.env.GENERATEUR_MOTEUR = 'direct'
+  process.env.GENERATEUR_FOURNISSEUR = 'deepseek'
+  process.env.DEEPSEEK_API_KEY = 'cle-de-test'
+  delete process.env.RESEND_API_KEY
+})
+
+const reponseDe = (s: 'ok' | 'A' | 'B') =>
+  s === 'ok' ? [deepseek(BON)]
+    : s === 'A' ? [deepseek(CASSE)]
+      : [() => new Response('{"error":{"message":"Service unavailable"}}', { status: 503 })]
+
+describe('OBSERVATION — ce qu’une régénération écrase après la réparation', () => {
+  const suites: Record<string, ('ok' | 'A' | 'B')[]> = {
+    S1_regeneration_reussie: ['ok'],
+    S2_regeneration_non_convergee: ['A'],
+    S3_echec_puis_reussite: ['A', 'ok'],
+    S4_deux_reussites: ['ok', 'ok'],
+    S5_erreur_fournisseur: ['B'],
+  }
+  for (const [nom, suite] of Object.entries(suites)) {
+    it(nom, async () => {
+      reseau.reponses = reponseDe('ok')
+      const d0 = (await (await generer()).json()) as { ok?: boolean; id?: string }
+      expect(d0.ok).toBe(true)
+      const id = d0.id!
+      const etapes: unknown[] = []
+      let precedente = brute(id)
+      etapes.push({ etape: 'generation_initiale', ligne: resume(precedente), tours: toursDe(precedente).length, versions: versions(id) })
+      for (const [i, s] of suite.entries()) {
+        reseau.i = 0
+        reseau.appels = 0
+        reseau.reponses = reponseDe(s)
+        const r = await generer(id)
+        const corps = (await r.clone().json()) as Ligne
+        const apres = brute(id)
+        etapes.push({
+          etape: `regeneration_${String(i + 1)}_${s}`,
+          corps_rendu: { ok: corps.ok, error: resume(corps.error), coutUsd: corps.coutUsd },
+          comparaison_avec_l_etat_precedent: comparer(precedente, apres),
+          tours_dans_la_ligne: toursDe(apres).length,
+          versions: versions(id),
+          lignes_app_generations: (base.tables.get(TABLE_GENERATIONS) ?? []).map((x) => ({ id: x.id === id ? 'ID_OEUVRE' : 'AUTRE', statut: x.statut, ok: x.ok })),
+        })
+        precedente = apres
+      }
+      releves[nom] = etapes
+      writeFileSync(SORTIE, JSON.stringify(releves, null, 2))
+    }, 120_000)
+  }
+})
