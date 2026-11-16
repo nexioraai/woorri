@@ -433,3 +433,14 @@ La ligne de l'œuvre dans `app_generations` : `id` identique, `nom` carnet de d�
 - l'écran a abandonné alors que la génération réussissait (`DEFAUT_ABANDON_ECRAN.md`) ;
 - l'œuvre est `livree` alors qu'elle ne se monte pas (§5 bis).
 
+### 6.9 Incident — la génération neuve rouverte par un push de documentation (2026-11-16) [OBSERVÉ-PROD]
+
+- **Cause :** après le tir, la génération neuve avait été refermée à l'écran, mais `NEXT_PUBLIC_GENERATION_ASYNC` valait encore `1` dans Vercel (lu par `vercel env pull`). Le push de documentation `bbcdc4ca` a déclenché un nouveau build, qui a figé `modeAsyncActif("1")`.
+- **Ouverte à tous** d'environ 08:51 UTC (`/api/version` → `bbcdc4c`) à environ 10:10 UTC (redeploy du propriétaire, heure déduite de `vercel ls` : « 16m » à 10:26). « Régénérer » est resté fermé tout du long (variable absente, refus 409 de la route).
+- **Fermeture vérifiée à 10:26 UTC :**
+  - la variable Vercel vaut `0`, et `NEXT_PUBLIC_REGENERATION_OUVERTE` est absente ;
+  - le code servi contient `U=(0,$.modeAsyncActif)("0")` et `let F="1"===…NEXT_PUBLIC_REGENERATION_OUVERTE`, ce qui ferme les deux portes ;
+  - le moteur est `direct`, donc le suivi asynchrone est éteint.
+- **Non vérifié :** si quelqu'un a généré pendant la fenêtre. La requête à lancer dans l'éditeur SQL : `select id, owner_id, statut, cout_usd, created_at from public.app_generations where created_at between '2026-11-16 08:51:00+00' and '2026-11-16 10:15:00+00' order by created_at;`.
+- **Règle retenue :** avant tout push sur `main`, lire la valeur réelle des interrupteurs dans Vercel.
+

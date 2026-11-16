@@ -48,11 +48,11 @@ if (!res.ok || d.ok !== true || typeof d.html !== 'string') {
 
 Le `.catch(() => null)` avale l'erreur **sans la consigner**. Même le navigateur ne garde pas le nom de l'exception : un abandon du filet (`AbortError`) et une coupure réseau affichent le même message. C'est une perte de diagnostic, à noter en plus du défaut.
 
-### 2.2 Ce qui a coupé : NON DÉTERMINÉ
+### 2.2 Ce qui a coupé : NON DÉTERMINÉ — H1 probable (témoignage, 2026-11-16)
 
 | Hypothèse | Pour | Contre ou manque |
 |---|---|---|
-| H1 · iOS Safari coupe la connexion (écran verrouillé, application en arrière-plan) | Le tir a été fait sur iPhone (capture). WebKit suspend les connexions d'une page qui n'est plus au premier plan. | Le propriétaire dit avoir vu le compteur avancer pendant sept minutes ; on ignore s'il a quitté l'écran. |
+| H1 · iOS Safari coupe la connexion quand la page passe en arrière-plan — **PROBABLE, appuyée sur le témoignage de l'utilisateur** | Le tir a été fait sur iPhone (capture). Témoignage du propriétaire (2026-11-16) : entre 08:11 et 08:20 UTC, il a **quitté Safari** pour envoyer des captures depuis une autre application ; la page de Deribfy est passée en arrière-plan au moins une fois. | Un témoignage n'est pas une mesure. L'heure du passage en arrière-plan n'est pas relevée, ni sa coïncidence avec l'abandon. H2 n'est pas exclue : les deux peuvent même coexister. |
 | H2 · les battements n'arrivent pas au navigateur (mise en tampon ou compression en route), et une couche ferme la connexion inactive | Même symptôme que le défaut du 2026-10-19. Rien n'a jamais **mesuré**, en production, que les octets du battement atteignent le navigateur. | `X-Accel-Buffering: no` est posé. |
 | H3 · une limite de durée côté Vercel ou côté réseau, sans rapport avec l'inactivité | — | Aucune limite connue de cet ordre ; `maxDuration` vaut 900 s. |
 
@@ -61,8 +61,27 @@ Le `.catch(() => null)` avale l'erreur **sans la consigner**. Même le navigateu
 **Preuves qui trancheraient, sans rien corriger :**
 
 - *Gratuite :* le journal de la requête dans le tableau de bord Vercel (Logs, filtre `/api/generateur/direct`, 08:11–08:21 UTC). Statut, durée et éventuelle fermeture côté client y figurent. Seul le propriétaire y a accès.
-- *Gratuite :* le propriétaire dit s'il a verrouillé l'écran ou changé d'application pendant le tir. Si oui, H1 devient très probable.
+- ~~*Gratuite :* le propriétaire dit s'il a verrouillé l'écran ou changé d'application pendant le tir.~~ **Fait le 2026-11-16 : oui.** H1 passe à « probable », pas à « établie ».
+
+**Ce qu'il faudrait pour ÉTABLIR H1, et pour EXCLURE H2 :**
+
+1. *Gratuit :* le journal de la requête dans le tableau de bord Vercel. Une fermeture **côté client** à une heure qui coïncide avec le passage en arrière-plan appuierait H1 ; une erreur côté proxy (5xx, délai) la contredirait.
+2. *Essai contrôlé, deux bras, même appareil, même demande :* (a) page laissée **au premier plan**, écran allumé, jusqu'au bout ; (b) passage en arrière-plan à heure **notée**. H1 est établie si (a) aboutit et (b) abandonne, à l'heure du passage ou peu après. H2 est exclue si (a) aboutit.
+   - *Payant* sur la vraie route (environ 0,05 à 0,31 $ par bras), donc sur accord seulement.
+   - *Ou gratuit* avec une route de mesure qui ne fait qu'attendre en émettant le même battement, sans appeler le modèle. Elle n'existe pas : ce serait du code à écrire, donc sur accord.
+3. *Pour H2 seule :* mesurer, sur un poste de bureau, l'arrivée des battements dans le navigateur (onglet Réseau : octets reçus au fil du temps). Cela exige soit un tir payant, soit la route de mesure ci-dessus.
 - *Payante, sur accord seulement :* refaire un tir depuis un ordinateur, page au premier plan. S'il abandonne aussi, H1 est écartée.
+
+### 2.3 La conséquence produit — LE VRAI SUJET
+
+Sur un téléphone, **passer en arrière-plan pendant huit minutes est le comportement normal** d'un utilisateur, pas l'exception : il répond à un message, consulte autre chose, verrouille l'écran. Une génération qui dure 2 à 8 minutes (121 s en moyenne sur 8 livrées, 504 s pour ce tir) et qui ne survit pas à un passage en arrière-plan est **inutilisable sur mobile**.
+
+C'est vrai quelle que soit l'hypothèse retenue. Même si H2 était seule en cause, H1 resterait un comportement connu de WebKit sur iOS. Un écran qui n'obtient le résultat qu'en gardant une connexion ouverte jusqu'au bout est fragile sur téléphone par construction.
+
+Ce qui aggrave le défaut :
+- l'écran annonce un **échec** au lieu d'une perte de contact ;
+- il remet le texte en place, prêt à être **renvoyé et repayé** ;
+- rien ne dit que l'œuvre existe déjà au tableau de bord (§4).
 
 ## 3. Ce que devient la génération après l'abandon de l'écran
 
