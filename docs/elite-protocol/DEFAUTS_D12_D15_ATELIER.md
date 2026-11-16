@@ -108,3 +108,50 @@ Les quatre juges, dont le budget de visites (D12) ; l'œuvre `b010d704` et toute
 - **Si le modèle suivra les deux nouvelles règles :** seule une génération le dira.
 - **D13 dans la forme exacte de l'Atelier** (grille rendue seulement s'il y a des lignes) : **le juge ne le verra toujours pas**. Seuls la consigne ou un montage avec données peuvent l'empêcher.
 - **L'écran Ventes du Registre :** non observé.
+
+---
+
+## Réponses aux quatre questions du propriétaire (2026-11-16)
+
+**1. Les adresses.**
+- **Le web sortant fonctionne**, mesuré : `suivi.deribfy.app` répond 200 (839 713 octets), et le code servi contient `mouvementsCeMois` (4 occurrences).
+- **La lecture du matin était bien celle du code servi :** `curl https://suivi.deribfy.app/`, 839 006 octets enregistrés dans `oeuvre4d/page.html` à 12:02 (heure locale).
+- **« Aucune de ces adresses ne répond » portait sur des adresses DEVINÉES** (`atelier`, `reparation`, `registre`…), essayées faute du résultat de A1. Elles se résolvent par le DNS générique de Vercel (`atelier.deribfy.app` → `76.76.21.241`), mais la connexion échoue (`http=000`) : ce ne sont pas des domaines de Deribfy. Les vraies adresses des deux œuvres ne m'ont jamais été données. La phrase était exacte pour ce que j'ai essayé, et **trompeuse** pour qui l'a lue : il fallait écrire « les adresses que j'ai devinées ne répondent pas ».
+- **Sur quoi a porté la mesure D6, précisément :**
+  - Playwright, avec WebKit et Chromium, en **local** ;
+  - la page testée est une sortie réelle de `pageAutonome` (vrai assembleur), servie par un serveur HTTP local qui pose les **mêmes en-têtes** que Deribfy (`X-Frame-Options: SAMEORIGIN`, `frame-ancestors 'self'`), dans une `iframe srcdoc` en `sandbox="allow-scripts"` comme l'aperçu.
+  - **Elle n'a PAS porté sur l'aperçu de Deribfy en production.** D6 est en production sans avoir été observé dans l'interface réelle. C'est le cas exact de la règle de preuve du 2026-11-16 : la mesure s'écrit [OBSERVÉ-LOCAL], et D6 reste **non validé** tant que le propriétaire n'a pas cliqué « Espace de gestion » dans l'aperçu de l'interface.
+
+**2. La consigne qui grossit.**
+- **Aujourd'hui** (mesuré à `c34c697`) : `CONSIGNE` fait **10 216 signes** sans table, et **14 908** avec une table.
+- **Il y a un mois :** la boucle directe n'existait pas. Sa première consigne (`47837412`, 2026-10-18) faisait **262 signes**. Le cliquet EP-319 relève aussi « 1 363 » puis « 5 904 » vers le 2026-11-03.
+- **Rien ne borne cette croissance.** Les plafonds d'EP-319 sont relevés à chaque fois : **25 relèvements** sont consignés dans ce test, dont **6 aujourd'hui**, sur trois plafonds.
+- **Chaque correction de type consigne ajoute sa phrase.** Où ça mène :
+  - la consigne s'allonge sans fin ;
+  - chaque règle pèse moins dans la masse (le modèle a déjà ignoré des clauses écrites) ;
+  - chaque appel coûte un peu plus ;
+  - le texte se contredit à la longue.
+  
+  Les corrections de type **garde dans la bibliothèque** (parMois, GrilleTableau) ne grossissent pas la consigne et se vérifient : c'est la voie qui passe à l'échelle. **Décision ouverte, non traitée.**
+
+**3. Le mécanisme des tours (lu dans le code, pas mesuré).** Chaque tour **réécrit l'application entière.**
+- La consigne de reprise demande « Corrige et rends TOUS les fichiers » (`boucle-directe.ts:897`).
+- Les fichiers d'un tour sont lus de **sa seule** réponse (`let lus = lireFichiers(texte)`, `:496`), puis la carte est reconstruite à partir d'eux seuls (`:574-575`). Rien du tour précédent n'est fusionné.
+
+La durée d'une génération suit donc le **nombre de tours** et la taille de l'application **à chaque tour**. Le détail des trois œuvres sort de A1 (mesure), pas du code.
+
+**4. D7, « c'est systématique ».**
+- **Ce que la base a mesuré :** **1 œuvre sur 48.**
+- **Mon affirmation confondait deux choses.** Ce qui était systématique, c'est la **faille de la consigne** : les fonctions de données étaient nommées sans leurs arguments, dans **chaque** génération. Le **défaut dans les applications livrées**, lui, ne l'était pas : une sur 48, et ce chiffre est un minimum (un argument passé par variable n'est pas compté).
+- J'aurais dû revenir sur la phrase dès la mesure.
+
+---
+
+## LA DÉCISION QUI COMMANDE TOUTES LES AUTRES (consignée, non commencée)
+
+**Le juge monte les applications vides, et les défauts vivent dans l'état plein.**
+
+D7 (graphique vide à côté d'un compteur), D13 (une liste qui tombe à la première ligne) et D14 (des réglages qui ne s'enregistrent pas) : trois défauts sur trois écrans, et une seule raison de n'avoir rien vu. Le juge d'exécution monte l'œuvre sur une base vide (`url: ''`, D1). Les écrans y prennent leur branche « vide », ou n'enregistrent rien qu'on relise.
+
+Aucune garde de bibliothèque ni aucun budget de clics ne ferme cette famille (D12 : même un budget infini ne voit pas D13). **Ce chantier commande les autres.** Il n'est pas commencé : il attend la décision du propriétaire.
+
