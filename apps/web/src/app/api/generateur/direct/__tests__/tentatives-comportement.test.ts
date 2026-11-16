@@ -221,7 +221,19 @@ describe('Manque 4 · une tentative = une ligne, jamais réécrite', () => {
   })
 
   it('S4 · deux réussites : deux tentatives distinctes, versions 2 et 3', async () => {
-    const id = await oeuvreLivree()
+    // L'ŒUVRE DE DÉPART EST ENSEMENCÉE, pas produite : le sujet de S4 est les
+    // DEUX régénérations, qui passent toutes deux par la vraie route. Un
+    // troisième assemblage réel portait ce cas à 1,9 s, au-delà de la marge
+    // exigée par `verifier-marge-tests.mjs` (un test qui calcule s'allège).
+    const id = '44444444-4444-4444-4444-444444444444'
+    base.tables.set(TABLE_GENERATIONS, [{
+      id, owner_id: 'u-1', demande: 'calcule ma facture SNE', nom: 'Facture SNE',
+      statut: 'livree', ok: true, document: { fichiers: {} }, version_courante: 1,
+    }])
+    base.tables.set(TABLE_VERSIONS, [{ generation_id: id, rang: 1, etape: 'livraison', etat: {} }])
+    base.tables.set(TABLE_TENTATIVES, [{
+      generation_id: id, rang: 1, nature: 'generation', issue: 'livree', version_rang: 1, trace: {},
+    }])
     await regenerer(id, 'ok')
     await regenerer(id, 'ok')
     expect(tentativesDe(id).map((x) => [x.rang, x.issue, x.version_rang])).toEqual([

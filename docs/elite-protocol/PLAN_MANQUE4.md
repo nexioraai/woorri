@@ -257,6 +257,11 @@ Branche `feat/tentatives-generation`, non poussée.
 | S3 échec puis réussite | l'échec effacé par la réussite | échec : **aucune** ; réussite : `duree_ms`, `sections_acquises`, `version_courante` | 3 ; l'échec garde 3 tours et 0,0226 $ |
 | S5 boucle qui jette | aucune ; carte `refusee` ajoutée | aucune ; carte `refusee` **gardée** | 2 : `livree` puis `interrompue`, rattachée à l'œuvre |
 
+**Allègement de S4 (avant le push).** Le contrôle de marge (`verifier-marge-tests.mjs`) a refusé S4 : 1 939 ms pour un plafond de 1 667 ms, dû à trois assemblages réels.
+- L'œuvre de départ de S4 est désormais **ensemencée** (ligne, version 1, tentative 1).
+- Les **deux régénérations**, sujet du cas, passent toujours par la vraie route.
+- Durées mesurées ensuite, en ms : S0 710 · S1 1 288 · S2 651 · S3 1 287 · S4 1 290 · S5 645 · S6 1 287.
+
 **Les tests mordent** (mutations, toutes restaurées, octet pour octet) :
 - route d'avant restaurée → 7 tests sur 7 rouges ;
 - ligne de l'œuvre de nouveau écrite en échec → S2 et S3 rouges ;
