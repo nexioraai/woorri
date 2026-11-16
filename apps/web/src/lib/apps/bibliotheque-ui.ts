@@ -664,6 +664,13 @@ export function CoqueGestion({ nom: n, sousTitre = 'Espace de gestion', style: s
 
 /** Une grille qui range les cartes : 4 par ligne sur ordinateur, 2 ou 1 sur téléphone. */
 export function GrilleTableau({ colonnes = 4, children, enfants }: { colonnes?: number; children?: React.ReactNode; enfants?: React.ReactNode }) {
+  // D13 (2026-11-16) : une GRILLE DE CARTES, pas un tableau de données. Mesuré
+  // (Atelier b010d704) : colonnes=[{ libelle, acces }] et enfants=lignes →
+  // l'écran tombait dès la PREMIÈRE ligne (« objects are not valid as a React
+  // child »), et passait vide. Erreur nommée, à la première utilisation.
+  if (typeof colonnes !== 'number') {
+    throw new Error('GrilleTableau est une GRILLE DE CARTES : colonnes est un NOMBRE (2, 3 ou 4), pas une liste de colonnes. Une liste de lignes s’écrit en <table>.')
+  }
   const min = colonnes >= 4 ? 210 : colonnes === 3 ? 260 : 320
   return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(' + min + 'px, 100%), 1fr))', gap: ESPACE.m }}>{children ?? enfants}</div>
 }
@@ -1197,7 +1204,10 @@ ${fonctionsDonneesEnumerees()}
    un état → Anneau(compterPar) ; une catégorie ou un lieu →
    Classement(compterPar) ; puis ListeRecente. Seulement les blocs qui ont
    un sens ici. AUCUN chiffre en dur : tout sort de ./systeme/donnees.
-   « Réglages » contient <ChoixApparence /> (style, fond, couleur).
+   « Réglages » contient <ChoixApparence /> importé de ./systeme/ui, TEL
+   QUEL, sans réglage : n'en écris jamais un à toi (le fourni enregistre et
+   applique l'apparence). GrilleTableau est une grille de CARTES (colonnes
+   = un nombre), jamais un tableau : une liste de lignes s'écrit en <table>.
    STYLE selon l'activité, pas toujours le même : <CoqueGestion style=…>
    « chaleureux » (commerce, restauration, beauté), « institutionnel »
    (administration, école, finance), « nature » (santé, agriculture,
