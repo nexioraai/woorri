@@ -1,7 +1,7 @@
 # Plan — la boucle tourne tant qu'il reste du temps, et ne livre jamais une application qui ne démarre pas
 
 - **Date :** 2026-11-16.
-- **Statut :** PLAN, **non validé**. Aucune ligne de code n'est écrite.
+- **Statut :** PLAN **VALIDÉ** le 2026-11-16 (§6). Lot en cours d'écriture, rien de poussé.
 - **Code lu :** `main` @ `662bfea8`.
 - **Origine :** le registre de clients (`1dd7eb95`), généré depuis l'interface sur le lot `662bfea` et livré cassé (« render is not a function »).
 
@@ -36,7 +36,7 @@ Le registre de clients (160, 85, 74) en aurait permis environ 8. **Le 3 n'était
 
 ## 2. Ce qui limite, en plus du temps
 
-- **Les jetons d'entrée grossissent :** chaque tour renvoie toute la réponse précédente. Mesuré : +6 000 à +7 300 jetons par tour (expérience du 2026-11-16 : 4 517, puis 11 915, 19 135, 21 692). Au 7ᵉ tour : environ 45 000 jetons. La fenêtre de contexte de `deepseek-v4-pro` n'est pas relevée dans le dépôt : **UNKNOWN**, à vérifier dans la documentation du fournisseur.
+- **Les jetons d'entrée grossissent :** chaque tour renvoie toute la réponse précédente. Mesuré : +6 000 à +7 300 jetons par tour (expérience du 2026-11-16 : 4 517, puis 11 915, 19 135, 21 692). Au 7ᵉ tour : environ 45 000 jetons. La fenêtre de contexte de `deepseek-v4-pro` est de **1M jetons**, et la sortie maximale de **384K** (documentation officielle, https://api-docs.deepseek.com/quick_start/pricing, relevé le 2026-11-16 : « CONTEXT LENGTH 1M », « MAX OUTPUT MAXIMUM: 384K », modèle `deepseek-v4-pro` = DeepSeek-V4-Pro-0813). Le garde-fou est au §6.
 - **Le coût par tour monte avec eux :** de 0,02 à 0,05 $ mesurés sur les 4 premiers tours. Au 7ᵉ, il faut ajouter environ 0,005 $ d'entrée par tour en heure creuse, le double en pointe. Une génération à 7 tours coûterait environ 0,25 $ en heure creuse et 0,50 $ en pointe. **Proposé : un plafond de coût par génération, 0,50 $, à toi de fixer.**
 - **L'attente de l'utilisateur :** jusqu'à 15 minutes. Elle aggrave le défaut d'abandon d'écran sur mobile, documenté et non corrigé.
 - **La dégradation par l'historique, ton hypothèse du matin :** pas observée jusqu'au 4ᵉ tour. Au-delà, c'est **UNKNOWN**.
@@ -83,3 +83,11 @@ Décision 3, « Régénérer », la couverture et ses 19 familles, les chantiers
   - soit un refus annoncé, « l'application ne démarrait pas ». **Jamais** une application cassée marquée « livrée ».
 - **Lecture en base :** les requêtes P1 à P3, plus le nombre de tours.
 - **Le verdict est le tien.** Coût estimé de 0,10 à 0,30 $.
+
+## 6. Décisions du propriétaire (2026-11-16)
+
+- **Plan validé tel quel :** l'échéance au lieu d'un nombre de tours ; `TOURS_MAX` à 10 comme plafond de sécurité ; un défaut bloquant n'est jamais accepté ; un refus annoncé plutôt qu'une coquille livrée ; les défauts non bloquants montrés ; l'arrêt après deux tours aux mêmes familles de reproches.
+- **Plafond de coût : 0,50 $ par génération.** Raison du propriétaire : les générations réussies coûtent de 0,09 à 0,10 $. Un plafond à 0,50 $ laisse passer une boucle qui progresse et coupe celle qui s'emballe. Un abonnement Pro à 15 CAD absorbe une trentaine de générations à ce prix ; ajustement prévu quand les chiffres d'usage réels existeront.
+- **Garde-fou de contexte, dans le même lot :** avant un tour, si les jetons d'entrée attendus (ceux du tour précédent, plus leur dernière croissance) **plus** la sortie demandée (`maxJetons`, 65 536, `fournisseur.ts:185`) dépassent la fenêtre de 1M, la boucle s'arrête proprement, et refuse si un défaut est bloquant. Avec les chiffres mesurés, ce cas ne se produit pas avant plusieurs dizaines de tours ; le garde-fou existe pour qu'il échoue en le disant, jamais en silence.
+- **L'abandon d'écran devient nécessaire à corriger :** une génération de 5 minutes faisait déjà abandonner l'écran sur mobile ; jusqu'à 15 minutes, ce sera systématique. **Cette correction rend le chantier de la génération en tâche de fond nécessaire, pas seulement souhaitable. Il remonte dans la liste.** Il n'est pas traité dans ce lot.
+
