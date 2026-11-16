@@ -330,6 +330,16 @@ Projet `nexiora-ai`, branche `main` (PRODUCTION). Appliquée **par le propriéta
 - l'existant est inchangé (75 / 51 à chaque relevé) ;
 - le code peut être déployé, la migration l'ayant précédé.
 
+### 6.6 Déploiement du code — 2026-11-15 [OBSERVÉ-PROD]
+
+- `npm run verifier` : exit 0 (seul rouge `socle/npx eslint .`, absorbé).
+  - Un premier passage était rouge sur `test_marge` (S4, allégé, §6.3).
+  - Un deuxième était rouge sur `gestionMontee.test.ts` (1 690 ms, test étranger à ce lot, sensible à la charge). Il est vert au troisième, sans modification.
+- Poussé : `main` = `feat/tentatives-generation` = `d9f4812e` (vérifié par `ls-remote`). Ordre respecté : migration d'abord, code ensuite.
+- `https://www.deribfy.com/api/version` → `{"commit":"d9f4812"}` (≈ 19:46, heure de Toronto).
+- Journaux Vercel de production, dernière heure : 0 ligne `level:error`, 0 ligne contenant « tentative ». `/admin/applications` répond 200.
+- **Limite de cette absence d'alerte :** la génération est en pause (`NEXT_PUBLIC_GENERATION_ASYNC=0`), donc **aucune** génération n'a tourné. L'absence d'alerte ne prouve pas que l'écriture fonctionne : seule la preuve en production (§6.4.3) le fera.
+
 **Non vérifié :**
 - le rendu de `/admin/applications` avec des tentatives, sans session administrateur ;
 - le comportement sous Postgres de production (version non relevée).
