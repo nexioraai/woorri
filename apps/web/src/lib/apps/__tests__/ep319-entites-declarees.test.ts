@@ -267,7 +267,11 @@ describe('EP-319 · les données déclarées', () => {
     // FORME des éléments d'une liste d'objets (`details[{libelle, valeur}]`,
     // M7 : « object is not iterable » 3/3). Compressé au minimum : mesuré 8 927
     // (+253 signes ≈ 70 jetons par tour, ~210 par génération à trois tours).
-    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(9000)
+    // ── 9 000 → 9 300 le 2026-11-16 : L4, la forme des listes par type nommé
+    // (`sections[{cle, id, libelle, icone, nombre}]`…) — 1 liste décrite sur
+    // 16 devenait 13. Croissance mesurée et validée par le propriétaire
+    // (+2 %, PLAN_CHEMIN_VISIBLE.md §2). Mesuré : 9 234.
+    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(9300)
   })
 
   it('⑥ter LA DÉROGATION DE PORTABILITÉ EST BORNÉE À `blocBase`', () => {
@@ -455,7 +459,9 @@ describe('EP-319 · les données déclarées', () => {
     // ── 12 550 → 13 450 le 2026-11-12 : les réglages exacts (⑥). Mesuré : 13 305.
     // ── 13 450 → 13 700 le 2026-11-13 : l'étape 3 (⑥) — mêmes ajouts, présents une
     // fois dans les deux variantes. Mesuré : 13 558.
-    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(13700)
+    // ── 13 700 → 14 000 le 2026-11-16 : L4 (voir ⑥), présent dans les deux
+    // variantes. Mesuré : 13 930.
+    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(14000)
 
     // ── ET LE BANDEAU N'EST PLUS DEMANDÉ À L'ŒUVRE (2026-11-05).
     //
@@ -525,7 +531,9 @@ describe('EP-319 · les données déclarées', () => {
       // ── 18 650 → 19 550 le 2026-11-12 : les réglages exacts (+893 signes).
       // ── 19 550 → 19 800 le 2026-11-13 : l'étape 3 (⑥, +253 signes).
       // Mesurée PAR CE CLIQUET : 19 630.
-    ).toBeLessThan(19800)
+      // ── 19 800 → 20 100 le 2026-11-16 : L4 (⑥, la forme des listes par type
+      // nommé). Mesurée PAR CE CLIQUET : 20 002.
+    ).toBeLessThan(20100)
 
     // ── ③ ET LA PORTE DES DONNÉES RESTE UNE PORTE ÉTROITE.
     //

@@ -138,6 +138,26 @@ export function signaturesDe(systeme: ReadonlyMap<string, string>): Map<string, 
               if (objet !== null) {
                 const cles = [...objet[1]!.matchAll(/([A-Za-z_$][\w$]*)\??\s*:/gu)].map((c) => c[1]!)
                 if (cles.length > 0) formes[t[1]!] = cles
+              } else {
+                // ── UN TYPE NOMMÉ SE SUIT JUSQU'À SA DÉCLARATION (L4, 2026-11-16).
+                //
+                // `sections?: SectionGestion[]` ne porte aucune accolade : la
+                // forme restait inconnue, et la consigne disait « sections[] »
+                // sans dire de quoi. Mesuré : 15 listes sur 16 dans ce cas ;
+                // le modèle devinait — `titre`, puis `nom`, puis `titre` —
+                // et les boutons du menu sortaient sans texte (carnet, tir 2).
+                const nomme = /([A-Z][\w$]*)\s*\[\]|Array<\s*([A-Z][\w$]*)\s*>/u.exec(t[2]!)
+                const nomType = nomme?.[1] ?? nomme?.[2]
+                if (nomType !== undefined) {
+                  const decl = new RegExp(`type\\s+${nomType}\\s*=\\s*\\{([^}]*)\\}`, 'u')
+                  for (const autre of systeme.values()) {
+                    const d = decl.exec(autre)
+                    if (d === null) continue
+                    const cles = [...d[1]!.matchAll(/([A-Za-z_$][\w$]*)\??\s*:/gu)].map((c) => c[1]!)
+                    if (cles.length > 0) formes[t[1]!] = cles
+                    break
+                  }
+                }
               }
             }
           }
