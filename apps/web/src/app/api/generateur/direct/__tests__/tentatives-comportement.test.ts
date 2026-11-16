@@ -12,7 +12,7 @@
  *
  * Aucun appel payant, aucune écriture en base réelle.
  */
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { randomUUID } from 'node:crypto'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { TABLE_TENTATIVES } from '@/lib/apps/tentatives'
@@ -161,6 +161,12 @@ async function regenerer(id: string, s: 'ok' | 'A' | 'B') {
 }
 
 beforeEach(() => {
+  // L'HEURE EST FIGÉE, EN HEURE CREUSE : le tarif DeepSeek DOUBLE en pointe
+  // (01–04 h et 06–10 h UTC en semaine, lib/apps/fournisseur.ts estPointe).
+  // Sans cela, S2/S3 attendaient 0,0226 $ et lisaient 0,0451 $ le lundi
+  // 2026-11-16 à 07:31 UTC. Seule `Date` est simulée, les minuteurs restent réels.
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-11-15T20:00:00Z'))
   base.tables = new Map()
   base.misesAJourRefusees = 0
   reseau.reponses = []
@@ -173,6 +179,10 @@ beforeEach(() => {
   // Les scénarios S1–S6 régénèrent : l'interrupteur (fermé par défaut) est
   // ouvert ICI, explicitement. S7 le referme.
   process.env.NEXT_PUBLIC_REGENERATION_OUVERTE = '1'
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('Manque 4 · une tentative = une ligne, jamais réécrite', () => {
