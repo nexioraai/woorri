@@ -1,7 +1,7 @@
 # Plan — décision 3 : le type d'application (personnelle, outil interne, vitrine)
 
 - **Date :** 2026-11-16.
-- **Statut :** PLAN, **non validé**. Aucune ligne de code n'est écrite.
+- **Statut :** PLAN **VALIDÉ** le 2026-11-16, avec les deux décisions du §7. **Rien ne commence** avant que le lot `feat/chemin-visible` soit éprouvé en production et que le propriétaire ait rendu son verdict.
 - **Code lu :** `main` @ `662bfea8`.
 - **Origine :** décision 3 du propriétaire. Le générateur transforme toute demande en site vitrine : un accueil public, un espace de gestion séparé et une déconnexion, même pour un carnet de dépenses personnel. « Il impose un moule. »
 
@@ -74,3 +74,13 @@ Tout se passe dans le **bloc base** (`entites-declarees.ts:362`, `blocBase`), qu
 - Les comptes d'équipe d'un outil interne (§2).
 - « Régénérer ».
 - Les chantiers à part : purge, `journal.ts`, `ai_usage_log`, 16 $, abandon d'écran. Le point 7 n'est réglé que pour les deux nouveaux types.
+
+## 7. Décisions du propriétaire (2026-11-16)
+
+1. **Type non devinable : « personnelle » par défaut, pas « vitrine ».** Raison du propriétaire : une vitrine expose des données au public. Dans le doute, le choix sûr est celui qui n'expose rien. Un utilisateur qui voulait une vitrine le dira et la changera en un clic ; un utilisateur dont les données privées se retrouvent publiques par défaut, c'est un incident.
+2. **Outil interne :** une première version avec le seul compte du propriétaire. Les comptes d'équipe (invitations, rôles, permissions) deviennent un chantier à part, qui ne doit pas retarder le reste.
+
+## 8. Lien consigné : la décision 3 rend « Régénérer » nécessaire
+
+Un type mal deviné et repéré **après** la génération ne se corrige qu'en régénérant (§3) : la structure de l'application change. L'annonce avant de payer réduit le cas sans le supprimer. **La décision 3 rend donc la réouverture de « Régénérer » nécessaire, pas seulement souhaitable.** Aujourd'hui, cette réouverture est prévue après les manques 1 à 3 (`PLAN_MANQUE4.md`) ; ce lien doit peser dans leur ordre.
+
