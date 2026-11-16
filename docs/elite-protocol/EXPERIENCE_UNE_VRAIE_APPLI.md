@@ -119,6 +119,23 @@ Sources : `scratchpad/vraie-appli/tir1/journal.jsonl`, réponses brutes `tir1/re
 - **Verdict des juges sur l'œuvre acceptée :** se monte dans le simulateur, 0 erreur ; 3 écrans atteints ; 30 contrôles visités sur 60 découverts ; aucun jeton inexistant, aucun contrôle mort, aucune donnée en mémoire ; couverture 0,5 avec **0 exigence absente** ; déclaration de la table acceptée (`lecturePublique: true`, selon l'exigence du juge des faces — question de confidentialité laissée au propriétaire, chantier à part n° 7).
 - **Le juge n'est pas le critère.** L'application est sur le Bureau du propriétaire (`carnet-tir3-final.html`, données en mémoire), qui tranche les critères 1, 2 et 4.
 
+### 5.5 Verdict du propriétaire sur le tir 3, et D4 [OBSERVÉ + LU-CODE + SORTIE DU JUGE]
+
+**Verdict (2026-11-16) : critère 1 ÉCHOUÉ.** Le menu n'a que deux entrées (« Liste des dépenses », « Total du mois ») ; la liste porte « LECTURE SEULE » ; aucun moyen d'ajouter une dépense. Ce qui marche : l'application se monte, le menu a ses textes, le total s'affiche avec la devise, les statistiques sont correctes.
+
+**D4 — le juge fait PASSER une œuvre cassée.** D1 à D3 faisaient échouer des œuvres réparables ; celui-ci laisse passer.
+
+1. **Le formulaire d'ajout EXISTE.** `composants/EspaceGestion.tsx` : 5 `<input`, 2 `<form`, 2 `onSubmit` ; l'insertion est dans `index.tsx` (`.from('depense').insert`, 1 occurrence). Il vit dans l'**espace de gestion**, affiché seulement quand l'adresse se termine par `#gestion` (`index.tsx` : `route.startsWith('#gestion')`).
+2. **Pourquoi il n'est pas dans la navigation : la CONSIGNE l'interdit, pas l'assembleur.** Pour une œuvre à tables, la consigne impose deux faces (`entites-declarees.ts:384-402`). La face publique, ouverte par défaut, doit être en lecture seule, sans aucun bouton qui écrit, et « NE MONTRER AUCUN CHEMIN VERS LA GESTION : aucune entrée de menu, aucun lien, aucun bouton ». Le modèle a obéi à la lettre : face publique en lecture seule, gestion cachée. Un carnet personnel sans comptes devient une vitrine sans porte. C'est la même règle de fond que le chantier à part n° 7.
+3. **Comment le juge compte « 3 écrans ».** Un écran est une **empreinte du contenu rendu** (texte de la racine et longueur du HTML, `juge-execution-enfant.mjs:269-286`), atteinte en cliquant. Le chiffre affiché ne vient que du montage public (`ecransDistincts` de l'accueil ; la fusion `boucle-directe.ts:517-532` additionne visites et découvertes du montage de gestion, pas ses écrans). Sur la face publique, la liste vide, les statistiques et la page de départ donnent trois empreintes : ce sont des états d'affichage, pas des écrans de la demande.
+4. **Comment la couverture a déclaré « aucune exigence absente » (la question centrale).** Le juge ne se fie **pas** à une déclaration du modèle : `PERIMETRE.md` est absent et n'est pas en jeu. Mais il échoue deux fois :
+   - **Il ouvre la gestion par l'adresse, pas par la navigation.** Le juge monte une seconde fois l'œuvre directement sur `#gestion` (`boucle-directe.ts:513-516`). Il y voit « Ajouter une dépense », que l'utilisateur, lui, ne peut pas atteindre. Il juge ce qu'un visiteur qui connaît l'adresse secrète peut faire, pas ce que l'utilisateur peut faire.
+   - **Le formulaire d'ajout n'a jamais été une exigence.** Les exigences tirées de cette demande sont exactement deux mots : `depense` (couverte) et `ecran` (absente). « formulaire d'ajout », « liste » et « total du mois » n'y figurent pas (sortie `couverture.exigences` de cette œuvre). Et `ecran` absente ne compte pas : seules les exigences des 19 familles nommées sont reprochées (`juge-couverture.ts:267`) ; celles tirées de la demande sont mesurées, pas reprochées (arbitrage du 2026-11-06).
+
+**En une phrase :** le juge ne vérifie pas que la demande est satisfaite, il vérifie que des mots de la demande apparaissent à l'écran, en entrant par une porte que l'utilisateur ne voit pas.
+
+**Pour le propriétaire, sans rien régénérer :** l'espace de gestion de cette œuvre s'ouvre en ajoutant `#gestion` à la fin de l'adresse du fichier. En aperçu, il n'y a pas de connexion à franchir. C'est là qu'est le formulaire.
+
 ## 7. Levier L4 — formulé, NON appliqué (attend l'avis du propriétaire)
 
 **L4 : documenter dans la consigne les composants de la bibliothèque ET les champs des objets qu'ils attendent, pour que le modèle n'ait rien à deviner.** Si l'hypothèse tient, L4 supprime d'un coup toute une famille d'erreurs au lieu de les rattraper une par une. Ce serait un levier produit, pas un correctif d'expérience.
