@@ -117,6 +117,7 @@ describe('EP-371 · J1 · les deux faces, mesurées en montant', () => {
    */
   let fautive: VerdictFaces
   let saine: VerdictFaces
+  let sansDonneePublique: VerdictFaces
 
   beforeAll(async () => {
     const court = { attenteMs: 900 }
@@ -130,6 +131,8 @@ describe('EP-371 · J1 · les deux faces, mesurées en montant', () => {
       [table('annonce', { lecturePublique: true })],
       court,
     )
+    // D5 : la face publique CHARGE une table mais n'en montre rien.
+    sansDonneePublique = await jugerFaces(temoin({ charge: ['depense'] }), [table('depense')], court)
   }, 90_000)
 
   it('① LE JUGE TOURNE ET RÉSOUT LES TABLES EN LES EXÉCUTANT', () => {
@@ -187,6 +190,15 @@ describe('EP-371 · J1 · les deux faces, mesurées en montant', () => {
       saine.silencesIndiscernables,
       'une œuvre qui distingue l’échec du vide est accusée à tort',
     ).toBe(false)
+  })
+
+  it('⑤bis D5 · SANS DONNÉE MONTRÉE EN PUBLIC, PAS DE « SILENCES INDISCERNABLES »', () => {
+    // Refus et vide y rendent forcément le même texte : aucun code ne peut
+    // satisfaire ce reproche. Il faisait tourner la boucle à vide (tir 4).
+    expect(sansDonneePublique.aTourne, sansDonneePublique.motif ?? '').toBe(true)
+    expect(sansDonneePublique.silencesIndiscernables).toBe(false)
+    // Et le reproche ne prête plus au modèle un code qu'il n'a pas écrit.
+    expect(reprocheFaces(fautive) ?? '').not.toMatch(motifTexte('Ton code fait'))
   })
 
   it('⑥ UNE TABLE DÉCLARÉE PUBLIQUE N’EST PAS UN DÉFAUT', () => {

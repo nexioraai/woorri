@@ -130,9 +130,11 @@ export function reprocheFaces(v: VerdictFaces): string | null {
       'UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU\'UN CHARGEMENT VIDE — mesuré : ' +
         'deux montages, l\'un où la base refuse, l\'autre où elle rend zéro ligne, et ' +
         'le MÊME texte à l\'écran.\n' +
-        'Ton code fait `if (!error && data)` : sur un refus, il ne se passe RIEN et ' +
-        'l\'écran affiche « aucun élément ». Le visiteur lit qu\'il n\'y a rien ; il y a ' +
-        'quelque chose.\n' +
+        // D5 : on dit ce qui est MESURÉ, pas un code que l'œuvre n'a peut-être
+        // pas — la phrase « Ton code fait `if (!error && data)` » était écrite
+        // en dur, et fausse sur le carnet (tir 4).
+        'Sur un refus, l\'écran rend ce qu\'il rend quand il n\'y a rien. Le visiteur ' +
+        'lit qu\'il n\'y a rien ; il y a quelque chose.\n' +
         'Traite le cas `error` SÉPARÉMENT du cas « zéro ligne », et dis à l\'écran ' +
         'laquelle des deux situations se présente.',
     )
@@ -228,7 +230,15 @@ export async function jugerFaces(
     }
 
     // ── ② DEUX SILENCES INDISCERNABLES.
+    //
+    // ── SEULEMENT SI LA FACE PUBLIQUE MONTRE UNE TABLE (D5, 2026-11-16).
+    //
+    // Sur une page qui n'affiche AUCUNE donnée, un refus et un vide rendent
+    // forcément le même texte : le reproche était impossible à satisfaire.
+    // Mesuré (carnet, tir 4) : face publique sans dépense, liste et erreur
+    // dans la gestion, et le même reproche trois tours de suite.
     const silencesIndiscernables =
+      temoin.tablesMontrees.length > 0 &&
       refus.monte && vide.monte && comparable(refus.texte) === comparable(vide.texte)
 
     return { aTourne: true, motif: null, defauts, silencesIndiscernables, montages }
