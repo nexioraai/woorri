@@ -16,6 +16,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { contenusPublics, libelleChamp, PHRASE_LISTE_ENTIERE } from '../contenu-public'
 import { accordLecturePublique } from '@/components/apps/accordLecturePublique'
+import { motifTexte } from './motif-texte'
 
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
   requireAuthenticatedUser: () => ({ ok: true, userId: 'u-1', email: 'a@b.c' }),
@@ -64,10 +65,10 @@ describe('Décision 2 — publier nomme ce qui sera lu', () => {
     expect(d.lecturePublique).toBe(true)
     expect(d.tables).toEqual(['vehicule', 'reparation'])
     expect(d.contenus).toEqual(contenusPublics(ENTITES as never))
-    expect(d.error).toContain('Tout le monde pourra lire : « vehicule » (client id, marque, Immatriculation) ; « reparation » (description, statut, montant main oeuvre).')
-    expect(d.error).toContain(PHRASE_LISTE_ENTIERE)
-    expect(d.error).toContain('PAR TOUT LE MONDE, sans compte')
-    expect(d.error).toContain('Personne ne pourra y écrire')
+    expect(d.error).toMatch(motifTexte('Tout le monde pourra lire : « vehicule » (client id, marque, Immatriculation) ; « reparation » (description, statut, montant main oeuvre).'))
+    expect(d.error).toMatch(motifTexte(PHRASE_LISTE_ENTIERE))
+    expect(d.error).toMatch(motifTexte('PAR TOUT LE MONDE, sans compte'))
+    expect(d.error).toMatch(motifTexte('Personne ne pourra y écrire'))
     expect(d.error).not.toContain('code secret')
   })
 
@@ -81,9 +82,9 @@ describe('Décision 2 — publier nomme ce qui sera lu', () => {
       tables: ['vehicule', 'reparation'],
       contenus: contenusPublics(ENTITES as never),
     })).toBe(false)
-    expect(vu).toContain('• vehicule — tout le monde pourra lire : client id, marque, Immatriculation')
-    expect(vu).toContain('• reparation — tout le monde pourra lire : description, statut, montant main oeuvre')
-    expect(vu).toContain(PHRASE_LISTE_ENTIERE)
+    expect(vu).toMatch(motifTexte('• vehicule — tout le monde pourra lire : client id, marque, Immatriculation'))
+    expect(vu).toMatch(motifTexte('• reparation — tout le monde pourra lire : description, statut, montant main oeuvre'))
+    expect(vu).toMatch(motifTexte(PHRASE_LISTE_ENTIERE))
   })
 
   it('③ une réponse sans `contenus` (route plus ancienne) garde au moins les noms', () => {

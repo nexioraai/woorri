@@ -137,7 +137,7 @@ describe('D16 — un jour saisi est le jour affiché', () => {
     expect(refus.ok, 'une œuvre aux dates de Greenwich a été livrée').toBe(false)
     if (refus.ok) return
     expect(refus.raison).toBe('bloquant')
-    expect(refus.motif).toMatch(/calculait encore ses dates à l’heure de Greenwich \(index\.tsx\)/u)
+    expect(refus.motif).toMatch(motifTexte('calculait encore ses dates à l’heure de Greenwich (index.tsx)'))
     let appels = 0
     const corrigee = await boucleEcriture({
       demande: 'x',
