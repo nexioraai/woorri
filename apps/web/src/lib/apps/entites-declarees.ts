@@ -393,16 +393,24 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '     ni « impossible de charger », ni zone vide alors qu’il y a du',
     '     contenu. Un visiteur qui lit une erreur croit l’application',
     '     cassée, et il ne revient pas ;',
-    '   · NE MONTRER AUCUN CHEMIN VERS LA GESTION : aucune entrée de menu,',
-    '     aucun lien, aucun bouton, aucun onglet. Un visiteur ne doit même',
-    '     pas savoir que cet espace existe ;',
+    // ── DÉCISION 2 DU PROPRIÉTAIRE (2026-11-16) : un chemin visible.
+    //
+    // Le défaut du 2026-11-06 (asso) n'était pas la visibilité du lien,
+    // c'était que la gestion s'ouvrait SANS COMPTE. Un lien nommé qui mène à
+    // la connexion ne le recrée pas ; il remet une porte là où il n'y en
+    // avait plus. Mesuré le 2026-11-16 : le carnet de dépenses, sans ce
+    // lien, n'offrait AUCUN moyen d'ajouter une dépense.
+    // docs/elite-protocol/PLAN_CHEMIN_VISIBLE.md §0.
+    '   · PORTER UN CHEMIN VISIBLE ET NOMMÉ VERS LA GESTION :',
+    `     <a href="${ADRESSE_GESTION}">Espace de gestion</a>, sur chaque écran`,
+    '     public ; la gestion ne s’ouvre JAMAIS sans compte ;',
     '   · N’AFFICHER AUCUN FORMULAIRE DE CONNEXION. Il n’a rien à faire là ;',
     '   · ne laisser filtrer AUCUNE donnée privée — pas même un tableau',
     '     vide, pas même dans un message d’erreur.',
     '',
     `   L’ESPACE DE GESTION vit à l’adresse \`${ADRESSE_GESTION}\` et NULLE PART`,
-    '   ailleurs. On y arrive en tapant cette adresse, jamais par un lien',
-    '   affiché. C’est LÀ, et seulement là, que tu écris l’écran de',
+    '   ailleurs. On y arrive par le lien de la face publique, jamais en',
+    '   tapant l’adresse. C’est LÀ, et seulement là, que tu écris l’écran de',
     '   connexion (`base.auth.signInWithPassword`), affiché tant que',
     '   `base.auth.getSession()` ne rend rien — sinon tes listes privées',
     '   seront vides sans qu’on sache pourquoi.',

@@ -90,7 +90,10 @@ describe('EP-370 · la loi public/gestion est dite', () => {
     for (const phrase of [
       'QUE du contenu destiné à tout le monde',
       'SANS connexion et SANS AUCUNE ERREUR',
-      'NE MONTRER AUCUN CHEMIN VERS LA GESTION',
+      // DÉCISION 2 (2026-11-16) : l'interdiction est devenue une OBLIGATION —
+      // une obligation se vérifie, une interdiction se contourne.
+      'PORTER UN CHEMIN VISIBLE ET NOMMÉ VERS LA GESTION',
+      'la gestion ne s’ouvre JAMAIS sans compte',
       'N’AFFICHER AUCUN FORMULAIRE DE CONNEXION',
       'ne laisser filtrer AUCUNE donnée privée',
       // ── ET CELLE-CI EXISTAIT AVANT LA LOI, mesuré le 2026-11-06.
@@ -112,6 +115,12 @@ describe('EP-370 · la loi public/gestion est dite', () => {
     // « même vide » compte autant que le reste : un tableau vide à la place
     // d'une liste privée renseigne encore sur son existence.
     expect(t).toMatch(motifTexte('pas même un tableau'))
+    // ET L'ANCIENNE INTERDICTION A DISPARU — les deux ne coexistent jamais :
+    // le modèle obéirait à l'une ou à l'autre, au hasard.
+    expect(t).not.toMatch(motifTexte('NE MONTRER AUCUN CHEMIN VERS LA GESTION'))
+    expect(t).not.toMatch(motifTexte('jamais par un lien affiché'))
+    // Le lien est écrit avec l'adresse de sa source unique.
+    expect(t).toMatch(motifTexte(`<a href="${ADRESSE_GESTION}">Espace de gestion</a>`))
   })
 
   it('② LES TROIS CLAUSES DE LA GESTION', () => {
