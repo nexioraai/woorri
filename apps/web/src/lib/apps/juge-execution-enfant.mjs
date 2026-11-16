@@ -197,6 +197,22 @@ console.error = (...args) => {
 document.body.innerHTML = '<div id="racine"></div>'
 const code = readFileSync(cheminBundle, 'utf8')
 
+// ── LA BASE QUE LA VRAIE PAGE POSE TOUJOURS (D1, 2026-11-16).
+//
+// La page d'aperçu définit `window.DERIBFY_BASE` AVANT l'application, vide
+// en aperçu (boucle-directe.ts, `pageAutonome`), et la consigne dit au
+// modèle de la lire (`b.url`). Ce simulateur ne la posait pas : toute œuvre
+// à tables qui suivait la consigne à la lettre mourait à l'import
+// (« reading 'url' ») et était refusée — mesuré, carnet, tir 1. Un
+// instrument qui ne reproduit pas les conditions réelles ne mesure rien.
+// Mêmes clés, mêmes options que la page : l'œuvre tourne en mémoire.
+globalThis.window.DERIBFY_BASE = Object.freeze({
+  url: '',
+  clePubliable: '',
+  schema: '',
+  options: { db: { schema: '' }, auth: { persistSession: true } },
+})
+
 // ── LE VERROU S'ARME ICI : tout ce qui suit est du code du modèle.
 armerLeVerrouReseau()
 
