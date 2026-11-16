@@ -278,3 +278,42 @@ order by 1, 3 desc, 2;
 ```
 
 **Décision du propriétaire (2026-11-16) :** le seuil « la moitié des refus » est abandonné. La construction sera traitée, **pour sa seule moitié mécanique** (les imports), dans l'**assembleur** et jamais dans la consigne, une fois chiffrée par B5.
+
+---
+
+## 8. Résultat de B5 (2026-11-16, soir) [OBSERVÉ-PROD]
+
+**Construction (13) :** sans code 6 · `PARSE_ERROR` 6 · `UNRESOLVED_IMPORT → ./systeme/ui` 1. Un import sur treize : **la piste de l'assembleur est abandonnée**, sur décision du propriétaire.
+
+**Ne se monte pas (11) :**
+
+| détail | refus | origine |
+|---|---|---|
+| `reading 'url'` (signature de D1) | 5 | **notre instrument** : le juge ne posait pas `DERIBFY_BASE`, corrigé (`1f84a310`) |
+| `supabaseUrl is required` | 2 | **le modèle** (a, ci-dessous) |
+| `navigator.locks.request` refusé en origine opaque | 1 | **le modèle** (b, ci-dessous) |
+| `Pastille is not defined`, `formaterIndex is not defined`, `object is not iterable` | 3 | le modèle |
+
+### a) « supabaseUrl is required » : une faute réelle du modèle, pas un artefact
+
+- **Rejoué avec le vrai assembleur et le vrai juge actuel**, qui pose la base vide comme l'aperçu :
+  - `const base = createClient(b.url, …)` sans garde → **ne monte pas**, `import : supabaseUrl is required.` ;
+  - avec la garde que la consigne écrit mot pour mot (`const enBase = b.url !== '' && window.origin !== 'null'`, `const base = enBase ? createClient(…) : null`, `entites-declarees.ts:367-378`) → **monte**, aucune erreur.
+- **Dans le vrai aperçu de Deribfy, l'URL est aussi vide** (`pageAutonome`, `boucle-directe.ts`). L'application aurait planté **sous les yeux de l'utilisateur**. Le juge reproduit ici la réalité ; il ne fabrique rien.
+- **Nuance de date :** ces 2 refus sont **antérieurs** à D1. Le juge d'alors ne posait pas `DERIBFY_BASE`, et le modèle devait donc lire la base avec une valeur de repli (`?.` ou `??`). L'issue dans l'aperçu réel aurait été la même.
+
+### b) `navigator.locks` refusé : la reproduction voulue de l'aperçu, à ne pas lever
+
+- Le juge pose `navigator.locks` **exprès, refusant** (`juge-execution-enfant.mjs:112-146`, mesuré le 2026-11-05). Dans un cadre `sandbox="allow-scripts"` sans `allow-same-origin`, l'API existe et refuse (pile Safari `request@[native code]`). C'est ce que rencontre l'utilisateur dans l'aperçu.
+- **La lever rendrait le juge menteur : ce serait D1 à l'envers.** Le modèle *peut* éviter ce refus : il vient du SDK Supabase créé dans l'aperçu, et la garde de la consigne (`window.origin !== 'null'`) l'empêche.
+- **Nombre :** 1 refus.
+
+### Le taux réel de refus au tour 1
+
+- **Ce ne sont pas 8 artefacts sur 11 : c'en sont 5**, ceux de D1.
+- Ces 5 générations n'ont pas forcément été refusées **pour D1 seul**. B4 donne « seule cause : ne se monte pas » = **3**, toutes sous-causes confondues. **Au plus 3** des 41 refus disparaissent donc grâce à la correction de D1.
+- **Taux réel au tour 1 : au moins 38 sur 46, soit 83 %**, contre 89 % mesuré. **Pas 72 %.**
+- Le chiffre exact entre 83 % et 89 % est **INCONNU**. Il faudrait savoir, pour chacune des 5, si D1 était sa seule famille.
+
+**Aucune correction.** La suite est la génération de l'Atelier lancée par le propriétaire : elle teste d'un coup la consigne du matin et le contrôle de type du juge.
+
