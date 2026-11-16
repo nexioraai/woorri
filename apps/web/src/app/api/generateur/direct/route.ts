@@ -62,6 +62,21 @@ export const runtime = 'nodejs'
 // aurait encore payé pour un échec sans réponse.
 export const maxDuration = 900
 
+/**
+ * LA BOUCLE TOURNE AU TEMPS (2026-11-16, docs/elite-protocol/PLAN_TOURS_AU_TEMPS.md).
+ *
+ * Échéance = `maxDuration` − 60 s de marge pour les juges du dernier tour et
+ * l'écriture (mesuré hors tours : 0 à 5 s ; un juge d'exécution : 15 s au plus).
+ * Le plafond de coût (0,50 $) est une décision du propriétaire : une génération
+ * réussie coûte 0,09 à 0,10 $ ; il laisse passer une boucle qui progresse et
+ * coupe celle qui s'emballe.
+ */
+const ECHEANCE_MS = (maxDuration - 60) * 1000
+const PLAFOND_USD_GENERATION = 0.5
+/** Fenêtres de contexte, documentation officielle relevée le 2026-11-16 :
+ *  DeepSeek « CONTEXT LENGTH 1M » (api-docs.deepseek.com/quick_start/pricing). */
+const FENETRE_CONTEXTE: Readonly<Record<string, number>> = { deepseek: 1_000_000 }
+
 
 
 
@@ -459,14 +474,24 @@ export async function POST(req: Request) {
   ) => {
     // LA CONSIGNE EST CELLE DE CETTE OEUVRE : avec entites, le bloc de base
     // REMPLACE la regle des valeurs d'exemple. Les deux ne coexistent jamais.
-    const r = await appelerFournisseur(fournisseur, cle, consignePour(entitesCourantes), messages)
+    const quand = new Date()
+    const r = await appelerFournisseur(fournisseur, cle, consignePour(entitesCourantes), messages, signalAppel)
     entree += r.usage.entree
     sortie += r.usage.sortie
+    const t = tarifDe(config.prix, quand)
     // LA TRONCATURE VOYAGE AVEC LE TEXTE. La boucle ne peut pas la deviner :
     // un texte coupé ressemble à un texte fautif, et seul le fournisseur sait
-    // lequel des deux il vient de rendre.
-    return { texte: r.texte, tronquee: r.tronquee }
+    // lequel des deux il vient de rendre. LE COÛT ET LES JETONS D'ENTRÉE
+    // voyagent aussi : la boucle en tient son plafond et sa fenêtre.
+    return {
+      texte: r.texte,
+      tronquee: r.tronquee,
+      coutUsd: (r.usage.entree * t.entree + r.usage.sortie * t.sortie) / 1e6,
+      jetonsEntree: r.usage.entree,
+    }
   }
+  /** L'interruption de l'appel en cours, armée à l'échéance (posée dans `travailler`). */
+  let signalAppel: AbortSignal | undefined
 
   // L'IDENTITÉ EST CAPTURÉE ICI, hors du flux : à l'intérieur, TypeScript ne
   // sait plus que le garde a répondu `ok` et refuserait de lire `userId`.
@@ -573,6 +598,12 @@ export async function POST(req: Request) {
     }
   }
   let resultat
+  // ── L'APPEL EST INTERROMPU À L'ÉCHÉANCE + 30 s : la tentative est alors
+  // écrite par le chemin d'erreur, au lieu que Vercel tue la fonction à
+  // 900 s sans laisser de trace.
+  const interrupteur = new AbortController()
+  signalAppel = interrupteur.signal
+  const minuterie = setTimeout(() => { interrupteur.abort() }, Math.max(0, debut + ECHEANCE_MS + 30_000 - Date.now()))
   try {
     // LES ENTITES VONT AU JUGE DE PERSISTANCE : une table absente du code
     // rendu est precisement ce qu'il cherche, donc elle ne peut pas s'en
@@ -581,6 +612,11 @@ export async function POST(req: Request) {
       demande,
       configuration,
       appeler,
+      // ── LA BOUCLE TOURNE AU TEMPS (2026-11-16, PLAN_TOURS_AU_TEMPS.md).
+      echeance: debut + ECHEANCE_MS,
+      plafondUsd: PLAFOND_USD_GENERATION,
+      fenetreContexte: FENETRE_CONTEXTE[fournisseur],
+      sortieMax: config.maxJetons,
       entites: entitesDeclarees,
       // LA MÊME GRAMMAIRE QUE LA LECTURE DU CAHIER, jamais une seconde :
       // deux validateurs divergeraient, et la divergence se découvrirait
@@ -646,6 +682,8 @@ export async function POST(req: Request) {
       detail: `${message}\n\nDemande : ${demande.slice(0, 400)}`,
     }).catch(() => undefined)
     return { ok: false as const, error: message.slice(0, 200) }
+  } finally {
+    clearTimeout(minuterie)
   }
   // ── CE QUE LA BOUCLE A APPRIS REMPLACE CE QU'ELLE A REÇU.
   //

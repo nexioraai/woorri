@@ -98,6 +98,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
   },
 }))
 
+import { TOURS_MAX } from '@/lib/apps/boucle-directe'
 import { POST } from '../route'
 
 const BON = [
@@ -203,7 +204,12 @@ describe('EP-276 · la route de l’écriture directe', () => {
     const d = (await (await POST(appel())).json()) as { ok: boolean; motif: string; tours: unknown[] }
     expect(d.ok).toBe(false)
     expect(d.motif).toContain('Non convergé')
-    expect(d.tours.length, 'la borne de trois tours ne mord pas').toBe(3)
+    // LA BORNE N'EST PLUS « 3 » (2026-11-16, PLAN_TOURS_AU_TEMPS.md) : la
+    // boucle s'arrête sur une garde (temps, coût, contexte, stagnation) ou au
+    // plafond de sécurité. Ce qui compte : elle s'arrête, et le dit.
+    expect(d.tours.length, 'la boucle ne s’arrête pas').toBeGreaterThanOrEqual(2)
+    expect(d.tours.length).toBeLessThanOrEqual(TOURS_MAX)
+    expect(d.motif).toMatch(new RegExp(`Non convergé en ${String(d.tours.length)} tours`, 'u'))
     const l = lignesEcrites()[0] ?? {}
     expect(lignesEcrites().length, 'un échec payé n’est pas journalisé').toBe(1)
     expect(l.statut).toBe('refusee')
@@ -329,7 +335,8 @@ describe('EP-276 · la route de l’écriture directe', () => {
 
     const l = lignesEcrites()[0] ?? {}
     const sa = l.sections_acquises as { tours?: unknown[]; dernierTexte?: string }
-    expect(sa.tours?.length, 'les tours ne sont pas gardés').toBe(3)
+    expect(sa.tours?.length, 'les tours ne sont pas gardés').toBe(d.tours?.length)
+    expect(sa.tours?.length ?? 0).toBeGreaterThanOrEqual(2)
     expect(
       sa.dernierTexte,
       'le brut du dernier essai est perdu : impossible de dire si le modèle ' +

@@ -232,6 +232,8 @@ export async function appelerFournisseur(
   cle: string,
   system: string,
   messages: readonly { role: 'user' | 'assistant'; content: string }[],
+  /** Interrompt l'appel — l'échéance de la route (PLAN_TOURS_AU_TEMPS.md §3.1). */
+  signal?: AbortSignal,
 ): Promise<Reponse> {
   const c = CONFIGS[f]
 
@@ -248,6 +250,7 @@ export async function appelerFournisseur(
         max_tokens: c.maxJetons,
         messages: [{ role: 'system', content: system }, ...messages],
       }),
+      ...(signal !== undefined ? { signal } : {}),
     })
     if (!r.ok) throw new Error(`${String(r.status)} ${(await r.text()).slice(0, 300)}`)
     const d = (await r.json()) as {
@@ -274,7 +277,7 @@ export async function appelerFournisseur(
     max_tokens: c.maxJetons,
     system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
-  })
+  }, signal !== undefined ? { signal } : undefined)
   const r = await flux.finalMessage()
   return {
     texte: r.content.map((b) => (b.type === 'text' ? b.text : '')).join(''),

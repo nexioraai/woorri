@@ -245,9 +245,69 @@ export type Resultat =
  */
 export type Appeler = (
   messages: readonly { role: 'user' | 'assistant'; content: string }[],
-) => Promise<{ readonly texte: string; readonly tronquee: boolean }>
+) => Promise<{
+  readonly texte: string
+  readonly tronquee: boolean
+  /** Ce que CET appel a coûté et lu — la boucle en tient ses gardes. */
+  readonly coutUsd?: number
+  readonly jetonsEntree?: number
+}>
 
-export const TOURS_MAX = 3
+/**
+ * PLAFOND DE SÉCURITÉ, PLUS LA RÈGLE (2026-11-16, PLAN_TOURS_AU_TEMPS.md).
+ *
+ * C'était 3, sans justification écrite (posé le 2026-10-18, `47837412`).
+ * Mesuré : le registre de clients a été livré cassé au tour 3 après 319 s
+ * sur 900. La boucle s'arrête désormais sur une ÉCHÉANCE, un PLAFOND DE
+ * COÛT ou la FENÊTRE DE CONTEXTE (`peutRejouer`) ; ce nombre ne décide plus
+ * rien en temps normal.
+ */
+export const TOURS_MAX = 10
+
+/** Le tour le plus court qu'on estime — 9 tours suivants sur 10 tiennent sous 158 s (T1, 2026-11-16). */
+export const TOUR_ESTIME_MIN_MS = 160_000
+
+/** Ce que chaque raison d'arrêt veut dire, en clair, pour le motif. */
+export const MOTIF_ARRET: Readonly<Record<string, string>> = {
+  temps: 'le temps de génération est épuisé',
+  cout: 'le plafond de coût de la génération est atteint',
+  contexte: 'la fenêtre de contexte du modèle serait dépassée',
+  stagnation: 'deux essais de suite butent sur les mêmes défauts',
+  tours: 'le nombre maximal d’essais est atteint',
+}
+
+/**
+ * PEUT-ON JOUER UN TOUR DE PLUS ? `null` si oui, sinon la raison.
+ *
+ * Pure, et c'est voulu : le temps, le coût et les jetons sont des
+ * PARAMÈTRES — une garde qui lit l'horloge ne se teste qu'à l'heure qu'il est.
+ */
+export function peutRejouer(o: {
+  readonly maintenant: number
+  readonly echeance?: number
+  /** Durées des tours DE CETTE génération, en ms. */
+  readonly durees: readonly number[]
+  readonly coutCumule: number
+  readonly dernierCout: number
+  readonly plafondUsd?: number
+  /** Jetons d'entrée des tours de cette génération, dans l'ordre. */
+  readonly entrees: readonly number[]
+  readonly fenetreContexte?: number
+  readonly sortieMax?: number
+}): string | null {
+  if (o.echeance !== undefined) {
+    const estime = Math.max(TOUR_ESTIME_MIN_MS, ...o.durees)
+    if (o.maintenant + estime > o.echeance) return 'temps'
+  }
+  if (o.plafondUsd !== undefined && o.coutCumule + o.dernierCout > o.plafondUsd) return 'cout'
+  if (o.fenetreContexte !== undefined && o.entrees.length > 0) {
+    const dernier = o.entrees[o.entrees.length - 1]!
+    const avant = o.entrees.length > 1 ? o.entrees[o.entrees.length - 2]! : 0
+    const prochain = dernier + Math.max(0, dernier - avant)
+    if (prochain + (o.sortieMax ?? 0) > o.fenetreContexte) return 'contexte'
+  }
+  return null
+}
 
 /**
  * Écrit l'application, et la corrige tant que le compilateur refuse.
@@ -326,6 +386,15 @@ export async function boucleEcriture(o: {
   readonly configuration?: ConfigurationClient
   readonly appeler: Appeler
   readonly toursMax?: number
+  /** Heure (ms) au-delà de laquelle aucun tour ne doit plus finir. */
+  readonly echeance?: number
+  /** Coût maximal d'une génération, en USD (0,50, décision du 2026-11-16). */
+  readonly plafondUsd?: number
+  /** Fenêtre de contexte du modèle, et la sortie demandée par appel. */
+  readonly fenetreContexte?: number
+  readonly sortieMax?: number
+  /** L'horloge, injectable pour les tests. */
+  readonly maintenant?: () => number
   /**
    * LE JUGE D'EXÉCUTION, REMPLAÇABLE — et le défaut reste le VRAI.
    *
@@ -368,6 +437,13 @@ export async function boucleEcriture(o: {
   readonly validerEntite?: (e: unknown) => boolean
 }): Promise<Resultat> {
   const toursMax = o.toursMax ?? TOURS_MAX
+  const horloge = o.maintenant ?? Date.now
+  const durees: number[] = []
+  const entrees: number[] = []
+  let coutCumule = 0
+  let dernierCout = 0
+  /** La raison pour laquelle la boucle s'est arrêtée avant `toursMax`, s'il y en a une. */
+  let arret: string | null = null
   const tours: Tour[] = []
   let dernierTexte = ''
   // ── CE QUE LA BOUCLE SAIT DES DONNÉES, ET ÇA GRANDIT.
@@ -383,7 +459,11 @@ export async function boucleEcriture(o: {
 
   for (let rang = 1; rang <= toursMax; rang += 1) {
     const debut = Date.now()
-    const { texte, tronquee } = await o.appeler(messages)
+    const reponse = await o.appeler(messages)
+    const { texte, tronquee } = reponse
+    dernierCout = reponse.coutUsd ?? 0
+    coutCumule += dernierCout
+    if (reponse.jetonsEntree !== undefined) entrees.push(reponse.jetonsEntree)
     dernierTexte = texte
     let lus = lireFichiers(texte)
     // Les refus de déclaration de CE tour — ils partent au modèle (D2).
@@ -681,7 +761,17 @@ export async function boucleEcriture(o: {
               'et un champ déjà déclaré garde le type du cahier.',
           )
         }
-        if (reproches.length > 0 && rang < toursMax) {
+        // ── LE DERNIER TOUR N'EST PLUS UN NUMÉRO : c'est le temps, le coût
+        // ou le contexte qui le disent (PLAN_TOURS_AU_TEMPS.md §3.1).
+        arret =
+          rang >= toursMax
+            ? 'tours'
+            : peutRejouer({
+                maintenant: horloge(), echeance: o.echeance,
+                durees: [...durees, horloge() - debut], coutCumule, dernierCout,
+                plafondUsd: o.plafondUsd, entrees, fenetreContexte: o.fenetreContexte, sortieMax: o.sortieMax,
+              })
+        if (reproches.length > 0 && arret === null) {
           motif = reproches.join('\n\n')
         } else {
           // Au dernier tour, les défauts restants ne REFUSENT pas l'œuvre —
@@ -717,6 +807,14 @@ export async function boucleEcriture(o: {
       budget -= part.length
     }
     tours.push({ rang, fichiers: lus.length, ok: false, motif, tronquee, ms: Date.now() - debut, source })
+    durees.push(Date.now() - debut)
+    if (rang < toursMax) {
+      const raison = peutRejouer({
+        maintenant: horloge(), echeance: o.echeance, durees, coutCumule, dernierCout,
+        plafondUsd: o.plafondUsd, entrees, fenetreContexte: o.fenetreContexte, sortieMax: o.sortieMax,
+      })
+      if (raison !== null) { arret = raison; break }
+    }
 
     // ── ON RENVOIE L'ERREUR TELLE QUELLE, ET ON REDEMANDE TOUT.
     //
@@ -739,7 +837,7 @@ export async function boucleEcriture(o: {
 
   return {
     ok: false,
-    motif: `Non convergé en ${String(toursMax)} tours.`,
+    motif: `Non convergé en ${String(tours.length)} tours${arret !== null && arret !== 'tours' ? ` (arrêt : ${MOTIF_ARRET[arret] ?? arret})` : ''}.`,
     tours,
     dernierTexte,
   }

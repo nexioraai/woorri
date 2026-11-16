@@ -211,10 +211,13 @@ describe('Manque 4 · une tentative = une ligne, jamais réécrite', () => {
     expect((await regenerer(id, 'A')).ok).toBe(false)
     expect(ligneDe(id)).toEqual(avant)
     const echec = tentativesDe(id)[1]!
-    expect([echec.nature, echec.issue, echec.version_rang, echec.tirages]).toEqual(['regeneration', 'non_convergee', null, 3])
-    expect(toursDe(echec)).toHaveLength(3)
-    expect(Number(echec.cout_usd)).toBe(0.0226)
-    expect(echec.diagnostics).toEqual(['Non convergé en 3 tours.'])
+    expect([echec.nature, echec.issue, echec.version_rang]).toEqual(['regeneration', 'non_convergee', null])
+    // Tous les tours joués sont gardés — leur nombre suit la règle au temps (2026-11-16).
+    expect(toursDe(echec)).toHaveLength(Number(echec.tirages))
+    expect(Number(echec.tirages)).toBeGreaterThanOrEqual(2)
+    // Le coût de CHAQUE tour joué, heure creuse : 1 200 × 0,66 + 3 400 × 1,98 par million.
+    expect(Number(echec.cout_usd)).toBe(Number((Number(echec.tirages) * 0.007524).toFixed(4)))
+    expect(echec.diagnostics).toEqual([`Non convergé en ${String(echec.tirages)} tours.`])
   })
 
   it('S3 · LE CRITÈRE : un échec PUIS une réussite — l’échec garde ses 3 tours et son coût', async () => {
@@ -227,8 +230,9 @@ describe('Manque 4 · une tentative = une ligne, jamais réécrite', () => {
     expect(regenerations).toHaveLength(2)
     const [echec, reussite] = regenerations
     expect(echec!.issue).toBe('non_convergee')
-    expect(toursDe(echec)).toHaveLength(3)
-    expect(Number(echec!.cout_usd)).toBe(0.0226)
+    expect(toursDe(echec)).toHaveLength(Number(echec.tirages))
+    expect(Number(echec.tirages)).toBeGreaterThanOrEqual(2)
+    expect(Number(echec!.cout_usd)).toBe(Number((Number(echec!.tirages) * 0.007524).toFixed(4)))
     expect([reussite!.issue, reussite!.version_rang]).toEqual(['livree', 2])
     expect(toursDe(reussite)).toHaveLength(1)
   })

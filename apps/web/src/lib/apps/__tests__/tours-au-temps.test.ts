@@ -1,0 +1,68 @@
+/**
+ * LA BOUCLE TOURNE AU TEMPS (2026-11-16, docs/elite-protocol/PLAN_TOURS_AU_TEMPS.md).
+ *
+ * Mesuré : le registre de clients (1dd7eb95) a été livré cassé au tour 3 —
+ * le dernier — après 319 s sur 900. Le « 3 » n'avait aucune justification
+ * écrite. La boucle s'arrête désormais sur une échéance, un plafond de coût,
+ * la fenêtre de contexte, ou un plafond de sécurité.
+ */
+import { describe, expect, it } from 'vitest'
+import { boucleEcriture, peutRejouer, TOURS_MAX, TOUR_ESTIME_MIN_MS } from '../boucle-directe'
+import { jugeMuet } from './juge-muet'
+
+const CASSE = '=== index.tsx ===\nexport const total = { a: 1,'
+const base = { durees: [] as number[], coutCumule: 0, dernierCout: 0, entrees: [] as number[] }
+
+describe('La boucle au temps', () => {
+  it('① le plafond de sécurité n’est plus 3', () => {
+    expect(TOURS_MAX).toBe(10)
+  })
+
+  it('② la garde du temps : un tour de plus seulement s’il tient avant l’échéance', () => {
+    expect(peutRejouer({ ...base, maintenant: 0, echeance: TOUR_ESTIME_MIN_MS })).toBeNull()
+    expect(peutRejouer({ ...base, maintenant: 1, echeance: TOUR_ESTIME_MIN_MS })).toBe('temps')
+    // Le tour le plus long de CETTE génération sert d'estimation.
+    expect(peutRejouer({ ...base, durees: [300_000], maintenant: 0, echeance: 299_000 })).toBe('temps')
+  })
+
+  it('③ la garde du coût : le prochain tour ne doit pas dépasser le plafond', () => {
+    expect(peutRejouer({ ...base, maintenant: 0, coutCumule: 0.4, dernierCout: 0.05, plafondUsd: 0.5 })).toBeNull()
+    expect(peutRejouer({ ...base, maintenant: 0, coutCumule: 0.46, dernierCout: 0.05, plafondUsd: 0.5 })).toBe('cout')
+  })
+
+  it('④ la garde du contexte : entrée attendue + sortie demandée ≤ fenêtre', () => {
+    const c = { ...base, maintenant: 0, fenetreContexte: 1_000_000, sortieMax: 65_536 }
+    expect(peutRejouer({ ...c, entrees: [4_500, 11_900] })).toBeNull()
+    expect(peutRejouer({ ...c, entrees: [800_000, 900_000] })).toBe('contexte')
+  })
+
+  it('⑤ la boucle s’arrête à l’échéance, et le motif dit pourquoi', async () => {
+    let t = 0
+    let appels = 0
+    const r = await boucleEcriture({
+      demande: 'x',
+      appeler: (async () => { appels += 1; t += 100_000; return { texte: CASSE, tronquee: false } }) as never,
+      juger: jugeMuet,
+      maintenant: () => t,
+      echeance: 350_000,
+    })
+    expect(r.ok).toBe(false)
+    if (r.ok) return
+    expect(appels, 'des tours ont été lancés après l’échéance').toBeLessThan(TOURS_MAX)
+    expect(r.motif).toMatch(/le temps de génération est épuisé/u)
+  })
+
+  it('⑥ la boucle s’arrête au plafond de coût', async () => {
+    let appels = 0
+    const r = await boucleEcriture({
+      demande: 'x',
+      appeler: (async () => { appels += 1; return { texte: CASSE, tronquee: false, coutUsd: 0.2 } }) as never,
+      juger: jugeMuet,
+      plafondUsd: 0.5,
+    })
+    expect(r.ok).toBe(false)
+    if (r.ok) return
+    expect(appels, '0,2 $ par tour, plafond 0,5 : deux tours seulement').toBe(2)
+    expect(r.motif).toMatch(/plafond de coût/u)
+  })
+})
