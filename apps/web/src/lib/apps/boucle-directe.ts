@@ -88,7 +88,7 @@ export const REGLE_6_TETE_SANS_BASE: readonly string[] = [
   '   Rends ce fichier EN PLUS des autres (il ne part pas dans l’application) :',
   '',
   '   === DONNEES.json ===',
-  '   [{"name":"chose","fields":[{"name":"champ","type":"text","required":true}]}]',
+  '   [{"id":"ent_chose","name":"chose","fields":[{"id":"fld_champ","name":"champ","type":"text","required":true}]}]',
   '',
   '   `chose` est REFUSÉ exprès : recopie ce gabarit et ta table sera écartée.',
   '   Types : text, number, date, boolean.',
@@ -386,6 +386,8 @@ export async function boucleEcriture(o: {
     const { texte, tronquee } = await o.appeler(messages)
     dernierTexte = texte
     let lus = lireFichiers(texte)
+    // Les refus de déclaration de CE tour — ils partent au modèle (D2).
+    let refusDuTour: readonly RefusEntite[] = []
 
     // ── LA DÉCLARATION EN ROUTE, LUE AVANT TOUT LE RESTE.
     //
@@ -404,14 +406,14 @@ export async function boucleEcriture(o: {
         // obtenu. Avant, cette fonction jetait l'entité entière sans un mot
         // — y compris un CHAMP EN PLUS, donc une colonne qui n'existe
         // jamais. Le canal existait déjà ; elle ne s'en servait pas.
-        refusEnRoute = [
-          ...refusEnRoute,
+        refusDuTour = [
           ...dec.refus,
           ...fusion.pertes.map((pe) => ({
             quoi: `${pe.table}.${pe.quoi}`,
             motif: pe.pourquoi,
           })),
         ]
+        refusEnRoute = [...refusEnRoute, ...refusDuTour]
       }
       if (carteBrute.size !== dec.fichiers.size) {
         lus = lus.filter((f) => f.chemin !== FICHIER_DECLARATION)
@@ -662,6 +664,21 @@ export async function boucleEcriture(o: {
                 )
                 .join('\n') +
               `\nCouvre-les, ou déclare-les dans ${FICHIER_PERIMETRE} avec un motif d’une ligne. Le silence est interdit.`,
+          )
+        }
+        // ── D2 (2026-11-16) : UNE DÉCLARATION REFUSÉE SE DIT AU MODÈLE.
+        //
+        // Mesuré (carnet, tir 1) : le juge des faces demandait « déclare-la
+        // publique », le modèle la déclarait, la déclaration était jetée
+        // (pas d'`id`) et rien ne le lui disait. Motif identique au tour
+        // suivant : aucune boucle ne sort de là. Le refus était accumulé
+        // (`refusEnRoute`) mais n'entrait dans aucun reproche.
+        if (refusDuTour.length > 0) {
+          reproches.push(
+            'TA DÉCLARATION DONNEES.json A ÉTÉ REFUSÉE, elle n’a rien changé :\n' +
+              refusDuTour.map((r) => `- ${r.quoi} : ${r.motif}`).join('\n') +
+              '\nChaque table et chaque champ portent un "id" ("ent_<nom>", "fld_<nom>"), ' +
+              'et un champ déjà déclaré garde le type du cahier.',
           )
         }
         if (reproches.length > 0 && rang < toursMax) {
