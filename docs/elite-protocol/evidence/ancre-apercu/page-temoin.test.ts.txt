@@ -1,0 +1,19 @@
+import { writeFileSync } from 'node:fs'
+import { assembler } from '@/lib/apps/bac-a-sable'
+import { pageAutonome } from '@/lib/apps/boucle-directe'
+it('page', async () => {
+  const APP = `import React, { useState, useEffect } from 'react'
+import { createRoot } from 'react-dom/client'
+function App() {
+  const [h, setH] = useState(location.hash)
+  useEffect(() => { const f = () => setH(location.hash); addEventListener('hashchange', f); return () => removeEventListener('hashchange', f) }, [])
+  return h === '#gestion'
+    ? <main><h1>GESTION</h1><a id="retour" href="#">Retour</a></main>
+    : <main><h1>ACCUEIL</h1><a id="l" href="#gestion">Espace de gestion</a></main>
+}
+createRoot(document.getElementById('racine')!).render(<App />)
+`
+  const v = await assembler(new Map([['index.tsx', APP]]))
+  if (!v.ok) throw new Error(v.erreur)
+  writeFileSync('/private/tmp/claude-501/-Users-yia/7380ee6a-d9ff-4f0d-94f4-1de37dfe3248/scratchpad/ancre/app.html', pageAutonome(v.code, 'Témoin'))
+}, 60000)

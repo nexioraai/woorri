@@ -994,6 +994,15 @@ var x=(p.textContent||"").replace(/\\s+/g," ").trim();if(x===""||x.length>60)con
 if(!p.id)p.id="deribfy-libelle-"+(++N);f.setAttribute("aria-labelledby",p.id)}}
 document.addEventListener("DOMContentLoaded",function(){lier();
 try{new MutationObserver(lier).observe(document.body,{childList:true,subtree:true})}catch(e){}});
+// D6 (2026-11-16) : UN LIEN #ancre RESTE DANS L APPLICATION, MEME DANS L APERCU.
+// Dans un cadre srcdoc, l URL de base est celle de la page qui l affiche :
+// href="#gestion" visait deribfy.com/...#gestion, que le cadre ne peut pas
+// charger (X-Frame-Options) - mesure sous WebKit et Chromium. Hors d un
+// cadre srcdoc (page publiee, fichier), rien ne change.
+document.addEventListener("click",function(e){
+if(location.protocol!=="about:"||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+var a=e.target&&e.target.closest?e.target.closest('a[href^="#"]'):null;if(!a)return;
+e.preventDefault();var h=a.getAttribute("href")||"#";if(location.hash!==h)location.hash=h});
 })()`
 
 /**

@@ -1,0 +1,31 @@
+import http from 'node:http'
+import { readFileSync } from 'node:fs'
+import { webkit, chromium } from '/Users/yia/dev/woorri/node_modules/playwright/index.mjs'
+const APP = readFileSync(process.argv[2], 'utf8')
+const PARENT = `<!doctype html><html><body><iframe id="f" sandbox="allow-scripts" style="width:800px;height:500px"></iframe><script>
+fetch('/app').then(r=>r.text()).then(t=>{document.getElementById('f').srcdoc=t})</script></body></html>`
+const srv = http.createServer((req, res) => {
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN'); res.setHeader('Content-Security-Policy', "frame-ancestors 'self'")
+  res.setHeader('Content-Type', 'text/html; charset=utf-8'); res.end(req.url.startsWith('/app') ? APP : PARENT)
+}).listen(0)
+const base = `http://127.0.0.1:${srv.address().port}`
+let fautes = 0
+for (const [nom, moteur] of [['webkit', webkit], ['chromium', chromium]]) {
+  const b = await moteur.launch(); const p = await b.newPage()
+  await p.goto(base + '/dashboard')
+  let f
+  for (let i = 0; i < 80; i++) { await p.waitForTimeout(100); f = p.frames().find((x) => x !== p.mainFrame()); if (f && await f.evaluate(() => !!document.getElementById('l')).catch(() => false)) break }
+  await f.click('#l'); await p.waitForTimeout(600)
+  const g = p.frames().find((x) => x !== p.mainFrame())
+  const apres = await g.evaluate(() => ({ url: location.href, texte: document.body.innerText.replace(/\s+/g,' ').slice(-80) })).catch((e) => ({ url: g.url(), texte: 'ILLISIBLE ' + e.message.slice(0, 50) }))
+  await g.click('#retour').catch(() => {}); await p.waitForTimeout(400)
+  const g2 = p.frames().find((x) => x !== p.mainFrame())
+  const retour = await g2.evaluate(() => document.body.innerText.replace(/\s+/g,' ').slice(-80)).catch((e) => 'ILLISIBLE')
+  const p2 = await b.newPage(); await p2.goto(base + '/app'); await p2.click('#l'); await p2.waitForTimeout(300)
+  const autonome = { url: p2.url(), texte: (await p2.evaluate(() => document.body.innerText)).replace(/\s+/g,' ').slice(-80) }
+  const ok = /GESTION/.test(apres.texte) && /ACCUEIL/.test(retour) && /GESTION/.test(autonome.texte) && autonome.url.endsWith('/app#gestion')
+  if (!ok) fautes++
+  console.log(JSON.stringify({ moteur: nom, ok, apercu_apres_clic: apres, apercu_retour: retour.replace(/\n/g,' '), autonome }))
+  await b.close()
+}
+srv.close(); process.exit(fautes ? 1 : 0)
