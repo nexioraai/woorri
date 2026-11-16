@@ -30,10 +30,14 @@ On a vérifié de la même façon, en lecture seule, les deux autres application
 
 Conséquence : l'œuvre servie n'a aucune table publique. **Ce que la publication ferait si on l'acceptait ne peut pas se mesurer sur elle.**
 
-Une autre conséquence logique : la route refuse de publier sans accord tant qu'une table est publique (`publier/route.ts:268-288`). Deux explications restent possibles, et la mesure ne les départage pas (INCONNU) :
+**Fermé par le propriétaire le 2026-11-16 : ce sont deux applications différentes.**
 
-- l'avertissement vu provient d'une autre version de l'œuvre que celle servie ;
-- l'œuvre servie a été publiée sans aucune table publique.
+| | Œuvre | Fichiers | Durée | Recherche publique | Publiée |
+|---|---|---|---|---|---|
+| une.deribfy.app | `3b96d2e7` | 6 | 165 s | non (rien de public dans le brief) | oui |
+| celle de l'avertissement | la suivante | 14 | 251 s | oui, par immatriculation | non : Youssouf a cliqué Annuler |
+
+La mesure du §1 prouve exactement ce qu'elle prouve : **une application sans demande publique n'expose rien**.
 
 ## 2. Ce que la publication ferait si on l'acceptait
 
@@ -66,7 +70,7 @@ Le tir `porte-deux-regimes.tir.ts` a été exécuté le 2026-11-05 sur la vraie 
 - elle refuse insert, update et delete ;
 - une table non déclarée refuse la lecture.
 
-Un tir propre à l'Atelier sur la vraie base a été **refusé par le garde-fou** de la session, parce qu'il crée un schéma en production. Il est conservé hors du dépôt : `scratchpad/publique/atelier-lecture-publique.tir.ts`. On peut le lancer sur feu vert.
+Un tir propre à l'Atelier sur la vraie base a été refusé par le garde-fou de la session, parce qu'il crée un schéma en production. **Le propriétaire l'a refusé lui aussi le 2026-11-16** : on ne crée pas de schéma en production pour une démonstration. La simulation locale et la preuve réelle du 2026-11-05 suffisent à établir le comportement.
 
 ## 3. Verdict
 
@@ -99,4 +103,21 @@ Ce sont des estimations de travail, non mesurées. Aucune ne coûte d'argent à 
 | **C · table de statut séparée** (déjà possible : une entité publique de plus) | oui | **non** | Aucun changement de moteur, mais le modèle doit écrire **deux fois** (risque de divergence). Un juge de cohérence serait à faire. | ~0,5 jour (juge) ; risque produit |
 | **D · lien signé par réparation** : jeton aléatoire par ligne, lu par une fonction `security definer` `suivi(jeton)` qui rend le statut seul ; `anon` n'a que `execute` | oui | **oui** | Émission de fonction et de colonne jeton ; extension du validateur SQL ; revue de sécurité ; un écran « partager par WhatsApp » ; la page publique de suivi. | ~2–3 jours |
 
-**Seule D couvre le cas du garagiste de Moundou**, puisqu'il faut à la fois cacher les prix et ne montrer à chaque client que sa voiture. A, B et C cachent les prix mais laissent tout le monde lister l'état de toutes les voitures. Aucune voie n'est choisie ici.
+**Seule D couvre le cas du garagiste de Moundou**, puisqu'il faut à la fois cacher les prix et ne montrer à chaque client que sa voiture. A, B et C cachent les prix mais laissent tout le monde lister l'état de toutes les voitures.
+
+## 5. Décisions du propriétaire (2026-11-16)
+
+**Décision 2 — le message nomme le contenu. FAIT, commit `1df7d1d7`.**
+
+- La route (`publier/route.ts`) et la fenêtre d'accord (`accordLecturePublique.ts`) disent, pour chaque table publique, ce que tout le monde pourra lire.
+- Ils ajoutent la phrase mesurée : « La liste ENTIÈRE est téléchargeable… ».
+- Les libellés viennent de `contenu-public.ts`. C'est le libellé déclaré du champ s'il existe, en français d'abord. Sinon, c'est le nom sans ses tirets bas, par exemple « montant main oeuvre » : on ne devine ni accent ni traduction (règle d'AIR, `air.ts:935-944`).
+- Un champ dérivé ou sensible, qui n'est pas stocké, n'est pas annoncé.
+- Preuve : `publier-nomme-le-contenu.test.ts` (4 tests) exerce la vraie fonction `POST`. Contrôle négatif : avec l'ancienne route et l'ancienne fenêtre, 2 tests tombent.
+- Limite : tant que le modèle ne déclare pas de `label`, le commerçant lit le nom mécanique, pas « le montant de la main-d'œuvre ».
+
+**Décision 3 — CHANTIER OUVERT, NON COMMENCÉ : voie D, le lien signé par réparation.**
+
+C'est la seule des quatre voies qui cache les prix **et** ne montre à chaque client que sa voiture. Estimation : 2 à 3 jours, revue de sécurité comprise. Le tableau du §4 est la référence. **Ne pas commencer sans instruction.**
+
+**Tir sur la vraie base : REFUSÉ** (voir §2).

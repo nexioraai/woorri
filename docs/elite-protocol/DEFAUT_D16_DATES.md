@@ -67,6 +67,22 @@ Son reproche donne le remède : `lireDate(v)` de `./systeme/donnees`, ou `new Da
 
 **Preuves.** Le test `d16-dates-decalees.test.ts` compte 7 tests, exécutés sous UTC−5 sur le code **émis**. Contrôle négatif : avec l'ancienne bibliothèque, les 3 volets ① tombent. Gate : `npm run verifier` EXIT=0, 499 fichiers et 6 369 tests.
 
+## 3 bis. Décision 1 du propriétaire (2026-11-16) : le Tchad. FAIT, commit `2d24f490`.
+
+Mesuré sous `Africa/Ndjamena` (UTC+1), le marché réel :
+
+- `new Date(a, m - 1, 1).toISOString().slice(0, 7)` rend **« 2026-09 » pour octobre**, et cela **en permanence** ;
+- le jour et le mois courants calculés avec `toISOString` sont faux entre 00 h et 01 h ;
+- la lecture d'un jour (« 2026-11-10 ») ne se décale pas.
+
+Ce qui a été fait :
+
+- La forme `toISOString().slice/substring/substr(0, 10|7)` est maintenant **BLOQUANTE**. Une œuvre qui la garde au dernier tour n'est pas livrée, avec le motif « calculait encore ses dates à l'heure de Greenwich (fichiers) ». Aucun faux positif n'est connu.
+- Les autres formes restent non bloquantes : `split("T")` et `new Date(x)` lu en local, faux positif assumé compris.
+- `d16-dates-decalees.test.ts` couvre désormais UTC−5 **et** UTC+1, avec 12 tests. Contrôle négatif : avec la boucle d'avant, le test du refus tombe.
+
+**Conséquence assumée :** une génération dont le modèle ne corrige pas cette forme avant la fin est payée sans être livrée.
+
 ## 4. Alternative non retenue (décision du propriétaire si voulue)
 
 **Remplacer le `Date` global** dans chaque paquet, pour qu'un texte `AAAA-MM-JJ` soit lu comme un jour local.
