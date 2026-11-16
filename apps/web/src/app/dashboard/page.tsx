@@ -49,6 +49,8 @@ type Application = {
   dureeMs: number;
   fichiers: number;
   revoyable: boolean;
+  /** Ce que les juges ont relevé et qui n'a pas empêché la livraison. */
+  diagnostics?: string[];
 };
 
 export default function DashboardPage() {
@@ -745,6 +747,18 @@ export default function DashboardPage() {
                     </span>
                   </div>
                   <p className="text-white/40 text-xs leading-relaxed line-clamp-3">{a.demande}</p>
+                  {/* LES POINTS À SURVEILLER, DITS (2026-11-16) : une œuvre livrée avec
+                      des défauts non bloquants les porte ici, repliés mais visibles. */}
+                  {a.statut === 'livree' && (a.diagnostics ?? []).length > 0 && (
+                    <details className="text-xs text-amber-300/80">
+                      <summary className="cursor-pointer">
+                        {`⚠ ${String((a.diagnostics ?? []).length)} point(s) à surveiller`}
+                      </summary>
+                      <ul className="mt-1 space-y-1 list-disc pl-4 text-white/50">
+                        {(a.diagnostics ?? []).map((x, i) => <li key={i}>{x}</li>)}
+                      </ul>
+                    </details>
+                  )}
                   {/* ── SON ADRESSE, EN CLAIR ET CLIQUABLE.
                        C'est la seule information qui distingue une carte
                        des cinq autres — et c'est celle qui manquait. */}

@@ -43,7 +43,7 @@ export async function GET(req: Request) {
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('id, created_at, statut, moteur, fournisseur, cout_usd, duree_ms, nom, demande, document, publication_slug, publication_jeton')
+    .select('id, created_at, statut, moteur, fournisseur, cout_usd, duree_ms, nom, demande, document, publication_slug, publication_jeton, diagnostics')
     // Une œuvre supprimée n'apparaît plus : l'écran est le seul endroit où
     // la suppression doit être totale et immédiate. La ligne, elle, survit
     // trente jours (rattrapage) puis reste en pierre tombale (le nom).
@@ -95,6 +95,14 @@ export async function GET(req: Request) {
       // besoin à son tour, et un deuxième exemplaire aurait divergé au
       // premier changement de domaine.
       adresse: adressePubliee(g.publication_slug, g.publication_jeton),
+      // ── CE QUE LES JUGES ONT DIT, MONTRÉ À CELUI QUI S'EN SERT (2026-11-16).
+      //
+      // Les diagnostics existaient en base et personne ne les voyait : une
+      // œuvre livrée « partiellement éprouvée » ou « sans données
+      // conservées » s'affichait comme les autres. PLAN_TOURS_AU_TEMPS.md §3.3.
+      diagnostics: Array.isArray(g.diagnostics)
+        ? (g.diagnostics as unknown[]).filter((x): x is string => typeof x === 'string').slice(0, 12)
+        : [],
     }
   })
 
