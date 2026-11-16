@@ -65,4 +65,36 @@ describe('La boucle au temps', () => {
     expect(appels, '0,2 $ par tour, plafond 0,5 : deux tours seulement').toBe(2)
     expect(r.motif).toMatch(/plafond de coût/u)
   })
+
+  it('⑦ BLOQUANT · une œuvre qui ne se monte pas n’est JAMAIS livrée, même au dernier tour', async () => {
+    const neSeMontePas = (async () => ({
+      monteDansSimulateur: false,
+      erreurs: [{ quoi: 'import', message: 'import__embarque_react_dom.default.render is not a function', indice: '' }],
+      octetsRendus: 0, texte: '', ms: 0,
+    })) as unknown as typeof jugeMuet
+    const r = await boucleEcriture({
+      demande: 'x',
+      appeler: (async () => ({ texte: '=== index.tsx ===\nexport const a = 1', tronquee: false })) as never,
+      juger: neSeMontePas,
+      toursMax: 2,
+    })
+    expect(r.ok, 'une application qui ne démarre pas a été livrée').toBe(false)
+    if (r.ok) return
+    expect(r.raison).toBe('bloquant')
+    expect(r.motif).toMatch(/Après 2 essai\(s\), l’application ne démarrait toujours pas : rien n’a été livré/u)
+    expect(r.tours.every((t) => !t.ok)).toBe(true)
+  })
+
+  it('⑧ NON BLOQUANT · un contrôle mort au dernier tour accompagne l’œuvre, il ne la refuse pas', async () => {
+    const r = await boucleEcriture({
+      demande: 'x',
+      appeler: (async () => ({ texte: '=== index.tsx ===\nexport const B = () => <button type="button">Rien</button>', tronquee: false })) as never,
+      juger: jugeMuet,
+      toursMax: 1,
+    })
+    expect(r.ok, r.ok ? '' : r.motif).toBe(true)
+    if (!r.ok) return
+    expect(r.vivacite.length, 'le contrôle mort n’est plus dit').toBeGreaterThan(0)
+  })
 })
+

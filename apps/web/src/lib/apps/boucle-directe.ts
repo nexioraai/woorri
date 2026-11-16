@@ -220,6 +220,8 @@ export type Resultat =
       readonly ok: false
       readonly motif: string
       readonly tours: readonly Tour[]
+      /** `bloquant` : l'œuvre s'assemblait mais ne démarrait pas — refusée, jamais livrée. */
+      readonly raison?: 'bloquant'
       /**
        * CE QUE LE MODÈLE AVAIT ÉCRIT AU DERNIER TOUR, BRUT.
        *
@@ -774,8 +776,29 @@ export async function boucleEcriture(o: {
         if (reproches.length > 0 && arret === null) {
           motif = reproches.join('\n\n')
         } else {
-          // Au dernier tour, les défauts restants ne REFUSENT pas l'œuvre —
-          // ils l'ACCOMPAGNENT, dits : refuser re-brûlerait l'argent du
+          // ── UN DÉFAUT BLOQUANT N'EST JAMAIS ACCEPTÉ (2026-11-16,
+          // PLAN_TOURS_AU_TEMPS.md §3.2).
+          //
+          // Mesuré : le registre de clients (1dd7eb95) a été livré au dernier
+          // tour alors que le juge disait « ne se monte pas ». Une application
+          // qui ne démarre pas, ou qui mourrait sur un jeton inventé, n'est
+          // pas une application : mieux vaut un échec annoncé qu'une coquille
+          // livrée.
+          const bloquant =
+            jetons.length > 0 ||
+            (execution !== null && execution.indisponible === undefined && !execution.monteDansSimulateur)
+          if (bloquant) {
+            tours.push({ rang, fichiers: lus.length, ok: false, motif: reproches.join('\n\n'), ms: Date.now() - debut })
+            return {
+              ok: false,
+              raison: 'bloquant',
+              motif: `Après ${String(tours.length)} essai(s), l’application ne démarrait toujours pas : rien n’a été livré.`,
+              tours,
+              dernierTexte,
+            }
+          }
+          // Les défauts NON bloquants restants ne REFUSENT pas l'œuvre — ils
+          // l'ACCOMPAGNENT, dits : refuser re-brûlerait l'argent du
           // propriétaire, taire referait le défaut fondateur.
           tours.push({ rang, fichiers: lus.length, ok: true, ms: Date.now() - debut })
           return {

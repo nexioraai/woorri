@@ -967,8 +967,10 @@ export async function POST(req: Request) {
       trace: tracePourTentative,
     })
     const phraseEchec =
-      `${resultat.motif} Le code produit ne s'est pas assemblé ` +
-      `(${String(resultat.tours.length)} essai(s), ${String(Math.round(dureeMs / 1000))} s).`
+      resultat.raison === 'bloquant'
+        ? `${resultat.motif} (${String(Math.round(dureeMs / 1000))} s)`
+        : `${resultat.motif} Le code produit ne s'est pas assemblé ` +
+          `(${String(resultat.tours.length)} essai(s), ${String(Math.round(dureeMs / 1000))} s).`
     return { ok: false as const, error: phraseEchec, motif: phraseEchec, tours: resultat.tours, coutUsd, dureeMs }
   }
   const charge: Record<string, unknown> = ligne
@@ -1143,9 +1145,12 @@ export async function POST(req: Request) {
     //
     // Les deux champs portent désormais une phrase lisible : quel que soit
     // celui que l'écran lit, il trouve quelque chose à dire.
+    // Un REFUS BLOQUANT dit ce qui s'est passé : ça s'assemblait, ça ne démarrait pas.
     const phrase =
-      `${resultat.motif} Le code produit ne s'est pas assemblé ` +
-      `(${String(resultat.tours.length)} essai(s), ${String(Math.round(dureeMs / 1000))} s).`
+      resultat.raison === 'bloquant'
+        ? `${resultat.motif} (${String(Math.round(dureeMs / 1000))} s)`
+        : `${resultat.motif} Le code produit ne s'est pas assemblé ` +
+          `(${String(resultat.tours.length)} essai(s), ${String(Math.round(dureeMs / 1000))} s).`
     return { ok: false as const, error: phrase, motif: phrase, tours: resultat.tours, coutUsd, dureeMs }
   }
 
