@@ -198,3 +198,78 @@ order by 2 desc nulls last;
 
 **Aucune correction ici.**
 
+---
+
+## 7. Résultat de B4 (2026-11-16) [OBSERVÉ-PROD, export du propriétaire]
+
+**Générateur `main` : 46 premiers tours, 41 refusés (89 %).**
+
+| famille | générations touchées au tour 1 | seule cause |
+|---|---|---|
+| construction (assemblage, syntaxe, import) | 13 | **13** |
+| ne se monte pas | 11 | 3 |
+| données en mémoire / sans table | 9 | 0 |
+| exigences muettes | 9 | 3 |
+| jetons inexistants | 8 | 2 |
+| tables lues avant connexion | 7 | 1 |
+| chargement = vide | 6 | 0 |
+| réglages inconnus des pièces | 4 | 1 |
+| contrôles sans nom | 4 | 0 |
+| contrôles morts | 2 | 1 |
+| aucune famille reconnue | 0 | — |
+
+- **Somme des « seule cause » : 24 premiers tours** refusés pour une seule famille. **17** l'ont été pour deux familles ou plus.
+- **Aucune famille n'explique à elle seule la moitié des refus.** La première, la construction, en explique **13 sur 41, soit 32 %**. Selon la règle posée par le propriétaire, aucune n'est traitée.
+- **Chiffre utile malgré tout :** sans la construction, 13 générations de plus auraient été acceptées au tour 1, soit **18 sur 46 au lieu de 5**.
+
+### Les trois premières familles
+
+**1. Construction : 13 générations, 13 en seule cause.**
+- **a) Évitable ? En partie.** B3 en montrait des fragments :
+  - des erreurs de syntaxe JSX (`[PARSE_ERROR]` : « Unexpected token », « Did you mean `{'>'}` », « Unterminated string », « Expected `>` ») : des fautes de frappe du modèle ;
+  - un chemin d'import faux (`[UNRESOLVED_IMPORT] './systeme/ui'` depuis `composants/`).
+  
+  La répartition exacte est **INCONNUE** : B5 la donne.
+- **b) Une garde ?**
+  - Pour le **chemin d'import**, oui : l'assembleur pourrait résoudre `systeme/…` depuis n'importe quel sous-dossier. La faute deviendrait impossible, sans consigne.
+  - Pour la **syntaxe**, pas de garde qui l'empêche. C'est une faute d'écriture, que le tour suivant corrige déjà.
+- **c)** 13, soit le plafond de ce qu'une garde sur la construction peut rendre. Elle ne rendrait que **la part « import »** de ces 13, inconnue avant B5.
+
+**2. Ne se monte pas : 11 générations, 3 en seule cause.**
+- **a) Mélangé.** Une partie de ces refus venait de **D1**, le juge qui ne posait pas `window.DERIBFY_BASE` : c'est un faux refus de l'instrument, corrigé ce jour (`1f84a310`, en production depuis 14:59:31 UTC le 2026-11-16). Le carnet de dépenses du matin en était un. B5 sépare les refus avant et après ce déploiement.
+- **b) Déjà traité pour la part D1.** Pour le reste (des API retirées comme `ReactDOM.render`, des erreurs de rendu), une garde dépend du cas.
+- **c)** 3 au plus.
+
+**3. Ex æquo, 9 chacune :**
+- **données en mémoire : seule cause 0.** La supprimer ne rendrait **aucun** premier tour, car elle n'est jamais seule.
+- **exigences muettes : seule cause 3.** C'est le juge de couverture, dont les familles sont des mots (`ENQUETE_QUALITE_GENERATEUR.md`). Une part de ces refus peut venir de l'instrument : **INCONNU**.
+
+### B5 — le détail des deux premières familles, avant et après D1 (essayée sur table factice)
+
+```sql
+with g as (
+  select a.id, a.created_at, a.sections_acquises->'tours' as tours
+  from public.app_generations a
+  where a.moteur = 'direct'
+    and jsonb_typeof(a.sections_acquises->'tours') = 'array'
+    and not exists (select 1 from jsonb_array_elements(a.sections_acquises->'tours') x
+                    where x ? 'passe' or coalesce(x->>'motif', '') ~ '^\[')
+    and (select count(*) = count(distinct x->>'rang') from jsonb_array_elements(a.sections_acquises->'tours') x)
+), premier as (
+  select g.id, g.created_at, coalesce(e->>'motif', '') as motif
+  from g, jsonb_array_elements(g.tours) e
+  where (e->>'rang')::int = 1 and not (e->>'ok')::boolean
+)
+select case when motif ~ '^La construction a échoué' then 'construction'
+            when motif ~ 'APPLICATION NE SE MONTE PAS' then 'ne se monte pas' end as famille,
+       coalesce(substring(motif from '\[([A-Z_]{3,})\]'),
+                left(regexp_replace(substring(motif from 'APPLICATION NE SE MONTE PAS[^\n]*\n- ([^\n]*)'), '\s+', ' ', 'g'), 90),
+                '(sans code)') as detail,
+       count(*) filter (where created_at <  '2026-11-16 14:59:31+00') as avant_d1,
+       count(*) filter (where created_at >= '2026-11-16 14:59:31+00') as apres_d1
+from premier
+where motif ~ '^La construction a échoué' or motif ~ 'APPLICATION NE SE MONTE PAS'
+group by 1, 2
+order by 1, 3 desc, 2;
+```
+

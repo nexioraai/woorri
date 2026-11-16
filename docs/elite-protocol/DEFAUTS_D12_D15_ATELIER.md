@@ -155,3 +155,11 @@ D7 (graphique vide à côté d'un compteur), D13 (une liste qui tombe à la prem
 
 Aucune garde de bibliothèque ni aucun budget de clics ne ferme cette famille (D12 : même un budget infini ne voit pas D13). **Ce chantier commande les autres.** Il n'est pas commencé : il attend la décision du propriétaire.
 
+## Correction de la décision qui commande les autres (2026-11-16, soir)
+
+**D13 n'appartenait pas à la famille « il faut des données pour le voir ».** Le tour 2 de l'Atelier écrivait `<GrilleTableau colonnes={[…]}>` : un nombre attendu, une liste écrite. C'est **statique**, visible dans le code sans aucune donnée. L'ancien juge du contrat ne contrôlait que l'inverse (une liste attendue reçue en texte).
+
+Rejeu du code livré : ancien juge → aucun reproche ; juge corrigé (`5152c8a7`) → « « colonnes » attend un NOMBRE ». Le tour 2 aurait été refusé.
+
+**La famille des défauts qui exigent vraiment des données est donc plus petite qu'écrit plus haut.** D7 (un graphique vide à côté d'un compteur) et D14 (des réglages qui ne s'enregistrent pas) y restent. D13 en sort : il relevait d'un contrôle de type manquant.
+
