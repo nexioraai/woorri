@@ -132,3 +132,21 @@ Tests ajoutés : `d6-ancre-apercu.test.ts`, `d7-donnees-signatures.test.ts`. Cha
 - **Si le modèle suivra les signatures et la règle des libellés :** seule une génération par l'interface le dira.
 - **Le nombre d'œuvres déjà touchées par D7, D8 et D9 :** la requête est prête et n'a pas été lancée.
 - **D6 sur Safari pour iPhone.**
+
+---
+
+## Décision ouverte — où corriger D6 (posée par le propriétaire, 2026-11-16)
+
+**La question :** la correction actuelle fait porter la rustine par CHAQUE application générée (le prélude de `pageAutonome`), pour un défaut de notre propre aperçu. Une correction dans l'aperçu (une adresse de base dans le cadre, ou servir la page autrement qu'en `srcdoc`) réglerait le problème à sa source.
+
+**Réponse franche : cette voie n'a pas été examinée avant d'écrire la correction.** Le prélude a été choisi parce qu'il est un point unique, partagé par les trois aperçus (conversation, tableau de bord, atelier). Aucune mesure n'a comparé les autres voies.
+
+**Pistes à éprouver, aucune testée :**
+- **`<base href>` dans la page d'aperçu.** Vers quelle adresse ? `about:srcdoc` comme base n'est pas établi dans les deux moteurs.
+- **`iframe src` vers une route au lieu de `srcdoc`.** La route d'aperçu exige un jeton porteur (`Authorization`), qu'un `src` ne transmet pas. Il faudrait une adresse signée, ce qui change le modèle d'accès.
+- **Une URL `blob:` créée par la page parente.** Les ancres se résoudraient contre le `blob:`, mais l'origine opaque et le comportement de chaque moteur restent à mesurer.
+
+**Coût de la solution actuelle, mesuré :** environ 600 octets dans chaque page générée. Le code est **inerte** hors d'un cadre `srcdoc` (garde `location.protocol === "about:"`) : une page publiée ne l'exécute pas.
+
+**À trancher après la génération de test.**
+
