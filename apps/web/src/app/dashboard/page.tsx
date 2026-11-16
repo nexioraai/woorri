@@ -11,12 +11,14 @@ import { supabase } from '@/lib/supabase';
 import { IdentifiantsOeuvre, type EtatCompteOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { computeAiScore } from '@/app/lib/aiScore';
 import { useTranslation } from '@/lib/translations';
-import { modeAsyncActif, oublierGeneration } from '@/lib/apps/suivi-generation';
+import { oublierGeneration } from '@/lib/apps/suivi-generation';
+import { regenerationOuverte } from '@/lib/apps/regeneration';
 
-// ── LA GÉNÉRATION D'APPLICATIONS EST EN PAUSE (2026-11-14, décision du propriétaire).
-// Le MÊME interrupteur que le bouton « Application » de l'accueil (OnboardingChat) :
-// NEXT_PUBLIC_GENERATION_ASYNC=1 rouvre les deux portes, rien d'autre à toucher.
-const GENERATION_OUVERTE = modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYNC);
+// ── « RÉGÉNÉRER » A SON PROPRE INTERRUPTEUR (2026-11-16, décision du propriétaire).
+// Il ne suit plus la génération neuve (NEXT_PUBLIC_GENERATION_ASYNC, bouton
+// « Application » de l'accueil) : NEXT_PUBLIC_REGENERATION_OUVERTE=1 l'ouvre,
+// absent il reste fermé. La route revérifie la même variable et refuse (409).
+const REGENERATION_OUVERTE = regenerationOuverte(process.env.NEXT_PUBLIC_REGENERATION_OUVERTE);
 import {
   adresseProposee,
   AVERTISSEMENT_MARQUE,
@@ -171,7 +173,7 @@ export default function DashboardPage() {
    */
   const regenerer = async (a: Application) => {
     // En pause : aucune génération ne part d'ici (le bouton le dit déjà).
-    if (!GENERATION_OUVERTE) return;
+    if (!REGENERATION_OUVERTE) return;
     setApercuErreur(null);
     // LE PRIX SE LIT AVANT DE DEMANDER, MÊME HISTORIQUE REPLIÉ. Il ne
     // s'affichait que si le panneau était ouvert : la plupart des gens
@@ -837,7 +839,7 @@ export default function DashboardPage() {
                           className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
                           {versions?.id === a.id ? 'Masquer' : 'Historique'}
                         </button>
-                        {GENERATION_OUVERTE ? (
+                        {REGENERATION_OUVERTE ? (
                           <button type="button" onClick={() => { void regenerer(a); }}
                             title="Rejoue votre demande d’origine et en fait une nouvelle version"
                             className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">

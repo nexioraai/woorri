@@ -30,6 +30,7 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
+import { regenerationOuverte } from '@/lib/apps/regeneration'
 import { alerter } from '@/lib/alertes'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
@@ -301,6 +302,22 @@ export async function POST(req: Request) {
   if (moteurChoisi(process.env.GENERATEUR_MOTEUR) !== 'direct') {
     return NextResponse.json(
       { error: 'Cette version n’est pas active.' },
+      { status: 409, headers: { 'Cache-Control': 'no-store' } },
+    )
+  }
+
+  // ── « RÉGÉNÉRER » A SON PROPRE INTERRUPTEUR, FERMÉ PAR DÉFAUT (2026-11-16).
+  //
+  // Le serveur est l'autorité : sans ce refus, la pause ne fermait que le
+  // bouton, et une requête forgée avec `?id=` régénérait encore. Le refus
+  // tombe AVANT la clé, le corps et tout appel payant. Sans `?id=`, rien ne
+  // change ici (lib/apps/regeneration.ts).
+  if (
+    (new URL(req.url).searchParams.get('id') ?? '') !== '' &&
+    !regenerationOuverte(process.env.NEXT_PUBLIC_REGENERATION_OUVERTE)
+  ) {
+    return NextResponse.json(
+      { error: 'La régénération est fermée pour le moment.' },
       { status: 409, headers: { 'Cache-Control': 'no-store' } },
     )
   }

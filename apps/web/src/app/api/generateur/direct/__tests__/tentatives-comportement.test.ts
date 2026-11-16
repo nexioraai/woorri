@@ -170,6 +170,9 @@ beforeEach(() => {
   process.env.GENERATEUR_FOURNISSEUR = 'deepseek'
   process.env.DEEPSEEK_API_KEY = 'cle-de-test'
   delete process.env.RESEND_API_KEY
+  // Les scénarios S1–S6 régénèrent : l'interrupteur (fermé par défaut) est
+  // ouvert ICI, explicitement. S7 le referme.
+  process.env.NEXT_PUBLIC_REGENERATION_OUVERTE = '1'
 })
 
 describe('Manque 4 · une tentative = une ligne, jamais réécrite', () => {
@@ -265,5 +268,37 @@ describe('Manque 4 · une tentative = une ligne, jamais réécrite', () => {
     await regenerer(id, 'B')
     expect(base.misesAJourRefusees).toBe(0)
     expect(tentativesDe(id).map((x) => x.rang)).toEqual([1, 2, 3, 4])
+  })
+
+  it('S7 · interrupteur fermé : « Régénérer » est refusé (409) sans rien payer ni écrire, la génération neuve passe', async () => {
+    // L'ŒUVRE DE DÉPART EST ENSEMENCÉE, comme en S4 : une seule génération
+    // réelle tient dans la marge de `verifier-marge-tests.mjs` (deux : 1,9 s).
+    const id = '77777777-7777-7777-7777-777777777777'
+    base.tables.set(TABLE_GENERATIONS, [{
+      id, owner_id: 'u-1', demande: 'calcule ma facture SNE', nom: 'Facture SNE',
+      statut: 'livree', ok: true, document: { fichiers: {} }, version_courante: 1,
+    }])
+    base.tables.set(TABLE_VERSIONS, [{ generation_id: id, rang: 1, etape: 'livraison', etat: {} }])
+    base.tables.set(TABLE_TENTATIVES, [{
+      generation_id: id, rang: 1, nature: 'generation', issue: 'livree', version_rang: 1, trace: {},
+    }])
+    const avant = ligneDe(id)
+    const appelsAvant = reseau.appels
+    for (const v of [undefined, '', '0', 'true']) {
+      if (v === undefined) delete process.env.NEXT_PUBLIC_REGENERATION_OUVERTE
+      else process.env.NEXT_PUBLIC_REGENERATION_OUVERTE = v
+      reseau.reponses = reponseDe('ok')
+      const r = await generer(id)
+      expect(r.status).toBe(409)
+      expect(((await r.json()) as { error?: string }).error).toContain('régénération est fermée')
+    }
+    expect(reseau.appels).toBe(appelsAvant)
+    expect(ligneDe(id)).toEqual(avant)
+    expect(tentativesDe(id).map((x) => x.nature)).toEqual(['generation'])
+    expect(versionsDe(id)).toEqual([1])
+    // LA GÉNÉRATION NEUVE N'EST PAS CONCERNÉE par cet interrupteur.
+    delete process.env.NEXT_PUBLIC_REGENERATION_OUVERTE
+    const neuve = await oeuvreLivree()
+    expect(tentativesDe(neuve).map((x) => [x.nature, x.issue])).toEqual([['generation', 'livree']])
   })
 })
