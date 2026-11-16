@@ -49,7 +49,7 @@ Chaque tour renvoie au modèle la demande, **toutes** ses réponses précédente
 
 Sources : `scratchpad/vraie-appli/tir1/journal.jsonl`, réponses brutes `tir1/reponses/appel-0N.txt`.
 
-**Contexte envoyé (hypothèse du propriétaire) :** +7 400 puis +7 200 jetons d'entrée par tour, soit la réponse précédente entière plus le motif. La croissance est confirmée. La dégradation, elle, **n'est pas observée** : le tour 2 a corrigé le reproche du tour 1. Ce qui a bloqué ensuite est autre chose (§5.2).
+**Contexte envoyé (hypothèse du propriétaire) :** +7 400 puis +7 200 jetons d'entrée par tour, soit la réponse précédente entière plus le motif. La croissance est confirmée. **L'hypothèse du propriétaire (le modèle se noie dans son historique) n'est pas vérifiée à ce stade :** le tour 2 a bien corrigé le reproche du tour 1, malgré +7 300 jetons. Ce qui a bloqué ensuite est autre chose (§5.2). La taille du contexte et la qualité restent mesurées tour par tour ; si une dégradation apparaît après le tour 5 ou 6, le levier suivant sera un tour sans historique accumulé.
 
 ### 5.2 Deux défauts de l'instrument, trouvés en route [LU-CODE + REJOUÉ HORS LIGNE, gratuit]
 
@@ -75,3 +75,12 @@ Sources : `scratchpad/vraie-appli/tir1/journal.jsonl`, réponses brutes `tir1/re
 | # | Levier | Pourquoi | Effet mesuré |
 |---|---|---|---|
 | 0 | Limite de tours levée (`toursMax` = 25) | les tours corrigent : 9 œuvres refusées au tour 1 ont été acceptées sans reproche au tour 2 (T3, `ENQUETE_TOURS_ET_DUREES.md`) | — |
+
+### 5.3 Tir 2 — leviers L1 et L2b (validés par le propriétaire, 2026-11-16)
+
+- **L1, dans le montage seulement :** le juge d'exécution reçoit `window.DERIBFY_BASE` vide, comme la vraie page (`experience.test.ts`, `jugerCommeLaPage`, passé par le paramètre `juger`, `boucle-directe.ts:339`).
+- **L2b, modification LOCALE et TEMPORAIRE, NON COMMITÉE de `boucle-directe.ts` :** les refus de déclaration du tour (`refusDuTour`) deviennent un reproche, avec un exemple valide portant les `id`. L'original est sauvegardé dans le scratchpad (`vraie-appli/boucle-directe.ts.original`) et sera restauré à la fin.
+- **L2a écartée** par le propriétaire : elle trancherait la question de confidentialité à sa place.
+- **Vérification hors ligne avant le tir (gratuite) :** les réponses 1 et 3 du tir 1 rejouées. Avec L1, la réponse 1 n'est plus « ne se monte pas » ; avec L2b, le reproche « TA DÉCLARATION DONNEES.json A ÉTÉ REFUSÉE » part bien au modèle.
+- Lancé à 13:30 UTC, en heure creuse, même plafond (1 USD) et mêmes règles.
+

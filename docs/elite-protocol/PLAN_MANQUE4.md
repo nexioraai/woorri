@@ -242,6 +242,7 @@ Ce constat rejoint la liste des chantiers à part.
 4. La génération à 16 $ (§5).
 5. L'écran qui abandonne une génération réussie (`DEFAUT_ABANDON_ECRAN.md`, 2026-11-16).
 6. Des œuvres « livrées » qui ne se montent pas (§5 bis).
+7. **Confidentialité d'une application personnelle (2026-11-16).** Le juge des faces exige qu'une table lue sans connexion soit déclarée lisible par tout visiteur : reproche de `juge-faces.ts:123` (« DES TABLES SONT INTERROGÉES AVANT TOUTE CONNEXION… Déclare-la publique »), et loi écrite dans la consigne, `entites-declarees.ts:425-432` (« UNE PAGE PUBLIQUE LIT UNE TABLE DÉCLARÉE PUBLIQUE. TOUJOURS. »). Pour un carnet de dépenses personnel sans comptes, cela exposerait les dépenses à n'importe qui. C'est une question de confidentialité à trancher par le propriétaire, pas un réglage. Relevé dans `EXPERIENCE_UNE_VRAIE_APPLI.md` §5.2.
 
 La suite prévue reste les manques 1 à 3.
 
