@@ -210,6 +210,10 @@ Deux questions, **sans réponse ici** :
 
 Ce point rejoint la liste des chantiers à part.
 
+**Relevé du 2026-11-16 (propriétaire, éditeur SQL, nexiora-ai main) :** sur `moteur = 'direct'`, `statut = 'livree'`, `fournisseur = 'deepseek'` → 8 œuvres, coût moyen 0,0521 $, maximum 0,1545 $, durée moyenne 121 s.
+
+Note du propriétaire : 16,0338 $ vaut environ 100 fois ce maximum. Cela confirme que cette génération suivait un autre chemin que le moteur direct sur DeepSeek, et **renforce** l'hypothèse de l'option 2, **sans l'établir**. Le point reste ouvert et non traité.
+
 ## 4. UNKNOWN
 
 - ~~La taille réelle de `sections_acquises` en production.~~ Relevée le 2026-11-15 (§2.1). La taille **brute** (non compressée) reste non mesurée : `select max(octet_length(sections_acquises::text)) from public.app_generations;`
@@ -343,3 +347,21 @@ Projet `nexiora-ai`, branche `main` (PRODUCTION). Appliquée **par le propriéta
 **Non vérifié :**
 - le rendu de `/admin/applications` avec des tentatives, sans session administrateur ;
 - le comportement sous Postgres de production (version non relevée).
+
+### 6.7 « Régénérer » séparé de la génération neuve — 2026-11-16 [OBSERVÉ-PROD]
+
+Décision du propriétaire (option A) : « Régénérer » reçoit son propre interrupteur, pour pouvoir ouvrir la génération neuve le temps de la preuve (§6.4.3) sans le rouvrir.
+
+- **Variable :** `NEXT_PUBLIC_REGENERATION_OUVERTE`, ouverte seulement par `1`. Elle est absente en production, donc fermée (vérifié par `vercel env ls production`).
+- **Lecteurs :** le bouton du tableau de bord, et la route `POST /api/generateur/direct?id=…`, qui refuse en 409 avant la clé, le corps et tout appel payant. Avant ce lot, la route n'avait **aucun** verrou : la pause du 2026-11-14 ne fermait que le bouton.
+- **Preuves :** scénario S7 et cliquet `lib/apps/__tests__/regeneration.test.ts`. En retirant le verrou serveur, S7 et ③ rougissent.
+- **Défaut trouvé dans mes tests du manque 4 :** S2 et S3 dépendaient de l'horloge. Ils lisaient 0,0451 $ au lieu de 0,0226 $ le lundi à 07:31 UTC, heure de pointe DeepSeek où le tarif double. L'heure des scénarios est maintenant figée (`be091daf`).
+- **Vérification complète :** `npm run verifier`, sortie 0 (seul rouge `eslint`, absorbé). Un passage intermédiaire a rougi sur `test_marge` (S7 à 1,9 s), corrigé en ensemençant l'œuvre de départ ; S7 tourne en 555 ms.
+- **Déploiement :** `main` = `be091daf`. `/api/version` → `{"commit":"be091da"}` à 07:48:25 UTC.
+- **Code servi au navigateur, lu dans les fichiers JavaScript de production :**
+  - tableau de bord : `let F="1"===t.default.env.NEXT_PUBLIC_REGENERATION_OUVERTE`. La variable est absente au build, donc `F` vaut `false` et seul « Bientôt disponible » s'affiche ;
+  - accueil : `let U=(0,$.modeAsyncActif)("0")`, donc le bouton « Application » est fermé.
+- **Journaux Vercel de production, 15 minutes après le déploiement :** 0 erreur, 0 ligne « tentative ».
+
+**Non vérifié :** l'écran connecté lui-même, faute de session dans cette vérification ; le refus 409 en production, faute de jeton.
+
