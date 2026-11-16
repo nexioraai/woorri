@@ -84,3 +84,19 @@ Sources : `scratchpad/vraie-appli/tir1/journal.jsonl`, réponses brutes `tir1/re
 - **Vérification hors ligne avant le tir (gratuite) :** les réponses 1 et 3 du tir 1 rejouées. Avec L1, la réponse 1 n'est plus « ne se monte pas » ; avec L2b, le reproche « TA DÉCLARATION DONNEES.json A ÉTÉ REFUSÉE » part bien au modèle.
 - Lancé à 13:30 UTC, en heure creuse, même plafond (1 USD) et mêmes règles.
 
+**Tours du tir 2 [MESURÉ] :**
+
+| tour | modèle (s) | entrée | sortie | coût | cumul | ce qui a changé | motif renvoyé ensuite |
+|---|---|---|---|---|---|---|---|
+| 1 | 179 | 4 517 | 15 500 | 0,0337 | 0,0337 | — (avec L1, plus de « ne se monte pas ») | 2 boutons sans nom ; échec de chargement affiché comme une liste vide ; **déclaration refusée (dit, L2b)** |
+| 2 | 70 | 10 058 | 7 544 | 0,0216 | 0,0552 | `id` ajoutés à la déclaration | 4 boutons sans nom ; chargement ; déclaration refusée : `montant: number` au lieu de `decimal` |
+| 3 | 61 | 15 945 | 7 060 | 0,0245 | 0,0797 | **déclaration acceptée** (L2b a convergé en 2 corrections) | 4 boutons sans nom ; chargement |
+| 4 | 84 | 21 692 | 8 313 | 0,0308 | 0,1105 | — | identique au précédent |
+| 5 | interrompu | | | | | | |
+
+**Nouvel angle mort de l'instrument, D3 : un reproche juste mais pas actionnable.** Les « boutons sans nom » sont ceux de la barre latérale de la **bibliothèque** (`CoqueGestion`, `bibliotheque-ui.ts:620`, `:646`), qui affiche `s.libelle` (type `SectionGestion`, `:493`). Le modèle lui passe d'autres noms de champ à chaque tour : `titre` (tours 2 et 4), puis `nom` (tour 3). Il devine, et oscille. Le reproche ne nomme ni le composant ni le champ attendu. L'assembleur ne vérifie pas les types, et `jugerContrat` ne voit pas un champ manquant à l'intérieur d'un tableau.
+
+**Aperçus ouvrables :** `scratchpad/vraie-appli/tir2/apercu-tour3.html` et `apercu-tour4.html` (données en mémoire).
+
+**Tir 2 arrêté au tour 5,** sur l'oscillation, en attente d'une décision sur le levier L3.
+
