@@ -199,3 +199,11 @@ Tir 4 arrêté au tour 4 : le reproche « UN CHARGEMENT QUI ÉCHOUE REND LE MÊM
 
 **Aperçu du tour 3 du tir 4 :** sur le Bureau, `carnet-tir4-tour3.html` (même architecture à deux faces : le formulaire est derrière `#gestion`).
 
+## 9. Clôture de l'expérience (2026-11-16)
+
+- **Le tir 4 n'a pas fini :** il a été arrêté au tour 4, avant la demande du propriétaire, sur le reproche identique (D5, §8.1). Il est consigné au §8.
+- **Restauration :** `boucle-directe.ts` et `juge-contrat.ts` remis à l'identique depuis leurs copies d'origine ; `git diff` vide sur `apps/web/src`. Les leviers L1 à L4 restent des modifications d'expérience : rien ne part sur `main`.
+- **Coût total :** 0,40 $ mesurés sur 13 appels (tir 1 : 0,0927 ; tir 2 : 0,1105 ; tir 3 : 0,1035 ; tir 4 : 0,0947), plus 3 tours interrompus dont le coût n'est pas mesuré.
+- **Ce que l'expérience établit :** le générateur est capable. Avec L1, L2b et L3, une œuvre a été acceptée au tour 3 sans reproche restant, en 413 s pour 0,10 $ : la première acceptation non forcée du produit. Ce qui l'empêchait tenait à nos instruments (D1 à D5, et le lecteur de signatures comme cause racine de D3). **Mais le critère du propriétaire n'est pas atteint :** la règle des deux faces cache le formulaire derrière `#gestion` (D4, §5.5).
+- **Suite :** `PLAN_CHEMIN_VISIBLE.md` (décisions 1 et 2).
+
