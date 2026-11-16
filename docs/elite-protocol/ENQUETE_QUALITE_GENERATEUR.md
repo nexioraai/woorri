@@ -1,7 +1,7 @@
 # Enquête — pourquoi le générateur livre des œuvres incomplètes
 
 - **Ouverte :** 2026-11-16, sur instruction du propriétaire. Les manques 1 à 3 sont reportés.
-- **Statut :** temps 1 mesuré (2026-11-16, captures du propriétaire), temps 2 et 3 rédigés. Trois requêtes complémentaires (R10–R12, §4) sont en attente : elles ferment des UNKNOWN sans changer la réponse à H-C.
+- **Statut :** CLOS le 2026-11-16. Les temps 1, 2 et 3 sont rédigés, et R10–R12 (§4) sont mesurées (§1.3). La conclusion est au §5 ; l'ordre recommandé des corrections et les questions ouvertes sont au §6. Aucune correction n'a été faite : la suite est la décision du propriétaire.
 - **Règles :** aucune correction, aucune migration, aucun changement de code, aucune génération payante. « Régénérer » et la génération neuve restent fermés.
 - **Niveaux :** [OBSERVÉ-PROD] vient d'un résultat de requête du propriétaire ; [LU-CODE] vient de la lecture du dépôt (`main` @ `bb3255ed`) ; [UNKNOWN] n'est pas mesuré.
 
@@ -253,9 +253,50 @@ select 'tours', (sections_acquises->'tours')::text
 
 1. **Deux générateurs, pas un.** Le diagnostic « écran(s) en repli (écrits par Deribfy, le modèle refusé trois fois) » n'existe **que** sur la branche `etape-v3` (générateur V4, commit `08780633` du 2026-11-14, **absent de `main`**, `git merge-base --is-ancestor` négatif). Sur `main`, la boucle est bornée à 3 tours (`boucle-directe.ts:251`) : 30 à 42 tours y sont impossibles. Les œuvres du 14 et du 15 novembre (30–42 tours, replis) ont donc très probablement été produites par V4, et d3ece28a et le carnet par `main`. [LU-CODE + DÉDUIT ; confirmation : R10]
 2. **Le nombre 48 est le plafond du juge, pas une mesure de l'œuvre.** Le juge d'exécution s'arrête après `BUDGET_VISITES` clics : **48** sur `etape-v3` (`juge-execution-enfant.mjs:236`, « 24 → 48 le 2026-11-13 »), **24** par montage sur `main` (`:233`, commenté « borne de COÛT, pas de vérité »). Quatre œuvres sur neuf ont exactement 48 contrôles vus : le juge a épuisé son budget. Leur « taux » vaut donc **48 / contrôles trouvés** par construction : 48/248 = 19 %, 48/146 = 33 %. Il mesure la taille de l'application face à un budget fixe. [LU-CODE + OBSERVÉ-PROD]
-3. **L'échantillon est petit et concentré.** 9 œuvres, dont **6 sur le même cahier** (26 028 signes, Conterak). La taille de la demande, le générateur (V4 ou `main`) et le cahier se recouvrent presque exactement : les 2 petites demandes passent par `main`, les 7 grandes par V4. La corrélation de −0,95 ne peut pas séparer ces trois causes. [OBSERVÉ-PROD + DÉDUIT]
+3. **L'échantillon est petit et concentré.** 9 œuvres, dont **6 sur le même cahier** (26 028 signes, Conterak). La taille de la demande, le générateur (V4 ou `main`) et le cahier se recouvrent presque exactement. La corrélation de −0,95 ne peut pas séparer ces trois causes. [OBSERVÉ-PROD + DÉDUIT] *Corrigé par R10 (§1.3) : ce n'est pas « les 7 grandes par V4 », mais 6 grandes par V4 et 1 grande (ad6017df) par `main`.*
 
 ---
+
+### 1.3 Résultats de R10, R11, R12 [OBSERVÉ-PROD, captures du propriétaire, 2026-11-16]
+
+**R10 — le code qui a produit chaque œuvre livrée :**
+
+| œuvre | quand | environnement | branche | commit | tours | écrans en repli |
+|---|---|---|---|---|---|---|
+| 07dfe7c8 | 11-14 12:03 | preview | etape-v3 | fd49fe1 | 30 | — |
+| fcc4f126 | 11-14 14:12 | preview | etape-v3 | 2b0730b | 42 | 1 |
+| d410c06d | 11-14 17:46 | preview | etape-v3 | 2b0730b | 39 | 1 |
+| **ad6017df** | 11-14 18:06 | **production** | **main** | db1314b | 3 | — |
+| 414773cd | 11-14 18:14 | preview | etape-v3 | 2b0730b | 39 | — |
+| edd1a7f9 | 11-14 18:21 | preview | etape-v3 | 52a6d95 | 39 | 1 |
+| 66bdab46 | 11-15 00:05 | preview | etape-v3 | e9d1bf7 | 37 | — |
+| **ef085fa7** | 11-16 08:20 | **production** | **main** | be091da | 3 | — |
+
+La ligne de d3ece28a n'est pas visible sur la capture (le tableau défile à partir de 07dfe7c8) : sa provenance n'est **pas relevée**.
+
+**Ce que R10 établit :**
+- les **six** œuvres à 30–42 tours viennent toutes d'`etape-v3`, **en preview**. Le §1.2 point 1 est confirmé ;
+- **ces taux (19, 33, 34, 36 %) ne décrivent pas ce que reçoivent les utilisateurs.** Ce sont des essais d'un générateur **en pause**, jamais fusionné dans `main`, dans un environnement qui n'est pas la production. *Toute lecture future des diagnostics « PARTIELLEMENT éprouvée » de ces six œuvres doit partir de là* ;
+- **une grande demande est bien passée en production :** ad6017df (Conterak, 26 028 signes, `main`, 3 tours), à 23 % : 25 contrôles vus sur 111, 6 écrans atteints sur 9 prévus. Sur `main`, le juge a 24 clics par montage (§1.2), donc 25 visites ne disent pas à elles seules si le plafond a mordu : **UNKNOWN** ;
+- **les œuvres livrées en production sont donc ad6017df, ef085fa7, et peut-être d3ece28a.** C'est sur elles, pas sur les six autres, que se juge ce que les utilisateurs reçoivent.
+
+**R11 — les trois tours du carnet :**
+
+| tour | accepté | fichiers | motif |
+|---|---|---|---|
+| 1 | false | 1 | L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue… |
+| 2 | false | 1 | L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue… |
+| 3 | true | 1 | — |
+
+« — » au tour 3 ne veut pas dire que le défaut a disparu. Un tour **accepté** n'enregistre jamais de motif (`boucle-directe.ts:690`), et l'œuvre livrée porte encore `monte = false` et « L'application ne se monte pas » dans ses diagnostics (R3, R9).
+
+**R12 — le code du carnet (`index.tsx`, 24 973 signes) :** 5 `<input`, 2 `<form`, 2 `onSubmit`, 20 occurrences de « ajout », 1 `.insert(`, 36 occurrences de « valeur ».
+
+**Ce que R12 établit :** le formulaire d'ajout **a été écrit**, avec des champs, deux formulaires, deux gestionnaires de soumission et une insertion en base. H-A est définitivement écartée pour ce cas : le modèle a compris la demande **et** l'a réalisée.
+
+**Ce que R12 n'établit pas :**
+- ce sont des comptes de chaînes, pas une exécution. Ils montrent que le formulaire est dans le code, pas qu'il s'affiche ;
+- l'erreur « reading 'valeur' » est imputée par le juge à l'**espace de gestion** (R9 : « espace de gestion — console »), c'est-à-dire au second montage (`boucle-directe.ts:513-516`). Les 36 occurrences de « valeur » ne localisent pas la ligne fautive. Que ce plantage soit la cause pour laquelle le formulaire n'est pas atteint est **plausible, non prouvé** : le formulaire peut aussi vivre dans la partie gestion, ou être atteignable mais non compté comme écran distinct (§2.4).
 
 ## 2. Temps 2 — ce que dit le code
 
@@ -297,7 +338,7 @@ Le carnet suit exactement ce chemin : tour 1 refusé (« ne se monte pas »), pu
 ### 2.3 Taille de la demande et dégradation : les causes mécaniques [LU-CODE + DÉDUIT]
 
 1. **Le dénominateur grandit, le numérateur est plafonné.** Le juge ouvre au plus 48 contrôles (V4) ou 24 par montage (`main`), mais compte **tous** ceux qu'il aperçoit (`juge-execution-enfant.mjs:344-346`). Plus l'application est grande, plus le taux baisse, **même si elle est parfaite**. Cette cause suffit à produire une corrélation négative.
-2. **Le générateur change avec la taille** dans cet échantillon (§1.2, à confirmer par R10). Les deux générateurs n'ont ni le même découpage, ni le même budget de juge, ni la même règle de livraison.
+2. **Le générateur change avec la taille** dans cet échantillon : 6 des 7 grandes demandes sont passées par V4 (R10, §1.3). Les deux générateurs n'ont ni le même découpage, ni le même budget de juge, ni la même règle de livraison.
 3. **Sur `main` seulement, un seul appel par tour pour toute l'application,** plafonné à 65 536 jetons de sortie (`fournisseur.ts:185`), avec un historique qui s'allonge à chaque tour. Une grande demande y pousse vers la troncature, qui est détectée et refusée (`boucle-directe.ts:434-437`). Dans cet échantillon, aucune grande demande n'est passée par `main` : **non mesuré**.
 4. **Sur V4, la taille se découpe par écran.** Un appel ne voit pas toute l'application ; la longueur du cahier pèse sur le plan et la fiche de chaque écran, pas sur un appel unique. Effet sur la qualité : **UNKNOWN**.
 
@@ -398,4 +439,38 @@ select length(x) as signes_index,
        (length(x) - length(replace(x, 'valeur', ''))) / 6 as mot_valeur
 from f;
 ```
+
+---
+
+## 5. Conclusion
+
+**Le générateur n'est pas aveugle. Il voit le défaut, le nomme, et tente deux fois de le réparer. Mais la règle du dernier tour transforme un échec détecté en livraison.**
+
+Le carnet du 16 novembre en est la démonstration complète, et la seule en production mesurée de bout en bout :
+1. le modèle a compris la demande (R9 : les trois écrans prévus) et l'a écrite, formulaire compris (R12) ;
+2. le juge a vu que l'application ne se montait pas, et l'a dit au modèle deux fois, dans les mêmes termes (R11, tours 1 et 2) ;
+3. deux regénérations complètes n'ont pas réparé le défaut (H-B, établie pour ce cas) ;
+4. au tour 3, le défaut était toujours là, et l'œuvre a été acceptée parce que c'était le dernier tour (`boucle-directe.ts:684-705`) ;
+5. elle est partie chez l'utilisateur avec le statut `livree` (`route.ts:739`), ses diagnostics stockés en base et montrés à personne.
+
+**Un défaut qui résiste à deux corrections part automatiquement chez l'utilisateur avec l'étiquette « livrée ».** C'est H-C, et c'est H-C qui rend H-B visible pour l'utilisateur. Sans elle, l'échec d'exécution resterait un refus ; avec elle, il devient un produit.
+
+**Ce que cette enquête ne permet pas d'affirmer :**
+- que la qualité se dégrade avec la taille de la demande. Les taux sur grandes demandes viennent pour 6 sur 7 d'un générateur en pause, en preview, et sont plafonnés par le budget du juge ;
+- quelle part des défauts relève de l'exécution plutôt que de la mesure. L'instrument ne sépare pas un écran absent d'un écran non ouvert.
+
+## 6. Recommandations — consignées, NON décidées, NON faites
+
+### 6.1 Ordre recommandé des corrections
+
+1. **D'abord réparer l'instrument de mesure.** Le taux d'exploration ne distingue pas un écran absent d'un écran que le juge n'a pas pu ouvrir (plafond de clics, parcours sans session, §1.2 et §2.4).
+2. **Ensuite seulement, poser un seuil de refus.** Un seuil posé sur l'instrument actuel refuserait des œuvres au hasard : surtout les grandes, et des applications peut-être complètes.
+
+Inverser cet ordre reviendrait à remplacer une livraison aveugle par un refus aveugle.
+
+### 6.2 Questions ouvertes, sans réponse ici
+
+1. **Quand le dernier tour échoue encore,** que doit-il se passer : refuser, livrer en avertissant l'utilisateur, ou accorder des tours supplémentaires ?
+2. **Trois tours suffisent-ils, et cela se mesure-t-il ?** Aujourd'hui, un tour ne stocke pas de mesure comparable d'un tour à l'autre (§2.2) : on ne sait pas si le tour 2 a rapproché le résultat du but.
+3. **L'utilisateur doit-il voir les diagnostics** qui existent déjà en base et que personne ne lui montre ?
 
