@@ -824,15 +824,24 @@ export async function boucleEcriture(o: {
           // qui ne démarre pas, ou qui mourrait sur un jeton inventé, n'est
           // pas une application : mieux vaut un échec annoncé qu'une coquille
           // livrée.
-          const bloquant =
+          // D16 (décision du propriétaire, 2026-11-16) : la date de Greenwich
+          // prise pour la date locale est BLOQUANTE — mesuré, au Tchad le
+          // « mois précédent » est faux en permanence. Voir juge-dates.
+          const datesBloquantes = dates.filter((d) => d.bloquant)
+          const demarrePas =
             jetons.length > 0 ||
             (execution !== null && execution.indisponible === undefined && !execution.monteDansSimulateur)
+          const bloquant = demarrePas || datesBloquantes.length > 0
           if (bloquant) {
             tours.push({ rang, fichiers: lus.length, ok: false, motif: reproches.join('\n\n'), ms: Date.now() - debut })
             return {
               ok: false,
               raison: 'bloquant',
-              motif: `Après ${String(tours.length)} essai(s), l’application ne démarrait toujours pas : rien n’a été livré.`,
+              motif: demarrePas
+                ? `Après ${String(tours.length)} essai(s), l’application ne démarrait toujours pas : rien n’a été livré.`
+                : `Après ${String(tours.length)} essai(s), l’application calculait encore ses dates à l’heure de Greenwich ` +
+                  `(${datesBloquantes.map((d) => d.fichier).filter((f, i, t) => t.indexOf(f) === i).join(', ')}) : ` +
+                  'ses dates et ses mois seraient faux d’un jour ou d’un mois selon le fuseau. Rien n’a été livré.',
               tours,
               dernierTexte,
             }
