@@ -38,7 +38,6 @@ import { jugerDevise, marqueRecommandee } from './juge-devise'
 import { CONSIGNE_BIBLIOTHEQUE, fichiersSysteme, VARIABLES_CSS } from './bibliotheque-ui'
 import { jugerContrat, reprocheContrat } from './juge-contrat'
 import {
-  ADRESSE_GESTION,
   blocBase,
   REGLE_6_COMMUN,
   type EntiteDeclaree,
@@ -503,33 +502,17 @@ export async function boucleEcriture(o: {
         // sait déjà qu'elle mourra, et un tour coûte de l'argent.
         const accueil: VerdictExecution | null =
           jetons.length === 0 ? await (o.juger ?? jugerExecution)(v.code) : null
-        // ── ET L'ESPACE DE GESTION, MONTÉ LUI AUSSI (2026-11-12).
+        // ── LE JUGE JUGE CE QUE L'UTILISATEUR VOIT (décision 1 du
+        // propriétaire, 2026-11-16 — docs/elite-protocol/PLAN_CHEMIN_VISIBLE.md).
         //
-        // MESURÉ sur une vraie génération : l'accueil public démarrait, la
-        // gestion PLANTAIT à l'ouverture (« reading 'length' of undefined »),
-        // et l'œuvre a été ACCEPTÉE — le juge partait de l'accueil, et aucun
-        // lien public ne mène à #gestion. Une œuvre à tables a une gestion :
-        // on la monte, on y clique tout, et ses erreurs portent son nom.
-        const gestionMontee: VerdictExecution | null =
-          accueil !== null && entitesConnues.length > 0
-            ? await (o.juger ?? jugerExecution)(v.code, { adresse: ADRESSE_GESTION })
-            : null
-        const execution: VerdictExecution | null =
-          accueil === null || gestionMontee === null || gestionMontee.indisponible !== undefined
-            ? accueil
-            : {
-                ...accueil,
-                monteDansSimulateur: accueil.monteDansSimulateur && gestionMontee.monteDansSimulateur,
-                erreurs: [
-                  ...accueil.erreurs,
-                  ...gestionMontee.erreurs.map((e) => ({ ...e, quoi: `espace de gestion — ${e.quoi}` })),
-                ],
-                controlesMuets: [...(accueil.controlesMuets ?? []), ...(gestionMontee.controlesMuets ?? [])],
-                ecrans: [...(accueil.ecrans ?? []), ...(gestionMontee.ecrans ?? [])],
-                ecransVisites: (accueil.ecransVisites ?? 0) + (gestionMontee.ecransVisites ?? 0),
-                ecransDecouverts: (accueil.ecransDecouverts ?? 0) + (gestionMontee.ecransDecouverts ?? 0),
-                ms: accueil.ms + gestionMontee.ms,
-              }
+        // Il montait aussi l'œuvre DIRECTEMENT sur #gestion (2026-11-12) : il
+        // y voyait des écrans qu'aucun chemin visible n'atteignait, et la
+        // couverture les comptait. Mesuré le 2026-11-16 (carnet, tir 3) :
+        // « 3 écrans », « aucune exigence absente », et l'utilisateur ne
+        // pouvait pas ajouter une dépense. Il ne reste qu'un montage, depuis
+        // l'accueil, et le juge y CLIQUE : la gestion se juge si — et
+        // seulement si — un lien visible y mène (décision 2, consigne).
+        const execution: VerdictExecution | null = accueil
         // La couverture se juge APRÈS l'exécution : elle a besoin des ÉCRANS
         // RÉELLEMENT OUVERTS. Jugée avant, elle ne voyait que des mots — et
         // « réservation couverte » avec 2 occurrences pour 59 au cahier
