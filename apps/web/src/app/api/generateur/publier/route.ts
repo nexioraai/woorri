@@ -23,6 +23,7 @@
  */
 import { NextResponse } from 'next/server'
 import { lecturePubliqueDe, nomTable, type EntiteDeclaree } from '@/lib/apps/entites-declarees'
+import { contenusPublics, phraseContenus, PHRASE_LISTE_ENTIERE } from '@/lib/apps/contenu-public'
 import { configBaseOeuvres } from '@/lib/apps/base-oeuvres'
 import { poserOeuvre } from '@/lib/apps/poser-oeuvre'
 import { assurerCompteOeuvre } from '@/lib/apps/compte-oeuvre'
@@ -268,16 +269,23 @@ export async function POST(req: Request) {
   }
   if (publiques.length > 0 && !accord) {
     const liste = publiques.map((t) => `« ${t} »`).join(', ')
+    // ── LE CONTENU, PAS SEULEMENT LE NOM (décision 2, 2026-11-16) : un
+    // commerçant ne tire rien de « vehicule, reparation ». On dit ce qui
+    // sera lu, colonne par colonne, et que la liste ENTIÈRE se télécharge.
+    const contenus = contenusPublics(docPublie?.entites ?? [])
     return NextResponse.json(
       {
         error:
           `${publiques.length > 1 ? 'Ces listes seront lisibles' : 'Cette liste sera lisible'} ` +
           `PAR TOUT LE MONDE, sans compte : ${liste}. ` +
+          `Tout le monde pourra lire : ${phraseContenus(contenus)}. ` +
+          `${PHRASE_LISTE_ENTIERE} ` +
           'Personne ne pourra y écrire ; tout le monde pourra y lire.',
         // LE DRAPEAU ET LA LISTE VOYAGENT : l'écran doit pouvoir nommer
         // chaque table, pas seulement répéter une phrase.
         lecturePublique: true,
         tables: publiques,
+        contenus,
         quoiFaire:
           'Relisez cette liste. Si une de ces listes contient quelque chose ' +
           'qui ne doit pas être lu par n’importe qui, demandez une ' +

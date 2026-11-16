@@ -29,10 +29,14 @@
  * décider.
  */
 
+import { lireContenus, PHRASE_LISTE_ENTIERE } from '@/lib/apps/contenu-public'
+
 /** Ce que la route rend quand elle refuse pour cause de lecture publique. */
 export type RefusLecturePublique = {
   readonly lecturePublique?: unknown
   readonly tables?: unknown
+  /** Décision 2 (2026-11-16) : ce que chaque table laissera lire. */
+  readonly contenus?: unknown
   readonly error?: unknown
   readonly quoiFaire?: unknown
 }
@@ -51,13 +55,24 @@ export function estRefusLecturePublique(d: RefusLecturePublique): boolean {
 export function accordLecturePublique(d: RefusLecturePublique): boolean {
   if (!estRefusLecturePublique(d)) return false
   const tables = (d.tables as unknown[]).map((t) => String(t))
-  const liste = tables.map((t) => `  • ${t}`).join('\n')
+  // Le CONTENU de chaque table quand la route l'envoie ; sinon son nom seul
+  // (une route plus ancienne en cache ne doit pas faire taire la liste).
+  const contenus = new Map(lireContenus(d.contenus).map((c) => [c.table, c.champs]))
+  const liste = tables
+    .map((t) => {
+      const champs = contenus.get(t)
+      return champs !== undefined && champs.length > 0
+        ? `  • ${t} — tout le monde pourra lire : ${champs.join(', ')}`
+        : `  • ${t}`
+    })
+    .join('\n')
   const titre =
     tables.length > 1
       ? 'Ces listes seront lisibles PAR TOUT LE MONDE, sans compte :'
       : 'Cette liste sera lisible PAR TOUT LE MONDE, sans compte :';
   return window.confirm(
     `${titre}\n\n${liste}\n\n` +
+      `${PHRASE_LISTE_ENTIERE}\n\n` +
       'Personne ne pourra y écrire ; tout le monde pourra y lire.\n\n' +
       'Si l’une de ces listes contient quelque chose qui ne doit pas être lu ' +
       'par n’importe qui, annulez et demandez une modification AVANT de ' +
