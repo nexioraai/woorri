@@ -938,8 +938,20 @@ function valeur(e: unknown, champ: string): unknown {
   return e !== null && typeof e === 'object' ? (e as Record<string, unknown>)[champ] : undefined
 }
 
+/** D7 (2026-11-16) : un NOMBRE de périodes, jamais un nom de champ. Mesuré :
+ *  parMois(mouvements, "date", "quantite") rendait une série VIDE sans un mot
+ *  (\"quantite\" - 1 = NaN), et le graphique disait « Pas encore de données »
+ *  à côté d'un compteur à 3. Une erreur nommée vaut mieux qu'un vide qui ment. */
+function periodes(fonction: string, n: unknown): number {
+  if (typeof n !== 'number' || !Number.isInteger(n) || n < 1) {
+    throw new Error(fonction + ' : le dernier argument est un NOMBRE de périodes, reçu « ' + String(n) + ' ». ' +
+      'Pour une SOMME par mois : sommeParMois(elements, champDate, champMontant).')
+  }
+  return n
+}
 /** Combien d'éléments par mois, sur les nombre derniers mois (le mois courant inclus). */
 export function parMois(elements: readonly unknown[], champ: string, nombre = 6): Point[] {
+  periodes('parMois(elements, champDate, nombre)', nombre)
   const maintenant = new Date()
   const cases: Point[] = []
   const index = new Map<string, number>()
@@ -959,6 +971,7 @@ export function parMois(elements: readonly unknown[], champ: string, nombre = 6)
 
 /** Combien d'éléments par jour, sur les nombre derniers jours. */
 export function parJour(elements: readonly unknown[], champ: string, nombre = 7): Point[] {
+  periodes('parJour(elements, champDate, nombre)', nombre)
   const aujourdHui = new Date(); aujourdHui.setHours(0, 0, 0, 0)
   const cases: Point[] = []
   const index = new Map<number, number>()
@@ -979,6 +992,7 @@ export function parJour(elements: readonly unknown[], champ: string, nombre = 7)
 
 /** La somme d'un champ chiffré, par mois — pour une courbe de montants. */
 export function sommeParMois(elements: readonly unknown[], champDate: string, champMontant: string, nombre = 6): Point[] {
+  periodes('sommeParMois(elements, champDate, champMontant, nombre)', nombre)
   const maintenant = new Date()
   const cases: Point[] = []
   const index = new Map<string, number>()
@@ -1111,6 +1125,35 @@ function vocabulaireEnumere(): string {
  * legende=, serie="30 derniers jours" — et l'espace de gestion a planté.
  * La liste vient du même lecteur que le juge du contrat : ce qu'on enseigne
  * et ce qu'on exige ne peuvent pas diverger. */
+/** D7 (2026-11-16) : les fonctions de données AVEC leurs arguments, LUS dans leur
+ *  source — la consigne ne donnait que les noms, et le modèle a appelé
+ *  parMois(mouvements, "date", "quantite") pour une somme. Même cause que L4. */
+function fonctionsDonneesEnumerees(): string {
+  const src = fichiersSysteme(undefined).get('systeme/donnees.ts') ?? ''
+  const lignes: string[] = []
+  for (const m of src.matchAll(/export function (\w+)(?:<[^>]*>)?\(([^)]*)\)/gu)) {
+    if (m[1] === 'lireDate') continue
+    // Les virgules IMBRIQUÉES (Record<string, string>) ne séparent pas.
+    const parts: string[] = []
+    let prof = 0
+    let cur = ''
+    for (const c of m[2]!) {
+      if (c === '<' || c === '(' || c === '[' || c === '{') prof += 1
+      if (c === '>' || c === ')' || c === ']' || c === '}') prof -= 1
+      if (c === ',' && prof === 0) { parts.push(cur); cur = '' } else cur += c
+    }
+    parts.push(cur)
+    const args = parts.map((a) => {
+      const nom = /^\s*(\w+)/u.exec(a)?.[1] ?? ''
+      const defaut = /=\s*([^,]+)$/u.exec(a)?.[1]?.trim()
+      return defaut !== undefined && /^[0-9]+$/u.test(defaut) ? `${nom} = ${defaut}` : nom
+    }).filter((x) => x !== '')
+    lignes.push(`${m[1]!}(${args.join(', ')})`)
+  }
+  const ligne = '     ' + lignes.join(' · ')
+  return ligne
+}
+
 function reglagesEnumeres(): string {
   const lignes: string[] = []
   for (const [piece, s] of signaturesDe(fichiersSysteme(undefined))) {
@@ -1137,8 +1180,14 @@ export const CONSIGNE_BIBLIOTHEQUE = `L'INTERFACE VIENT DE LA BIBLIOTHÈQUE FOUR
      LISTE, jamais un texte ; « [{a, b}] » = une liste d'OBJETS à ces clés,
      jamais des paires [a, b] :
 ${reglagesEnumeres()}
-   · ./systeme/donnees : parMois, parJour, sommeParMois, compterPar, somme,
-     recents, tendance, plusRecents, ilYA.
+   · ./systeme/donnees — SIGNATURES EXACTES, l'ordre des arguments compte :
+${fonctionsDonneesEnumerees()}
+     Un COMPTE par mois : parMois ; une SOMME par mois : sommeParMois.
+   · CE QUI S'AFFICHE EST LISIBLE. Une valeur brute de la base (« entree »)
+     ne va jamais à l'écran : compterPar(l, 'type', { entree: 'Entrée' }),
+     le même mot partout. Le genre d'un élément de ListeRecente S'AFFICHE :
+     un mot lisible, jamais un ton (« succes », « alerte »). Une alerte ne
+     se montre que si le métier l'établit (stock à zéro), jamais par type.
 
    UN ESPACE DE GESTION = <CoqueGestion> (jamais ta propre barre ; chaque
    section porte nombre= de sa table) qui S'OUVRE SUR « Accueil », un

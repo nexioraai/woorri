@@ -271,7 +271,10 @@ describe('EP-319 · les données déclarées', () => {
     // (`sections[{cle, id, libelle, icone, nombre}]`…) — 1 liste décrite sur
     // 16 devenait 13. Croissance mesurée et validée par le propriétaire
     // (+2 %, PLAN_CHEMIN_VISIBLE.md §2). Mesuré : 9 234.
-    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(9300)
+    // ── 9 300 → 10 100 le 2026-11-16 : D7/D8/D9 — les SIGNATURES des fonctions
+    // de données et la règle des libellés lisibles (parMois appelé avec un nom
+    // de champ, « Entree », « succes »/« alerte » à l'écran). Mesuré : 9 983.
+    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(10100)
   })
 
   it('⑥ter LA DÉROGATION DE PORTABILITÉ EST BORNÉE À `blocBase`', () => {
@@ -461,7 +464,8 @@ describe('EP-319 · les données déclarées', () => {
     // fois dans les deux variantes. Mesuré : 13 558.
     // ── 13 700 → 14 000 le 2026-11-16 : L4 (voir ⑥), présent dans les deux
     // variantes. Mesuré : 13 930.
-    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(14000)
+    // ── 14 000 → 14 800 le 2026-11-16 : D7/D8/D9 (voir ⑥). Mesuré : 14 679.
+    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(14800)
 
     // ── ET LE BANDEAU N'EST PLUS DEMANDÉ À L'ŒUVRE (2026-11-05).
     //
@@ -533,7 +537,8 @@ describe('EP-319 · les données déclarées', () => {
       // Mesurée PAR CE CLIQUET : 19 630.
       // ── 19 800 → 20 100 le 2026-11-16 : L4 (⑥, la forme des listes par type
       // nommé). Mesurée PAR CE CLIQUET : 20 002.
-    ).toBeLessThan(20100)
+      // ── 20 100 → 20 900 le 2026-11-16 : D7/D8/D9 (⑥). Mesurée PAR CE CLIQUET : 20 751.
+    ).toBeLessThan(20900)
 
     // ── ③ ET LA PORTE DES DONNÉES RESTE UNE PORTE ÉTROITE.
     //
