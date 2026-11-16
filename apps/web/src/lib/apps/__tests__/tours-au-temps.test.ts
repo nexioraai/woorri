@@ -7,10 +7,14 @@
  * la fenêtre de contexte, ou un plafond de sécurité.
  */
 import { describe, expect, it } from 'vitest'
-import { boucleEcriture, peutRejouer, TOURS_MAX, TOUR_ESTIME_MIN_MS } from '../boucle-directe'
+import { boucleEcriture, famillesDe, peutRejouer, TOURS_MAX, TOUR_ESTIME_MIN_MS } from '../boucle-directe'
 import { jugeMuet } from './juge-muet'
 
 const CASSE = '=== index.tsx ===\nexport const total = { a: 1,'
+// Deux erreurs d'assemblage DIFFÉRENTES en alternance : la garde de stagnation
+// ne mord pas, ce sont les autres gardes qu'on éprouve.
+const AUTRE = "=== index.tsx ===\nimport z from './absent'\nexport const y = z"
+const alterne = (n: number) => (n % 2 === 1 ? CASSE : AUTRE)
 const base = { durees: [] as number[], coutCumule: 0, dernierCout: 0, entrees: [] as number[] }
 
 describe('La boucle au temps', () => {
@@ -41,7 +45,7 @@ describe('La boucle au temps', () => {
     let appels = 0
     const r = await boucleEcriture({
       demande: 'x',
-      appeler: (async () => { appels += 1; t += 100_000; return { texte: CASSE, tronquee: false } }) as never,
+      appeler: (async () => { appels += 1; t += 100_000; return { texte: alterne(appels), tronquee: false } }) as never,
       juger: jugeMuet,
       maintenant: () => t,
       echeance: 350_000,
@@ -56,7 +60,7 @@ describe('La boucle au temps', () => {
     let appels = 0
     const r = await boucleEcriture({
       demande: 'x',
-      appeler: (async () => { appels += 1; return { texte: CASSE, tronquee: false, coutUsd: 0.2 } }) as never,
+      appeler: (async () => { appels += 1; return { texte: alterne(appels), tronquee: false, coutUsd: 0.2 } }) as never,
       juger: jugeMuet,
       plafondUsd: 0.5,
     })
@@ -95,6 +99,26 @@ describe('La boucle au temps', () => {
     expect(r.ok, r.ok ? '' : r.motif).toBe(true)
     if (!r.ok) return
     expect(r.vivacite.length, 'le contrôle mort n’est plus dit').toBeGreaterThan(0)
+  })
+
+  it('⑨ STAGNATION · deux tours sur les mêmes familles : on s’arrête, et on livre si rien n’est bloquant', async () => {
+    let appels = 0
+    const r = await boucleEcriture({
+      demande: 'x',
+      appeler: (async () => { appels += 1; return { texte: '=== index.tsx ===\nexport const B = () => <button type="button">Rien</button>', tronquee: false } }) as never,
+      juger: jugeMuet,
+    })
+    expect(appels, 'la boucle a tourné à vide').toBe(2)
+    expect(r.ok).toBe(true)
+  })
+
+  it('⑩ deux erreurs d’assemblage DIFFÉRENTES sont un progrès ; la même deux fois, une stagnation', () => {
+    const a = 'La construction a échoué :\n[UNRESOLVED_IMPORT] Could not resolve ./App'
+    const b = 'La construction a échoué :\n[MISSING_EXPORT] formatterMontant'
+    expect(famillesDe(a)).not.toBe(famillesDe(b))
+    expect(famillesDe(a)).toBe(famillesDe('La construction a échoué :\n[UNRESOLVED_IMPORT] Could not resolve ./Autre'))
+    expect(famillesDe('DES CONTRÔLES MORTS — x\n- a\n\nDES JETONS QUI N’EXISTENT PAS — y'))
+      .toBe(famillesDe('DES JETONS QUI N’EXISTENT PAS — z\n\nDES CONTRÔLES MORTS — w'))
   })
 })
 

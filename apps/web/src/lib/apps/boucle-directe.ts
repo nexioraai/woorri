@@ -269,6 +269,30 @@ export const TOURS_MAX = 10
 /** Le tour le plus court qu'on estime — 9 tours suivants sur 10 tiennent sous 158 s (T1, 2026-11-16). */
 export const TOUR_ESTIME_MIN_MS = 160_000
 
+/**
+ * LES FAMILLES D'UN MOTIF — la première ligne de chaque reproche.
+ *
+ * Deux tours refusés de suite sur les MÊMES familles : la boucle n'avance
+ * plus (PLAN_TOURS_AU_TEMPS.md §3.4 ; T5 : 13 paires sur 64). Un échec
+ * d'assemblage garde son code d'erreur (« [MISSING_EXPORT] ») : deux erreurs
+ * d'assemblage DIFFÉRENTES sont un progrès, pas une stagnation.
+ */
+export function famillesDe(motif: string): string {
+  return motif
+    .split(/\n\s*\n/u)
+    .map((bloc) => {
+      const lignes = bloc.trim().split('\n')
+      const titre = (lignes[0] ?? '').replace(/\s*[—:].*$/u, '').trim().toUpperCase()
+      const code = /\[([A-Z_]{3,})\]/u.exec(bloc)?.[1]
+      if (code !== undefined) return `${titre} [${code}]`
+      // Un échec d'assemblage SANS code se distingue par son message.
+      return /^LA CONSTRUCTION A ÉCHOUÉ/u.test(titre) ? `${titre} [${(lignes[1] ?? '').trim().slice(0, 60)}]` : titre
+    })
+    .filter((t) => t !== '')
+    .sort()
+    .join(' | ')
+}
+
 /** Ce que chaque raison d'arrêt veut dire, en clair, pour le motif. */
 export const MOTIF_ARRET: Readonly<Record<string, string>> = {
   temps: 'le temps de génération est épuisé',
@@ -446,6 +470,8 @@ export async function boucleEcriture(o: {
   let dernierCout = 0
   /** La raison pour laquelle la boucle s'est arrêtée avant `toursMax`, s'il y en a une. */
   let arret: string | null = null
+  /** Les familles du dernier tour refusé — pour voir une boucle qui n'avance plus. */
+  let famillesPrecedentes: string | null = null
   const tours: Tour[] = []
   let dernierTexte = ''
   // ── CE QUE LA BOUCLE SAIT DES DONNÉES, ET ÇA GRANDIT.
@@ -514,6 +540,8 @@ export async function boucleEcriture(o: {
     // Le 2026-10-19 j'ai relayé ce symptôme au modèle comme un diagnostic. Il
     // a « corrigé » du code qui n'était pas faux, et s'est fait couper encore.
     let motif: string | null = null
+    /** Le motif vient-il des juges ? (sinon : troncature, assemblage, paquets…) */
+    let motifDesJuges = false
     if (tronquee) {
       motif =
         'Ta réponse a été coupée : tu as atteint le plafond de jetons avant ' +
@@ -773,8 +801,13 @@ export async function boucleEcriture(o: {
                 durees: [...durees, horloge() - debut], coutCumule, dernierCout,
                 plafondUsd: o.plafondUsd, entrees, fenetreContexte: o.fenetreContexte, sortieMax: o.sortieMax,
               })
+        // ── DEUX TOURS DE SUITE SUR LES MÊMES FAMILLES : on s'arrête.
+        if (arret === null && reproches.length > 0 && famillesDe(reproches.join('\n\n')) === famillesPrecedentes) {
+          arret = 'stagnation'
+        }
         if (reproches.length > 0 && arret === null) {
           motif = reproches.join('\n\n')
+          motifDesJuges = true
         } else {
           // ── UN DÉFAUT BLOQUANT N'EST JAMAIS ACCEPTÉ (2026-11-16,
           // PLAN_TOURS_AU_TEMPS.md §3.2).
@@ -831,6 +864,14 @@ export async function boucleEcriture(o: {
     }
     tours.push({ rang, fichiers: lus.length, ok: false, motif, tronquee, ms: Date.now() - debut, source })
     durees.push(Date.now() - debut)
+    // Un refus HORS juges (assemblage, troncature) se compare ici ; un refus
+    // des juges a déjà été comparé avant de décider.
+    const familles = famillesDe(motif ?? '')
+    if (!motifDesJuges && familles === famillesPrecedentes && rang < toursMax) {
+      arret = 'stagnation'
+      break
+    }
+    famillesPrecedentes = familles
     if (rang < toursMax) {
       const raison = peutRejouer({
         maintenant: horloge(), echeance: o.echeance, durees, coutCumule, dernierCout,

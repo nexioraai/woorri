@@ -142,17 +142,28 @@ describe('EP-276 · la boucle', () => {
     expect(second[second.length - 1]?.content ?? '').toContain('Aucun fichier reçu')
   })
 
-  it('⑤ LA BORNE MORD — trois tours, puis on s’arrête et on le DIT', async () => {
+  it('⑤ LA BORNE MORD — la même erreur deux fois arrête la boucle, et le plafond tient toujours', async () => {
     // ── UNE BOUCLE SANS BORNE A DÉJÀ COÛTÉ ICI.
     //
     // C'est écrit dans le moteur actuel : « 6,87 $ brûlés, seul le garde-fou
     // du harnais a arrêté ». La borne est un cliquet, pas une espérance.
-    const { appeler, vus } = modele('=== a.tsx ===\nconst x = {{{ ;')
-    const r = await boucleEcriture({ demande: 'x', appeler })
+    //
+    // Depuis le 2026-11-16 (PLAN_TOURS_AU_TEMPS.md) : la même erreur deux
+    // tours de suite est une boucle qui n'avance plus — elle s'arrête au
+    // tour 2 et le dit. Des erreurs DIFFÉRENTES continuent, jusqu'au plafond.
+    const meme = modele('=== a.tsx ===\nconst x = {{{ ;')
+    const r = await boucleEcriture({ demande: 'x', appeler: meme.appeler })
     expect(r.ok, 'du code invalide a été accepté').toBe(false)
-    expect(r.tours.length, 'la borne ne mord pas').toBe(TOURS_MAX)
-    expect(vus.length, 'plus d’appels que de tours autorisés').toBe(TOURS_MAX)
-    if (!r.ok) expect(r.motif).toContain('Non convergé')
+    expect(meme.vus.length, 'la boucle a tourné à vide').toBe(2)
+    if (!r.ok) expect(r.motif).toMatch(/Non convergé en 2 tours \(arrêt : deux essais de suite butent sur les mêmes défauts\)/u)
+
+    const alternees = Array.from({ length: TOURS_MAX + 2 }, (_, i) =>
+      i % 2 === 0 ? '=== index.tsx ===\nconst x = {{{ ;' : "=== index.tsx ===\nimport z from './absent'\nexport const y = z",
+    )
+    const diff = modele(...alternees)
+    const r2 = await boucleEcriture({ demande: 'x', appeler: diff.appeler })
+    expect(r2.ok).toBe(false)
+    expect(diff.vus.length, 'plus d’appels que de tours autorisés').toBe(TOURS_MAX)
   })
 
   it('⑥ LE JOURNAL DES TOURS DIT CE QUI S’EST PASSÉ, tour par tour', async () => {

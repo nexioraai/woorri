@@ -217,7 +217,7 @@ describe('Manque 4 · une tentative = une ligne, jamais réécrite', () => {
     expect(Number(echec.tirages)).toBeGreaterThanOrEqual(2)
     // Le coût de CHAQUE tour joué, heure creuse : 1 200 × 0,66 + 3 400 × 1,98 par million.
     expect(Number(echec.cout_usd)).toBe(Number((Number(echec.tirages) * 0.007524).toFixed(4)))
-    expect(echec.diagnostics).toEqual([`Non convergé en ${String(echec.tirages)} tours.`])
+    expect(String((echec.diagnostics as string[])[0])).toMatch(new RegExp(`^Non convergé en ${String(echec.tirages)} tours`, 'u'))
   })
 
   it('S3 · LE CRITÈRE : un échec PUIS une réussite — l’échec garde ses 3 tours et son coût', async () => {
