@@ -106,6 +106,19 @@ Sources : `scratchpad/vraie-appli/tir1/journal.jsonl`, réponses brutes `tir1/re
 - **Lancé à 13:40 UTC,** avec L1, L2b et L3, mêmes règles. Les aperçus vont désormais aussi sur le Bureau du propriétaire.
 - **L3 est un pansement, et le journal le dit :** il rattrape **un** reproche **après** l'échec. Il faudrait le refaire pour chaque composant de la bibliothèque dont le modèle ne devine pas les champs. C'est sans fin. La question est en amont : pourquoi le modèle ne sait-il pas que `CoqueGestion` attend `libelle` ?
 
+**Tours du tir 3 [MESURÉ] — L1 + L2b + L3 :**
+
+| tour | durée du tour (s) | coût | cumul | issue | motif renvoyé ensuite |
+|---|---|---|---|---|---|
+| 1 | 237 | 0,0459 | 0,0459 | refusé | boutons sans nom (avec la précision L3 : `libelle`) ; plus deux autres reproches |
+| 2 | 111 | 0,0293 | 0,0752 | refusé | **un seul** : déclaration refusée, `montant: number` au lieu de `decimal` |
+| 3 | 65 | 0,0282 | 0,1035 | **ACCEPTÉ, sans aucun reproche restant** | — |
+
+- **Première acceptation non forcée de toute l'expérience.** La limite était à 25 tours : le tour 3 n'était pas le dernier, et l'œuvre a été acceptée parce qu'aucun juge n'avait plus rien à reprocher (`boucle-directe.ts:684`).
+- **Durée totale 413 s, coût 0,1035 $.**
+- **Verdict des juges sur l'œuvre acceptée :** se monte dans le simulateur, 0 erreur ; 3 écrans atteints ; 30 contrôles visités sur 60 découverts ; aucun jeton inexistant, aucun contrôle mort, aucune donnée en mémoire ; couverture 0,5 avec **0 exigence absente** ; déclaration de la table acceptée (`lecturePublique: true`, selon l'exigence du juge des faces — question de confidentialité laissée au propriétaire, chantier à part n° 7).
+- **Le juge n'est pas le critère.** L'application est sur le Bureau du propriétaire (`carnet-tir3-final.html`, données en mémoire), qui tranche les critères 1, 2 et 4.
+
 ## 7. Levier L4 — formulé, NON appliqué (attend l'avis du propriétaire)
 
 **L4 : documenter dans la consigne les composants de la bibliothèque ET les champs des objets qu'ils attendent, pour que le modèle n'ait rien à deviner.** Si l'hypothèse tient, L4 supprime d'un coup toute une famille d'erreurs au lieu de les rattraper une par une. Ce serait un levier produit, pas un correctif d'expérience.
