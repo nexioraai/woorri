@@ -18,6 +18,14 @@ cet ordre :
 
 Les autres registres se consultent au besoin.
 
+## 🔴 RÈGLE DE PREUVE — UNE CORRECTION SE CONCLUT EN PRODUCTION (2026-11-16)
+
+Décision du propriétaire, valable pour **tous les chantiers suivants** :
+
+- **Toute correction se teste depuis l'interface de Deribfy en production.** Les essais locaux restent utiles pour **enquêter**, jamais pour **conclure**.
+- **Raison :** l'aperçu local n'a ni base ni connexion. Il ne peut juger ni la persistance des données ni le parcours de connexion. C'est précisément ce qui a échoué sous les yeux du propriétaire le 2026-11-16 (carnet de dépenses, `PLAN_CHEMIN_VISIBLE.md` §6) alors que l'essai local était accepté.
+- **Conséquence :** un essai local accepté, ou un juge vert, s'écrit au mieux [OBSERVÉ-LOCAL]. Le verdict appartient au propriétaire, en production, depuis l'interface.
+
 ## 🔴 DEUX COLLISIONS DE VOCABULAIRE — À NE JAMAIS CONFONDRE
 
 Ces deux ambiguïtés existaient dans le dépôt AVANT ce document. Elles sont
