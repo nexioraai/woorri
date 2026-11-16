@@ -441,6 +441,7 @@ La ligne de l'œuvre dans `app_generations` : `id` identique, `nom` carnet de d�
   - la variable Vercel vaut `0`, et `NEXT_PUBLIC_REGENERATION_OUVERTE` est absente ;
   - le code servi contient `U=(0,$.modeAsyncActif)("0")` et `let F="1"===…NEXT_PUBLIC_REGENERATION_OUVERTE`, ce qui ferme les deux portes ;
   - le moteur est `direct`, donc le suivi asynchrone est éteint.
-- **Non vérifié :** si quelqu'un a généré pendant la fenêtre. La requête à lancer dans l'éditeur SQL : `select id, owner_id, statut, cout_usd, created_at from public.app_generations where created_at between '2026-11-16 08:51:00+00' and '2026-11-16 10:15:00+00' order by created_at;`.
+- **Aucune génération pendant la fenêtre** [OBSERVÉ-PROD, requête du propriétaire, 2026-11-16] : `select id, owner_id, statut, cout_usd, created_at from public.app_generations where created_at between '2026-11-16 08:51:00+00' and '2026-11-16 10:15:00+00'` → **0 ligne**. La réouverture accidentelle n'a entraîné aucune génération : aucun coût, aucune œuvre produite par un tiers.
+  - *Réserve :* `created_at` est posé à la **fin** du travail (§6.8). Une génération lancée juste avant la fermeture et terminée après 10:15 échapperait à cette requête. La vérification par l'heure de **lancement**, `select generation_id, issue, cout_usd, debut_le from public.app_generation_attempts where debut_le between '2026-11-16 08:51:00+00' and '2026-11-16 10:15:00+00';`, n'a pas été lancée.
 - **Règle retenue :** avant tout push sur `main`, lire la valeur réelle des interrupteurs dans Vercel.
 
