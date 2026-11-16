@@ -100,3 +100,41 @@ Sources : `scratchpad/vraie-appli/tir1/journal.jsonl`, réponses brutes `tir1/re
 
 **Tir 2 arrêté au tour 5,** sur l'oscillation, en attente d'une décision sur le levier L3.
 
+### 5.4 Tir 3 — levier L3 (validé), et L3 est un pansement
+
+- **L3, en modification LOCALE, TEMPORAIRE et NON COMMITÉE de `boucle-directe.ts` :** quand des contrôles sans nom sont reprochés et que l'œuvre emploie `CoqueGestion`, le reproche ajoute le champ attendu (`libelle`) et le type exact `SectionGestion`. Vérifié hors ligne sur la réponse 4 du tir 2 : la phrase part bien au modèle.
+- **Lancé à 13:40 UTC,** avec L1, L2b et L3, mêmes règles. Les aperçus vont désormais aussi sur le Bureau du propriétaire.
+- **L3 est un pansement, et le journal le dit :** il rattrape **un** reproche **après** l'échec. Il faudrait le refaire pour chaque composant de la bibliothèque dont le modèle ne devine pas les champs. C'est sans fin. La question est en amont : pourquoi le modèle ne sait-il pas que `CoqueGestion` attend `libelle` ?
+
+## 7. Levier L4 — formulé, NON appliqué (attend l'avis du propriétaire)
+
+**L4 : documenter dans la consigne les composants de la bibliothèque ET les champs des objets qu'ils attendent, pour que le modèle n'ait rien à deviner.** Si l'hypothèse tient, L4 supprime d'un coup toute une famille d'erreurs au lieu de les rattraper une par une. Ce serait un levier produit, pas un correctif d'expérience.
+
+### 7.1 Ce que la bibliothèque expose [MESURÉ sur le code, `signaturesDe(fichiersSysteme())`]
+
+- **15 composants** à signature lisible : Icone, Carte, CarteDeChiffre, EnTeteDeSection, Pastille, Bouton, EtatVide, CoqueGestion, GrilleTableau, CarteVedette, Courbe, Barres, Anneau, Classement, ListeRecente.
+- **16 réglages sont des LISTES** à remplir par le modèle.
+- **Pour 1 seule** de ces 16 listes, la forme des éléments est connue : `CarteVedette.details[{libelle, valeur}]`.
+- **Les 15 autres** ne disent pas les champs de leurs éléments : `CarteDeChiffre.serie`, **`CoqueGestion.sections`**, `Courbe.points/donnees/comparaison`, `Barres.points/donnees`, `Anneau.parts/donnees/points`, `Classement.lignes/donnees/points`, `ListeRecente.elements/donnees`.
+
+Les champs que le modèle doit deviner sont donc ceux des éléments de ces 15 listes. Leur nombre exact par liste n'est pas compté ici : il faudrait lire chaque type.
+
+### 7.2 Ce que la consigne actuelle en dit [MESURÉ sur la consigne produite pour le carnet]
+
+**Ni rien, ni seulement des noms : les composants ET leurs réglages, mais pas l'intérieur des listes.** Depuis le 2026-11-12, la consigne énumère chaque pièce avec ses réglages exacts (`bibliotheque-ui.ts:1107-1127`, `reglagesEnumeres`), par exemple :
+
+    CoqueGestion(nom, sousTitre, style, sections[], active, …)
+    CarteVedette(libelle, valeur, contexte, tendance, details[{libelle, valeur}])
+
+`sections[]` dit « une liste » sans dire de quoi. Le modèle sait qu'il faut une liste de sections, pas qu'une section porte `libelle`.
+
+### 7.3 Pourquoi la forme manque : une cause mécanique [LU-CODE]
+
+La forme des éléments est lue dans le **texte** de la signature, par une expression régulière qui ne reconnaît qu'un objet écrit en ligne, `{ … }` (`juge-contrat.ts:137-140`).
+- `details?: { libelle: string; valeur: string }[]` est écrit en ligne : forme trouvée.
+- `sections?: SectionGestion[]` passe par un **type nommé** (`bibliotheque-ui.ts:493`) : aucune accolade dans la signature, donc aucune forme.
+
+Ce n'est pas un oubli de rédaction : le lecteur ne suit pas les types nommés. Le même lecteur sert au juge du contrat (`jugerContrat`), ce qui explique aussi pourquoi aucun juge n'a vu `titre` à la place de `libelle`.
+
+**Ce qui trancherait l'hypothèse L4, sans la croire :** un tir du carnet avec L4 et **sans** L3. Si les boutons ont un `libelle` dès le tour 1, L4 a supprimé l'erreur en amont.
+
