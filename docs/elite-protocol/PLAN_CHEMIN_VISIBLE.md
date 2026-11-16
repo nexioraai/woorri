@@ -89,3 +89,36 @@ L3 (le reproche qui nomme `libelle`) n'est **pas** repris : L4 le rend inutile.
 5. Preuve (§4), puis ton verdict.
 
 Rien n'est poussé ni déployé sans ton accord.
+
+## 6. Réalisation et preuve (2026-11-16)
+
+**Commits (branche `feat/chemin-visible`, non poussée) :**
+- `17f24c15` décision 1 ;
+- `b487819a` décision 2 ;
+- `1f84a310` D1 ;
+- `882643f2` D2 ;
+- `d1025866` L4 ;
+- `ea821ca2` D5.
+
+Chaque commit a son test, rouge sur le code précédent. `npm run verifier` : sortie 0, seul rouge `socle/npx eslint .`, absorbé.
+
+**Écarts au plan, dits :**
+- **L4 ne fait pas voir au juge du contrat les champs inventés.** `jugerContrat` ne contrôle que les réglages de premier niveau ; les formes ne servent qu'à la consigne. L'affirmation du §2 (« `jugerContrat` voit enfin les champs inventés ») était fausse, de même que celle du journal de l'expérience (§8 : « `GrilleTableau donnees=`, que `jugerContrat` voit maintenant »). Ce réglage-là est de premier niveau : il était vu avant L4. L4 corrige ce que le **modèle** sait, pas ce que le juge vérifie.
+- **L4 fait grossir la consigne de +234 signes (+2,5 %),** au-delà des plafonds d'EP-319. Les trois plafonds sont relevés avec leur mesure, comme les relèvements précédents.
+- **Décision 2 et D2 tiennent sous les plafonds,** au prix d'un texte resserré.
+
+**Preuve, en local, avec le code du lot, sans aucun levier d'expérience, 3 tours, heure creuse :**
+
+| tour | modèle (s) | coût | issue |
+|---|---|---|---|
+| 1 | 215 | 0,0432 | refusé : assemblage, `import './App'` au lieu de `./composants/App` (erreur du modèle) |
+| 2 | 78 | 0,0242 | refusé : assemblage, `formatterMontant` au lieu de `formaterMontant` (erreur du modèle) |
+| 3 | 47 | 0,0235 | **accepté** |
+
+- **Totaux :** 345 s, **0,0908 $**.
+- **Verdicts enregistrés sur l'œuvre :** se monte, 0 erreur ; 7 écrans atteints **en cliquant depuis l'accueil**, gestion comprise ; aucun contrôle muet, aucun jeton inventé, aucun contrôle mort ; persistance sans défaut ; juge des faces sans défaut ni « silences indiscernables » ; couverture sans exigence absente (familles).
+- **Réserve :** le tour 3 est le dernier, et le verdict du contrat n'est pas enregistré dans le résultat. On ne peut donc pas certifier que l'acceptation n'était pas forcée par la règle du dernier tour.
+- **Le chemin visible existe :** la face publique porte un lien « Espace de gestion » (`composants/App.tsx:133`, `href="#gestion"`). Le juge l'a suivi : les écrans « Gestion » sont dans ce qu'il a ouvert.
+- **Le formulaire existe :** `App.tsx` contient 2 `<input` et 1 `.insert(`, `GestionDepenses.tsx` 3 `<input`.
+- **Le critère est au propriétaire :** `carnet-preuve.html` est sur son Bureau. Ajouter une dépense **sans taper d'adresse**. Le juge ne décide pas.
+
