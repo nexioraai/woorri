@@ -287,6 +287,44 @@ Les cinq cliquets du dépôt qui ont mordu en cours de route ont été satisfait
 3. **Preuve en production** : une génération neuve faite par l'interface, puis `select … from app_generation_attempts where generation_id = …` doit rendre 1 ligne `generation / livree / version_rang 1`. Coût du tir à annoncer avant ; feu vert requis.
 4. La preuve sur une **régénération réelle** attend la réouverture du bouton, décision du propriétaire.
 
+### 6.5 Application en production — 2026-11-15 [OBSERVÉ-PROD, captures du propriétaire]
+
+Projet `nexiora-ai`, branche `main` (PRODUCTION). Appliquée **par le propriétaire** ; je n'ai rien appliqué.
+
+**Première pose (18:58 – 19:00, heure de Toronto)**
+
+| Bloc | Résultat |
+|---|---|
+| 1 (avant) | `75 \| 51 \| NULL` |
+| 2 (migration) | `Success. No rows returned` |
+| 3a | 7 lignes, les 7 contraintes attendues |
+| 3b | `1 \| true \| true \| 0` |
+| 3c | 0 ligne |
+| 3d | `75 \| 51` |
+
+**Puis, par erreur, l'annulation (19:01)** : `drop table` + `drop function` → `Success`.
+- La table était vide (bloc 3b, 0 ligne) : **rien n'a été perdu**.
+- `app_generations` et `app_generation_versions` ne sont pas concernées.
+
+**Contrôle de propreté (19:07)** : `table_tentatives NULL · index_tentatives NULL · fonctions 0 · declencheurs 0 · oeuvres 75 · versions 51 · cle_versions 1`.
+- La suppression n'a laissé **aucune trace**.
+- La clé des versions, posée plus tôt dans la journée, est intacte.
+
+**Seconde pose (19:08 – 19:10)**
+
+| Bloc | Résultat |
+|---|---|
+| 2 (migration) | `Success. No rows returned` |
+| 3a | 7 lignes, les 7 contraintes attendues |
+| 3b | `1 \| true \| true \| 0` |
+| 3c | 0 ligne |
+| 3d | `75 \| 51` |
+
+**Verdict :**
+- la table `app_generation_attempts` est **en place en production**, vide, ajout seul, fermée au navigateur [OBSERVÉ-PROD] ;
+- l'existant est inchangé (75 / 51 à chaque relevé) ;
+- le code peut être déployé, la migration l'ayant précédé.
+
 **Non vérifié :**
 - le rendu de `/admin/applications` avec des tentatives, sans session administrateur ;
 - le comportement sous Postgres de production (version non relevée).
