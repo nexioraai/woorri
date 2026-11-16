@@ -246,6 +246,8 @@ order by 2 desc nulls last;
 
 ### B5 — le détail des deux premières familles, avant et après D1 (essayée sur table factice)
 
+Version du 2026-11-16, soir : elle ajoute la CIBLE de chaque import non résolu (`systeme/…` ou un composant de l'œuvre) et la signature de D1 (`reading 'url'`). La correction dans l'assembleur ne vaut que pour la part « import » ; la cible dit laquelle on peut résoudre sans deviner.
+
 ```sql
 with g as (
   select a.id, a.created_at, a.sections_acquises->'tours' as tours
@@ -262,9 +264,11 @@ with g as (
 )
 select case when motif ~ '^La construction a échoué' then 'construction'
             when motif ~ 'APPLICATION NE SE MONTE PAS' then 'ne se monte pas' end as famille,
-       coalesce(substring(motif from '\[([A-Z_]{3,})\]'),
+       coalesce(substring(motif from '\[([A-Z_]{3,})\]') ||
+                  coalesce(' → ' || substring(motif from 'Could not resolve ''([^'']+)'''), ''),
                 left(regexp_replace(substring(motif from 'APPLICATION NE SE MONTE PAS[^\n]*\n- ([^\n]*)'), '\s+', ' ', 'g'), 90),
                 '(sans code)') as detail,
+       count(*) filter (where motif ~ 'reading .url.') as signature_d1,
        count(*) filter (where created_at <  '2026-11-16 14:59:31+00') as avant_d1,
        count(*) filter (where created_at >= '2026-11-16 14:59:31+00') as apres_d1
 from premier
@@ -273,3 +277,4 @@ group by 1, 2
 order by 1, 3 desc, 2;
 ```
 
+**Décision du propriétaire (2026-11-16) :** le seuil « la moitié des refus » est abandonné. La construction sera traitée, **pour sa seule moitié mécanique** (les imports), dans l'**assembleur** et jamais dans la consigne, une fois chiffrée par B5.
