@@ -1,0 +1,42 @@
+import http from 'node:http'
+import { webkit, chromium } from '/Users/yia/dev/woorri/node_modules/playwright/index.mjs'
+const APP = `<!doctype html><html><body><div id="r"></div><script>
+function rendre(){document.getElementById('r').innerHTML = location.hash==='#gestion' ? '<h1>GESTION</h1>' : '<h1>ACCUEIL</h1><a id="l" href="#gestion">Espace de gestion</a>'}
+addEventListener('hashchange', rendre); rendre()
+</script></body></html>`
+const PARENT = `<!doctype html><html><body><iframe id="f" sandbox="allow-scripts" style="width:600px;height:400px"></iframe><script>
+document.getElementById('f').srcdoc = ${JSON.stringify(APP).replace(/<\//g, '<\\/')}
+</script></body></html>`
+const srv = http.createServer((req, res) => {
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN')
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self'")
+  res.setHeader('Content-Type', 'text/html; charset=utf-8')
+  res.end(req.url.startsWith('/app') ? APP : PARENT)
+}).listen(0)
+const base = `http://127.0.0.1:${srv.address().port}`
+for (const [nom, moteur] of [['webkit', webkit], ['chromium', chromium]]) {
+  const b = await moteur.launch()
+  const p = await b.newPage()
+  // ① l'aperçu : iframe srcdoc sandboxée
+  await p.goto(base + '/dashboard')
+  let f
+  for (let i = 0; i < 40; i++) {
+    await p.waitForTimeout(100)
+    f = p.frames().find((x) => x !== p.mainFrame())
+    if (f && await f.evaluate(() => document.getElementById('l') !== null).catch(() => false)) break
+  }
+  const avant = await f.evaluate(() => ({ url: location.href, base: document.baseURI, href: document.getElementById('l').href }))
+  await f.click('#l').catch((e) => console.log(nom, 'clic erreur', e.message.slice(0, 80)))
+  await p.waitForTimeout(800)
+  const g = p.frames().find((x) => x !== p.mainFrame())
+  let apres
+  try { apres = { url: g.url(), texte: (await g.evaluate(() => document.body.innerText)).slice(0, 80) } } catch (e) { apres = { url: g.url(), texte: 'ILLISIBLE: ' + e.message.slice(0, 60) } }
+  // ② le document autonome (publication, fichier)
+  const p2 = await b.newPage()
+  await p2.goto(base + '/app')
+  await p2.click('#l'); await p2.waitForTimeout(300)
+  const autonome = { url: p2.url(), texte: (await p2.evaluate(() => document.body.innerText)).slice(0, 40) }
+  console.log(JSON.stringify({ moteur: nom, apercu_avant: avant, apercu_apres: apres, autonome }, null, 1))
+  await b.close()
+}
+srv.close()

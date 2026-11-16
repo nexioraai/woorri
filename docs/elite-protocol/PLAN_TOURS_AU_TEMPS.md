@@ -91,3 +91,25 @@ Décision 3, « Régénérer », la couverture et ses 19 familles, les chantiers
 - **Garde-fou de contexte, dans le même lot :** avant un tour, si les jetons d'entrée attendus (ceux du tour précédent, plus leur dernière croissance) **plus** la sortie demandée (`maxJetons`, 65 536, `fournisseur.ts:185`) dépassent la fenêtre de 1M, la boucle s'arrête proprement, et refuse si un défaut est bloquant. Avec les chiffres mesurés, ce cas ne se produit pas avant plusieurs dizaines de tours ; le garde-fou existe pour qu'il échoue en le disant, jamais en silence.
 - **L'abandon d'écran devient nécessaire à corriger :** une génération de 5 minutes faisait déjà abandonner l'écran sur mobile ; jusqu'à 15 minutes, ce sera systématique. **Cette correction rend le chantier de la génération en tâche de fond nécessaire, pas seulement souhaitable. Il remonte dans la liste.** Il n'est pas traité dans ce lot.
 
+## 7. Preuve en production, puis D6 (2026-11-16)
+
+**La génération [OBSERVÉ-PROD] :** `4d480027`, « Suivi de stock », `livree`, **2 tours**, 256 s, 0,07 $, `monte_selon_le_juge = true`, **diagnostics vides**. C'est la première génération en production sans aucun reproche restant, acceptée avant le dernier tour.
+
+**D6 — le lien « Espace de gestion » casse dans l'aperçu de l'interface** (« This page couldn't load », message de Safari, pas de l'application).
+
+1. **Hypothèse du propriétaire (« une adresse de base particulière empêche l'ancre ») : VÉRIFIÉE, et la cause est précise.**
+   - L'aperçu montre l'application dans une `iframe` **`srcdoc`**, en `sandbox="allow-scripts"` : `Conversation.tsx:242-245` (`ApercuAppareil`), `dashboard/page.tsx:715`, `CadreApercu.tsx:116-120`.
+   - Un document `srcdoc` a pour URL `about:srcdoc`, mais pour **URL de base celle de la page parente**.
+   - Donc `href="#gestion"` ne désigne pas « ce document, à l'ancre gestion » : il désigne **la page de Deribfy**, suivie de `#gestion`. Le clic fait naviguer le cadre vers deribfy.com, qui refuse d'être encadrée ainsi (`X-Frame-Options: SAMEORIGIN`, `next.config` ; le cadre, sans `allow-same-origin`, a une origine opaque).
+   - **Mesuré dans deux vrais moteurs** (Playwright, WebKit et Chromium, `evidence/ancre-apercu/preuve.mjs.txt`), page parente servie avec ces en-têtes :
+     - avant le clic, `url: about:srcdoc`, `baseURI: …/dashboard`, `href: …/dashboard#gestion` ;
+     - après le clic, le cadre est sur `…/dashboard#gestion`, **vide** ;
+     - la même application ouverte comme **document autonome** va à `…/app#gestion` et affiche **« GESTION »**.
+2. **Pourquoi le juge, lui, réussit : un écart entre l'instrument et la réalité, de la famille de D1.**
+   - Le juge monte l'œuvre comme un **document autonome**, à l'adresse `https://oeuvre.invalid/` (`juge-execution-enfant.mjs:51`). L'ancre y reste dans le même document.
+   - Le fichier du Bureau de ce matin était aussi un document autonome.
+   - Aucun des deux ne reproduit l'`iframe srcdoc` de l'aperçu.
+3. **La publication échappe au problème [LU-CODE + MESURÉ].** `/p/[jeton]` et `/a/[sous]` servent `pageAutonome(...)` comme une **vraie page** (`p/[jeton]/route.ts:171`, `a/[sous]/route.ts:70`), pas dans un `srcdoc` : c'est le cas « document autonome » de la mesure. **Le propriétaire peut tester sur l'application publiée sans attendre une correction de l'aperçu.** Dans l'aperçu, le défaut touche toute œuvre qui suit la décision 2.
+
+Rien n'est corrigé.
+
