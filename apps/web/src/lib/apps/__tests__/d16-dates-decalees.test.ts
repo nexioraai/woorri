@@ -111,54 +111,21 @@ describe('D16 — un jour saisi est le jour affiché', () => {
     ]))).toEqual([])
   })
 
-  it('② SEULE la forme toISOString().slice(0, 10|7) est bloquante', () => {
-    const d = jugerDates(new Map([
-      ['A.tsx', [
-        'const j = new Date().toISOString().slice(0, 10)',
-        'const m = maintenant.toISOString().slice(0, 7)',
-        'const s = new Date().toISOString().split("T")[0]',
-        'const l = new Date(r.date).toLocaleDateString("fr-FR")',
-      ].join('\n')],
-    ]))
-    expect(d.map((x) => `${x.forme}:${String(x.bloquant)}`)).toEqual([
-      'jour-de-greenwich:true', 'jour-de-greenwich:true', 'jour-de-greenwich:false', 'jour-lu-en-utc:false',
-    ])
-    expect(reprocheDates(d) ?? '').toMatch(/\[BLOQUANT/u)
-  })
-
-  it('② la boucle REFUSE de livrer une œuvre qui garde la forme bloquante, et livre l’autre', async () => {
+  it('② NON BLOQUANT (décision du 2026-11-16, après mesure) : la forme de Greenwich est reprochée, puis l’œuvre est livrée avec son diagnostic', async () => {
+    // MESURÉ le 2026-11-16 : la forme toISOString().slice(0, 10|7) était dans
+    // 5 des 7 œuvres livrées ce jour-là (19 sur 52 en tout). La bloquer aurait
+    // refusé la plupart des générations, payées. Elle reste dite, pas bloquante.
     const appli = (ligne: string) => `=== index.tsx ===\nexport const mois = () => ${ligne}`
-    const refus = await boucleEcriture({
+    let appels = 0
+    const r = await boucleEcriture({
       demande: 'x',
-      appeler: (async () => ({ texte: appli('new Date().toISOString().slice(0, 7)'), tronquee: false })) as never,
+      appeler: (async () => { appels += 1; return { texte: appli('new Date().toISOString().slice(0, 7)'), tronquee: false } }) as never,
       juger: jugeMuet,
       toursMax: 2,
     })
-    expect(refus.ok, 'une œuvre aux dates de Greenwich a été livrée').toBe(false)
-    if (refus.ok) return
-    expect(refus.raison).toBe('bloquant')
-    expect(refus.motif).toMatch(motifTexte('calculait encore ses dates à l’heure de Greenwich (index.tsx)'))
-    let appels = 0
-    const corrigee = await boucleEcriture({
-      demande: 'x',
-      appeler: (async () => {
-        appels += 1
-        return { texte: appli(appels === 1 ? 'new Date().toISOString().slice(0, 7)' : 'new Date().toLocaleDateString("sv-SE").slice(0, 7)'), tronquee: false }
-      }) as never,
-      juger: jugeMuet,
-      toursMax: 3,
-    })
-    expect(corrigee.ok, corrigee.ok ? '' : corrigee.motif).toBe(true)
+    expect(r.ok, r.ok ? '' : r.motif).toBe(true)
     expect(appels, 'le défaut n’a pas été renvoyé au modèle').toBe(2)
-    // non bloquant : une lecture new Date(x) restante accompagne l'œuvre
-    const accompagnee = await boucleEcriture({
-      demande: 'x',
-      appeler: (async () => ({ texte: appli('new Date(x.date).getMonth()'), tronquee: false })) as never,
-      juger: jugeMuet,
-      toursMax: 1,
-    })
-    expect(accompagnee.ok, accompagnee.ok ? '' : accompagnee.motif).toBe(true)
-    if (accompagnee.ok) expect(accompagnee.dates.map((x) => x.bloquant)).toEqual([false])
+    if (r.ok) expect(r.dates.map((x) => x.forme)).toEqual(['jour-de-greenwich'])
   })
 
   it('③ la boucle reproche, la route le dit sur la carte', () => {
@@ -184,12 +151,12 @@ describe('D16 — à UTC+1, le fuseau des utilisateurs de Deribfy', () => {
     expect(new Date(2026, 9, 1).getTimezoneOffset()).toBe(-60)
   })
 
-  it('la forme bloquante y est FAUSSE toute la journée : le mois précédent tombe deux mois avant', () => {
+  it('la forme de Greenwich y est FAUSSE toute la journée : le mois précédent tombe deux mois avant', () => {
     const maintenant = new Date(2026, 10, 16, 10, 0)
     expect(new Date(maintenant.getFullYear(), maintenant.getMonth() - 1, 1).toISOString().slice(0, 7)).toBe('2026-09')
     // le remède proposé par le reproche, lui, est juste
     expect(new Date(maintenant.getFullYear(), maintenant.getMonth() - 1, 1).toLocaleDateString('sv-SE').slice(0, 7)).toBe('2026-10')
-    expect(jugerDates(new Map([['A.tsx', 'const moisPrec = new Date(a, m - 1, 1).toISOString().slice(0, 7)']]))[0]?.bloquant).toBe(true)
+    expect(jugerDates(new Map([['A.tsx', 'const moisPrec = new Date(a, m - 1, 1).toISOString().slice(0, 7)']]))[0]?.forme).toBe('jour-de-greenwich')
   })
 
   it('la bibliothèque y range chaque jour dans son mois et son jour', async () => {

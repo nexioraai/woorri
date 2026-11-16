@@ -28,6 +28,13 @@
  * deux formes mesurées, pas la classe entière ; la bibliothèque, elle,
  * ferme la classe pour tout ce qui passe par lireDate.
  *
+ * ── NON BLOQUANT, Y COMPRIS POUR toISOString().slice(0, 10|7) — MESURÉ.
+ * Le 2026-11-16, la rendre bloquante a été décidé puis retiré avant mise en
+ * ligne : la forme était dans 5 des 7 œuvres livrées ce jour-là (19 des 52
+ * générations directes à code en base). La bloquer aurait refusé la plupart
+ * des générations, payées. Elle est reprochée à chaque tour, et dite sur la
+ * carte si elle reste.
+ *
  * ── FAUX POSITIF ASSUMÉ : new Date(horodatage).getMonth() est juste pour
  * un horodatage complet, et sera quand même signalé. Le remède proposé
  * (lireDate) est juste pour les deux : un tour de plus, jamais une faute
@@ -39,21 +46,12 @@ export type DefautDate = {
   readonly fichier: string
   readonly forme: 'jour-de-greenwich' | 'jour-lu-en-utc'
   readonly extrait: string
-  /**
-   * BLOQUANT (décision du propriétaire, 2026-11-16) : SEULE la forme
-   * toISOString().slice/substring/substr(0, 10|7). Mesuré sous
-   * Africa/Ndjamena : new Date(a, m - 1, 1).toISOString().slice(0, 7) rend
-   * « 2026-09 » pour octobre, TOUJOURS — le marché réel de Deribfy. Aucun
-   * faux positif connu : elle prend le jour de Greenwich pour le jour local.
-   * Les autres formes restent non bloquantes (faux positif assumé).
-   */
-  readonly bloquant: boolean
 }
 
 /** ② la date ou le mois « d'aujourd'hui » pris à Greenwich. */
-const JOUR_DE_GREENWICH: readonly (readonly [RegExp, boolean])[] = [
-  [/\.toISOString\(\s*\)\s*\.\s*(?:slice|substring|substr)\(\s*0\s*,\s*(?:10|7)\s*\)/gu, true],
-  [/\.toISOString\(\s*\)\s*\.\s*split\(\s*["'`]T["'`]\s*\)/gu, false],
+const JOUR_DE_GREENWICH: readonly RegExp[] = [
+  /\.toISOString\(\s*\)\s*\.\s*(?:slice|substring|substr)\(\s*0\s*,\s*(?:10|7)\s*\)/gu,
+  /\.toISOString\(\s*\)\s*\.\s*split\(\s*["'`]T["'`]\s*\)/gu,
 ]
 
 /**
@@ -73,14 +71,14 @@ export function jugerDates(fichiers: ReadonlyMap<string, string>): DefautDate[] 
   for (const [fichier, source] of fichiers) {
     if (fichier.startsWith('systeme/')) continue
     if (!/\.(tsx|ts|jsx|js)$/u.test(fichier)) continue
-    for (const [motif, bloquant] of JOUR_DE_GREENWICH) {
+    for (const motif of JOUR_DE_GREENWICH) {
       for (const m of source.matchAll(motif)) {
-        defauts.push({ fichier, forme: 'jour-de-greenwich', extrait: extraitAutour(source, m.index ?? 0), bloquant })
+        defauts.push({ fichier, forme: 'jour-de-greenwich', extrait: extraitAutour(source, m.index ?? 0) })
       }
     }
     for (const motif of [JOUR_LU_EN_UTC, JOUR_LU_EN_UTC_PAR_VARIABLE]) {
       for (const m of source.matchAll(motif)) {
-        defauts.push({ fichier, forme: 'jour-lu-en-utc', extrait: extraitAutour(source, m.index ?? 0), bloquant: false })
+        defauts.push({ fichier, forme: 'jour-lu-en-utc', extrait: extraitAutour(source, m.index ?? 0) })
       }
     }
   }
@@ -100,7 +98,7 @@ export function reprocheDates(defauts: readonly DefautDate[]): string | null {
     defauts
       .slice(0, 12)
       .map((d) =>
-        `- ${d.bloquant ? '[BLOQUANT — l’application ne sera pas livrée tant qu’elle reste] ' : ''}${d.fichier} : ${d.extrait} → ` +
+        `- ${d.fichier} : ${d.extrait} → ` +
         (d.forme === 'jour-de-greenwich'
           ? 'toISOString() donne le jour de GREENWICH ; le jour local s’écrit new Date().toLocaleDateString("sv-SE") (AAAA-MM-JJ), le mois local .slice(0, 7) de ce texte'
           : 'new Date("AAAA-MM-JJ") est minuit UTC, la veille à l’ouest ; lis la date avec lireDate(v), exportée par ./systeme/donnees (un jour y reste le jour local)'),

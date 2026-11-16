@@ -67,7 +67,7 @@ Son reproche donne le remède : `lireDate(v)` de `./systeme/donnees`, ou `new Da
 
 **Preuves.** Le test `d16-dates-decalees.test.ts` compte 7 tests, exécutés sous UTC−5 sur le code **émis**. Contrôle négatif : avec l'ancienne bibliothèque, les 3 volets ① tombent. Gate : `npm run verifier` EXIT=0, 499 fichiers et 6 369 tests.
 
-## 3 bis. Décision 1 du propriétaire (2026-11-16) : le Tchad. FAIT, commit `2d24f490`.
+## 3 bis. Décision 1 du propriétaire (2026-11-16) : le Tchad
 
 Mesuré sous `Africa/Ndjamena` (UTC+1), le marché réel :
 
@@ -75,13 +75,21 @@ Mesuré sous `Africa/Ndjamena` (UTC+1), le marché réel :
 - le jour et le mois courants calculés avec `toISOString` sont faux entre 00 h et 01 h ;
 - la lecture d'un jour (« 2026-11-10 ») ne se décale pas.
 
-Ce qui a été fait :
+**Test UTC+1 : FAIT** (`2d24f490`). Il est dans `d16-dates-decalees.test.ts`, à côté du test UTC−5.
 
-- La forme `toISOString().slice/substring/substr(0, 10|7)` est maintenant **BLOQUANTE**. Une œuvre qui la garde au dernier tour n'est pas livrée, avec le motif « calculait encore ses dates à l'heure de Greenwich (fichiers) ». Aucun faux positif n'est connu.
-- Les autres formes restent non bloquantes : `split("T")` et `new Date(x)` lu en local, faux positif assumé compris.
-- `d16-dates-decalees.test.ts` couvre désormais UTC−5 **et** UTC+1, avec 12 tests. Contrôle négatif : avec la boucle d'avant, le test du refus tombe.
+**Blocage : écrit (`2d24f490`), puis RETIRÉ avant la mise en ligne, après mesure.** Le propriétaire avait posé la règle : « si c'est la plupart, on repasse en non bloquant ».
 
-**Conséquence assumée :** une génération dont le modèle ne corrige pas cette forme avant la fin est payée sans être livrée.
+| Mesure (lecture seule, juge appliqué au code livré) | Résultat |
+|---|---|
+| a) les trois œuvres servies aujourd'hui | **3 sur 3** : suivi `composants/App.tsx` (`slice(0, 10)`) ; regi `composants/TableauDeBord.tsx` (2 × `slice(0, 7)`) ; une `composants/Gestion.tsx` (2 × `slice(0, 7)`) |
+| b) générations directes du 2026-11-16 (base de Deribfy, `app_generations`) | **5 sur 7** (ef085fa7, 4d480027, bbf07fd6, 3b96d2e7, 425a49a4) |
+| b) toutes les générations directes ayant du code | **19 sur 52**, soit 37 % |
+
+Le générateur actuel est celui du 16 : il produit cette forme dans la plupart des cas. La bloquer aurait refusé la plupart des générations, alors qu'elles sont payées. **INCONNU** : combien le modèle en corrige après le reproche, car le juge n'existait pas lors de ces générations. La forme reste **reprochée à chaque tour** et **dite sur la carte** si elle demeure.
+
+La mesure a d'abord donné zéro partout. C'était une faute de mon instrument : la clé « paquet » n'avait pas d'extension, et le juge ignore ces fichiers. La mesure a été refaite avec « paquet.js ».
+
+**Le cliquet EP-364 a aussi fonctionné.** Il a attrapé une ancre rigide de mon propre test (377 contre 376 tolérées), corrigée dans `92d6d268`.
 
 ## 4. Alternative non retenue (décision du propriétaire si voulue)
 
