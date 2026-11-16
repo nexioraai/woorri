@@ -214,6 +214,37 @@ Ce point rejoint la liste des chantiers à part.
 
 Note du propriétaire : 16,0338 $ vaut environ 100 fois ce maximum. Cela confirme que cette génération suivait un autre chemin que le moteur direct sur DeepSeek, et **renforce** l'hypothèse de l'option 2, **sans l'établir**. Le point reste ouvert et non traité.
 
+## 5 bis. Constat consigné, NON traité : des œuvres « livrées » qui ne fonctionnent pas
+
+Relevé par le propriétaire le 2026-11-16 (éditeur SQL, `app_generations`, les 5 dernières œuvres) [OBSERVÉ-PROD] :
+
+| Œuvre | Nom | Créée (UTC) | Statut | Premier diagnostic |
+|---|---|---|---|---|
+| `ef085fa7` | carnet de dépenses | 2026-11-16 08:20 | `livree` | PARTIELLEMENT éprouvée : 10 sur 12 (**83 %**). Second diagnostic : « L'application ne se monte pas (simulateur) : Cannot read properties of undefined (reading 'valeur') » |
+| `66bdab46` | Conterak | 2026-11-15 00:05 | `livree` | PARTIELLEMENT éprouvée : 24 sur 67 (**36 %**) |
+| `edd1a7f9` | Conterak | 2026-11-14 18:21 | `livree` | « 1 écran(s) en repli (écrits par Deribfy, le modèle refusé trois fois) » ; son taux n'est pas visible sur la capture |
+| `414773cd` | Conterak | 2026-11-14 18:14 | `livree` | PARTIELLEMENT éprouvée : 48 sur 144 (**33 %**) |
+| `ad6017df` | CONTERAK | 2026-11-14 18:06 | `livree` | PARTIELLEMENT éprouvée : 25 sur 111 (**23 %**) |
+
+Une œuvre peut être marquée `livree` alors que ses propres diagnostics disent qu'elle **ne se monte pas**.
+
+Questions posées, **sans réponse ici** :
+1. À partir de quel seuil une œuvre doit-elle être refusée plutôt que livrée ?
+2. La personne doit-elle être avertie qu'une œuvre n'est que partiellement éprouvée ?
+
+Ce constat rejoint la liste des chantiers à part.
+
+## 5 ter. Chantiers à part, dans l'ordre où ils ont été consignés
+
+1. La purge à 30 jours.
+2. Le DDL de `journal.ts` aligné sur la base.
+3. `ai_usage_log` (nom de modèle écrit en dur).
+4. La génération à 16 $ (§5).
+5. L'écran qui abandonne une génération réussie (`DEFAUT_ABANDON_ECRAN.md`, 2026-11-16).
+6. Des œuvres « livrées » qui ne se montent pas (§5 bis).
+
+La suite prévue reste les manques 1 à 3.
+
 ## 4. UNKNOWN
 
 - ~~La taille réelle de `sections_acquises` en production.~~ Relevée le 2026-11-15 (§2.1). La taille **brute** (non compressée) reste non mesurée : `select max(octet_length(sections_acquises::text)) from public.app_generations;`
@@ -364,4 +395,41 @@ Décision du propriétaire (option A) : « Régénérer » reçoit son propre in
 - **Journaux Vercel de production, 15 minutes après le déploiement :** 0 erreur, 0 ligne « tentative ».
 
 **Non vérifié :** l'écran connecté lui-même, faute de session dans cette vérification ; le refus 409 en production, faute de jeton.
+
+### 6.8 PREUVE EN PRODUCTION — 2026-11-16 [OBSERVÉ-PROD, captures du propriétaire]
+
+Le propriétaire a ouvert la génération neuve, lancé **une** génération par l'interface (« Test Manque 4 — carnet de dépenses »), puis refermé la génération neuve. « Régénérer » est resté fermé.
+
+`app_generation_attempts` contient **exactement une ligne** :
+
+| Colonne | Valeur |
+|---|---|
+| `generation_id` | `ef085fa7-5272-48e2-a93d-acc5b62be8c6` |
+| `rang` | 1 |
+| `nature` | `generation` |
+| `issue` | `livree` |
+| `debut_le` | 2026-11-16 08:11:53.509+00 |
+| `fin_le` | 2026-11-16 08:20:17.701+00 |
+| `cout_usd` | 0.1856 |
+| `duree_ms` | 504 192 |
+| `diagnostics` | « Application PARTIELLEMENT éprouvée : 10 sur 12 (83 %) des controles des 2 ecran(s) atteint(s) », « L'application ne se monte pas (simulateur) : Cannot read properties of undefined (reading 'valeur') » |
+
+La ligne de l'œuvre dans `app_generations` : `id` identique, `nom` carnet de dépenses, `statut livree`, `created_at` 08:20:17.338814+00, `duree_ms` 503 683, `cout_usd` 0.1856.
+
+**Le critère est rempli en production, plus seulement en simulation :** la tentative est écrite, avec son issue, ses heures de début et de fin, son coût, sa durée et ses diagnostics, et elle est liée à son œuvre.
+
+**Non relevé sur ces captures :** `jetons_entree`, `jetons_sortie`, `version_rang`, `trace`, `trace_tronquee`. La requête du propriétaire ne les sélectionnait pas. La présence de la trace en production n'est donc pas encore observée.
+
+**Coût :** 0,1856 $. C'est au-dessus de l'estimation annoncée (environ 0,05 $, pire observé 0,15 $), et sous le plafond prudent de 0,31 $. Le tir est parti à 08:11 UTC un lundi, en **heure de pointe** DeepSeek (06:00–10:00 UTC), où le tarif double.
+
+**Éclaircissement demandé — `created_at` est posé à la livraison, pas au lancement.** [LU-CODE + OBSERVÉ-PROD]
+- La route n'écrit jamais `created_at` : la colonne prend `default now()` (`journal.ts:411`).
+- La ligne d'une œuvre neuve n'est insérée qu'**à la fin** du travail (`route.ts`, `insert(charge)` après la boucle).
+- D'où `created_at` = 08:20:17.338, quelques centaines de millisecondes avant l'écriture de la tentative (08:20:17.701).
+- L'heure de lancement n'existe **que** dans `debut_le` de la tentative.
+- Pour une régénération, la ligne est mise à jour : `created_at` garde la date de la première génération.
+
+**Deux découvertes au passage, consignées sans être traitées :**
+- l'écran a abandonné alors que la génération réussissait (`DEFAUT_ABANDON_ECRAN.md`) ;
+- l'œuvre est `livree` alors qu'elle ne se monte pas (§5 bis).
 
