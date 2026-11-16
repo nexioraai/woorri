@@ -35,6 +35,7 @@ import {
   lireDeclarationEnRoute,
 } from './declaration-en-route'
 import { jugerDevise, marqueRecommandee } from './juge-devise'
+import { jugerDates, reprocheDates, type DefautDate } from './juge-dates'
 import { CONSIGNE_BIBLIOTHEQUE, fichiersSysteme, VARIABLES_CSS } from './bibliotheque-ui'
 import { jugerContrat, reprocheContrat } from './juge-contrat'
 import {
@@ -187,6 +188,8 @@ export type Resultat =
       /** Ce qu'a donné le montage réel — null si les jetons l'ont évité. */
       readonly execution: VerdictExecution | null
       readonly vivacite: readonly DefautVivacite[]
+      /** D16 : les formes de date qui décalent d'un jour, encore là à l'acceptation. */
+      readonly dates: readonly DefautDate[]
       /** Le rapport chiffré qui accompagne toute génération (EP-297). */
       readonly couverture: RapportCouverture
       /** J1 · les deux faces, `null` quand l'œuvre n'a aucune table. */
@@ -602,6 +605,8 @@ export async function boucleEcriture(o: {
         // de la bibliothèque, donc toujours à jour — voir juge-contrat.
         const contrat = jugerContrat(carte, systeme)
         const vivacite = jugerVivacite(carte)
+        // D16 (2026-11-16) : un jour saisi est le jour affiché — voir juge-dates.
+        const dates = jugerDates(carte)
         // EP-298 : l'argent parle la devise configurée. EP-296 transmet,
         // celui-ci VÉRIFIE — une instruction sans contrôle est un vœu
         // (mesuré : 10× EUR sur une base tchadienne, devise validée).
@@ -689,6 +694,8 @@ export async function boucleEcriture(o: {
               '\nRemplace chacune : tous les montants visibles emploient la devise du client, aucune autre.',
           )
         }
+        const quoiDates = reprocheDates(dates)
+        if (quoiDates !== null) reproches.push(quoiDates)
         if (vivacite.length > 0) {
           reproches.push(
             'DES CONTRÔLES MORTS — un écran qui a l’air de fonctionner et ne fait rien :\n' +
@@ -842,6 +849,7 @@ export async function boucleEcriture(o: {
             jetons,
             execution,
             vivacite,
+            dates,
             couverture,
             persistance,
             faces,

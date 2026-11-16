@@ -819,6 +819,10 @@ export async function POST(req: Request) {
           ...(resultat.vivacite.length > 0
             ? [`${String(resultat.vivacite.length)} contrôle(s) sans action — voir le rapport de vivacité`]
             : []),
+          ...(resultat.dates.length > 0
+            ? [`${String(resultat.dates.length)} date(s) qui peuvent s’afficher décalées d’un jour : ` +
+                [...new Set(resultat.dates.map((d) => d.fichier))].slice(0, 6).join(', ')]
+            : []),
           ...(resultat.couverture.absentes.length > 0
             ? [
                 'Couverture partielle, non déclarée : ' +

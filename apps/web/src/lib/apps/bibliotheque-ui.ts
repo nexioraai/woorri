@@ -733,8 +733,28 @@ export function CarteVedette({ libelle, valeur, contexte, tendance, details = []
 
 type Point = { libelle: string; valeur: number }
 
+/** D16 (2026-11-16) : un JOUR (« 2026-11-10 ») est un jour du LECTEUR, pas minuit UTC.
+ *  new Date('2026-11-10') vaut minuit UTC — le 9 à 19 h à UTC−5 : mesuré
+ *  « 09/11/2026 » à l'écran de l'Atelier 3b96d2e7 pour une réparation du 10. */
+function jourLocal(v: string): Date | null {
+  const m = /^(\\d{4})-(\\d{2})-(\\d{2})$/u.exec(v)
+  if (m === null) return null
+  const d = new Date(2000, Number(m[2]) - 1, Number(m[3]))
+  d.setFullYear(Number(m[1]))
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
 function dateCourte(v: unknown): string | undefined {
   if (typeof v !== 'string' && typeof v !== 'number') return undefined
+  const jour = typeof v === 'string' ? jourLocal(v.trim()) : null
+  if (jour !== null) {
+    // Un jour n'a pas d'heure : « il y a 14 h » serait inventé.
+    const auj = new Date()
+    const ecart = Math.round((new Date(auj.getFullYear(), auj.getMonth(), auj.getDate()).getTime() - jour.getTime()) / 86_400_000)
+    if (ecart === 0) return 'aujourd’hui'
+    if (ecart === 1) return 'hier'
+    return jour.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+  }
   const d = new Date(v)
   if (Number.isNaN(d.getTime())) return undefined
   const s = (Date.now() - d.getTime()) / 1000
@@ -935,6 +955,15 @@ const JOURS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.']
 export function lireDate(v: unknown): Date | null {
   if (v instanceof Date) return Number.isNaN(v.getTime()) ? null : v
   if (typeof v === 'string' || typeof v === 'number') {
+    // D16 : « 2026-11-01 » est le 1er novembre du LECTEUR. Lu comme minuit
+    // UTC, il tombait en OCTOBRE à UTC−5 (mesuré : getMonth() = 9) et
+    // parMois/sommeParMois le rangeaient dans le mauvais mois.
+    const m = typeof v === 'string' ? /^(\\d{4})-(\\d{2})-(\\d{2})$/u.exec(v.trim()) : null
+    if (m !== null) {
+      const j = new Date(2000, Number(m[2]) - 1, Number(m[3]))
+      j.setFullYear(Number(m[1]))
+      return Number.isNaN(j.getTime()) ? null : j
+    }
     const d = new Date(v)
     return Number.isNaN(d.getTime()) ? null : d
   }
