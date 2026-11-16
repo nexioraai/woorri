@@ -46,7 +46,8 @@ describe('le juge du contrat des pièces', () => {
       'EnTeteDeSection.libelle:inconnu',
       'EnTeteDeSection.legende:inconnu',
     ]))
-    expect(reprocheContrat(d)).toMatch(motifTexte('Ses réglages : titre, libelle, description'))
+    // Depuis le 2026-11-16 le reproche porte le TYPE de chaque réglage (Atelier b010d704).
+    expect(reprocheContrat(d)).toMatch(motifTexte('Ses réglages : titre (string), libelle (string), description (string)'))
   })
 
   it('③ ce qui est licite ne déclenche rien', () => {

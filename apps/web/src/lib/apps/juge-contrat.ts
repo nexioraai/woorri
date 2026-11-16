@@ -47,14 +47,20 @@ export type Signature = {
   readonly listes: readonly string[]
   /** Pour une liste d'OBJETS, les clés de chaque élément (`details` → libelle, valeur) — ce que la consigne enseigne. */
   readonly formes: Readonly<Record<string, readonly string[]>>
+  /** Le TYPE de chaque réglage, tel qu'écrit, commentaires ôtés (2026-11-16). */
+  readonly types: Readonly<Record<string, string>>
+  /** Réglages typés comme un NOMBRE (number, éventuellement | null | undefined). */
+  readonly nombres: readonly string[]
 }
 
 export type DefautContrat = {
   readonly fichier: string
   readonly piece: string
   readonly reglage: string
-  readonly nature: 'inconnu' | 'liste-en-texte'
+  readonly nature: 'inconnu' | 'liste-en-texte' | 'nombre-en-liste'
   readonly acceptes: readonly string[]
+  /** Le type de chaque réglage accepté, pour que le reproche dise ce qu'il attend. */
+  readonly types?: Readonly<Record<string, string>>
 }
 
 /** Lit un bloc équilibré qui commence à `debut` (sur `{`), chaînes comprises. */
@@ -122,14 +128,20 @@ export function signaturesDe(systeme: ReadonlyMap<string, string>): Map<string, 
         .filter((n): n is string => n !== undefined)
       // Le type littéral qui suit `}:` — pour reconnaître les listes.
       const listes: string[] = []
+      const nombres: string[] = []
+      const types: Record<string, string> = {}
       const formes: Record<string, readonly string[]> = {}
       const apres = source.slice(ferme + 1).match(/^\s*:\s*\{/u)
       if (apres !== null) {
         const ouvreType = ferme + 1 + apres[0].length - 1
         const fermeType = bloc(source, ouvreType)
         if (fermeType !== -1) {
-          const type = source.slice(ouvreType + 1, fermeType)
+          // Les commentaires ôtés : un JSDoc portant « donnees: … » n'est pas un réglage
+          // (mesuré : « tendance). */ » dans le type lu de CarteDeChiffre).
+          const type = source.slice(ouvreType + 1, fermeType).replace(/\/\*[\s\S]*?\*\//gu, '').replace(/\/\/[^\n]*/gu, '')
           for (const t of type.matchAll(/([A-Za-z_$][\w$]*)\??\s*:\s*([^;\n]*)/gu)) {
+            if (types[t[1]!] === undefined) types[t[1]!] = t[2]!.trim().replace(/\s+/gu, ' ')
+            if (/^number(\s*\|\s*(null|undefined))*$/u.test(t[2]!.trim())) nombres.push(t[1]!)
             if (/\[\]|Array</u.test(t[2]!) && !/=>/u.test(t[2]!)) {
               listes.push(t[1]!)
               // Un élément objet `{ a: T, b: T }` (virgules, pas de point-virgule :
@@ -163,7 +175,7 @@ export function signaturesDe(systeme: ReadonlyMap<string, string>): Map<string, 
           }
         }
       }
-      sig.set(m[1]!, { acceptes: reste ? null : acceptes, listes, formes })
+      sig.set(m[1]!, { acceptes: reste ? null : acceptes, listes, formes, types, nombres })
     }
   }
   return sig
@@ -239,11 +251,15 @@ export function jugerContrat(
           let nature: DefautContrat['nature'] | null = null
           if (s.acceptes !== null && !UNIVERSELS.has(a.nom) && !s.acceptes.includes(a.nom)) nature = 'inconnu'
           else if (s.listes.includes(a.nom) && a.valeur !== null && estScalaireLitteral(a.valeur)) nature = 'liste-en-texte'
+          // ── L'INVERSE (2026-11-16) : un NOMBRE attendu, une liste ou un objet écrit.
+          // Mesuré (Atelier b010d704, tour 2) : <GrilleTableau colonnes={[{ libelle, acces }]}>
+          // — accepté, et l'écran tombait dès la première ligne. Visible sans données.
+          else if (s.nombres.includes(a.nom) && a.valeur !== null && /^\{\s*[[{]/u.test(a.valeur.trim())) nature = 'nombre-en-liste'
           if (nature === null) continue
           const clef = `${fichier}|${piece}|${a.nom}|${nature}`
           if (vus.has(clef)) continue
           vus.add(clef)
-          defauts.push({ fichier, piece, reglage: a.nom, nature, acceptes: s.acceptes ?? [] })
+          defauts.push({ fichier, piece, reglage: a.nom, nature, acceptes: s.acceptes ?? [], types: s.types })
         }
       }
     }
@@ -261,8 +277,12 @@ export function reprocheContrat(defauts: readonly DefautContrat[]): string | nul
       .slice(0, 20)
       .map((d) =>
         d.nature === 'inconnu'
-          ? `- ${d.fichier} : <${d.piece} ${d.reglage}=…> — ${d.piece} n’a pas « ${d.reglage} ». Ses réglages : ${d.acceptes.join(', ')}`
-          : `- ${d.fichier} : <${d.piece} ${d.reglage}=…> — « ${d.reglage} » attend une LISTE (tableau), pas un texte ni un nombre`,
+          // LE TYPE, PAS SEULEMENT LE NOM (2026-11-16) : « colonnes » seul a fait
+          // renommer lignes= en colonnes= avec la même liste (Atelier b010d704).
+          ? `- ${d.fichier} : <${d.piece} ${d.reglage}=…> — ${d.piece} n’a pas « ${d.reglage} ». Ses réglages : ${d.acceptes.map((r) => (d.types?.[r] !== undefined ? `${r} (${d.types[r]})` : r)).join(', ')}`
+          : d.nature === 'nombre-en-liste'
+            ? `- ${d.fichier} : <${d.piece} ${d.reglage}=…> — « ${d.reglage} » attend un NOMBRE (${d.types?.[d.reglage] ?? 'number'}), pas une liste ni un objet`
+            : `- ${d.fichier} : <${d.piece} ${d.reglage}=…> — « ${d.reglage} » attend une LISTE (tableau), pas un texte ni un nombre`,
       )
       .join('\n') +
     '\nEmploie EXACTEMENT les réglages listés, aucun autre.'
