@@ -168,3 +168,34 @@ Ce n'est pas un oubli de rédaction : le lecteur ne suit pas les types nommés. 
 
 **Ce qui trancherait l'hypothèse L4, sans la croire :** un tir du carnet avec L4 et **sans** L3. Si les boutons ont un `libelle` dès le tour 1, L4 a supprimé l'erreur en amont.
 
+## 8. Tir 4 — L1 + L2b + L4, SANS L3 [MESURÉ], et comparaison avec le tir 3
+
+| tour | modèle (s) | entrée | sortie | coût | cumul | motif renvoyé ensuite |
+|---|---|---|---|---|---|---|
+| 1 | 246 | 4 614 | 21 327 | 0,0453 | 0,0453 | réglage inventé (`GrilleTableau donnees=`) ; chargement qui échoue affiché comme une liste vide ; … |
+| 2 | 66 | 10 161 | 7 667 | 0,0219 | 0,0672 | chargement qui échoue affiché comme une liste vide |
+| 3 | 75 | 16 189 | 8 516 | 0,0275 | 0,0947 | **identique** au précédent |
+| 4 | interrompu | | | | | |
+
+**Comparaison tir 3 et tir 4 :**
+
+| | Tir 3 (L3, en aval) | Tir 4 (L4, en amont) |
+|---|---|---|
+| Boucle du menu, tour 1 | `titre` : reproche « sans nom », puis corrigé au tour 2 grâce au reproche L3 | **`libelle` dès le tour 1, aucun reproche** |
+| Consigne | 13 589 signes | 13 862 signes (+273, +2,0 %) |
+| Formes de liste connues du modèle et du juge | 1 sur 16 | 13 sur 16 |
+| Autre reproche apparu grâce au lecteur corrigé | — | `GrilleTableau donnees=` : un réglage inventé, que `jugerContrat` voit maintenant |
+
+**Conclusion sur L4 : l'hypothèse tient.** L'erreur des sections a été supprimée en amont, pas rattrapée. Une seule cause produisait deux aveuglements : le modèle ignorait la forme attendue et devinait ; le juge du contrat lisait la même signature incomplète et ne pouvait pas voir l'erreur. Le **défaut racine** est le lecteur de signatures (`juge-contrat.ts:137-140`), pas les reproches ni le nombre de tours. **Portée : 15 listes sur 16** de la bibliothèque, sur toutes les générations depuis que cette consigne énumère les réglages (2026-11-12).
+
+**Autres reproches supprimés par L4 : un seul mesurable** (les boutons sans nom). Un tir ne suffit pas à dire si L4 en supprime d'autres.
+
+### 8.1 D5 — un reproche faux positif, et une phrase toute faite [LU-CODE]
+
+Tir 4 arrêté au tour 4 : le reproche « UN CHARGEMENT QUI ÉCHOUE REND LE MÊME ÉCRAN QU'UN CHARGEMENT VIDE » revient à l'identique.
+- **Le juge des faces** monte l'œuvre sans session, une fois où la base refuse et une fois où elle rend zéro ligne. Il reproche dès que les deux textes de la face publique sont identiques (`juge-faces.ts:230-232`). Il **ne vérifie pas** que la face publique affiche la table.
+- **Dans le tir 4, la face publique (`PagePublique`) n'affiche aucune dépense.** Les dépenses ne sont montrées que dans l'espace de gestion, qui affiche bien l'erreur à part (`erreurChargement`). Sur une page qui n'affiche pas de données, refus et vide donnent forcément le même texte : le reproche ne peut pas être satisfait.
+- **La phrase « Ton code fait `if (!error && data)` » est écrite en dur** (`juge-faces.ts:133`). Elle n'est pas tirée du code de l'œuvre. Ici, le chargement traite bien `error` à part (`if (error) { setErreurChargement(…) }`) ; seules les écritures emploient `if (!error && data)`. Le modèle reçoit un diagnostic qui ne correspond pas à son code.
+
+**Aperçu du tour 3 du tir 4 :** sur le Bureau, `carnet-tir4-tour3.html` (même architecture à deux faces : le formulaire est derrière `#gestion`).
+
