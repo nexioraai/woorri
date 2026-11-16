@@ -122,3 +122,21 @@ Chaque commit a son test, rouge sur le code précédent. `npm run verifier` : so
 - **Le formulaire existe :** `App.tsx` contient 2 `<input` et 1 `.insert(`, `GestionDepenses.tsx` 3 `<input`.
 - **Le critère est au propriétaire :** `carnet-preuve.html` est sur son Bureau. Ajouter une dépense **sans taper d'adresse**. Le juge ne décide pas.
 
+## 7. Premier essai en production (2026-11-16) — « render is not a function »
+
+**Rapporté par le propriétaire :** une application générée depuis l'interface, un **registre de clients**, donc **pas** le carnet, s'arrête au chargement dans l'aperçu : `import__embarque_react_dom.default.render is not a function`.
+
+**1. Les environnements, terme à terme [MESURÉ] : React est le même partout.**
+- L'assembleur n'emploie pas le `node_modules` du disque. Il embarque React depuis un JSON **commité** (`react-embarque.ts:23`, `react-embarque.genere.json`), compilé dans le code du serveur (EP-294). Les versions inscrites sont `react 19.2.4`, `react-dom 19.2.4`, `scheduler 0.27.0`, `@supabase/supabase-js 2.106.2`. Le fichier n'a pas changé depuis `8902959e` (2026-11-03).
+- Le `node_modules` local donne aussi `react 19.2.4`, `react-dom 19.2.4`.
+- La production assemble le même JSON, puisqu'il fait partie du commit servi (`662bfea`).
+- **Conclusion : aucune différence de version entre le local et la production.** L'hypothèse « l'environnement local diffère » est réfutée sur ce point.
+
+**2. La cause, prouvée : une API retirée de React 19, écrite par le modèle.** `ReactDOM.render(<App />, container)` est l'API de React 17, supprimée en React 19. L'erreur affichée est celle-là, mot pour mot.
+
+**3. Le juge d'exécution voit cette erreur [MESURÉ].** J'ai rejoué une œuvre minimale `import ReactDOM from 'react-dom' ; ReactDOM.render(<App />, …)` avec le vrai assembleur et le vrai juge : `assemble: true`, `monte: false`, `erreurs: ["import : import__embarque_react_dom.default.render is not a function"]`. Message identique à celui de la production. **Ce n'est donc pas un sixième défaut d'instrument dans la détection.** Ce qui reste à établir est ce que la boucle a **fait** de ce verdict (requêtes P1 à P3, `scratchpad/enquete/requetes-render.sql`).
+
+**4. Hypothèse à confirmer par P2 et P3, pas affirmée :** le juge a vu « ne se monte pas » aux tours 1 et 2, le modèle ne l'a pas corrigé, et le tour 3 a été accepté par la règle du dernier tour (H-C, `boucle-directe.ts:684-705`). Si P2 montre au contraire un tour accepté **avant** le dernier avec cette erreur, ou si P3 montre `monte_selon_le_juge = true`, alors c'est un défaut d'instrument, à nommer D6.
+
+**Ce qui tient des essais locaux :** les versions de React et l'assemblage sont identiques, et le juge local reproduit l'erreur de production. Ce qui ne pouvait pas être prouvé en local, et ne l'a jamais été : la persistance et la connexion (règle de preuve du 2026-11-16).
+
