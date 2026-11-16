@@ -7,7 +7,7 @@
   3. après fermeture et réouverture, elle est toujours là ;
   4. rien ne plante, aucun écran ne manque.
 - **Demande :** le carnet de dépenses du 16 novembre (œuvre `ef085fa7`), mot pour mot.
-- **Statut :** MONTAGE PRÊT ET ÉPROUVÉ À BLANC. Aucun appel payant. En attente des entrées exactes du carnet (§2) et d'une décision sur la persistance (§3).
+- **Statut :** TIR 1 ARRÊTÉ au tour 4 (2026-11-16, 13:23 UTC) sur une impasse du juge, prouvée hors ligne (§5.2). Coût : 0,0927 $ mesuré pour 3 appels, plus le 4ᵉ appel interrompu (non mesuré, au plus ≈ 0,04 $). Option A choisie par le propriétaire pour la persistance (§3).
 
 ---
 
@@ -36,7 +36,39 @@ Chaque tour renvoie au modèle la demande, **toutes** ses réponses précédente
 
 ## 5. Journal des tours
 
-*(vide — aucun appel payant)*
+**Entrées (requête du propriétaire, 2026-11-16) :** la demande mot pour mot ; une table `depense` (date `date`, libelle `text`, montant `decimal`) ; configuration `currency XAF`, `nom_produit carnet de dépenses`, `encaissement aucun`. *Réserve :* ces tables sont celles d'après la boucle de production (`route.ts:655`) ; c'est la meilleure approximation stockée.
+
+### 5.1 Tir 1 — 13:17 UTC, heure creuse, limite 25 tours [MESURÉ]
+
+| tour | modèle (s) | jetons entrée | jetons sortie | tronqué | coût | cumul | motif renvoyé au tour suivant |
+|---|---|---|---|---|---|---|---|
+| 1 | 207 | 4 517 | 17 501 | non | 0,0376 | 0,0376 | L'APPLICATION NE SE MONTE PAS — « reading 'url' » à l'import |
+| 2 | 65 | 11 915 | 8 547 | non | 0,0248 | 0,0624 | contrôle sans nom lisible + « depense » lue sans connexion : déclare-la `lecturePublique` |
+| 3 | 74 | 19 135 | 8 901 | non | 0,0303 | 0,0927 | **identique au mot près** au précédent |
+| 4 | interrompu | — | — | — | — | — | — |
+
+Sources : `scratchpad/vraie-appli/tir1/journal.jsonl`, réponses brutes `tir1/reponses/appel-0N.txt`.
+
+**Contexte envoyé (hypothèse du propriétaire) :** +7 400 puis +7 200 jetons d'entrée par tour, soit la réponse précédente entière plus le motif. La croissance est confirmée. La dégradation, elle, **n'est pas observée** : le tour 2 a corrigé le reproche du tour 1. Ce qui a bloqué ensuite est autre chose (§5.2).
+
+### 5.2 Deux défauts de l'instrument, trouvés en route [LU-CODE + REJOUÉ HORS LIGNE, gratuit]
+
+**D1 · Le juge d'exécution ne définit pas `window.DERIBFY_BASE`.**
+- La consigne prescrit, pour une œuvre à tables, `const b = window.DERIBFY_BASE … b.url` (`entites-declarees.ts:375-378`).
+- La vraie page le définit toujours (`boucle-directe.ts:1114`, `:1150-1159`), de même que le juge des faces (`juge-faces-enfant.mjs:147`).
+- Le simulateur du juge d'exécution ne le définit **jamais** (`grep DERIBFY_BASE` : 0 occurrence dans `juge-execution-enfant.mjs`).
+- Résultat : le code écrit selon la consigne est déclaré « ne se monte pas » (tour 1). Le modèle a contourné au tour 2 (`?? { url: '' … }`). C'est un tour payé pour un défaut de l'instrument.
+- Il est **non établi** que ce soit la cause du « ne se monte pas » du carnet de production : son motif est tronqué dans R11.
+
+**D2 · Le reproche « déclare-la publique » est impossible à satisfaire.**
+- Le modèle a rendu `DONNEES.json` avec `"lecturePublique": true` dès le tour 2, et au tour 3 encore.
+- Rejoué hors ligne avec les vraies fonctions (`lireDeclarationEnRoute`, `fusionnerEntites`, contrat `projectAirSchema`) sur la réponse du tour 3 : **`DECLARATION [] REFUS [{"quoi":"depense","motif":"forme refusée par le contrat de données"}]`**. La déclaration est jetée en entier.
+- **Cause :** le contrat exige un `id` par table et par champ (`air-schema/src/air.ts:606-607`, `fieldSchema` strict). Or le gabarit que la consigne enseigne au modèle n'en porte pas (`boucle-directe.ts:93`, `[{"name":"chose","fields":[{"name":"champ",…}]}]`). Le modèle a aussi écrit `date: text` et `montant: number` à la place des types du cahier.
+- **Et le refus n'est jamais dit au modèle :** `refusEnRoute` est accumulé (`boucle-directe.ts:408-415`) mais n'entre dans **aucun** reproche. Il ne sort qu'à l'acceptation (`:703`).
+- Résultat : le juge des faces redemande la déclaration, le modèle la refait, elle est rejetée en silence. Le motif devient **identique mot pour mot** au tour 4. Aucun nombre de tours n'en sort : la boucle aurait tourné jusqu'à 25 et livré au dernier tour.
+- **Une question de fond, consignée sans réponse :** pour un carnet de dépenses **personnel**, sans comptes, le juge exige que les dépenses soient lisibles par tout visiteur. Que ce soit souhaitable est une décision du propriétaire.
+
+**Pourquoi le tir a été arrêté :** à partir du tour 3, le motif est identique et la cause est prouvée déterministe. Continuer aurait coûté sans rien apprendre ; c'est la règle de ce chantier.
 
 ## 6. Leviers essayés
 
