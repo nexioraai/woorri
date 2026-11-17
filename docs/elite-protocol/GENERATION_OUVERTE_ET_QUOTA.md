@@ -1,5 +1,9 @@
 # La création d'applications reste ouverte — et ce qui manque pour la vendre (2026-11-17)
 
+> **LE CHIFFRE QUI MANQUAIT POUR FIXER UN PRIX.** À l'échelle actuelle, c'est **l'hébergement** qui fixe le plancher, pas les retouches : **8,33 $ par application publiée et par mois à 3 applications**. C'est Supabase Pro à 25 $ par mois, divisé par 3 ; les visites coûtent environ 0,000016 $ chacune.
+> Ce plancher décroît avec le succès : 2,50 $ à 10 applications, 0,25 $ à 100, 0,025 $ à 1 000 (§6 c, §8 b).
+> Le plan Pro de la base des œuvres est **mesuré** (capture de Youssouf, 2026-11-17) : ces 25 $ sont déjà payés aujourd'hui.
+
 ## 1. Décision 1 du propriétaire : la pause du 14 novembre est levée
 
 **Décision (2026-11-17).** La variable reste à `1`, définitivement.
@@ -351,11 +355,20 @@ Soit **0,000016 $ par visite** (16 $ par million). Ce total représente 0,36 % d
 
 **Le seul passage sans compter, dit franchement : la panne.** Si l'insertion, la lecture ou le CAS **échouent côté base**, la réservation laisse passer sans compter (`reservee: false`, journalisé). C'est un choix délibéré, repris de l'ancien code, qui lisait 0 sur erreur. Il vaut pour **tous** les comptes, pas pour ces 9. Un client ne peut pas provoquer cette panne.
 
+**Réserve retirée par le propriétaire le 2026-11-17 :** la vérification sur le schéma servi suffit. Rien à corriger.
+
 **Ce qui n'est pas prouvé :** le passage réel par PostgREST en production, pour un compte sans ligne. Il se verra à la première création de site par l'un de ces comptes : sa ligne `profiles` doit apparaître avec `generation_count = 1`.
 
 ## 8. Le risque de pause — prêt à répondre dès que Youssouf donne le plan
 
-**Le plan de la base des œuvres reste INCONNU** tant que Youssouf ne l'a pas lu.
+**INCONNU FERMÉ le 2026-11-17 par la capture de Youssouf :**
+
+- `supabase-bench-test` : **Pro Plan**, 1 projet, psxbil (données des applications publiées) ;
+- `nexioraai's Org` : **Free Plan**, 4 projets, dont nexiora-ai (Deribfy).
+
+**Le scénario (a) ci-dessous est donc ÉCARTÉ pour les applications publiées :** Pro n'est jamais mis en pause. Il reste écrit pour l'historique, et parce qu'il vaut pour nexiora-ai. Le risque qui le remplace (nexiora-ai, gratuit et **sans aucune sauvegarde**) est traité dans `SAUVEGARDE_NEXIORA.md`.
+
+**Décision d'architecture du propriétaire (2026-11-17) :** les deux bases restent séparées. Déplacer le Pro de psxbil vers nexiora-ai est écarté : cela changerait seulement lequel des deux côtés est exposé.
 
 ### a) Si c'est le plan gratuit — d'après la documentation officielle (supabase.com/docs/guides/platform/free-project-pausing, lue le 2026-11-17)
 
@@ -379,7 +392,7 @@ Soit **0,000016 $ par visite** (16 $ par million). Ce total représente 0,36 % d
 
 - **Prix :** Supabase Pro coûte **25 $ par mois** par organisation, avec 10 $ de crédit de calcul, ce qui couvre une instance Micro (supabase.com/pricing, lu le 2026-11-17).
 - **Par application :** si la base des œuvres est seule dans son organisation, 25 / 3 = **8,33 $ par application et par mois**. Les visites ajoutent environ 0,000016 $ chacune (§6) : négligeable.
-- **Si l'organisation contient d'autres projets** : chaque projet de plus est facturé en calcul au-delà du crédit. Le contenu de l'organisation « supabase-bench-test » est **INCONNU**, faute d'avoir été remesuré.
+- **L'organisation ne contient que ce projet** : 1 projet, d'après la capture du 2026-11-17. Les 25 $ s'appliquent donc à psxbil seul, et **8,33 $ par application à 3 applications** est le bon chiffre.
 - **Le même calcul à mesure que les publications payantes arrivent :** 10 applications → 2,50 $ ; 100 → 0,25 $ (§6 c).
 
 **Observation, sans décision :** la base de **Deribfy lui-même** (nexiora-ai) est dans une organisation affichée **FREE**, sur la capture du propriétaire du 2026-11-17. Elle est soumise à la même règle de pause. Son activité est quotidienne (le site, et les crons de `vercel.json`), donc le risque y est faible. Il n'est pas nul si le trafic s'arrête.
@@ -406,3 +419,4 @@ Soit **0,000016 $ par visite** (16 $ par million). Ce total représente 0,36 % d
 - **Une borne en dollars plutôt qu'en nombre.** Le plafond varie d'une application à l'autre. Un budget en dollars (0,90 $ gratuit ; 3,00 $ par mois publié) est donc exact, quand un nombre ne l'est qu'au plafond d'atita. L'écran afficherait le nombre restant, calculé avec le plafond de **cette** application.
 - **La même mécanique que le quota des sites** : réservation atomique avant l'appel au modèle, restitution si la retouche échoue avant de rien dépenser.
 - **À revoir dès qu'il y aura plus de deux retouches réelles en base**, et avec le prix décidé. Ces bornes sont une proposition, pas une mesure.
+- **Décision du propriétaire (2026-11-17) :** la borne **en dollars** est retenue comme forme. Elle n'est **PAS construite** : elle ne repose que sur 2 retouches mesurées, et se précisera à l'usage.
