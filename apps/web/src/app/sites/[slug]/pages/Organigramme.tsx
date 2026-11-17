@@ -39,9 +39,13 @@ export type EntreeOrg = {
   cote?: string
 }
 
-/** Profondeur maximale rendue. Au-delà, un organigramme ne se lit plus. Six
- *  niveaux : l'organigramme réel de la CPA en compte six (2026-11-11). */
-export const PROFONDEUR_MAX = 6
+/** Profondeur maximale rendue. Ce n'est PAS un choix de lisibilité : c'est
+ *  le garde-fou contre une boucle (A chef de B, B chef de A), qui sans lui
+ *  rendrait à l'infini. Il était à 6 — l'organigramme de la CPA en comptait
+ *  six le 2026-11-11 ; le 2026-11-17 il en compte SEPT et « Magasiniers PP »
+ *  disparaissait SANS RIEN DIRE. Un plafond calé sur le client d'hier coupe
+ *  celui de demain : on le met loin de tout organigramme réel. */
+export const PROFONDEUR_MAX = 12
 
 /** Un lien de boîte n'est suivi que s'il désigne une page DU SITE. */
 export function lienValable(lien: unknown): lien is string {

@@ -75,10 +75,16 @@ describe('organigramme — boîtes cliquables, couleurs, poste latéral', () => 
     expect(rangee).not.toContain('Assistance')
   })
 
-  it('six niveaux sont rendus', () => {
-    expect(PROFONDEUR_MAX).toBe(6)
-    const chaine = Array.from({ length: 6 }, (_, i) => ({ cle: `n${i}`, ...(i ? { parent: `n${i - 1}` } : {}), fonction: `Niveau${i + 1}` }))
-    expect(rendre('boites', chaine)).toContain('Niveau6')
+  it('sept niveaux sont rendus — la CPA du 2026-11-17 (Magasiniers PP disparaissait)', () => {
+    const chaine = Array.from({ length: 7 }, (_, i) => ({ cle: `n${i}`, ...(i ? { parent: `n${i - 1}` } : {}), fonction: `Niveau${i + 1}` }))
+    expect(rendre('boites', chaine)).toContain('Niveau7')
+    expect(rendre('arbre', chaine)).toContain('Niveau7')
+  })
+
+  it('le plafond reste loin de tout organigramme réel, et une boucle ne fige pas le rendu', () => {
+    expect(PROFONDEUR_MAX).toBeGreaterThanOrEqual(12)
+    const boucle = [{ cle: 'r', fonction: 'Racine' }, { cle: 'a', parent: 'b', fonction: 'A' }, { cle: 'b', parent: 'a', fonction: 'B' }]
+    expect(() => rendre('boites', boucle)).not.toThrow()
   })
 
   it('l’éditeur propose nom, lien et couleur pour chaque boîte', () => {
