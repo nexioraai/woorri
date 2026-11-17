@@ -7,13 +7,14 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import ConversationApplication from './ConversationApplication';
 import { Attente, Bulle, CADRE_CONVERSATION, Composeur, VERRE_BULLE, Escalier } from './Conversation';
-import { modeAsyncActif } from '@/lib/apps/suivi-generation';
+import { creationApplicationOuverte } from '@/lib/apps/creation-application';
 import { doitAiguillerVersApplication } from '@/lib/apps/aiguillage';
 
-// « Application » ne devient cliquable que le jour ou la generation
-// asynchrone est armee — MEME interrupteur que l'ecran de suivi : un seul
-// geste proprietaire allume tout. D'ici la : « Bientot », message doux.
-const APPLICATION_PRETE = modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYNC);
+// « Application » n'est cliquable que si la creation d'applications est
+// ouverte. SON interrupteur depuis le 2026-11-17 (ancien nom :
+// NEXT_PUBLIC_GENERATION_ASYNC, voir lib/apps/creation-application.ts).
+// Ferme : « Bientot », message doux.
+const APPLICATION_PRETE = creationApplicationOuverte(process.env.NEXT_PUBLIC_CREATION_APPLICATION_OUVERTE);
 
 /**
  * LIT LE FIL LIGNE PAR LIGNE — et sait dire ce qui n'est jamais arrivé.

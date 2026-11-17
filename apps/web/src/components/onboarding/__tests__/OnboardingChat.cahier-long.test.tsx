@@ -33,7 +33,7 @@ const reponse = (objet: unknown) =>
 
 beforeAll(() => {
   // La pastille « Application » n'est active que sous ce drapeau, lu à l'import.
-  process.env.NEXT_PUBLIC_GENERATION_ASYNC = '1'
+  process.env.NEXT_PUBLIC_CREATION_APPLICATION_OUVERTE = '1'
   GlobalRegistrator.register({ url: 'http://localhost/' })
 })
 afterAll(() => { GlobalRegistrator.unregister() })

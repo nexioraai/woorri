@@ -15,8 +15,8 @@ import { oublierGeneration } from '@/lib/apps/suivi-generation';
 import { regenerationOuverte } from '@/lib/apps/regeneration';
 
 // ── « RÉGÉNÉRER » A SON PROPRE INTERRUPTEUR (2026-11-16, décision du propriétaire).
-// Il ne suit plus la génération neuve (NEXT_PUBLIC_GENERATION_ASYNC, bouton
-// « Application » de l'accueil) : NEXT_PUBLIC_REGENERATION_OUVERTE=1 l'ouvre,
+// Il ne suit plus la génération neuve (bouton « Application » de l'accueil,
+// NEXT_PUBLIC_CREATION_APPLICATION_OUVERTE) : NEXT_PUBLIC_REGENERATION_OUVERTE=1 l'ouvre,
 // absent il reste fermé. La route revérifie la même variable et refuse (409).
 const REGENERATION_OUVERTE = regenerationOuverte(process.env.NEXT_PUBLIC_REGENERATION_OUVERTE);
 import {

@@ -2,7 +2,9 @@
  * L'INTERRUPTEUR DE « RÉGÉNÉRER » — séparé de la génération neuve (2026-11-16).
  *
  * Jusqu'ici, la pause du 2026-11-14 (27e83891) fermait la génération neuve ET
- * la régénération avec UN SEUL interrupteur, `NEXT_PUBLIC_GENERATION_ASYNC`.
+ * la régénération avec UN SEUL interrupteur, `NEXT_PUBLIC_GENERATION_ASYNC`
+ * (celui de l'accueil, renommé `NEXT_PUBLIC_CREATION_APPLICATION_OUVERTE`
+ * le 2026-11-17).
  * Ouvrir l'une rouvrait l'autre. Décision du propriétaire (2026-11-16) :
  * « Régénérer » a son propre interrupteur, FERMÉ PAR DÉFAUT ; sa réouverture
  * vient après les manques 1 à 3.

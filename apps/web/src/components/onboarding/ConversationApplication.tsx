@@ -85,6 +85,12 @@ import { noteDeLecture, type LectureBrief } from '@/lib/apps/lecture-brief';
 // Le moteur direct ne produit AUCUNE génération asynchrone : il répond dans
 // sa propre requête. Il n'y a donc rien à suivre, rien à restaurer, et
 // aucune raison d'offrir de quoi relancer l'autre moteur.
+//
+// ── `NEXT_PUBLIC_GENERATION_ASYNC` NE SERT PLUS QU'ICI (2026-11-17).
+// Le bouton « Application » de l'accueil a son propre interrupteur,
+// `NEXT_PUBLIC_CREATION_APPLICATION_OUVERTE` (lib/apps/creation-application.ts).
+// Ce nom-ci garde son sens d'origine — le suivi asynchrone d'AIR — et il
+// est inerte sous le moteur `direct`.
 const ASYNC =
   moteurChoisi(process.env.NEXT_PUBLIC_GENERATEUR_MOTEUR) === 'air' &&
   modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYNC);
