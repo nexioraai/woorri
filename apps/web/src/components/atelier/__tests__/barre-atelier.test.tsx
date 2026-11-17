@@ -49,6 +49,19 @@ describe('la barre de l’atelier', () => {
     expect(CADRE).not.toMatch(/useState/u)
   })
 
+  it('M2 · sous 1024 px, deux onglets ; l’application à l’arrivée ; on y revient après chaque geste', () => {
+    // Mesuré à 390 px (2026-11-17) : sans onglets, l’aperçu ne recevait aucune
+    // largeur. Ce cliquet tient la RÈGLE ; le rendu, lui, se prouve à la capture.
+    expect(ATELIER).toMatch(/useState<'conversation' \| 'application'>\('application'\)/u)
+    expect(ATELIER).toMatch(/role="tablist"[^>]*className="[^"]*\blg:hidden\b/u)
+    // Chaque panneau est masqué hors de son onglet, et toujours visible en lg.
+    expect(ATELIER).toMatch(/id="panneau-conversation"[\s\S]{0,200}\? 'flex' : 'hidden'\}[^`]*\blg:flex\b/u)
+    expect(ATELIER).toMatch(/id="panneau-application"[\s\S]{0,200}\? 'flex' : 'hidden'\}[^`]*\blg:flex\b/u)
+    // Le résultat d’une modification se montre : sur téléphone il est dans l’autre onglet.
+    const envoyer = ATELIER.slice(ATELIER.indexOf('const envoyer ='), ATELIER.indexOf('const revenirA ='))
+    expect(envoyer.indexOf("setOnglet('application')")).toBeGreaterThan(envoyer.lastIndexOf('chargerApercu()'))
+  })
+
   it('② le choix de l’appareil change la largeur et le dit (aria-pressed)', async () => {
     const React = await import('react')
     const { ChoixAppareil } = await import('../ChoixAppareil')

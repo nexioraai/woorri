@@ -59,7 +59,9 @@ export function CadreApercu({
           `min-h-0`, un enfant flex refuse de rétrécir sous sa taille de
           contenu et DÉBORDE la fenêtre — l'application serait coupée en bas,
           exactement le défaut qu'on corrige. */}
-      <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-white/[0.07] bg-black/30 p-3">
+      {/* Sous 1024 px, aucune marge ni bordure : un téléphone de 390 px
+          affiche un aperçu de 390 px sans défilement horizontal. */}
+      <div className="min-h-0 flex-1 overflow-auto bg-black/30 lg:rounded-2xl lg:border lg:border-white/[0.07] lg:p-3">
         {/* La piste fait au moins la largeur du conteneur et centre ce
             qu'elle porte ; quand l'appareil est plus large, elle grandit et
             le défilement horizontal prend le relais sans rogner la gauche. */}

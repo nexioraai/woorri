@@ -44,7 +44,7 @@
  * personne publierait ce qu'elle ne regarde pas. Un seul courant, partout.
  */
 import { publierAvecAccord } from '@/components/apps/accordLecturePublique';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -64,6 +64,16 @@ import { IdentifiantsOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { adresseProposee, TITRE_SANS_NOM } from '@/lib/apps/nom-produit';
 import { echangesDe, heureCourte, type VersionLue } from '@/lib/apps/fil-atelier';
 import { phraseVersion } from '@/lib/apps/versions-oeuvre';
+
+/** M2 — l'écran est-il étroit ? Lu par `useSyncExternalStore` : juste au rendu
+ *  serveur (faux), juste dans le navigateur, et suivi si l'écran tourne. */
+const REQUETE_ETROIT = '(max-width: 1023.98px)';
+const abonnerEcranEtroit = (prevenir: () => void): (() => void) => {
+  const m = window.matchMedia(REQUETE_ETROIT);
+  m.addEventListener('change', prevenir);
+  return () => { m.removeEventListener('change', prevenir); };
+};
+const ecranEtroit = (): boolean => window.matchMedia(REQUETE_ETROIT).matches;
 
 type Application = {
   id: string;
@@ -85,7 +95,21 @@ export default function AtelierPage() {
   const [html, setHtml] = useState('');
   const [etatApercu, setEtatApercu] = useState('Chargement de l’aperçu…');
   /** La largeur de l'aperçu : choisie au centre de la barre, appliquée par le cadre. */
-  const [largeur, setLargeur] = useState<number>(1280);
+  // La largeur choisie par la personne ; tant qu'elle n'a rien choisi, celle
+  // de son écran : « Téléphone » sur un écran étroit, « Bureau » sinon.
+  const [largeurChoisie, setLargeur] = useState<number | null>(null);
+  const etroit = useSyncExternalStore(abonnerEcranEtroit, ecranEtroit, () => false);
+  const largeur = largeurChoisie ?? (etroit ? 390 : 1280);
+  /**
+   * M2 — SOUS 1024 PX, DEUX ONGLETS (décision du propriétaire, 2026-11-17).
+   *
+   * Mesuré à 390 px : la conversation prenait toute la largeur et l'aperçu ne
+   * recevait RIEN — l'atelier n'affichait pas l'application. Le marché de
+   * Deribfy est sur téléphone : c'était le produit qui ne fonctionnait pas.
+   * L'application s'affiche à l'arrivée ; au-dessus de 1024 px, les deux
+   * colonnes restent côte à côte et cet état ne change rien.
+   */
+  const [onglet, setOnglet] = useState<'conversation' | 'application'>('application');
   const [texte, setTexte] = useState('');
   const [plafond, setPlafond] = useState('');
   const [perimetre, setPerimetre] = useState('');
@@ -269,6 +293,7 @@ export default function AtelierPage() {
       setTexte('');
       setAvis(d.migration ?? 'Modification appliquée.');
       await Promise.all([chargerVersions(), chargerApercu()]);
+      setOnglet('application');
     } catch {
       setAvis(null);
       setErreur('L’application a échoué. Réessayez.');
@@ -402,6 +427,8 @@ export default function AtelierPage() {
       // ── LE CŒUR DE LA BOUCLE. On ne demande rien à la personne : le fil
       // et l'aperçu se remettent à jour, et le vert apparaît.
       await Promise.all([chargerVersions(), chargerApercu()]);
+      // Sur téléphone, le vert est dans l'autre onglet : on y va.
+      setOnglet('application');
     } catch {
       setAvis(null);
       setErreur('La modification a échoué. Réessayez.');
@@ -435,6 +462,7 @@ export default function AtelierPage() {
       }
       setAvis(`Revenu à la version ${String(rang)}.`);
       await Promise.all([chargerVersions(), chargerApercu()]);
+      setOnglet('application');
     } catch { setErreur('Le retour à cette version a échoué. Réessayez.'); }
   };
 
@@ -621,13 +649,38 @@ export default function AtelierPage() {
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1 gap-3 p-3">
+      {/* ── M2 : LES ONGLETS, SOUS 1024 PX SEULEMENT. */}
+      <div role="tablist" aria-label="Atelier" className="flex shrink-0 gap-1 border-b border-white/[0.07] px-3 py-1.5 lg:hidden">
+        {([['application', 'Application'], ['conversation', 'Conversation']] as const).map(([cle, libelle]) => (
+          <button
+            key={cle}
+            type="button"
+            role="tab"
+            id={`onglet-${cle}`}
+            aria-selected={onglet === cle}
+            aria-controls={`panneau-${cle}`}
+            onClick={() => { setOnglet(cle); }}
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FA5D1E] ${
+              onglet === cle ? 'bg-[#FA5D1E]/[0.16] text-[#FA5D1E]' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            {libelle}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex min-h-0 flex-1 gap-3 lg:p-3">
         {/* ── ② LA CONVERSATION — un tiers, et le champ toujours visible.
             C'est un fil qui se souvient : chaque échange porte ce qui a été
             demandé, ce que Deribfy a fait, et la version que ça a créée. Les
             trois viennent de l'historique des versions — aucune table de
             messages, donc aucune seconde vérité à côté. */}
-        <section className="flex w-full max-w-[26rem] min-w-0 shrink-0 flex-col gap-2 lg:w-1/3">
+        <section
+          id="panneau-conversation"
+          role="tabpanel"
+          aria-labelledby="onglet-conversation"
+          className={`${onglet === 'conversation' ? 'flex' : 'hidden'} w-full min-w-0 shrink-0 flex-col gap-2 p-3 lg:flex lg:w-1/3 lg:max-w-[26rem] lg:p-0`}
+        >
           <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3">
             {echanges.length === 0 ? (
               <p className="text-xs text-slate-400">
@@ -836,8 +889,16 @@ export default function AtelierPage() {
           </div>
         </section>
 
-        {/* ── ③ L'APERÇU — deux tiers, toute la hauteur, défilement interne. */}
-        <CadreApercu titre={nom} srcDoc={html} etat={etatApercu} largeur={largeur} />
+        {/* ── ③ L'APERÇU — deux tiers, toute la hauteur, défilement interne.
+            Sous 1024 px, c'est l'onglet « Application », bord à bord. */}
+        <div
+          id="panneau-application"
+          role="tabpanel"
+          aria-labelledby="onglet-application"
+          className={`${onglet === 'application' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 flex-col lg:flex`}
+        >
+          <CadreApercu titre={nom} srcDoc={html} etat={etatApercu} largeur={largeur} />
+        </div>
       </div>
     </main>
   );
