@@ -131,5 +131,5 @@ Le journal ne contient que des noms de tables et des nombres : 0 occurrence d'ad
 
 **Reste à faire :**
 
-- **le déchiffrement d'essai par Youssouf** sur son Mac, pour prouver que sa clé ouvre la sauvegarde ;
+- ~~le déchiffrement d'essai par Youssouf~~ **FAIT le 2026-11-17** : `age -d -i <clé privée> nexiora-2026-11-17.pgdump.age | head -c 5` a affiché **`PGDMP`**, la signature d'un dump Postgres au format custom. La clé privée de Youssouf ouvre la sauvegarde, et rien de déchiffré n'a été écrit sur le disque ;
 - **la copie des fichiers Storage** (2 095 fichiers, 320,7 Mo), qui demande une clé de lecture du stockage (geste ⑤).
