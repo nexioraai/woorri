@@ -103,3 +103,33 @@ Inventaire du 2026-11-17, 15:56 UTC : 58 tables et vues exposées, nombre de lig
 - **Resend** : envois.
 
 **En une phrase :** la perte de nexiora-ai efface les comptes, les sites des commerçants et leurs images, ainsi que le code des applications. Elle arrête aussi les applications publiées, alors que leurs données sont intactes de l'autre côté.
+
+## d) Mise en place — 2026-11-17 (validée par le propriétaire)
+
+**Dépôt :** `nexioraai/deribfy-sauvegardes`, **PRIVATE** (vérifié par `gh repo view`). Il contient `scripts/sauvegarder.py` et `.github/workflows/sauvegarde-nexiora.yml`, qui tourne chaque nuit à 03:17 UTC, ou à la main.
+
+**Secrets** (noms vérifiés par `gh secret list`, valeurs jamais lues) : `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`, `NEXIORA_DATABASE_URL` (Session pooler), `AGE_RECIPIENT` (clé publique). La clé privée est chez Youssouf seul.
+
+**Le dispositif :**
+
+1. Une transaction `repeatable read` exporte son instantané. Les 92 tables y sont comptées.
+2. `pg_dump --snapshot` lit **le même** instantané.
+3. Le dump est restauré dans `supabase/postgres:17.11.0.019`, à l'intérieur du runner.
+4. **Toute erreur de `pg_restore`, ou tout écart de lignes, fait échouer le passage en rouge, et rien n'est envoyé.**
+5. Ensuite seulement : chiffrement `age`, envoi vers R2 (`deribfy-sauvegardes/nexiora/<jour>/`), relecture de la liste dans R2.
+
+Le journal ne contient que des noms de tables et des nombres : 0 occurrence d'adresse de connexion.
+
+**Les passages :**
+
+| Passage | Mode | Résultat |
+|---|---|---|
+| `44190905793` | essai | vert ; 92/92 tables identiques ; **27 erreurs de `pg_restore`** : « role supabase_realtime_admin does not exist », absent de l'image d'essai. Le script a été durci : le rôle est créé dans la cible, et toute erreur fait désormais échouer |
+| `44191293947` | essai | vert ; Postgres 17.6 ; 92 tables, 56 914 lignes ; dump de 15,4 Mo ; **`pg_restore` code 0, 0 erreur, 0 écart** |
+| `44191593421` | **contrôle négatif** (une ligne retirée de la COPIE d'essai) | **rouge, comme attendu** : « ✗ public.cron_runs, source 7728, restauré 7727 », « rien n'est envoyé ». La preuve sait échouer |
+| `44193403294` | **réel** | vert ; 56 916 lignes ; 0 erreur, 0 écart ; puis chiffré, envoyé et **relu dans R2** : `nexiora-2026-11-17.pgdump.age` (15 386 959 octets) et `comptes-2026-11-17.json` (2 968 octets) |
+
+**Reste à faire :**
+
+- **le déchiffrement d'essai par Youssouf** sur son Mac, pour prouver que sa clé ouvre la sauvegarde ;
+- **la copie des fichiers Storage** (2 095 fichiers, 320,7 Mo), qui demande une clé de lecture du stockage (geste ⑤).
