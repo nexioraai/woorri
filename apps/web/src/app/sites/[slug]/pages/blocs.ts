@@ -40,6 +40,29 @@ export function lirePosition(brut: unknown): PositionBloc | null {
   return brut === 'cote' ? 'cote' : null
 }
 
+/**
+ * UNE ZONE CLIQUABLE SUR UNE IMAGE (CPA, 2026-11-17).
+ *
+ * Le client fournit un DESSIN (son organigramme) et le veut À L'IDENTIQUE —
+ * un rendu refait par le site n'est jamais son dessin. On affiche donc
+ * l'image telle quelle et on pose des liens PAR-DESSUS, en POURCENTAGES de
+ * l'image : ils suivent la photo à toutes les largeurs, sans calcul.
+ */
+export type ZoneImage = { x: number; y: number; l: number; h: number; chemin: string; libelle: string }
+
+/** Ne garde que les zones bien formées et DANS l'image. Une zone fausse est
+ *  écartée, jamais rendue à moitié : un lien posé à côté de sa case ment. */
+export function zonesValables(brut: unknown): ZoneImage[] {
+  if (!Array.isArray(brut)) return []
+  const pct = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 100
+  return brut.filter((z): z is ZoneImage => !!z && typeof z === 'object'
+    && pct((z as ZoneImage).x) && pct((z as ZoneImage).y) && pct((z as ZoneImage).l) && pct((z as ZoneImage).h)
+    && (z as ZoneImage).l > 0 && (z as ZoneImage).h > 0
+    && (z as ZoneImage).x + (z as ZoneImage).l <= 100.5 && (z as ZoneImage).y + (z as ZoneImage).h <= 100.5
+    && typeof (z as ZoneImage).chemin === 'string' && /^[a-z0-9][a-z0-9/-]*$/.test((z as ZoneImage).chemin)
+    && typeof (z as ZoneImage).libelle === 'string' && (z as ZoneImage).libelle.trim().length > 0)
+}
+
 export type Bloc = { position?: string } & (
   | { type: 'titre'; texte: string; niveau?: 2 | 3 }
   | { type: 'texte'; texte: string }
@@ -53,7 +76,7 @@ export type Bloc = { position?: string } & (
   | { type: 'encadre'; texte: string; ton?: 'info' | 'attention'; titre?: string }
   | { type: 'liens'; items: { libelle: string; chemin: string }[]; titre?: string }
   | { type: 'appel'; libelle: string; chemin: string; texte?: string }
-  | { type: 'image'; url: string; alt: string; legende?: string }
+  | { type: 'image'; url: string; alt: string; legende?: string; zones?: ZoneImage[] }
   | { type: 'galerie'; items: { url: string; alt: string; legende?: string }[]; titre?: string }
   | { type: 'citation'; texte: string; auteur?: string; fonction?: string; photo?: string; titre?: string }
   /** LOT 7 — la LISTE d'une catégorie d'articles. Ne porte aucun contenu :

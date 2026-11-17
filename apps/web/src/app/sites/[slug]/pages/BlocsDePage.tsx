@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Bloc } from './blocs'
+import { zonesValables } from './blocs'
 import ListeArticles from './ListeArticles'
 import Organigramme from './Organigramme'
 import MotPortrait from './MotPortrait'
@@ -243,6 +244,29 @@ export default function BlocsDePage({
             // et « Décrivez la photo » en attendant le fichier : mesuré le
             // 2026-11-11 sur une fiche CPA, le public voyait ce gabarit.
             if (!photoValable(b.url)) return null
+            {
+              // UNE IMAGE À ZONES : le dessin du client, à l'identique, et
+              // chaque case cliquable par-dessus. Sur téléphone le dessin
+              // garde une largeur lisible et défile de côté, plutôt que de
+              // rétrécir jusqu'à ne plus pouvoir lire une case.
+              const zones = zonesValables(b.zones)
+              if (zones.length > 0) return (
+                <figure key={k} style={{ margin: 0 }}>
+                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    <div style={{ position: 'relative', minWidth: 760 }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- une URL fournie par le client ne passe pas par le loader d'images */}
+                      <img src={b.url} alt={b.alt} loading="lazy" className="bloc-photo" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                      {zones.map((z, j) => (
+                        <Link key={j} href={`${base}/${z.chemin}`} aria-label={z.libelle} title={z.libelle} className="zone-image"
+                          style={{ position: 'absolute', left: `${z.x}%`, top: `${z.y}%`, width: `${z.l}%`, height: `${z.h}%`, borderRadius: 6 }} />
+                      ))}
+                    </div>
+                  </div>
+                  <style>{`.zone-image{outline:2px solid transparent;transition:outline-color .15s,background .15s}.zone-image:hover,.zone-image:focus-visible{outline-color:${primary};background:rgba(0,0,0,.06)}`}</style>
+                  {b.legende && <figcaption style={{ fontSize: 14, color: SOURDINE, marginTop: 8 }}>{b.legende}</figcaption>}
+                </figure>
+              )
+            }
             return (
               <figure key={k} style={{ margin: 0 }}>
                 {/* CLIQUABLE — l'image s'ouvre en grand dans un nouvel onglet.
