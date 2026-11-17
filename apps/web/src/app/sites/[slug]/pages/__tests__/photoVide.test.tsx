@@ -35,3 +35,32 @@ describe('photo vide', () => {
     expect(estUneFiche([{ type: 'citation', texte: 'x', auteur: '' } as Bloc])).toBe(false);
   });
 });
+
+// CPA, 2026-11-17 — « Ses missions » déplacé au-dessus du mot : la fiche du
+// chef comptable perdait son portrait rond (rendu en carré, page ordinaire).
+import FicheResponsable from '../FicheResponsable';
+describe('fiche : le mot n’a pas à être en tête', () => {
+  const photo = 'https://cdn.exemple.td/chef.png';
+  const blocs = [
+    { type: 'titre', texte: 'Ses missions' },
+    { type: 'citation', texte: 'La comptabilité doit rendre compte.', titre: 'Mot du chef comptable', auteur: 'Chef comptable', photo },
+    { type: 'liste', items: ['Tenir les comptes'] },
+    { type: 'appel', chemin: 'qui-sommes-nous/direction', libelle: 'Retour' },
+    { type: 'image', url: photo, alt: 'Décrivez la photo' },
+  ] as Bloc[];
+  const html = () => renderToStaticMarkup(<FicheResponsable site={{ name: 'CPA' }} titre="Chef comptable" blocs={blocs} base="" accent="#1e4d8c" parent={null} freres={[]} cheminCourant="x" />);
+
+  it('reste une fiche', () => expect(estUneFiche(blocs)).toBe(true));
+  it('le portrait rond porte la photo, une seule fois', () => {
+    const h = html();
+    expect(h).toContain('class="portrait"');
+    // compte les <img> affichées (React ajoute aussi un <link rel=preload>)
+    expect(h.split(`<img`).filter((x) => x.includes(`src="${photo}"`)).length).toBe(1);
+  });
+  it('« Ses missions » titre les missions, sans titre orphelin en double', () => {
+    expect(html().split('Ses missions').length - 1).toBe(1);
+  });
+  it('une page sans mot n’est pas une fiche', () => {
+    expect(estUneFiche([{ type: 'texte', texte: 'x' }, { type: 'citation', texte: 'y' }] as Bloc[])).toBe(false);
+  });
+});

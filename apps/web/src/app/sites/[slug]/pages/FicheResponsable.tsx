@@ -14,7 +14,7 @@ import type { EntreeMenu } from './typesPage'
 // « contact » et « pages liées ». La typographie du mot vient d'anie.td : sur-
 // titre au trait, grand titre, première phrase en avant, signature en italique.
 //
-// QUAND UNE PAGE EST-ELLE UNE FICHE ? Quand son PREMIER bloc est le mot d'un
+// QUAND UNE PAGE EST-ELLE UNE FICHE ? Quand elle contient le mot d'un
 // responsable, c'est-à-dire une citation qui porte une photo (`estUneFiche`).
 // Aucune colonne ni aucun réglage neuf : l'informaticien en fait une fiche en
 // posant ce bloc en tête, et la défait en le retirant. Toute autre page garde
@@ -32,9 +32,22 @@ type Mot = Extract<Bloc, { type: 'citation' }> & { photo: string }
 // un médaillon d'attente tient la place, et l'équipe pose sa photo dans /edit.
 // Le bloc citation par défaut de l'éditeur ne porte PAS de champ `photo` :
 // une citation ordinaire reste une citation ordinaire.
+//
+// PAS SEULEMENT EN TÊTE (CPA, 2026-11-17). La règle était « le PREMIER
+// bloc » : l'informaticien de la CPA a déplacé « Ses missions » au-dessus du
+// mot, et la fiche du chef comptable a perdu son portrait rond — sans rien
+// dire. Une mise en page qui tient à l'ordre d'un bloc casse au premier
+// glissement. Le mot est cherché PARTOUT dans la page (mesuré : sur les 79
+// pages, cela ne change que celle-là).
+const estLeMot = (b: Bloc | undefined): boolean =>
+  !!b && b.type === 'citation' && typeof b.photo === 'string' && (b.photo.trim() === '' || /^https?:\/\//.test(b.photo))
+
+export function indiceDuMot(blocs: Bloc[]): number {
+  return blocs.findIndex(estLeMot)
+}
+
 export function estUneFiche(blocs: Bloc[]): boolean {
-  const b = blocs[0]
-  return !!b && b.type === 'citation' && typeof b.photo === 'string' && (b.photo.trim() === '' || /^https?:\/\//.test(b.photo))
+  return indiceDuMot(blocs) >= 0
 }
 
 export default function FicheResponsable({
@@ -50,13 +63,20 @@ export default function FicheResponsable({
   freres: EntreeMenu[]
   cheminCourant: string
 }) {
-  const mot = blocs[0] as Mot
-  // Les missions : la PREMIÈRE liste, et le sous-titre qui la précède s'il y en a un.
+  const iMot = Math.max(0, indiceDuMot(blocs))
+  const mot = blocs[iMot] as Mot
+  // Les missions : la PREMIÈRE liste, et le sous-titre qui la précède s'il y en a un
+  // — le mot entre les deux ne compte pas (« Ses missions » posé au-dessus du mot).
   const iListe = blocs.findIndex((b) => b.type === 'liste')
   const liste = iListe >= 0 ? (blocs[iListe] as Extract<Bloc, { type: 'liste' }>) : null
-  const titreListe = iListe > 0 && blocs[iListe - 1].type === 'titre' ? (blocs[iListe - 1] as Extract<Bloc, { type: 'titre' }>) : null
-  const consommes = new Set<number>([0, ...(liste ? [iListe] : []), ...(titreListe ? [iListe - 1] : [])])
-  const reste = blocs.filter((_, i) => !consommes.has(i))
+  let iTitre = iListe - 1
+  if (iTitre === iMot) iTitre -= 1
+  const titreListe = iListe > 0 && iTitre >= 0 && blocs[iTitre].type === 'titre' ? (blocs[iTitre] as Extract<Bloc, { type: 'titre' }>) : null
+  const consommes = new Set<number>([iMot, ...(liste ? [iListe] : []), ...(titreListe ? [iTitre] : [])])
+  // LE PORTRAIT N'EST PAS RÉPÉTÉ : un bloc image qui porte LA MÊME photo que
+  // le portrait (posé pour « mettre la photo ») l'aurait montrée deux fois.
+  const reste = blocs.filter((b, i) => !consommes.has(i)
+    && !(b.type === 'image' && photoValable(mot.photo) && b.url === mot.photo))
 
   const [premier, ...suite] = mot.texte.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
   const c = site.contact ?? {}
