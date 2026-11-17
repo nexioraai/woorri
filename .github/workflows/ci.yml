@@ -20,7 +20,11 @@ on:
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    # ÉPINGLÉ le 2026-11-17 : `ubuntu-latest` est passé à 26.04 (libicu78) et le
+    # WebKit de playwright mis en cache exigeait libicudata.so.74 — le juge
+    # navigateur ne démarrait plus (CI main rouge, 43993698441). On remonte
+    # de version volontairement, pas par surprise.
+    runs-on: ubuntu-24.04
     # D-014 (monorepo) : l'app vit dans apps/web. `npm ci` s'execute a la
     # RACINE (lockfile workspace unique) ; toutes les autres commandes
     # s'executent dans apps/web -- y compris les 4 cliquets qui dependent de
@@ -499,7 +503,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ms-playwright-webkit-${{ hashFiles('apps/web/package-lock.json') }}
+          key: ms-playwright-webkit-${{ env.ImageOS }}-${{ hashFiles('apps/web/package-lock.json', 'package-lock.json') }}
 
       - name: Juge navigateur — l'instrument mord (WebKit)
         id: juge_navigateur
