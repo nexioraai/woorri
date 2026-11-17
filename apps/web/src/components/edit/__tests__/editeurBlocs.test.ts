@@ -107,10 +107,15 @@ describe('la route des fichiers ne laisse pas le client choisir le chemin', () =
 
 describe('l’écran de téléversement', () => {
   it('🔴 les trois appels portent l’en-tête Authorization', () => {
+    // Lister et retirer : deux `fetch` à en-tête. Déposer passe par
+    // `envoyerFichier` (2026-11-17, fichiers lourds) qui pose lui-même
+    // l'en-tête à partir du JETON — exigé ici, et vérifié dans
+    // depotDirect.test.ts (« chaque appel porte Authorization »).
     const appels = TELE.match(/fetch\(/gu) ?? [];
     const entetes = TELE.match(/headers:\s*(?:h|await entete\(\))/gu) ?? [];
-    expect(appels.length).toBe(3);
-    expect(entetes.length).toBe(3);
+    expect(appels.length).toBe(2);
+    expect(entetes.length).toBe(2);
+    expect(TELE).toMatch(/envoyerFichier\(\{[^\n]*jeton:\s*data\.session\?\.access_token/u);
   });
 
   it('🔴 un fichier peut être RETIRÉ', () => {

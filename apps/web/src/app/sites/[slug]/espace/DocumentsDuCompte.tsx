@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { envoyerFichier } from '@/lib/fichiers/envoyerFichier'
 
 // ============================================================================
 // LOT 12.1 — LE DOSSIER D'UN COMPTE, VU DES DEUX CÔTÉS.
@@ -113,12 +114,9 @@ export default function DocumentsDuCompte({
     setEnvoi(true); setMessage(null)
     try {
       const j = await jeton()
-      const form = new FormData()
-      form.append('fichier', fichier)
-      if (compte) form.append('compte', compte)
-      const r = await fetch(base, { method: 'POST', headers: { Authorization: `Bearer ${j}` }, body: form })
-      const d = await r.json().catch(() => ({}))
-      if (!r.ok) { setMessage(typeof d.error === 'string' ? d.error : mots.erreur); return }
+      // Au-delà de 4 Mo, le fichier part directement au stockage (envoyerFichier).
+      const r = await envoyerFichier({ url: base, seau: 'comptes-documents', jeton: j, fichier, champs: compte ? { compte } : {} })
+      if (!r.ok) { setMessage(typeof r.corps.error === 'string' ? r.corps.error : mots.erreur); return }
       // ON RELIT LA LISTE. Ajouter localement ce qu'on vient d'envoyer
       // montrerait un dépôt qui a peut-être échoué côté base.
       await charger()

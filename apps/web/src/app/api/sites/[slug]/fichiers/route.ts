@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { nomPropre } from '@/lib/fichiers/nomPropre'
+import { lireEnvoi, autoriserDepot } from '@/lib/fichiers/depotDirect'
 import { cleDuFichier, emploisDansLeSite, emploisDansLesPages, messageEmploye } from '@/lib/fichiers/emploisDuFichier'
 
 // ============================================================
@@ -78,23 +79,41 @@ export async function POST(req: Request, { params }: Params) {
   const garde = await requireSiteOwner(req, slug)
   if ('response' in garde) return garde.response
 
-  let form: FormData
-  try { form = await req.formData() } catch { return NextResponse.json({ error: 'Envoi illisible.' }, { status: 400 }) }
+  // Multipart (≤ 4 Mo) OU JSON (dépôt direct d'un fichier lourd) — voir
+  // `depotDirect.ts`. Le chemin reste CONSTRUIT ici dans les deux cas.
+  const envoi = await lireEnvoi(req)
+  if (!envoi) return NextResponse.json({ error: 'Envoi illisible.' }, { status: 400 })
 
-  const fichier = form.get('fichier')
-  const dossier = String(form.get('dossier') ?? 'documents') as Dossier
-  if (!(fichier instanceof File) || fichier.size === 0) {
+  const fichier = envoi.fichier
+  const dossier = (envoi.champ('dossier') ?? 'documents') as Dossier
+  if (!envoi.direct && (!fichier || fichier.size === 0)) {
     return NextResponse.json({ error: 'Aucun fichier recu.' }, { status: 400 })
   }
   if (!(DOSSIERS as readonly string[]).includes(dossier)) {
     return NextResponse.json({ error: 'Dossier inconnu.' }, { status: 400 })
   }
 
-  const nom = nomPropre(fichier.name)
+  const nomRecu = envoi.direct ? (envoi.champ('nomFichier') ?? '').trim() : (fichier as File).name
+  if (!nomRecu) return NextResponse.json({ error: 'Aucun fichier recu.' }, { status: 400 })
+  const nom = nomPropre(nomRecu)
   const chemin = `sites/${garde.site.id}/${dossier}/${nom}`
 
-  const { error } = await supabaseAdmin.storage.from(COMPARTIMENT)
-    .upload(chemin, fichier, { contentType: fichier.type || undefined, upsert: true })
+  let error: { message: string } | null = null
+  if (envoi.direct) {
+    const etape = envoi.champ('etape')
+    if (etape === 'preparer') {
+      const a = await autoriserDepot(COMPARTIMENT, chemin, true)
+      if ('erreur' in a) return NextResponse.json({ error: a.erreur }, { status: 500 })
+      return NextResponse.json(a, { status: 200 })
+    }
+    if (etape !== 'confirmer') return NextResponse.json({ error: 'Étape inconnue.' }, { status: 400 })
+    // À la confirmation, le chemin est RECALCULÉ depuis le nom : celui que le
+    // client renverrait n'est jamais lu.
+  } else {
+    const f = fichier as File
+    ;({ error } = await supabaseAdmin.storage.from(COMPARTIMENT)
+      .upload(chemin, f, { contentType: f.type || undefined, upsert: true }))
+  }
 
   if (error) {
     // Le stockage refuse sur le TYPE et sur la TAILLE. On traduit son message

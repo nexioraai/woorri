@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { journaliser } from '@/lib/audit/journaliser'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { nomPropre } from '@/lib/fichiers/nomPropre'
+import { lireEnvoi, cheminSous, autoriserDepot, constaterDepot } from '@/lib/fichiers/depotDirect'
 import { ouvreDesComptes } from '@/app/sites/[slug]/acces/ouvreDesComptes'
 
 // ============================================================================
@@ -202,12 +203,14 @@ export async function POST(req: Request, { params }: Params) {
   // l'en empêcherait.
   if (qui.role !== 'fournisseur') return REFUS()
 
-  let form: FormData
-  try { form = await req.formData() } catch {
-    return NextResponse.json({ error: 'Envoi illisible.' }, { status: 400 })
-  }
+  // Multipart (fichier joint, ≤ 4 Mo) OU JSON (dépôt direct d'un fichier
+  // lourd, en deux étapes) — voir `depotDirect.ts`. Les règles ci-dessous
+  // s'appliquent IDENTIQUES aux deux, et aux deux étapes.
+  const envoi = await lireEnvoi(req)
+  if (!envoi) return NextResponse.json({ error: 'Envoi illisible.' }, { status: 400 })
+  const champ = envoi.champ
 
-  const avisId = typeof form.get('avis') === 'string' ? String(form.get('avis')) : ''
+  const avisId = champ('avis') ?? ''
   if (!avisId) return NextResponse.json({ error: 'Avis non désigné.' }, { status: 400 })
 
   const { data: avis } = await supabaseAdmin
@@ -230,13 +233,13 @@ export async function POST(req: Request, { params }: Params) {
     }, { status: 409 })
   }
 
-  const fichier = form.get('fichier')
-  if (!(fichier instanceof File) || fichier.size === 0) {
+  const fichier = envoi.fichier
+  if (!envoi.direct && (!fichier || fichier.size === 0)) {
     return NextResponse.json({ error: 'Joignez votre offre en fichier.' }, { status: 400 })
   }
 
-  const nom = typeof form.get('nom') === 'string' ? String(form.get('nom')).trim() : ''
-  const contact = typeof form.get('contact') === 'string' ? String(form.get('contact')).trim() : ''
+  const nom = (champ('nom') ?? '').trim()
+  const contact = (champ('contact') ?? '').trim()
   if (nom.length < 2 || contact.length < 3) {
     return NextResponse.json({ error: 'Indiquez un nom et un contact pour cette offre.' }, { status: 400 })
   }
@@ -244,18 +247,43 @@ export async function POST(req: Request, { params }: Params) {
   // LE PRIX EST FACULTATIF, et un prix illisible vaut absence. Refuser
   // l'offre entière parce qu'un chiffre est mal tapé ferait perdre un
   // dossier recevable.
-  const prixBrut = typeof form.get('prix') === 'string' ? String(form.get('prix')).replace(/\s/gu, '').replace(',', '.') : ''
+  const prixBrut = (champ('prix') ?? '').replace(/\s/gu, '').replace(',', '.')
   const prix = prixBrut !== '' && Number.isFinite(Number(prixBrut)) && Number(prixBrut) >= 0
     ? Number(prixBrut) : null
-  const devise = typeof form.get('devise') === 'string' && String(form.get('devise')).trim().length >= 3
-    ? String(form.get('devise')).trim().slice(0, 8) : null
+  const devise = (champ('devise') ?? '').trim().length >= 3
+    ? (champ('devise') ?? '').trim().slice(0, 8) : null
 
   // UN CHEMIN UNIQUE PAR DÉPÔT : deux offres du même nom ne s'écrasent pas.
   const tampon = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-  const chemin = `sites/${qui.siteId}/avis/${avisId}/${tampon}-${nomPropre(fichier.name)}`
+  let chemin: string, nomFichier: string, octets: number, typeMime: string
+
+  if (envoi.direct) {
+    // ── DÉPÔT DIRECT. Le préfixe porte le COMPTE : un fournisseur ne peut
+    // constater que ce qu'il a lui-même déposé.
+    nomFichier = (champ('nomFichier') ?? '').trim()
+    if (!nomFichier) return NextResponse.json({ error: 'Joignez votre offre en fichier.' }, { status: 400 })
+    const prefixe = `sites/${qui.siteId}/avis/${avisId}/${qui.compteId}/`
+    const etape = champ('etape')
+    if (etape === 'preparer') {
+      const a2 = await autoriserDepot(SEAU, `${prefixe}${tampon}-${nomPropre(nomFichier)}`)
+      if ('erreur' in a2) return NextResponse.json({ error: a2.erreur }, { status: 500 })
+      return NextResponse.json(a2, { status: 200 })
+    }
+    if (etape !== 'confirmer') return NextResponse.json({ error: 'Étape inconnue.' }, { status: 400 })
+    const recu = champ('chemin')
+    if (!cheminSous(prefixe, recu)) return REFUS()
+    const { data: deja } = await supabaseAdmin.from('offres').select('id').eq('chemin', recu).maybeSingle()
+    if (deja) return NextResponse.json({ error: 'Cette offre est déjà enregistrée.' }, { status: 409 })
+    const vu = await constaterDepot(SEAU, recu)
+    if (!vu) return NextResponse.json({ error: 'Le fichier n’est pas arrivé. Réessayez.' }, { status: 400 })
+    chemin = recu; octets = vu.octets; typeMime = vu.type
+  } else {
+  const f = fichier as File
+  nomFichier = f.name; octets = f.size; typeMime = f.type || 'application/octet-stream'
+  chemin = `sites/${qui.siteId}/avis/${avisId}/${tampon}-${nomPropre(f.name)}`
 
   const { error: eDepot } = await supabaseAdmin.storage
-    .from(SEAU).upload(chemin, fichier, { contentType: fichier.type || undefined, upsert: false })
+    .from(SEAU).upload(chemin, f, { contentType: f.type || undefined, upsert: false })
   if (eDepot) {
     const m = eDepot.message.toLowerCase()
     const lisible =
@@ -266,6 +294,7 @@ export async function POST(req: Request, { params }: Params) {
           : eDepot.message
     return NextResponse.json({ error: lisible }, { status: 400 })
   }
+  }
 
   const { data, error } = await supabaseAdmin
     .from('offres')
@@ -275,8 +304,8 @@ export async function POST(req: Request, { params }: Params) {
       // que la Centrale sait à qui elle a affaire.
       compte_id: qui.compteId,
       nom, contact, prix, devise,
-      chemin, nom_fichier: fichier.name.slice(0, 200),
-      octets: fichier.size, type_mime: fichier.type || 'application/octet-stream',
+      chemin, nom_fichier: nomFichier.slice(0, 200),
+      octets, type_mime: typeMime,
       // `etat` N'EST PAS ENVOYÉ : une offre arrive `recue`, la Centrale n'a
       // encore rien décidé.
     })

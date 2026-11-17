@@ -11,8 +11,9 @@ describe('verifierFichier — prévenir avant l’envoi (CPA, 2026-11-17)', () =
   it('refuse un format inconnu en le nommant', () => {
     expect(verifierFichier({ name: 'video.mp4', size: 1000 })).toMatch(/« \.mp4 » non accepté/)
   })
-  it('4 Mo passe, au-delà non (mesuré : 4,4 Mo coupé par l’hébergeur)', () => {
-    expect(verifierFichier({ name: 'a.jpg', size: TAILLE_MAX_OCTETS })).toBeNull()
-    expect(verifierFichier({ name: 'a.jpg', size: 4.4 * 1048576 })).toMatch(/trop lourd \(4\.4 Mo\)/)
+  it('25 Mo passe (envoi direct au stockage au-delà de 4 Mo), au-delà non', () => {
+    expect(verifierFichier({ name: 'a.pdf', size: TAILLE_MAX_OCTETS })).toBeNull()
+    expect(verifierFichier({ name: 'a.pdf', size: 12 * 1048576 })).toBeNull()
+    expect(verifierFichier({ name: 'a.pdf', size: 26 * 1048576 })).toMatch(/trop lourd \(26\.0 Mo\)/)
   })
 })

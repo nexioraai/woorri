@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { envoyerFichier } from '@/lib/fichiers/envoyerFichier'
 
 // ============================================================================
 // LOT 13.1 — POSTULER À UN APPEL D'OFFRES.
@@ -128,12 +129,14 @@ export default function Postuler({
       const { data } = await supabase.auth.getSession()
       const j = data.session?.access_token
       const corps = new FormData(e.currentTarget)
-      corps.append('avis', avisId)
-      const r = await fetch(`/api/sites/${encodeURIComponent(slug)}/offres`, {
-        method: 'POST', headers: { Authorization: `Bearer ${j}` }, body: corps,
-      })
-      const d = await r.json().catch(() => ({}))
-      if (!r.ok) { setMessage(typeof d.error === 'string' ? d.error : mots.erreur); return }
+      const fichier = corps.get('fichier')
+      if (!(fichier instanceof File) || fichier.size === 0) { setMessage(mots.erreur); return }
+      // Les champs du formulaire, sauf le fichier ; au-delà de 4 Mo celui-ci
+      // part directement au stockage (envoyerFichier).
+      const champs: Record<string, string> = { avis: avisId }
+      corps.forEach((v, k) => { if (typeof v === 'string') champs[k] = v })
+      const r = await envoyerFichier({ url: `/api/sites/${encodeURIComponent(slug)}/offres`, seau: 'offres', jeton: j, fichier, champs })
+      if (!r.ok) { setMessage(typeof r.corps.error === 'string' ? r.corps.error : mots.erreur); return }
       setFaite(true)
       form.current?.reset()
     } catch { setMessage(mots.erreur) } finally { setEnvoi(false) }

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { nomPropre } from '@/lib/fichiers/nomPropre'
+import { lireEnvoi, cheminSous, autoriserDepot, constaterDepot } from '@/lib/fichiers/depotDirect'
 import { ouvreDesComptes } from '@/app/sites/[slug]/acces/ouvreDesComptes'
 import { lirePieces } from '@/app/sites/[slug]/espace/piecesFournisseur'
 
@@ -178,19 +179,20 @@ export async function POST(req: Request, { params }: Params) {
   const qui = await quiAppelle(req, slug)
   if (!qui) return REFUS()
 
-  let form: FormData
-  try { form = await req.formData() } catch {
-    return NextResponse.json({ error: 'Envoi illisible.' }, { status: 400 })
-  }
+  // Multipart (≤ 4 Mo) OU JSON (dépôt direct d'un fichier lourd, en deux
+  // étapes) — voir `depotDirect.ts`. Mêmes règles pour les deux.
+  const envoi = await lireEnvoi(req)
+  if (!envoi) return NextResponse.json({ error: 'Envoi illisible.' }, { status: 400 })
+  const champ = envoi.champ
 
-  const fichier = form.get('fichier')
-  if (!(fichier instanceof File) || fichier.size === 0) {
+  const fichier = envoi.fichier
+  if (!envoi.direct && (!fichier || fichier.size === 0)) {
     return NextResponse.json({ error: 'Aucun fichier reçu.' }, { status: 400 })
   }
 
   const compte = qui.role === 'titulaire'
     ? qui.compteId
-    : (typeof form.get('compte') === 'string' ? String(form.get('compte')) : '')
+    : (champ('compte') ?? '')
   if (!compte) return NextResponse.json({ error: 'Compte non désigné.' }, { status: 400 })
 
   // LE COMPTE DOIT APPARTENIR À CE SITE. Sans cette lecture, la Centrale
@@ -209,7 +211,7 @@ export async function POST(req: Request, { params }: Params) {
   // est DÉCLARÉ par la Centrale. Accepter une clé inconnue poserait un
   // rattachement qui n'honore rien — le dossier resterait incomplet pour
   // toujours, et personne ne comprendrait pourquoi.
-  const pieceDemandee = typeof form.get('piece') === 'string' ? String(form.get('piece')) : ''
+  const pieceDemandee = champ('piece') ?? ''
   let piece: string | null = null
   if (pieceDemandee) {
     const { data: siteLigne } = await supabaseAdmin
@@ -228,10 +230,34 @@ export async function POST(req: Request, { params }: Params) {
   // s'écraser : le second effacerait silencieusement le premier, dont la
   // ligne continuerait de prétendre qu'il existe.
   const tampon = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-  const chemin = `sites/${qui.siteId}/comptes/${compte}/${tampon}-${nomPropre(fichier.name)}`
+  let chemin: string, nomFichier: string, octets: number, typeMime: string
+
+  if (envoi.direct) {
+    // ── DÉPÔT DIRECT. Le préfixe est celui du COMPTE déjà vérifié ci-dessus.
+    nomFichier = (champ('nomFichier') ?? '').trim()
+    if (!nomFichier) return NextResponse.json({ error: 'Aucun fichier reçu.' }, { status: 400 })
+    const prefixe = `sites/${qui.siteId}/comptes/${compte}/`
+    const etape = champ('etape')
+    if (etape === 'preparer') {
+      const a = await autoriserDepot(SEAU, `${prefixe}${tampon}-${nomPropre(nomFichier)}`)
+      if ('erreur' in a) return NextResponse.json({ error: a.erreur }, { status: 500 })
+      return NextResponse.json(a, { status: 200 })
+    }
+    if (etape !== 'confirmer') return NextResponse.json({ error: 'Étape inconnue.' }, { status: 400 })
+    const recu = champ('chemin')
+    if (!cheminSous(prefixe, recu)) return REFUS()
+    const { data: deja } = await supabaseAdmin.from('comptes_documents').select('id').eq('chemin', recu).maybeSingle()
+    if (deja) return NextResponse.json({ error: 'Ce document est déjà enregistré.' }, { status: 409 })
+    const vu = await constaterDepot(SEAU, recu)
+    if (!vu) return NextResponse.json({ error: 'Le fichier n’est pas arrivé. Réessayez.' }, { status: 400 })
+    chemin = recu; octets = vu.octets; typeMime = vu.type
+  } else {
+  const f = fichier as File
+  nomFichier = f.name; octets = f.size; typeMime = f.type || 'application/octet-stream'
+  chemin = `sites/${qui.siteId}/comptes/${compte}/${tampon}-${nomPropre(f.name)}`
 
   const { error: eDepot } = await supabaseAdmin.storage
-    .from(SEAU).upload(chemin, fichier, { contentType: fichier.type || undefined, upsert: false })
+    .from(SEAU).upload(chemin, f, { contentType: f.type || undefined, upsert: false })
 
   if (eDepot) {
     // On TRADUIT le refus du stockage plutôt que de recopier ses bornes :
@@ -245,14 +271,15 @@ export async function POST(req: Request, { params }: Params) {
           : eDepot.message
     return NextResponse.json({ error: lisible }, { status: 400 })
   }
+  }
 
   const { data, error } = await supabaseAdmin
     .from('comptes_documents')
     .insert({
       site_id: qui.siteId, compte_id: compte, sens,
       depose_par: qui.userId,
-      nom: fichier.name.slice(0, 200),
-      chemin, octets: fichier.size, type_mime: fichier.type || 'application/octet-stream',
+      nom: nomFichier.slice(0, 200),
+      chemin, octets, type_mime: typeMime,
       piece,
     })
     .select(VU)

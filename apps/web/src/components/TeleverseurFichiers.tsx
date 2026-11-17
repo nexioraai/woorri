@@ -1,6 +1,7 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { envoyerFichier } from '@/lib/fichiers/envoyerFichier'
 import { verifierFichier, TEXTE_FORMATS, FORMATS_ACCEPTES } from '@/lib/fichiers/verifierFichier'
 
 // ============================================================================
@@ -55,14 +56,11 @@ export default function TeleverseurFichiers({
     const refus = verifierFichier(f)
     if (refus) { setErreur(refus); return }
     setOccupe(true); setErreur(null)
-    const corps = new FormData()
-    corps.append('fichier', f); corps.append('dossier', dossier)
-    const r = await fetch(`/api/sites/${slug}/fichiers`, { method: 'POST', headers: await entete(), body: corps })
-    const j = await r.json().catch(() => ({}))
+    // Au-delà de 4 Mo, le fichier part DIRECTEMENT au stockage (envoyerFichier).
+    const { data } = await supabase.auth.getSession()
+    const r = await envoyerFichier({ url: `/api/sites/${slug}/fichiers`, seau: 'site-fichiers', jeton: data.session?.access_token, fichier: f, champs: { dossier } })
     setOccupe(false)
-    // 413 : l'hébergeur a coupé l'envoi avant la route — pas de JSON à lire.
-    if (r.status === 413) { setErreur('Fichier trop lourd. La limite est de 4 Mo : réduisez la photo avant de l’envoyer.'); return }
-    if (!r.ok) { setErreur(j.error ?? 'Dépôt refusé.'); return }
+    if (!r.ok) { setErreur(typeof r.corps.error === 'string' ? r.corps.error : 'Dépôt refusé.'); return }
     // On RECHARGE depuis la route au lieu d'ajouter la réponse à la liste :
     // afficher ce qu'on croit avoir envoyé, c'est afficher son intention.
     await recharger()
