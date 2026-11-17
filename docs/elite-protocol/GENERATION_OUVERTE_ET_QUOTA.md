@@ -216,3 +216,124 @@ La colonne de gauche n'a pas changé : le fil, la boîte de saisie et « Modifie
 - La concurrence en production : elle ne se provoquera pas en production, car ce serait créer des sites pour une démonstration.
 
 Ce qui se vérifie après mise en ligne, depuis l'interface : une création de site par un compte non exempté fait passer `generation_count` de 1 exactement, et une création qui échoue ne le fait pas bouger.
+
+## 6. Ce que coûte une application PUBLIÉE, par mois — mesuré le 2026-11-17
+
+Toutes les mesures sont en **lecture seule**, faites vers 14 h 50 – 16 h UTC. Aucun appel payant, aucune écriture.
+
+### Ce qui est servi aujourd'hui
+
+- **3 applications publiées et servies** : atita, une et atel (`app_generations`, `publication_jeton` posé).
+- suivi, regi et neuf autres adresses sont en `supprimee`. suivi.deribfy.app et regi.deribfy.app répondent **404** (mesuré par `curl`).
+- **Les applications supprimées gardent leur schéma et leur compte** dans la base des œuvres : 9 schémas `oeuvre_*`, 14 comptes. Ce reste est consigné, il n'est pas corrigé.
+
+### a) Ce qu'une application publiée consomme
+
+| Poste | Mesure | Source |
+|---|---|---|
+| Base (schéma `oeuvre_<id>`) | **16 à 131 Ko** par application ; 728 Ko pour les 9 schémas ; 0 à 6 lignes chacun | `pg_total_relation_size`, `pg_stat_user_tables` (psql, `read only`) |
+| Base entière (psxbil) | 13 Mo, dont 10 Mo de catalogue Postgres | `pg_database_size` |
+| Fichiers | 2 fichiers, 7 Ko au total (`marque`) | `storage.objects` |
+| Comptes | 1 compte par application publiée, à la publication | `auth.users`, `app_metadata.oeuvre` |
+| Sous-domaine | **0 € par application** : `*.deribfy.app` est servi par une seule route, `/a/[sous]`, à travers le proxy. Aucun enregistrement par application | `x-matched-path: /a/[sous]` sur une et atita |
+| Liste des schémas exposés | +44 caractères par application ; aujourd'hui 10 schémas et 382 caractères (`authenticator`, `pgrst.db_schemas`) | psql ; `poser-oeuvre.ts:129-165, 365` |
+| **Chaque visite** | Une fonction Vercel **sans cache** (`no-store`, `x-vercel-cache: MISS`). Elle lit le document complet (`a/[sous]/route.ts:37`) puis **réassemble** le code (`:49`). Environ 183 Ko compressés par page, 2,4 à 4,4 s mesurées par `curl` | `curl` ; `route.ts` |
+
+**Sur la route `/a/[sous]`, en production, du 2026-10-19 au 2026-11-17 16:00 UTC** (`vercel metrics`) :
+
+| Mesure | Valeur |
+|---|---|
+| Invocations | 5 639 |
+| CPU actif | 594,8 s, soit 105 ms par invocation en moyenne |
+| Durée | 1 491 s, soit 264 ms en moyenne |
+| Mémoire provisionnée | **2 048 Mo** (pointe moyenne : 299 Mo) |
+| Fast Origin Transfer sortant | 659 Mo |
+| Fast Data Transfer sortant | 680 Mo |
+
+Une part de ces invocations vient de **robots** qui sondent des sous-domaines jamais publiés : grafana (37), minio (39), gitea (48), backend (52), jenkins (5), phpmyadmin (5)… Chacun déclenche la fonction. La liste rendue est tronquée à 50 noms, donc le total des robots n'est **pas** calculé.
+
+**Ce qui n'a PAS pu être mesuré :**
+
+- l'egress Supabase par visite ;
+- le nombre de requêtes PostgREST par application.
+
+Ni l'un ni l'autre n'est lisible sans le tableau de bord Supabase.
+
+### b) Les paliers, et le palier suivant
+
+**Vercel : le projet est déjà en Pro** (`vercel billing usage`, cycle du 19 oct. au 19 nov.).
+
+- 1 licence Pro à 20 $. Le crédit d'usage inclus de 20 $ est **épuisé à 100 %**.
+- L'infrastructure est à 25,08 $, pour un total estimé de 45,08 $.
+- Prix unitaires **déduits de cette facture** : CPU actif 0,130 $/h ; mémoire provisionnée 0,0114 $/Go-h ; Fast Origin Transfer 0,084 $/Go ; invocations 0,605 $ le million.
+- Inclus dans Pro (vercel.com/pricing) : 1 To de Fast Data Transfer et 10 M de requêtes CDN par mois.
+- **Le palier Vercel ne dépend pas du nombre d'applications, mais du nombre de visites** : 1 To de transfert inclus correspond à environ **8 millions de pages** à 120 Ko.
+
+**Supabase, base des œuvres (psxbil) : le plan est INCONNU.**
+
+- Non lisible sans le tableau de bord. L'organisation « supabase-bench-test » vient d'une note non remesurée. `max_connections = 60` ne distingue pas Nano de Micro.
+- Paliers officiels (supabase.com/pricing, lus le 2026-11-17) :
+
+| | Free | Pro |
+|---|---|---|
+| Prix | 0 $ | à partir de 25 $/mois, 10 $ de crédit de calcul (une instance Micro) |
+| Base | 500 Mo | 8 Go, puis 0,125 $/Go |
+| Egress | 5 Go | 250 Go, puis 0,09 $/Go |
+| Fichiers | 1 Go | 100 Go, puis 0,0213 $/Go |
+| Utilisateurs actifs par mois | 50 000 | 100 000, puis 0,00325 $ par utilisateur |
+| Pause | **après 1 semaine d'inactivité** | jamais |
+| Projets | 2 actifs gratuits au plus | — |
+
+- **Seuil de la base gratuite, sur les applications telles que mesurées** : (500 − 13 Mo) / 131 Ko ≈ **3 700 applications**. Ce chiffre vaut pour des applications presque vides (6 lignes au plus). Le vrai seuil viendra des **données saisies** par les commerçants, dont la croissance est **INCONNUE**.
+- **Le vrai palier, s'il s'agit du plan Free, n'est pas un nombre d'applications** : c'est la **pause après une semaine d'inactivité**. Une semaine sans visite, et **toutes** les applications publiées s'arrêtent ensemble. Pour une publication **payante**, cela impose le plan Pro, à 25 $ par mois.
+
+### c) Le coût mensuel par application publiée qui en découle
+
+**Le coût récurrent d'une visite**, sur la route `/a/[sous]`, ce cycle :
+
+| Poste | Calcul | Coût |
+|---|---|---|
+| CPU | 0,1652 h × 0,130 | 0,0215 $ |
+| Mémoire | 0,828 Go-h × 0,0114 | 0,0094 $ |
+| Fast Origin Transfer | 0,659 Go × 0,084 | 0,0553 $ |
+| Invocations | 5 639 × 0,605 $ le million | 0,0034 $ |
+| **Total** | | **0,0896 $ pour 5 639 invocations** |
+
+Soit **0,000016 $ par visite** (16 $ par million). Ce total représente 0,36 % de l'infrastructure Vercel du cycle.
+
+**Coût mensuel par application** = part fixe de Supabase Pro + visites :
+
+| Applications publiées | Part de 25 $ | + 1 000 visites/mois | + 10 000 visites/mois |
+|---|---|---|---|
+| 10 | 2,50 $ | 2,52 $ | 2,66 $ |
+| 50 | 0,50 $ | 0,52 $ | 0,66 $ |
+| 100 | 0,25 $ | 0,27 $ | 0,41 $ |
+| 1 000 | 0,025 $ | 0,041 $ | 0,184 $ |
+
+- Le stockage d'une application telle que mesurée (131 Ko au plus) est négligeable : moins de 0,00002 $ par mois au tarif de dépassement.
+- **Non comptés :**
+  - la licence Vercel de 20 $, payée de toute façon pour tout Deribfy ;
+  - l'egress Supabase par visite (INCONNU) ;
+  - les comptes des utilisateurs de chaque application (INCONNU tant qu'aucun commerçant n'en a créé).
+
+**Les coûts ponctuels de la règle produit**, payés par Deribfy avant toute publication :
+
+| Geste | Coût mesuré | Source |
+|---|---|---|
+| L'application gratuite (une génération directe) | **0,056 à 0,186 $** (8 tentatives depuis le 2026-11-16) ; plafond 0,50 $ | `app_generation_attempts` |
+| Une retouche (« essayer gratuit, sans limite ») | **0,0025 $ et 0,0030 $**, les **deux seules** retouches enregistrées. Plafond annoncé : 0,03 $ par retouche | `app_generation_versions`, étape « modifiée : … » |
+
+**À retenir pour fixer un prix :**
+
+1. **Le coût mensuel d'une application publiée est dominé par la part fixe de Supabase** (25 $ divisés par le nombre d'applications), pas par les visites. Avec peu d'applications, chacune coûte quelques dollars par mois ; à partir de la centaine, quelques dizaines de centimes.
+2. **La dépense non bornée vient d'ailleurs : des retouches gratuites et illimitées.** À 0,03 $ au plafond, 100 retouches coûtent 3 $ pour une application qui ne sera peut-être jamais publiée. L'échantillon réel (2 retouches à 0,003 $) est trop petit pour conclure.
+3. **Deux économies sont visibles, et ne sont pas faites :**
+   - chaque visite réassemble le code sans cache ;
+   - des robots déclenchent la fonction sur des sous-domaines inexistants.
+
+   Toutes deux sont minimes aux volumes actuels.
+
+**À fournir par le propriétaire pour fermer les INCONNUS** (une lecture du tableau de bord, pas de SQL) :
+
+- le **plan** du projet Supabase des œuvres ;
+- son **egress** sur 30 jours.
