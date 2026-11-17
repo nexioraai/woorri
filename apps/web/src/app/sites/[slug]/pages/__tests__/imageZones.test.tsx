@@ -15,6 +15,8 @@ describe('image à zones cliquables', () => {
     expect(html).toContain('aria-label="Responsable RH"');
     expect(html).toMatch(/left:10%;top:20%;width:15%;height:8%/);
     expect(html).not.toContain('Agrandir');
+    // sort de la colonne de texte pour rester lisible, sans dépasser l'écran
+    expect(html).toContain('width:min(1360px, calc(100vw - 32px))');
   });
 
   it('sans zone, le bloc image reste exactement l’ancien (s’ouvre en grand)', () => {
