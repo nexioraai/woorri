@@ -47,6 +47,8 @@ const WEB = ['apps', 'web', 'src']
 
 const ATELIER = (): string => lire(...WEB, 'app', 'atelier', '[id]', 'page.tsx')
 const CADRE = (): string => lire(...WEB, 'components', 'atelier', 'CadreApercu.tsx')
+const CHOIX = (): string => lire(...WEB, 'components', 'atelier', 'ChoixAppareil.tsx')
+const ABONNEMENT = (): string => lire(...WEB, 'components', 'atelier', 'BoutonAbonnement.tsx')
 
 /** Le corps d'une fonction de l'écran, de sa déclaration à la suivante. */
 const corpsDe = (source: string, nom: string): string => {
@@ -171,13 +173,17 @@ describe('EP-317 · l’atelier', () => {
     // `from '@/lib/apps/fournisseur'` : le guillemet precede le `@`, donc
     // l'aiguille n'apparaissait jamais. On extrait desormais les SOURCES
     // d'import et on les juge une par une.
-    for (const [nom, source] of [['atelier', ATELIER()], ['cadre', CADRE()]] as const) {
+    // ── 2026-11-17 : LE CADRE N'IMPORTE PLUS RIEN. Ses bascules sont montees
+    // dans la barre (`ChoixAppareil`) ; il ne fait plus qu'appliquer une
+    // largeur. Aucun import = rien qu'il puisse atteindre : on l'EXIGE, et
+    // les deux composants clients de la barre prennent sa place ci-dessous.
+    expect(CADRE(), 'le cadre importe de nouveau : le remettre dans la boucle').not.toMatch(/^import\s/mu)
+    for (const [nom, source] of [['atelier', ATELIER()], ['choix', CHOIX()], ['abonnement', ABONNEMENT()]] as const) {
       const sources = [...source.matchAll(/(?:from|import)\s*['"]([^'"]+)['"]/gu)].map((m) => m[1])
-      // Le cadre en a exactement trois (react, lucide, appareils) : exiger
-      // davantage etait MON defaut, pas le sien. Le garde-fou doit prouver
-      // que l'extraction marche, pas imposer un nombre d'imports.
+      // Le garde-fou doit prouver que l'extraction marche, pas imposer un
+      // nombre d'imports : chacun de ces trois en a au moins deux.
       expect(sources.length, `${nom} n’a aucun import : le contrôle ne mesure rien`)
-        .toBeGreaterThanOrEqual(3)
+        .toBeGreaterThanOrEqual(2)
       for (const interdit of ['supabase-admin', 'fournisseur', 'journal', 'bac-a-sable']) {
         const fautifs = sources.filter((s2) => s2.includes(interdit))
         expect(fautifs, `${nom} atteint ${interdit} — le SDK partirait dans le navigateur`)

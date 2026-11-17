@@ -58,6 +58,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { CadreApercu } from '@/components/atelier/CadreApercu';
+import { ChoixAppareil } from '@/components/atelier/ChoixAppareil';
+import { BoutonAbonnement } from '@/components/atelier/BoutonAbonnement';
 import { IdentifiantsOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { adresseProposee, TITRE_SANS_NOM } from '@/lib/apps/nom-produit';
 import { echangesDe, heureCourte, type VersionLue } from '@/lib/apps/fil-atelier';
@@ -82,6 +84,8 @@ export default function AtelierPage() {
   const [versions, setVersions] = useState<{ liste: VersionLue[]; courante: number | null } | null>(null);
   const [html, setHtml] = useState('');
   const [etatApercu, setEtatApercu] = useState('Chargement de l’aperçu…');
+  /** La largeur de l'aperçu : choisie au centre de la barre, appliquée par le cadre. */
+  const [largeur, setLargeur] = useState<number>(1280);
   const [texte, setTexte] = useState('');
   const [plafond, setPlafond] = useState('');
   const [perimetre, setPerimetre] = useState('');
@@ -507,9 +511,31 @@ export default function AtelierPage() {
   return (
     <main className="flex h-[100dvh] flex-col overflow-hidden bg-[#0A050E] text-white">
       {/* ── ① LA BARRE DU HAUT, MINIMALE.
-          Rien de marketing. Le nom de l'application, le retour vers les
-          projets, et les trois gestes qu'on fait depuis un atelier. */}
-      <header className="flex shrink-0 items-center gap-3 border-b border-white/[0.07] px-4 py-2.5">
+          Rien de marketing. La marque, le retour vers les projets, le nom
+          de l'application ; au CENTRE le choix de l'appareil ; à droite
+          les gestes qu'on fait depuis un atelier.
+          ── TROIS ZONES (2026-11-17). Gauche et droite prennent chacune
+          la moitié de ce qui reste (`flex-1`) : le choix de l'appareil
+          tombe ainsi au centre de la barre, dans la zone qui était vide,
+          quelle que soit la longueur du nom.
+          ── SOUS 1024 PX, TROIS RANGÉES. Mesuré à 390 px : sur une seule
+          rangée, les gestes chevauchaient le titre. La barre passe donc à
+          la ligne — identité, puis l'appareil centré, puis les gestes. */}
+      <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-white/[0.07] px-4 py-2.5 lg:flex-nowrap">
+        <div className="flex min-w-0 flex-1 basis-full items-center gap-3 lg:basis-0">
+        {/* L'IDENTITÉ DE DERIBFY : la même marque que la barre latérale.
+            L'atelier s'ouvre seul après une génération — on doit savoir
+            où l'on est. */}
+        <span className="flex shrink-0 items-center gap-2" translate="no">
+          <span
+            aria-hidden
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-sm font-black text-white"
+            style={{ background: 'radial-gradient(circle at 30% 30%, #4F6EF5 0%, transparent 60%), radial-gradient(circle at 70% 70%, #FA5D1E 0%, transparent 60%), #16090e' }}
+          >
+            D
+          </span>
+          <span className="hidden text-base font-black tracking-tight text-nexiora sm:inline">deribfy</span>
+        </span>
         <Link
           href="/dashboard"
           className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-xs text-slate-300 transition hover:border-white/20 hover:text-white"
@@ -517,9 +543,15 @@ export default function AtelierPage() {
           <ArrowLeft size={14} strokeWidth={2} aria-hidden />
           Mes projets
         </Link>
-        <h1 className="min-w-0 flex-1 truncate text-sm font-semibold text-white/90">{nom}</h1>
+        <h1 className="min-w-0 truncate text-sm font-semibold text-white/90">{nom}</h1>
+        </div>
 
-        <div className="relative flex shrink-0 items-center gap-1.5">
+        <div className="flex basis-full justify-center lg:basis-auto">
+          <ChoixAppareil largeur={largeur} onChoisir={setLargeur} />
+        </div>
+
+        <div className="flex min-w-0 flex-1 basis-full justify-end lg:basis-0">
+        <div className="relative flex flex-wrap items-center justify-end gap-1.5 lg:flex-nowrap">
           {/* ── L'HISTORIQUE EST UN MENU DÉROULANT, PAS UN PANNEAU.
               Un panneau séparé poussait l'aperçu vers le bas : on perdait de
               la hauteur d'application pour lire une liste qu'on consulte
@@ -574,6 +606,9 @@ export default function AtelierPage() {
             <Globe size={14} strokeWidth={2} aria-hidden />
             Publier
           </button>
+          {/* À CÔTÉ DE « PUBLIER » : l'emplacement et l'état, rien de
+              branché tant que le quota n'est pas décidé (décision 3). */}
+          <BoutonAbonnement />
           <button
             type="button"
             onClick={() => { void telecharger(); }}
@@ -582,6 +617,7 @@ export default function AtelierPage() {
             <Download size={14} strokeWidth={2} aria-hidden />
             Télécharger
           </button>
+        </div>
         </div>
       </header>
 
@@ -801,7 +837,7 @@ export default function AtelierPage() {
         </section>
 
         {/* ── ③ L'APERÇU — deux tiers, toute la hauteur, défilement interne. */}
-        <CadreApercu titre={nom} srcDoc={html} etat={etatApercu} />
+        <CadreApercu titre={nom} srcDoc={html} etat={etatApercu} largeur={largeur} />
       </div>
     </main>
   );

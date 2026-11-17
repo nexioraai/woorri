@@ -85,6 +85,8 @@ export default defineConfig({
       'src/components/edit/**/*.test.tsx',
       // test-or de l'Escalier partage (trois modes au caractere pres)
       'src/components/onboarding/**/*.test.tsx',
+      // 2026-11-17 — la barre de l'atelier (choix de l'appareil, abonnement).
+      'src/components/atelier/**/*.test.tsx',
       'src/app/__tests__/**/*.test.ts',
       'src/lib/cj/**/*.test.ts',
       'src/lib/shop/**/*.test.ts',
