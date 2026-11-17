@@ -97,3 +97,35 @@ Elle doit suivre la même douceur que la suppression : rien d'irréversible avan
 - **À la suppression :** retirer le schéma de `pgrst.db_schemas` (l'API cesse de servir les données), et bannir ou supprimer le compte.
 - **À la purge (30 jours) :** `drop schema … cascade` et suppression du compte.
 - **Preuve attendue :** sur une copie jetable, une application supprimée ne doit plus se lire par l'API, et une application restaurée avant 30 jours doit se relire. Preuve réelle sur la base, comme `porte-deux-regimes.tir.ts`, avec l'accord du propriétaire.
+
+## 6. QUARANTAINE DES 6 APPLICATIONS DÉJÀ SUPPRIMÉES — FAITE le 2026-11-17
+
+Accord du propriétaire, avec trois conditions : le blanc comme verrou, le retour écrit avant la bascule, et un retour immédiat si atita cesse de répondre. **Rien n'est détruit : les deux gestes sont réversibles, et les données restent jusqu'au jour 30.**
+
+### ① Le blanc (lecture seule)
+
+- **Avant :** 10 schémas : `public`, `graphql_public`, `faa9f0c3`, `ba20655a`, `35ed32c1`, `4d480027`, `bbf07fd6`, `b010d704`, `3b96d2e7`, `c488670a`.
+- **Après :** 5 schémas : `public`, `graphql_public`, `b010d704` (atel), `3b96d2e7` (une), `c488670a` (atita). Ordre inchangé.
+- Le script a vérifié, avant d'écrire, que la différence était **exactement** les 5 schémas des applications supprimées.
+
+### ② Le retour, écrit avant la bascule
+
+`alter role authenticator set pgrst.db_schemas = '<les 10>'`, puis `notify pgrst, 'reload config'` et `notify pgrst, 'reload schema'`, dans une transaction. Le retour du bannissement est `ban_duration: "none"` pour les 6 identifiants, écrit avant de bannir.
+
+### ③ La bascule
+
+Écrite à **21:18:50 UTC**, par la même forme que la publication (`poser-oeuvre.ts:362-380`). Un garde rejouait le retour si atita ne répondait plus dans les 30 s. **Il n'a pas eu à servir** : atita répondait (API `42501`, page 200).
+
+### Les preuves (2026-11-17, après la bascule)
+
+| Preuve | Avant | Après |
+|---|---|---|
+| L'API sans session, sur les 5 schémas retirés (suivi, regi, asso, asosa, `faa9f0c3`) | `42501` (servi) | **`PGRST106`** (non servi) |
+| L'API, sur atita, une et atel | `42501` | **`42501`** (toujours servi) |
+| Les pages atita, une et atel | 200 | **200** |
+| La liste relue en base | — | identique, au caractère près, à la liste prévue |
+| `banned_until` sur les 6 comptes (suivi, regi, asso, asosa, `faa9f0c3`, snenak) | aucun | **2126-10-24**, posé de 21:19:59 à 21:20:01 UTC, relu en base. Les 3 comptes en service restent NON bannis |
+
+**Ce que cela ferme :** les données des applications supprimées ne se lisent plus par l'API (schéma non servi), et leurs comptes ne peuvent plus ouvrir de session. Un jeton déjà émis expire de lui-même. Il ne servirait d'ailleurs à rien : le schéma n'est plus servi.
+
+**Observation, non traitée :** 4 autres comptes d'application (`56a9d5b9`, `71dba5c7`, `7da20064`, `bb1d4d1b`) n'ont **aucun** schéma dans la base des œuvres. Ce sont des restes de publications d'essai. Ils ne lisent rien, puisqu'il n'y a pas de schéma, et n'ont pas été touchés.
