@@ -254,7 +254,10 @@ export default function BlocsDePage({
                 // PLUS LARGE QUE LA COLONNE DE TEXTE (CPA, 2026-11-17) : un
                 // organigramme réduit à ~770 px se lit mal ; il sort de la
                 // colonne, centré, jusqu'à 1360 px — jamais plus que l'écran.
-                <figure key={k} style={{ margin: 0, position: 'relative', left: '50%', transform: 'translateX(-50%)', width: 'min(1360px, calc(100vw - 32px))' }}>
+                // Centré par MARGE et non par `transform` : l'animation
+                // d'apparition des blocs écrase `transform` (mesuré : dessin
+                // décalé d'une demi-colonne vers la droite).
+                <figure key={k} style={{ marginTop: 0, marginBottom: 0, marginLeft: 'calc((100% - min(1360px, calc(100vw - 32px))) / 2)', marginRight: 0, width: 'min(1360px, calc(100vw - 32px))' }}>
                   <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                     <div style={{ position: 'relative', minWidth: 760 }}>
                       {/* eslint-disable-next-line @next/next/no-img-element -- une URL fournie par le client ne passe pas par le loader d'images */}

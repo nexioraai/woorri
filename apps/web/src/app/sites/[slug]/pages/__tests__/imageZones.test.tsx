@@ -17,6 +17,8 @@ describe('image à zones cliquables', () => {
     expect(html).not.toContain('Agrandir');
     // sort de la colonne de texte pour rester lisible, sans dépasser l'écran
     expect(html).toContain('width:min(1360px, calc(100vw - 32px))');
+    expect(html).toContain('margin-left:calc((100% - min(1360px, calc(100vw - 32px))) / 2)');
+    expect(html).not.toContain('translateX(-50%)');
   });
 
   it('sans zone, le bloc image reste exactement l’ancien (s’ouvre en grand)', () => {
