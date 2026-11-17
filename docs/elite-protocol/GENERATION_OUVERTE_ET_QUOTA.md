@@ -337,3 +337,72 @@ Soit **0,000016 $ par visite** (16 $ par million). Ce total représente 0,36 % d
 
 - le **plan** du projet Supabase des œuvres ;
 - son **egress** sur 30 jours.
+
+## 7. Le quota des sites et les 9 comptes sans ligne `profiles` — vérifié le 2026-11-17
+
+**Question du propriétaire :** la réservation lit et incrémente `profiles`. Pour un compte sans ligne, échoue-t-elle, ou passe-t-elle sans compter ?
+
+**Réponse : elle compte. Ce n'est pas un trou.**
+
+- **La ligne est créée avant la réservation.** `reserverPlace` commence par `creerSiAbsente` (`lib/quota/reservation.ts:63-64`), soit `INSERT … ON CONFLICT (id) DO NOTHING` (`:126`), puis prend la place par CAS. Le test « ligne absente : créée à 0, puis la première place est prise » le couvre (`quota-reservation.test.ts`).
+- **L'insertion `{ id, generation_count: 0 }` est valide.** Schéma servi par PostgREST, mesuré : les colonnes obligatoires sont `id`, `generation_count`, `created_at` et `welcomed`, et toutes sauf `id` ont une valeur par défaut (`0`, `now()`, `false`).
+- **C'est déjà ainsi que les 15 profils existants sont nés.** Aucun déclencheur ne les crée : ils sont apparus de 165 s à 27 jours **après** leur compte, à la première création de site, par l'ancien `upsert`. Aucun autre code du dépôt n'insère dans `profiles`.
+- **Les 9 comptes sans ligne sont donc des comptes qui n'ont jamais réussi à créer un site.** À leur première demande, la ligne naît à 0, et la place est prise.
+
+**Le seul passage sans compter, dit franchement : la panne.** Si l'insertion, la lecture ou le CAS **échouent côté base**, la réservation laisse passer sans compter (`reservee: false`, journalisé). C'est un choix délibéré, repris de l'ancien code, qui lisait 0 sur erreur. Il vaut pour **tous** les comptes, pas pour ces 9. Un client ne peut pas provoquer cette panne.
+
+**Ce qui n'est pas prouvé :** le passage réel par PostgREST en production, pour un compte sans ligne. Il se verra à la première création de site par l'un de ces comptes : sa ligne `profiles` doit apparaître avec `generation_count = 1`.
+
+## 8. Le risque de pause — prêt à répondre dès que Youssouf donne le plan
+
+**Le plan de la base des œuvres reste INCONNU** tant que Youssouf ne l'a pas lu.
+
+### a) Si c'est le plan gratuit — d'après la documentation officielle (supabase.com/docs/guides/platform/free-project-pausing, lue le 2026-11-17)
+
+- **Combien de jours :** « inactive if it does not receive sufficient user database activity **over the past week** ». Donc 7 jours.
+  - Le seuil exact n'est pas défini : « typically a few user requests to the database each day over the previous week is enough ».
+  - **Il est donc INCONNU** pour une application de garage visitée irrégulièrement.
+- **Au réveil, rien ne revient seul.**
+  - La documentation ne décrit **aucune** reprise automatique à l'arrivée de requêtes.
+  - Elle décrit seulement un geste manuel : « Click **Resume project** and confirm », depuis le tableau de bord.
+  - La durée de la reprise n'est pas donnée : **INCONNUE**.
+- **Les données sont gardées** : « The project will return to its previous state, including data and configurations ». La reprise reste possible pendant un an.
+- **Ce que voit le client du garage pendant la pause [DÉDUIT du code, non observé] :**
+  - la page de l'application **s'affiche quand même**, car elle est servie par Vercel depuis le document rangé dans la base **Deribfy** (`a/[sous]/route.ts:37`), pas depuis la base des œuvres ;
+  - en revanche, **toute lecture et toute saisie échouent**, puisque l'application parle à la base des œuvres en pause.
+  - L'application est donc **morte en apparence vivante**, jusqu'à ce que quelqu'un clique « Resume » dans le tableau de bord.
+- **Après la reprise [DÉDUIT] :** la liste des schémas exposés est un réglage du rôle `authenticator`, rangé **dans** la base (`poser-oeuvre.ts:365`). Elle fait partie des « configurations » restaurées, et l'application devrait revenir sans republication. **Ce n'est pas vérifié** : aucune pause n'a été observée.
+
+**Pour une application de garage en service, la conséquence est nette :** une semaine creuse, et ses données deviennent inaccessibles sans prévenir personne, jusqu'à un geste manuel de Deribfy.
+
+### b) Supabase Pro rapporté aux 3 applications publiées aujourd'hui
+
+- **Prix :** Supabase Pro coûte **25 $ par mois** par organisation, avec 10 $ de crédit de calcul, ce qui couvre une instance Micro (supabase.com/pricing, lu le 2026-11-17).
+- **Par application :** si la base des œuvres est seule dans son organisation, 25 / 3 = **8,33 $ par application et par mois**. Les visites ajoutent environ 0,000016 $ chacune (§6) : négligeable.
+- **Si l'organisation contient d'autres projets** : chaque projet de plus est facturé en calcul au-delà du crédit. Le contenu de l'organisation « supabase-bench-test » est **INCONNU**, faute d'avoir été remesuré.
+- **Le même calcul à mesure que les publications payantes arrivent :** 10 applications → 2,50 $ ; 100 → 0,25 $ (§6 c).
+
+**Observation, sans décision :** la base de **Deribfy lui-même** (nexiora-ai) est dans une organisation affichée **FREE**, sur la capture du propriétaire du 2026-11-17. Elle est soumise à la même règle de pause. Son activité est quotidienne (le site, et les crons de `vercel.json`), donc le risque y est faible. Il n'est pas nul si le trafic s'arrête.
+
+## 9. Borner les retouches — proposition chiffrée (rien n'est construit)
+
+**Le constat du propriétaire :** la règle produit tient, mais les retouches gratuites et illimitées forment la seule dépense non bornée. Il faut les borner, non pour vendre, mais pour qu'**un seul utilisateur acharné ne coûte pas plus que dix abonnés ne rapportent**.
+
+**Les mesures disponibles :**
+
+- **Plafond d'une retouche :** il est calculé **par application**, selon la taille de son code et au tarif de pointe (`plafondRetouche`, `retouche.ts:54` ; `retoucher/route.ts:311`). Il vaut « au plus 0,03 $ » sur l'atelier d'atita.
+- **Coût réel :** 0,0025 $ et 0,0030 $, sur **les deux seules** retouches enregistrées (`app_generation_versions`). L'échantillon est trop petit pour connaître la distribution : **INCONNU** au-delà de ces deux points.
+- **La génération gratuite :** de 0,056 à 0,186 $ mesurés, plafond 0,50 $.
+
+**Proposition :**
+
+| Situation | Borne proposée | Pire cas (au plafond, 0,03 $) | Cas mesuré (environ 0,003 $) |
+|---|---|---|---|
+| Application **gratuite**, pas encore publiée | **30 retouches au total** | 0,90 $ ; avec la génération, **1,40 $ par compte au plus** | 0,09 $ ; avec la génération, environ 0,28 $ |
+| Application **publiée** (payante) | **100 retouches par mois et par application** | **3,00 $ par mois** | 0,30 $ par mois |
+| Tout le monde | **20 retouches par jour au plus** (protection contre une boucle, comme les 10 générations par jour) | 0,60 $ par jour | 0,06 $ par jour |
+
+- **La règle « un acharné ≤ dix abonnés » devient une condition sur le prix :** au pire cas, 3,00 $ par mois ≤ 10 × P, donc **P ≥ 0,30 $ par mois et par application publiée**. Le plancher d'hébergement du §8 b (8,33 $ à 3 applications sur Pro) est bien au-dessus. **À l'échelle actuelle, c'est l'hébergement qui fixe le plancher du prix, pas les retouches.**
+- **Une borne en dollars plutôt qu'en nombre.** Le plafond varie d'une application à l'autre. Un budget en dollars (0,90 $ gratuit ; 3,00 $ par mois publié) est donc exact, quand un nombre ne l'est qu'au plafond d'atita. L'écran afficherait le nombre restant, calculé avec le plafond de **cette** application.
+- **La même mécanique que le quota des sites** : réservation atomique avant l'appel au modèle, restitution si la retouche échoue avant de rien dépenser.
+- **À revoir dès qu'il y aura plus de deux retouches réelles en base**, et avec le prix décidé. Ces bornes sont une proposition, pas une mesure.
