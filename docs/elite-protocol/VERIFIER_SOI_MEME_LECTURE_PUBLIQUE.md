@@ -11,7 +11,7 @@ Objectif : savoir par soi-même, sans croire Deribfy, qui peut lire chaque table
 
 Les deux ne se mélangent pas, par construction (`base-oeuvres.ts:19-34`). Les tables des applications **ne sont pas** dans `nexiora-ai`. C'est pourquoi les deux essais faits dans `nexiora-ai` ont rendu « No rows returned ».
 
-Les noms des projets viennent de la note du 2026-11-14 (`deribfy-projets-supabase`). Les identifiants, eux, ont été remesurés aujourd'hui.
+**NON REMESURÉ :** le nom `deribfy-bus-intercites` et l'organisation « supabase-bench-test » viennent de la note du 2026-11-14 (`deribfy-projets-supabase`). Ils n'ont pas été relus le 2026-11-16, car la CLI Supabase n'était pas disponible. Les **identifiants** `lefume…` et `psxbil…` ont été remesurés ce jour-là, dans le code servi.
 
 ## 2. L'éditeur SQL du bon projet
 
@@ -49,6 +49,8 @@ order by 1, 2;
 - `sans_compte_peut_ecrire` doit toujours valoir `false`.
 
 **Résultat du 2026-11-16 à 23 h UTC** : 22 tables dans 8 applications. Les 22 sont réservées aux comptes de l'application, et aucune n'est modifiable sans compte.
+
+**Recoupé par le propriétaire** le même soir : il a lancé la requête dans l'éditeur du projet, et l'export CSV contient les mêmes 22 lignes, toutes « comptes de l'application seulement » et `false`. **Résultat retenu** : aucune table publiée n'est lisible ni modifiable sans compte au 2026-11-16.
 
 L'œuvre `425a49a4`, celle de l'avertissement, n'y figure pas. Le schéma ne se crée qu'à la publication (`publier/route.ts`, `poserOeuvre`), et elle n'a jamais été publiée.
 

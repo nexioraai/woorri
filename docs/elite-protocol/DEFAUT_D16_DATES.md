@@ -87,6 +87,8 @@ Mesuré sous `Africa/Ndjamena` (UTC+1), le marché réel :
 
 Le générateur actuel est celui du 16 : il produit cette forme dans la plupart des cas. La bloquer aurait refusé la plupart des générations, alors qu'elles sont payées. **INCONNU** : combien le modèle en corrige après le reproche, car le juge n'existait pas lors de ces générations. La forme reste **reprochée à chaque tour** et **dite sur la carte** si elle demeure.
 
+**MESURE À REPRENDRE, ce n'est pas un chantier.** Dans quelques jours, sur les générations postérieures au commit `554b0211` (en ligne le 2026-11-16), il faudra compter combien corrigent la forme après le reproche. Les deux sources sont `trace.tours[]` (le reproche « DES DATES DÉCALÉES » à un tour) et le diagnostic « date(s) qui peuvent s'afficher décalées » sur l'œuvre livrée. Ce sont les prochaines générations de Youssouf qui répondront.
+
 La mesure a d'abord donné zéro partout. C'était une faute de mon instrument : la clé « paquet » n'avait pas d'extension, et le juge ignore ces fichiers. La mesure a été refaite avec « paquet.js ».
 
 **Le cliquet EP-364 a aussi fonctionné.** Il a attrapé une ancre rigide de mon propre test (377 contre 376 tolérées), corrigée dans `92d6d268`.
