@@ -38,6 +38,7 @@ import {
   oublierGeneration,
   decisionDuSuivi,
 } from '@/lib/apps/suivi-generation'
+import { ouvrirAtelier } from '@/components/atelier/ouvrirAtelier'
 import { resumeDuJournal } from '@/lib/apps/journal-tirages';
 import type { EtatGeneration } from '@/lib/apps/service-generations';
 import type { EtatMagasin } from '@/lib/apps/exigences-magasin';
@@ -1107,7 +1108,7 @@ export default function ConversationApplication({
         // s'étranglerait sur ces lignes vides.
         const d =
           (await lireReponseQuiBat<{
-            ok?: boolean; html?: string; motif?: string; error?: string;
+            ok?: boolean; id?: string | null; html?: string; motif?: string; error?: string;
             tours?: unknown[]; dureeMs?: number;
             jetons?: { fichier: string; reference: string }[];
             execution?: { monteDansSimulateur: boolean; indisponible?: string; ecransVisites?: number; ecransDecouverts?: number; ecransDistincts?: number; erreurs: { quoi: string; message: string }[] };
@@ -1238,6 +1239,12 @@ export default function ConversationApplication({
             ],
           },
         ]);
+        // ── L'ATELIER S'OUVRE TOUT SEUL (2026-11-17, demande du propriétaire).
+        //
+        // La route rend l'identifiant de l'œuvre ; on y va. Sans identifiant
+        // (écriture en base refusée), on reste ici : l'aperçu ci-dessus est
+        // la seule trace de l'application, on ne la quitte pas.
+        if (typeof d.id === 'string' && d.id !== '') ouvrirAtelier(d.id);
         return;
       }
 
