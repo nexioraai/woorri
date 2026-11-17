@@ -123,7 +123,16 @@ Ce sont des estimations de travail, **non mesurées**. Aucune génération payan
 | 3 | **Stripe pour les applications** : prix créé dans Stripe ; `stripe_customer_id` et statut rattachés à l'**utilisateur** (aujourd'hui tout est rattaché au site) ; route de paiement ; webhook qui distingue un abonnement d'application d'un abonnement de site, faute de quoi il chercherait un site ; mode test de bout en bout | propriétaire (tableau de bord Stripe) + moi | 1,5 à 2 jours |
 | 4 | **L'abonnement lève la limite** : la fonction de quota lit le statut ; le bouton de l'atelier passe de « Bientôt » à « S'abonner » | moi | 0,5 jour |
 
-**Étape 0, la règle du propriétaire (2026-11-17) :**
+**RÈGLE PRODUIT EN VIGUEUR — décidée par Youssouf le 2026-11-17, elle REMPLACE celle juste en dessous :**
+
+- **créer** une application : gratuit, **une seule par compte** ;
+- **l'essayer dans l'atelier** : gratuit, sans limite de retouches ;
+- **publier** : payant, **toujours**, même la première ;
+- **une deuxième application** : payante.
+
+Le montant et la forme (abonnement, paiement unique, par application) **ne sont pas tranchés**. Avant de fixer un prix, il faut mesurer ce que coûte une application **publiée**, par mois : voir §6. Ni Stripe ni le quota des applications ne sont construits avant la décision de prix.
+
+~~**Étape 0, la règle du propriétaire (2026-11-17, matin) :**~~ remplacée, gardée pour l'historique.
 
 - **3 applications gratuites par compte**, comme les 3 sites gratuits ;
 - **abonné : aucune limite de total** ;
