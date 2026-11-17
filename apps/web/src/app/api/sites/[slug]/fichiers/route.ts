@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { nomPropre } from '@/lib/fichiers/nomPropre'
+import { cleDuFichier, emploisDansLeSite, emploisDansLesPages, messageEmploye } from '@/lib/fichiers/emploisDuFichier'
 
 // ============================================================
 // LOT 5 -- LES FICHIERS D'UN SITE.
@@ -139,7 +140,26 @@ export async function DELETE(req: Request, { params }: Params) {
   const propre = nomPropre(nom)
   if (!nom || propre !== nom) return NextResponse.json({ error: 'Nom de fichier invalide.' }, { status: 400 })
 
-  const chemin = `sites/${garde.site.id}/${dossier}/${nom}`
+  const chemin = cleDuFichier(garde.site.id, dossier, nom)
+
+  // UN FICHIER EMPLOYÉ NE SE RETIRE PAS (voir `emploisDuFichier`). On lit la
+  // ligne du site et ses pages ; une lecture qui échoue REFUSE le retrait —
+  // dans le doute, garder un fichier coûte moins qu'une case vide en ligne.
+  const [lSite, lPages] = await Promise.all([
+    supabaseAdmin.from('sites').select('*').eq('id', garde.site.id).maybeSingle(),
+    supabaseAdmin.from('site_pages').select('*').eq('site_id', garde.site.id),
+  ])
+  if (lSite.error || lPages.error) {
+    return NextResponse.json({ error: 'Vérification impossible : le fichier est conservé.' }, { status: 500 })
+  }
+  const emplois = [
+    ...emploisDansLeSite(lSite.data as Record<string, unknown> | null, chemin),
+    ...emploisDansLesPages(lPages.data as never, chemin),
+  ]
+  if (emplois.length > 0) {
+    return NextResponse.json({ error: messageEmploye(emplois), emplois }, { status: 409 })
+  }
+
   const { error } = await supabaseAdmin.storage.from(COMPARTIMENT).remove([chemin])
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
