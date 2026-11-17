@@ -54,7 +54,16 @@ Mesuré le 2026-11-17 vers 12 h 46 UTC, en lecture seule sur la base de Deribfy 
   - le compteur est `profiles.generation_count`. Les 15 lignes se répartissent ainsi : 0 → 1, 1 → 8, 2 → 1, 3 → 5 ;
   - les comptes exemptés sont `EMAILS_SANS_QUOTA` (`lib/admin-emails.ts:66-73`, deux adresses).
 - **Ce quota n'est pas sûr face à des requêtes simultanées.** Il est lu au début (`chat/route.ts:474-486`) et incrémenté à la fin, par `upsert(generation_count: usedGenerations + 1)` (`:1220`). Deux requêtes parallèles passent toutes les deux. Ce défaut est consigné, pas corrigé.
-- **INCONNU :** un utilisateur connecté peut-il réécrire son propre `profiles.generation_count` ? `login/page.tsx:70` écrit dans `profiles` (`welcomed`) avec la clé du navigateur, ce qui prouve qu'un droit d'UPDATE existe pour `authenticated`. Sa portée par colonne n'a pas pu être lue : je n'ai aucun accès SQL à nexiora-ai, puisque `.env.local` ne contient que les adresses de la base des œuvres. Si ce droit couvre la colonne, le quota des sites se contourne depuis le navigateur.
+- **FERMÉ le 2026-11-17 : un utilisateur NE PEUT PAS réécrire son `generation_count`.** Youssouf l'a mesuré dans l'éditeur SQL de nexiora-ai, sur `public.profiles` :
+
+  | rls_active | nb_politiques | anon_lit | anon_ecrit | connecte_lit | connecte_ecrit |
+  |---|---|---|---|---|---|
+  | true | 0 | true | false | true | false |
+
+  - **La raison décisive est RLS.** RLS est actif sans aucune politique : il refuse toute ligne, en lecture comme en écriture, à `anon` et à `authenticated`, quels que soient leurs droits. Seule la clé de service (`supabaseAdmin`, qui contourne RLS) touche le compteur (`chat/route.ts:474-478`, `:1218-1220`).
+  - **La seconde raison est le droit de table**, `connecte_ecrit = false`. Une précision sur sa portée : une mesure par `has_table_privilege` ne voit pas un droit accordé **par colonne**. Elle seule ne suffirait donc pas à exclure un `grant update (generation_count)`. Le refus de RLS, lui, couvre ce cas.
+  - **Conséquence :** le quota des sites n'a qu'un défaut, la course entre la lecture (`chat/route.ts:473-480`) et l'incrément (`:1220`). La colonne n'a pas à être verrouillée : elle l'est déjà.
+  - **Observation hors chantier, consignée sans correction.** `login/page.tsx:54-71` lit puis écrit `profiles.welcomed` avec la clé du navigateur. Sous RLS sans politique, la lecture ne rend aucune ligne, donc `profile` vaut `null`, et la branche qui appelle `/api/welcome` puis pose `welcomed = true` ne s'exécute jamais par ce chemin [DÉDUIT de la mesure ci-dessus, pas d'une vraie connexion]. En base, `welcomed` vaut `false` sur 14 profils et `true` sur 1 (mesuré le 2026-11-17).
 - **Abonnement de site :**
   - `sites.subscription_status` et `sites.stripe_customer_id` ;
   - la session de paiement se crée par `api/checkout/route.ts:103-108` (`mode: 'subscription'`, prix `STRIPE_PRICE_ID`, **par site**, via `requireSiteOwner`) ;
@@ -108,15 +117,36 @@ Ce sont des estimations de travail, **non mesurées**. Aucune génération payan
 
 | Étape | Contenu | Qui | Estimation |
 |---|---|---|---|
-| 0 | **La règle** : combien de générations gratuites, sur quelle période (à vie ou par mois), si les retouches comptent, si un échec rembourse | propriétaire | une décision |
+| 0 | **La règle** — **TRANCHÉE le 2026-11-17**, voir ci-dessous | propriétaire | fait |
 | 1 | **Quota serveur** : table et fonction atomique ; branchement dans `direct`, `retoucher` et `lire-brief` ; `revoke` ; tests de concurrence (N requêtes parallèles pour 1 place restante, 1 seule passe) ; migration jouée par le propriétaire | moi + migration en production | 1 à 1,5 jour |
 | 2 | **Écran** : le compte restant affiché avant de générer ; le refus 402 dit en clair dans l'accueil et l'atelier | moi | 0,5 jour |
 | 3 | **Stripe pour les applications** : prix créé dans Stripe ; `stripe_customer_id` et statut rattachés à l'**utilisateur** (aujourd'hui tout est rattaché au site) ; route de paiement ; webhook qui distingue un abonnement d'application d'un abonnement de site, faute de quoi il chercherait un site ; mode test de bout en bout | propriétaire (tableau de bord Stripe) + moi | 1,5 à 2 jours |
 | 4 | **L'abonnement lève la limite** : la fonction de quota lit le statut ; le bouton de l'atelier passe de « Bientôt » à « S'abonner » | moi | 0,5 jour |
 
+**Étape 0, la règle du propriétaire (2026-11-17) :**
+
+- **3 applications gratuites par compte**, comme les 3 sites gratuits ;
+- **abonné : aucune limite de total** ;
+- **10 générations par jour au plus, pour tout le monde**, abonnés compris. C'est une protection contre une boucle, pas contre un client ;
+- les comptes exemptés de `admin-emails.ts` (`EMAILS_SANS_QUOTA`) gardent leur exemption ;
+- **la même règle s'applique à `retoucher` et à `lire-brief`.**
+
+**Ordre fixé par le propriétaire.** On répare d'abord le quota des **sites**, qui est en ligne (réservation atomique, §5). Le quota des applications vient ensuite.
+
 **Total : 3,5 à 4,5 jours de travail, avant le premier euro.** Les frais Stripe par transaction ne sont pas calculés ici : ils dépendent du pays du compte Stripe de Deribfy, qui est **INCONNU**.
 
-## 4. Le chantier de l'atelier (préparé, non poussé)
+## 4. Le chantier de l'atelier — EN LIGNE le 2026-11-17
+
+**Mise en ligne, dans l'ordre fixé par le propriétaire :**
+
+1. `NEXT_PUBLIC_CREATION_APPLICATION_OUVERTE` créée dans Vercel (production).
+2. Valeur relue par `vercel env pull` : `"1"`. Les autres interrupteurs : `GENERATEUR_MOTEUR` et `NEXT_PUBLIC_GENERATEUR_MOTEUR` = `"direct"`, `NEXT_PUBLIC_REGENERATION_OUVERTE` absente.
+3. Push `c37adaac..16103d41` sur `main`. Le hook de pré-push a trouvé une vérification à jour, et `ls-remote` lit `16103d41`.
+4. `/api/version` rend `{"commit":"16103d4"}` à 13:32:16 UTC. Dans Chromium, sans session, l'accueil servi montre un bouton « Application » sans « Bientôt », et le clic mène à `/login` : c'est la branche ouverte. Fermé, il aurait affiché « arrive très bientôt ».
+5. Ensuite seulement, `NEXT_PUBLIC_GENERATION_ASYNC` a été retirée de Vercel (production).
+
+⚠ **Effet sur téléphone :** l'ouverture automatique mène à un atelier qui, sous 1024 px, n'affiche pas l'application. Ce défaut est antérieur, mais il est aggravé. Il est consigné en **M2** dans `DEFAUTS_MOBILE.md`.
+
 
 1. **L'atelier s'ouvre tout seul après une génération.**
    - *Cause mesurée :* la route `direct` rend `id` (`direct/route.ts:1162-1163`), mais l'écran de création ne le lisait pas. `generationId` restait `null`, et le lien « Ouvrir dans l'atelier » (`ConversationApplication.tsx`) ne s'affichait jamais sous le moteur `direct`.
@@ -128,10 +158,52 @@ Ce sont des estimations de travail, **non mesurées**. Aucune génération payan
 
 La colonne de gauche n'a pas changé : le fil, la boîte de saisie et « Modifier — au plus 0,03 $ ».
 
-**Ce qui change pour la personne :** le rapport de livraison qui s'affichait dans la conversation de création n'est plus lu à cet endroit, puisque l'écran part vers l'atelier :
+**Ce qui change pour la personne :** le message de livraison de la conversation de création n'est plus lu, puisque l'écran part vers l'atelier.
 
-- la couverture du cahier ;
-- « montée dans un simulateur » ;
-- les références mortes.
+**Vérifié le 2026-11-17 : les avertissements restent sur la carte.**
 
-Les diagnostics **enregistrés** de l'œuvre restent sur la carte de « Mes projets » (`dashboard/page.tsx:752-758`, jusqu'à 12 lignes, `mes-applications/route.ts:103-104`). Les données non conservées s'affichent aussi dans l'atelier. **NON VÉRIFIÉ :** que la carte dise exactement ce que disait le message de création. Les deux ne sont pas construits par le même code.
+- La route enregistre dans `app_generations.diagnostics` (`direct/route.ts:783-870`) une ligne pour chacun des avertissements du message de création :
+  - « partiellement éprouvée » ;
+  - juge indisponible ;
+  - « ne se monte pas » ;
+  - jetons inexistants ;
+  - contrôles sans action ;
+  - dates décalées ;
+  - couverture absente, ou non mesurée ;
+  - données non conservées.
+- La carte de « Mes projets » les montre pour une œuvre livrée (`dashboard/page.tsx:752-758`, jusqu'à 12 lignes, `mes-applications/route.ts:103-104`).
+- En base : 4 œuvres livrées sur 5 portent un diagnostic (« Application PARTIELLEMENT éprouvée : 24 sur 77 à 87 contrôles »). La cinquième, `d3ece28a`, n'en porte aucun.
+- **Ce qui est perdu :** seulement les lignes **positives** — « prête en N secondes », « Couverture X/Y couvertes », « Montée dans un simulateur » sans réserve.
+
+## 5. Réparation du quota des sites — préparée, NON poussée (2026-11-17)
+
+**Ordre fixé par le propriétaire :** ce quota est en ligne, il passe avant celui des applications. Après la mesure de Youssouf (§3 a), il n'a qu'un défaut : la course entre la lecture et l'incrément. La colonne n'a pas à être verrouillée, RLS la ferme déjà.
+
+### Ce qui change
+
+- **Une place réservée avant toute dépense.** Elle se prend au point de l'ancienne lecture (`chat/route.ts`, bloc « PLAFOND DE GENERATION »), avant le premier appel au modèle, par `reserverPlace` (`lib/quota/reservation.ts`). C'est un compare-and-set, **une seule instruction SQL** : `UPDATE profiles SET generation_count = k+1 WHERE id = … AND generation_count = k RETURNING …`.
+  - Il passe par PostgREST avec la clé de service, déjà employée par la route. **Aucune migration en production.**
+  - Une fonction SQL `insert … on conflict do update … where` aurait été l'autre forme. Elle exigeait de modifier le schéma de nexiora-ai, qui n'a pas de base de développement.
+- **La place est rendue si aucun site n'est créé.** Le `finally` de `traiter` la rend (`rendrePlace`, même CAS dans l'autre sens) sur **toutes** les sorties en échec : le refus du pré-contrôle (400), le JSON invalide (500), le sous-type absent (400), l'insertion refusée (500) et une exception.
+  - La place est consommée au point exact de l'ancien incrément, une fois le site inséré.
+  - Le compteur garde son sens : le nombre de sites **créés**.
+- **Une panne de `profiles` laisse passer**, comme l'ancien code : il lisait 0 sur erreur et avalait l'échec de l'incrément. La différence est que c'est maintenant journalisé (`[quota sites] réservation impossible…`). Un client ne peut pas provoquer cette panne.
+- **Inchangés :** le message 402 et `limitReached` ; l'exemption `sansQuota` ; la limite de 3 ; le pré-contrôle en lecture seule de `api/onboarding/route.ts:131-140`. Ce pré-contrôle ne consomme rien : il refuse tôt, et le verrou est dans `api/chat`.
+
+### Preuves
+
+| Preuve | Résultat | Niveau |
+|---|---|---|
+| `lib/__tests__/quota-reservation.test.ts` ① : 10 réservations simultanées pour 3 places, 20 tirages | 3 passent, 7 refusées, compteur 3, à chaque tirage | modèle en mémoire de la sémantique du CAS |
+| ① contrôle négatif : l'ancien algorithme sur la même rafale | plus de 3 passent, et le compteur reste sous le nombre de passages | idem |
+| ⑤ le port émet exactement `upsert(… ignoreDuplicates: true)` puis `update(k+1).eq('id').eq('generation_count', k)` | conforme | client factice |
+| ⑥ cliquet de route : réservation avant le premier `.messages.create(`, consommation après l'insertion, restitution dans `finally`, plus d'incrément `lu + 1` | vert ; l'ancienne route le fait tomber | lecture du source |
+| **Postgres 17 réel, local et jetable : 30 sessions `psql` simultanées**, avec l'instruction exacte du CAS | **nouveau : 3 places, 27 refus, compteur 3. Ancien : 30 places, 0 refus, compteur 1.** Trois passages identiques | SIMULATION sur un vrai moteur Postgres, sans PostgREST et sans la base de production |
+| Tests existants de la route `chat` (7 fichiers, 64 tests) | verts. Le faux client de `maxTokensRetry.test.ts` a reçu `.update`, assertions inchangées | |
+
+### Ce qui n'est PAS prouvé
+
+- Le passage par PostgREST en production.
+- La concurrence en production : elle ne se provoquera pas en production, car ce serait créer des sites pour une démonstration.
+
+Ce qui se vérifie après mise en ligne, depuis l'interface : une création de site par un compte non exempté fait passer `generation_count` de 1 exactement, et une création qui échoue ne le fait pas bouger.
