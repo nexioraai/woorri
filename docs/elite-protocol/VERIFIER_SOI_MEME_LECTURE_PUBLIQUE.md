@@ -62,15 +62,18 @@ Ces commandes n'utilisent que la clé publiable, qui est écrite dans la page pu
 # 1) ce que la page publiée donne elle-même : adresse, clé, schéma
 curl -s https://une.deribfy.app/ | grep -oE '"(url|clePubliable|schema)":"[^"]+"' | sort -u
 
+# la clé publiable rendue par la commande 1 (jamais écrite dans le dépôt)
+CLE=$(curl -s https://une.deribfy.app/ | grep -oE '"clePubliable":"[^"]+"' | head -1 | cut -d'"' -f4)
+
 # 2) lire chaque table sans compte (remplacer client par vehicule, reparation, piece)
 curl -s -w ' [HTTP %{http_code}]\n' \
-  -H 'apikey: sb_publishable_K4FN2A0b0A4tN6modZQmOg_Hw3siu10' \
+  -H "apikey: $CLE" \
   -H 'Accept-Profile: oeuvre_3b96d2e7_ca46_40d3_86c0_a084cd6ea99e' \
   'https://psxbilpmnojtlzosokzz.supabase.co/rest/v1/client?select=*'
 
 # 3) essayer d'écrire sans compte
 curl -s -w ' [HTTP %{http_code}]\n' -X POST \
-  -H 'apikey: sb_publishable_K4FN2A0b0A4tN6modZQmOg_Hw3siu10' \
+  -H "apikey: $CLE" \
   -H 'Content-Profile: oeuvre_3b96d2e7_ca46_40d3_86c0_a084cd6ea99e' \
   -H 'Content-Type: application/json' \
   -d '{"description":"essai sans compte"}' \
@@ -81,7 +84,7 @@ curl -s -w ' [HTTP %{http_code}]\n' -X POST \
 
 1. La commande 1 rend :
    - `"url":"https://psxbilpmnojtlzosokzz.supabase.co"`
-   - `"clePubliable":"sb_publishable_K4FN2A0b0A4tN6modZQmOg_Hw3siu10"`
+   - `"clePubliable":"sb_publishable_…"` (valeur réelle : à relire par la commande 1, jamais recopiée dans le dépôt — cliquet EP-321 ⑧)
    - `"schema":"oeuvre_3b96d2e7_ca46_40d3_86c0_a084cd6ea99e"`
 2. La commande 2 rend, pour chacune des quatre tables :
    `{"code":"42501",…,"message":"permission denied for table <table>"} [HTTP 401]`
