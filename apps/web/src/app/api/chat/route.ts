@@ -1,6 +1,7 @@
 import { NextResponse, after } from 'next/server';
 import { indicatifDuPays, corrigerIndicatif } from '@/lib/telephone';
 import { sansQuota } from '@/lib/admin-emails';
+import { portProfiles, rendrePlace, reserverPlace } from '@/lib/quota/reservation';
 import { z } from 'zod';
 import { clientIA, MODELE_LEGER, MODELE_LOURD } from '@/lib/ia/client';
 import { supabase as supabaseAnon } from '@/lib/supabase';
@@ -425,6 +426,11 @@ export function enforceModeProducts<T>(finalMode: number, rawProducts: T[]): T[]
 type Progres = (etape: string, rang: number) => void
 
 async function traiter(req: Request, progres: Progres) {
+  // ── LA PLACE DE QUOTA RÉSERVÉE ET PAS ENCORE CONSOMMÉE (2026-11-17).
+  // Posée après une réservation réussie, remise à `null` quand le site
+  // existe. Le `finally` rend toute place restée en main : chaque sortie en
+  // échec — 400, 500, exception — la rend, sans qu'aucune ne doive y penser.
+  let placeARendre: string | null = null;
   try {
     // ============ SÉCURITÉ : validation du Bearer token ============
     const authHeader = req.headers.get('authorization');
@@ -470,18 +476,23 @@ async function traiter(req: Request, progres: Progres) {
     if (!message) return NextResponse.json({ error: 'Message is required' }, { status: 400 });
 
     // ============ PLAFOND DE GENERATION ============
+    // ── RÉSERVÉ AVANT DE DÉPENSER, EN UNE INSTRUCTION (2026-11-17).
+    // Avant : lu ici, incrémenté à la fin par `upsert(lu + 1)` — deux requêtes
+    // simultanées passaient toutes les deux pour une seule place. La place se
+    // prend maintenant par un compare-and-set (lib/quota/reservation.ts) ;
+    // elle est rendue par le `finally` si aucun site n'est créé.
     const FREE_LIMIT = 3;
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('generation_count')
-      .eq('id', owner_id)
-      .maybeSingle();
-    const usedGenerations = profile?.generation_count ?? 0;
-    if (!isUnlimited && usedGenerations >= FREE_LIMIT) {
-      return NextResponse.json(
-        { error: "Vous avez atteint la limite de la version gratuite (3 sites). Passez à l'abonnement pour en créer davantage.", limitReached: true },
-        { status: 402 }
-      );
+    if (!isUnlimited) {
+      const place = await reserverPlace(portProfiles(supabaseAdmin), owner_id, FREE_LIMIT);
+      if (!place.ok) {
+        return NextResponse.json(
+          { error: "Vous avez atteint la limite de la version gratuite (3 sites). Passez à l'abonnement pour en créer davantage.", limitReached: true },
+          { status: 402 }
+        );
+      }
+      if (place.reservee) placeARendre = owner_id;
+      // Panne de `profiles` : on laisse passer, comme l'ancien code — mais on le dit.
+      else console.error('[quota sites] réservation impossible, création laissée passer :', place.panne);
     }
     // ===============================================
 
@@ -1212,16 +1223,10 @@ Return ONLY valid JSON, no markdown:
       }
     }
 
-    // Increment du compteur de generation (monotone, jamais decremente) — sauf comptes illimites
-    if (!isUnlimited) {
-      try {
-        await supabaseAdmin
-          .from('profiles')
-          .upsert({ id: owner_id, generation_count: usedGenerations + 1 }, { onConflict: 'id' });
-      } catch (e) {
-        console.error('generation_count increment failed:', e);
-      }
-    }
+    // ── LA PLACE EST CONSOMMÉE : le site existe. Le compteur a été incrémenté
+    // à la réservation ; on cesse seulement de vouloir le rendre. Même point
+    // du parcours que l'ancien incrément : ce qui comptait compte encore.
+    placeARendre = null;
 
     // Premier point d'historique du score de visibilite IA (non bloquant)
     try {
@@ -1383,6 +1388,11 @@ Return ONLY valid JSON, no markdown:
   } catch (error) {
     console.error('API ERROR:', error);
     return NextResponse.json({ error: 'Failed to generate business.' }, { status: 500 });
+  } finally {
+    if (placeARendre !== null) {
+      const rendue = await rendrePlace(portProfiles(supabaseAdmin), placeARendre);
+      if (rendue.panne !== undefined) console.error('[quota sites] place non rendue :', rendue.panne);
+    }
   }
 }
 

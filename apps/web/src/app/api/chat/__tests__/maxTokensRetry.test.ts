@@ -79,7 +79,14 @@ function anthropicMsg(stop_reason: string, text = VALID_SITE_JSON) {
 const LONG_MESSAGE = 'Restaurant marocain haut de gamme avec specialites variees et service traiteur pour les evenements a Montreal';
 
 function mockSitesChain() {
+  // La réservation de quota (2026-11-17) passe par un compare-and-set :
+  // update(...).eq('id').eq('generation_count', k).select(...) rend la ligne
+  // changée. Ce faux client la rend toujours : la place est libre.
+  const cas: Record<string, unknown> = {}
+  cas.eq = vi.fn(() => cas)
+  cas.select = vi.fn().mockResolvedValue({ data: [{ generation_count: 1 }], error: null })
   return {
+    update: vi.fn(() => cas),
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     maybeSingle: vi.fn().mockResolvedValue({ data: { generation_count: 0 }, error: null }),
