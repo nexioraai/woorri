@@ -1,6 +1,7 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { verifierFichier, TEXTE_FORMATS, FORMATS_ACCEPTES } from '@/lib/fichiers/verifierFichier'
 
 // ============================================================================
 // LOT 5 — DÉPOSER, LISTER, RETIRER UN FICHIER.
@@ -50,12 +51,17 @@ export default function TeleverseurFichiers({
   useEffect(() => { let vivant = true; void (async () => { if (vivant) await recharger() })(); return () => { vivant = false } }, [recharger])
 
   const deposer = async (f: File) => {
+    // Refusé d'avance ? On le dit tout de suite, sans rien envoyer.
+    const refus = verifierFichier(f)
+    if (refus) { setErreur(refus); return }
     setOccupe(true); setErreur(null)
     const corps = new FormData()
     corps.append('fichier', f); corps.append('dossier', dossier)
     const r = await fetch(`/api/sites/${slug}/fichiers`, { method: 'POST', headers: await entete(), body: corps })
     const j = await r.json().catch(() => ({}))
     setOccupe(false)
+    // 413 : l'hébergeur a coupé l'envoi avant la route — pas de JSON à lire.
+    if (r.status === 413) { setErreur('Fichier trop lourd. La limite est de 4 Mo : réduisez la photo avant de l’envoyer.'); return }
     if (!r.ok) { setErreur(j.error ?? 'Dépôt refusé.'); return }
     // On RECHARGE depuis la route au lieu d'ajouter la réponse à la liste :
     // afficher ce qu'on croit avoir envoyé, c'est afficher son intention.
@@ -77,10 +83,10 @@ export default function TeleverseurFichiers({
       <div className="flex items-center gap-2 flex-wrap">
         <label className={`text-xs px-3 py-2 rounded-lg border border-white/15 cursor-pointer hover:bg-white/10 transition ${occupe ? 'opacity-50 pointer-events-none' : ''}`}>
           {occupe ? 'Envoi en cours…' : 'Téléverser un fichier'}
-          <input type="file" className="hidden" disabled={occupe}
+          <input type="file" className="hidden" disabled={occupe} accept={FORMATS_ACCEPTES.map((e) => '.' + e).join(',')}
             onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void deposer(f) }} />
         </label>
-        <span className="text-[11px] opacity-50">PDF, Word, Excel, CSV, JPEG, PNG, WebP, AVIF — 25 Mo maximum</span>
+        <span className="text-[11px] opacity-50">{TEXTE_FORMATS}</span>
       </div>
 
       {erreur && <p className="text-xs text-red-400">{erreur}</p>}
