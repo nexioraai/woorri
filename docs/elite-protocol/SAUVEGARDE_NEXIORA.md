@@ -132,4 +132,29 @@ Le journal ne contient que des noms de tables et des nombres : 0 occurrence d'ad
 **Reste à faire :**
 
 - ~~le déchiffrement d'essai par Youssouf~~ **FAIT le 2026-11-17** : `age -d -i <clé privée> nexiora-2026-11-17.pgdump.age | head -c 5` a affiché **`PGDMP`**, la signature d'un dump Postgres au format custom. La clé privée de Youssouf ouvre la sauvegarde, et rien de déchiffré n'a été écrit sur le disque ;
-- **la copie des fichiers Storage** (2 095 fichiers, 320,7 Mo), qui demande une clé de lecture du stockage (geste ⑤).
+- ~~la copie des fichiers Storage~~ **FAITE le 2026-11-17**, voir ci-dessous.
+
+## e) La copie des fichiers — 2026-11-17
+
+**Secrets** (geste ⑤ ; noms vérifiés) : `SUPABASE_S3_ENDPOINT`, `SUPABASE_S3_REGION`, `SUPABASE_S3_ACCESS_KEY_ID`, `SUPABASE_S3_SECRET_ACCESS_KEY`.
+
+**Portée de cette clé, dite à Youssouf** (documentation Supabase) : « full access to all S3 operations across all buckets and bypass RLS ». Elle ouvre tout le stockage, en lecture et en écriture, mais **pas** la base. Le script ne fait que lire avec elle.
+
+**Le dispositif** (`scripts/copier_fichiers.sh`, travail `fichiers` du même workflow, chaque nuit) :
+
+- **Seaux publics** (`site-images`, `pod-designs`, `custom-designs`, `site-fichiers`), déjà lisibles par tous sur Internet : copie telle quelle.
+- **Seaux privés, et tout seau inconnu par prudence** : chaque fichier est chiffré avec la clé publique `age` avant de sortir du runner.
+- **`rclone copy`, jamais `sync`** : une suppression accidentelle chez Supabase n'efface pas la sauvegarde.
+- **La règle de cycle de vie de R2 (30 jours) s'applique aussi aux fichiers.** Une copie expirée est renvoyée la nuit suivante, puisqu'elle manque. **Limite dite :** un fichier supprimé chez Supabase disparaît de la sauvegarde au plus 30 jours après sa dernière copie.
+- **La preuve, en rouge au moindre manque :**
+  - pour un seau public, chaque fichier de la source doit être présent dans R2 avec la même taille (`rclone check --one-way --size-only`) ;
+  - pour un seau privé, chaque fichier doit avoir un `.age` d'au moins sa taille plus 32 octets. Une copie tronquée est rechiffrée et renvoyée.
+
+**Les passages :**
+
+| Passage | Résultat |
+|---|---|
+| `44199157960` | **rouge** : R2 renvoyait `501 NotImplemented` au premier envoi avec rclone 1.60.1 (paquet Ubuntu). La deuxième tentative passait, mais pas l'envoi en flux (`rcat`) des fichiers privés. **Corrigé** : rclone officiel 1.68.2 épinglé ; privés chiffrés dans un fichier, puis `copyto` rejouable |
+| `44199524274` | vert ; 2 095 fichiers. Mais la preuve des privés ne vérifiait que les noms. **Durcie** par la taille |
+| `44200189109` | **contrôle négatif, rouge comme attendu** : `site-fichiers` 12 sur 13. `offres` en ✗ aussi, mais avec « 3 manquants » pour une seule copie retirée. Cela a **révélé un défaut de mon script** : le suffixe `.age` n'était pas retiré, car il est en fin de ligne avec `--format sp`. Corrigé |
+| `44200899423` | **vert**. Base : 0 erreur, 92/92. Fichiers : `site-images` 1 870 fichiers (256 400 679 octets), `pod-designs` 187, `custom-designs` 22, `site-fichiers` 13 (rétabli), `offres` 3 (dont **1** rechiffré cette nuit, exactement la copie retirée par le contrôle négatif), `comptes-documents` et `oeuvres-medias` vides. **2 095 fichiers sur 2 095**, aucun `501` |
