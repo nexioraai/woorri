@@ -174,6 +174,34 @@ Bilan des six demandes : 4 passent ; « Photographier » est à retester ; « bo
 - **⑮ deux fois de suite.** La quatrième tuile du tableau de bord de pharma est remplacée à chaque retouche qui touche les produits : « Produits en stock bas — 1 » → « Rayon non précisé — 4 » (emplacement) → « Produits sans fournisseur — 5 » (fournisseur). Le modèle traite cette place comme libre. Ajouter sans qu'on demande agace ; **retirer sans qu'on demande fait perdre de l'information**. C'est le défaut le plus coûteux de la série. Rangé avec ⑫ et le juge (une retouche ne retire jamais un élément existant sans le dire).
 - **⑯** : les versions 8 et 9 portent encore « EN ATTENTE DE VOTRE ACCORD » alors qu'elles sont appliquées et servies. Ni l'étiquette de la version, ni la trace ne sont réécrites à l'accord.
 
+## Campagne de retouches : 8 familles sur 8 (2026-11-18, mesuré sur pharma.deribfy.app)
+
+Mesuré par le propriétaire dans l'appli publiée, avec ses vraies données. **La veille au soir : 2 sur 8.**
+
+| Famille | Résultat |
+|---|---|
+| Déplacer | ✓ |
+| Ajouter un élément | ✓ |
+| Ajouter un écran | ✓ |
+| Ajouter une donnée (colonne) | ✓ |
+| Lier deux tables | ✓ |
+| Calculer depuis des lignes | ✓ |
+| Utiliser l'appareil photo | ✓ |
+| Changer l'apparence | ✓ (surcharge de thème : aucune ligne de code touchée) |
+
+**Chiffres de référence** (propriétaire, export DeepSeek et trace `app_generation_attempts`) :
+
+| Mesure | Valeur |
+|---|---|
+| Génération | 0,136 $, 51 769 jetons de sortie, 5 min 31 s |
+| Retouche réussie | 0,015 à 0,018 $ |
+| Retouche refusée | 0,023 à 0,029 $ |
+| Retouche d'apparence seule | 0,007 $ |
+| Par modification **utilisable**, échecs compris | 0,026 $ |
+| Coût affiché comparé au réel | +4,9 %, du côté prudent |
+
+**PAS ENCORE TESTÉ — à mesurer après Dary :** supprimer un élément, renommer, dix retouches d'affilée, une demande mal écrite.
+
 ## Défaut ⑰ (2026-11-18, consigné, non corrigé)
 
 | # | Défaut | Où |

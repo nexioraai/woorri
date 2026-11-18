@@ -9,6 +9,15 @@ Demande du propriétaire après comparaison avec replit.com. **Tout passe après
 | 3 | Emplacement des liens sociaux ; **aucune icône tant que le compte n'existe pas** | 1 demi-journée |
 | 4 | Les quatre cartes portent l'explication (un clic ouvre la carte, une phrase, l'exemple de la boîte de saisie change) ; le bloc « mode d'emploi » disparaît. **Deux maquettes avant toute ligne de code** | 1 demi-journée (maquettes) + 2 (construction) |
 
+## Point 4 précisé (2026-11-18, vu sur base44.com)
+
+- **a) Une section entière par produit**, pas quatre cartes serrées : Site web, Boutique en ligne, Dropshipping, Application. Chacun a son titre, son paragraphe et son bouton, et les sections sont séparées par une bande de couleur. Cette structure se lit sur un téléphone.
+- **b) Une FAQ**, que nous n'avons pas du tout. La question la plus importante pour nous : « Mes données sont-elles en sécurité ? ». Un pharmacien qui met sa liste de clients en ligne se la posera, et personne ne sera là pour lui répondre.
+  - Brouillon de cinq questions donné au propriétaire le 2026-11-18, à corriger par lui.
+  - **Attention à la vérité du texte :** la sauvegarde nocturne chiffrée couvre aujourd'hui la base de **Deribfy** (nexiora-ai), **pas encore** celle des applications. Ce chantier figure dans l'ordre des cinq semaines. La FAQ ne doit pas promettre la sauvegarde des données des applications avant qu'elle existe et soit prouvée par une restauration d'essai.
+
+Rang inchangé : **après Stripe**.
+
 ## Point 2 — ce que Stripe demande, et ce que le site montre (relevé le 2026-11-18)
 
 Sources : *Website checklist* et *Account checklist* de la documentation Stripe ; pages de deribfy.com lues le même jour.
