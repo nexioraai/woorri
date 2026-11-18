@@ -14,6 +14,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { pageAutonome } from '@/lib/apps/boucle-directe'
+import { apparenceDuDocument } from '@/lib/apps/apparence'
 import { baseDeLOeuvre } from '@/lib/apps/base-de-l-oeuvre'
 import { entetesSousDomaine } from '@/lib/apps/publication'
 import { nomValide } from '@/lib/apps/sous-domaine'
@@ -67,7 +68,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ sous: string }
     // ── `servie` ET NON `apercu` : sans base, la phrase juste n'est pas
     //    « ce sera créé » — on y EST. Mesuré sur sneapp, publiée et sans
     //    aucun `create table`.
-    pageAutonome(v.code, titre, base, 'servie'),
+    pageAutonome(v.code, titre, base, 'servie', null, apparenceDuDocument(lu.data.document)),
     { status: 200, headers: entetesSousDomaine(base?.url ?? '') },
   )
 }

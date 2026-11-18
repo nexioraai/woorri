@@ -13,6 +13,7 @@ import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { zipper } from '@/lib/apps/zip'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { pageAutonome } from '@/lib/apps/boucle-directe'
+import { apparenceDuDocument } from '@/lib/apps/apparence'
 import { projetLivrable } from '@/lib/apps/projet-livrable'
 
 export const runtime = 'nodejs'
@@ -112,7 +113,7 @@ export async function GET(req: Request) {
         // la seule page qui a le droit d'y renvoyer. Partout ailleurs, le
         // bandeau annonce ce qui va se passer au lieu de pointer un fichier
         // que la personne n'a pas.
-        pageAutonome(v.code, 'Application', undefined, 'archive'),
+        pageAutonome(v.code, 'Application', undefined, 'archive', null, apparenceDuDocument(docDirect)),
         docDirect.schema,
         docDirect.politiques,
         // L'IDENTIFIANT DE L'OEUVRE : la note porte alors LA COMMANDE qui

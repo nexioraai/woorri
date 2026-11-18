@@ -18,6 +18,7 @@
  * borne a déjà coûté ici : « 6,87 $ brûlés, seul le garde-fou du harnais a
  * arrêté » — c'est écrit dans le moteur actuel.
  */
+import { cssApparence, type Apparence } from './apparence'
 import { assembler } from './bac-a-sable'
 import {
   importsInterdits,
@@ -1317,6 +1318,14 @@ export function pageAutonome(
    * Absente, le bandeau d'avant est rendu tel quel.
    */
   adressePubliee: string | null = null,
+  /**
+   * LA COULEUR CHOISIE PAR LE PROPRIÉTAIRE (surcharge de thème, 2026-11-18).
+   *
+   * Lue dans le document par l'appelant, injectée ICI : toutes les pages
+   * qu'assemble Deribfy la portent — servie, aperçu, archive —, sans une
+   * ligne du code de l'appli. Voir `apparence.ts`.
+   */
+  apparence: Apparence | null = null,
 ): string {
   const sur = titre.replace(/[<>&"]/gu, '')
   // ── LA CONFIGURATION EST SÉRIALISÉE EN JSON, PAS INTERPOLÉE À LA MAIN.
@@ -1343,12 +1352,13 @@ export function pageAutonome(
     `<title>${sur}</title>`,
     // N2 : installable — manifeste cuit, balises Apple, couleur de thème.
     `<link rel="manifest" href="${manifesteDataUri(sur)}" />`,
-    '<meta name="theme-color" content="#2a5bd7" />',
+    `<meta name="theme-color" content="${apparence?.couleur ?? '#2a5bd7'}" />`,
     '<meta name="apple-mobile-web-app-capable" content="yes" />',
     '<meta name="apple-mobile-web-app-status-bar-style" content="default" />',
     `<meta name="apple-mobile-web-app-title" content="${sur}" />`,
     `<link rel="apple-touch-icon" href="data:image/png;base64,${ICONE_192}" />`,
     `<style>${VARIABLES_CSS}*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--foreground);font-family:system-ui,-apple-system,sans-serif}</style>`,
+    cssApparence(apparence),
     // LE PRÉLUDE PART EN PREMIER, et en script ORDINAIRE : un module serait
     // différé, donc installé APRÈS que l'application a déjà échoué.
     `<script>${PRELUDE}</script>`,

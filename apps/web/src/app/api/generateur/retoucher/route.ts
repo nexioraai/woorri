@@ -82,6 +82,7 @@ import { CONFIGS, coutAppel, fournisseurChoisi, tarifDe, tarifPlafond, tarifsDuM
 import { deploiementQuiSert } from '@/lib/apps/deploiement'
 import { ecrireTentative, type Issue } from '@/lib/apps/tentatives'
 import { alerter } from '@/lib/alertes'
+import { apparenceDuDocument, lireApparenceEnRoute, type Apparence } from '@/lib/apps/apparence'
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { fichiersSysteme } from '@/lib/apps/bibliotheque-ui'
@@ -277,6 +278,7 @@ async function appliquerEnAttente(
         schema: etat.schema,
         politiques: etat.politiques,
         entites: entitesApres,
+        ...(etat.apparence === undefined ? {} : { apparence: etat.apparence }),
       },
       version_courante: rang,
     })
@@ -579,7 +581,20 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     apres,
     (e: unknown) => projectAirSchema.shape.entities.element.safeParse(e).success,
   )
-  const fichiersLivres = declaration.fichiers
+  // ── LA COULEUR NE PASSE PAS PAR LE CODE (surcharge de thème, 2026-11-18).
+  //
+  // `APPARENCE.json` est retiré des fichiers livrés, validé (format, et
+  // lisibilité du texte blanc des boutons), puis porté par le DOCUMENT : la
+  // page l'injecte au service. Une couleur refusée l'est AVEC sa raison.
+  const lueApparence = lireApparenceEnRoute(declaration.fichiers)
+  if (lueApparence.refus !== null) {
+    return NextResponse.json(
+      { error: `Cette couleur n’a pas été appliquée : ${lueApparence.refus}. Votre application n’a pas changé.`, coutUsd },
+      { status: 409 },
+    )
+  }
+  const apparenceApres: Apparence | null = lueApparence.apparence ?? apparenceDuDocument(docAvant)
+  const fichiersLivres = lueApparence.fichiers
   const entitesAvant = declarationDe(docAvant)
   // ── UNE SEULE FUSION, ET SES PERTES VOYAGENT.
   //
@@ -725,6 +740,7 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
         schema: emettreSchemaSql([...fusion.entites]),
         politiques: emettrePolitiquesSql([...fusion.entites], id),
         entites: [...fusion.entites],
+        ...(apparenceApres === null ? {} : { apparence: apparenceApres }),
       }
       const pose = await supabaseAdmin.from(TABLE_VERSIONS).insert({
         generation_id: id,
@@ -823,6 +839,7 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     coutUsd: Number(coutUsd.toFixed(4)),
     schema: schemaApres,
     politiques: politiquesApres,
+    ...(apparenceApres === null ? {} : { apparence: apparenceApres }),
   }
   const ecrit = await supabaseAdmin.from(TABLE_VERSIONS).insert({
     generation_id: id,
@@ -843,10 +860,13 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     .from(TABLE_GENERATIONS)
     .update({
       document: {
-        fichiers: Object.fromEntries(apres),
+        // LES FICHIERS LIVRÉS, comme la version — `apres` portait encore
+        // `DONNEES.json` (et aurait porté `APPARENCE.json`) dans l'appli.
+        fichiers: Object.fromEntries(fichiersLivres),
         schema: schemaApres,
         politiques: politiquesApres,
         entites: entitesApres,
+        ...(apparenceApres === null ? {} : { apparence: apparenceApres }),
       },
       version_courante: rang,
     })
@@ -883,6 +903,7 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
       // `null` avant comme après. Sans ce drapeau, son silence se lisait
       // comme « pas de régression » — et l'écran l'aurait répété.
       couvertureNonMesuree: verdict.couvertureNonMesuree,
+      ...(lueApparence.apparence === null ? {} : { couleur: lueApparence.apparence.couleur }),
       ...(declarationRejetee === null ? {} : { declarationRejetee }) },
     { headers: { 'Cache-Control': 'no-store' } },
   )

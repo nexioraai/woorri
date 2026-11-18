@@ -169,6 +169,12 @@ Bilan des six demandes : 4 passent ; « Photographier » est à retester ; « bo
 | ⑮ | **Premier RETRAIT non demandé** : la retouche de l'emplacement a remplacé la tuile « Produits en stock bas — 1 » par « Rayon non précisé — 4 ». Un commerçant perd un chiffre qu'il surveillait, sans être prévenu. Une retouche ne doit jamais retirer un élément existant sans le dire. Rangé avec ⑫ et le juge | juges de la retouche (aucun ne compare les éléments affichés avant/après) |
 | ⑯ | La trace d'une retouche mise de côté reste `en_attente` pour toujours : l'accord (« Appliquer ? ») n'appelle pas le modèle et n'écrit rien. Ni la réussite (versions 6 et 7), ni l'échec du premier essai du cas 3 (« must be owner », version 5) ne sont tracés | `retoucher/route.ts` (`appliquerEnAttente`) |
 
+## Défaut ⑰ (2026-11-18, consigné, non corrigé)
+
+| # | Défaut | Où |
+|---|---|---|
+| ⑰ | Trois couleurs que la bibliothèque **propose déjà** sont sous le seuil de lisibilité WCAG AA (4,5:1) avec le texte blanc des boutons : vert `#1f8a5b` (4,33), corail `#d2603a` (3,84), et la couleur du style chaleureux `#c8552f` (4,38). Mesuré. La surcharge de thème les refuse ; la palette de Réglages et le style chaleureux les emploient encore | `bibliotheque-ui.ts` (`COULEURS`, `html:root[data-style="chaleureux"]`) |
+
 ## Observations de passage
 
 - **Une retouche refusée ou ratée ne laisse aucune trace dans Deribfy** : la route n'écrit ni alerte ni journal. Seul Vercel garde le code de réponse. Le motif n'existe qu'à l'écran de la personne.

@@ -31,6 +31,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { pageAutonome } from '@/lib/apps/boucle-directe'
+import { apparenceDuDocument } from '@/lib/apps/apparence'
 import { adressePubliee } from '@/lib/apps/sous-domaine'
 
 export const runtime = 'nodejs'
@@ -93,7 +94,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   // l'injecter échangerait un mensonge contre un plantage.
   const adresse = adressePubliee(lu.data.publication_slug, lu.data.publication_jeton)
 
-  return new Response(pageAutonome(v.code, titre, undefined, 'apercu', adresse), {
+  const apparence = apparenceDuDocument(lu.data?.document)
+  return new Response(pageAutonome(v.code, titre, undefined, 'apercu', adresse, apparence), {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       // PRIVÉ : cette page porte l'œuvre d'une personne. Aucun cache partagé

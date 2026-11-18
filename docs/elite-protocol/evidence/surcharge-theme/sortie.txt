@@ -1,0 +1,15 @@
+Mesure du 2026-11-18 — vraie page de pharma (code de la v4, assemblé par `assembler`, page par
+`pageAutonome(…, 'servie', null, apparence)`), servie sous l'en-tête de production, espace de gestion,
+couleur de fond du bouton « Ajouter », puis un choix personnel posé en ligne (`style.setProperty`)
+comme le fait le panneau Réglages.
+
+Chromium pharma-sans    · --primary #2f7d4f · « Ajouter » rgb(47, 125, 79)   || choix perso → rgb(155, 44, 74)
+Chromium pharma-violet  · --primary #6b46c1 · « Ajouter » rgb(107, 70, 193)  || choix perso → rgb(155, 44, 74)
+WebKit   pharma-sans    · --primary #2f7d4f · « Ajouter » rgb(47, 125, 79)   || choix perso → rgb(155, 44, 74)
+WebKit   pharma-violet  · --primary #6b46c1 · « Ajouter » rgb(107, 70, 193)  || choix perso → rgb(155, 44, 74)
+
+Lecture : sans surcharge, le vert du style « nature » ; avec, le violet du propriétaire l'emporte sur
+le style ; un choix personnel fait dans Réglages l'emporte encore, sur l'appareil qui l'a fait.
+Note de méthode : une première mesure au vert ne départageait rien (le style « nature » est déjà
+#2f7d4f), et une seconde, faite par substitution de texte dans la page, était contaminée (elle
+changeait aussi la règle du style). Celle-ci régénère la page avec la couleur violette.

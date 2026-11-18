@@ -386,7 +386,7 @@ export default function AtelierPage() {
       const d = (await res.json().catch(() => ({}))) as {
         ok?: boolean; error?: string; horsPerimetre?: boolean; raison?: string;
         aConfirmer?: boolean; message?: string; fichiers?: string[]; coutUsd?: number; rang?: number;
-        migration?: string | boolean; couvertureNonMesuree?: boolean; declarationRejetee?: string;
+        migration?: string | boolean; couvertureNonMesuree?: boolean; declarationRejetee?: string; couleur?: string;
       };
       // CE QUI A ÉTÉ DÉPENSÉ SE DIT, MÊME QUAND ÇA RATE. Un refus gratuit et
       // un refus payé ne sont pas la même nouvelle.
@@ -440,7 +440,10 @@ export default function AtelierPage() {
           : '';
       setAvis(
         (d.migration === undefined
-          ? `Modifié — ${String((d.fichiers ?? []).length)} fichier(s) touché(s)${paye}.`
+          ? d.couleur !== undefined && (d.fichiers ?? []).filter((f) => f !== 'APPARENCE.json').length === 0
+            // SURCHARGE DE THÈME : aucune ligne de code touchée, et ça se dit.
+            ? `Couleur principale appliquée${paye}.`
+            : `Modifié — ${String((d.fichiers ?? []).length)} fichier(s) touché(s)${paye}.`
           : `${d.migration}${paye}`) + nonMesure +
           // UNE DONNÉE DEMANDÉE ET NON AJOUTÉE SE DIT (défaut A, 2026-11-18).
           (d.declarationRejetee === undefined ? '' : ` ${d.declarationRejetee}`),

@@ -96,6 +96,8 @@ export type VersionDocument = {
    * qui n'existent pas et laisserait les autres ouvertes.
    */
   readonly politiques?: string
+  /** La couleur choisie par le propriétaire (surcharge de thème) — absente = celle du style. */
+  readonly apparence?: { readonly couleur: string }
 }
 
 /** L'état interne du pipeline AIR. Ne permet PAS de revenir en arrière. */

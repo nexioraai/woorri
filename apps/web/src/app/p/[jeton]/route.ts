@@ -36,6 +36,7 @@ import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { construireApercu } from '@/lib/apps/apercu'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { pageAutonome } from '@/lib/apps/boucle-directe'
+import { apparenceDuDocument } from '@/lib/apps/apparence'
 import { baseDeLOeuvre } from '@/lib/apps/base-de-l-oeuvre'
 import { TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { CSP_PAGE_PUBLIEE, ENTETES_PAGE_PUBLIEE, jetonValide } from '@/lib/apps/publication'
@@ -168,7 +169,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ jeton: string 
     }
     // SANS BASE, rien à joindre : l'origine opaque ne gêne personne, et la
     // phrase juste est que cette application ne conserve rien.
-    return new Response(pageAutonome(v.code, titre, base, 'servie'), {
+    return new Response(pageAutonome(v.code, titre, base, 'servie', null, apparenceDuDocument(lu.data.document)), {
       status: 200,
       headers: ENTETES_PAGE_PUBLIEE,
     })

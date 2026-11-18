@@ -170,6 +170,8 @@ export async function POST(req: Request) {
         fichiers: etat.fichiers,
         schema: etat.schema,
         politiques: etat.politiques,
+        // LA COULEUR DE *CETTE* VERSION — revenir en arrière la ramène aussi.
+        ...(etat.apparence === undefined ? {} : { apparence: etat.apparence }),
       },
       version_courante: rang,
     })

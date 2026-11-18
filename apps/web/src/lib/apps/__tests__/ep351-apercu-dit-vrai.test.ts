@@ -137,8 +137,10 @@ describe('EP-351 · l’aperçu d’une œuvre publiée', () => {
     expect(src, 'la publication n’est pas lue en base').toMatch(
       /\.select\([^)]*publication_slug[^)]*publication_jeton/u,
     )
+    // `[,)]` (2026-11-18) : la couleur du propriétaire suit l'adresse en
+    // argument ; l'adresse doit toujours être TRANSMISE, pas forcément dernière.
     expect(src, 'l’adresse n’est pas transmise à la page').toMatch(
-      /pageAutonome\([^)]*adresse\)/u,
+      /pageAutonome\([^)]*adresse[,)]/u,
     )
     // ── ET LA BASE N'EST TOUJOURS PAS INJECTÉE DANS LE CADRE OPAQUE.
     //
