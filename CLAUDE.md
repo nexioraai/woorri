@@ -2,7 +2,7 @@
 
 ## Échéances écrites — à relire en début de session
 
-Les chantiers reportés portent une date limite dans `docs/ECHEANCES.md`. **Avant le 2027-01-31** : la suite de l'abonnement non renouvelé (préavis, retrait de la ligne après 30 jours, données gardées au moins 90 jours). Une échéance ne se retire que faite et prouvée, ou replanifiée par le propriétaire.
+Les chantiers reportés portent une date limite dans `docs/ECHEANCES.md`. **Avant le 2027-01-15** : le juge des écritures promises (moteur direct). **Avant le 2027-01-31, ensemble ou pas du tout** : l'export des données en CSV et la suite de l'abonnement non renouvelé (préavis, retrait de la ligne après 30 jours, données gardées au moins 90 jours). Une échéance ne se retire que faite et prouvée, ou replanifiée par le propriétaire.
 
 ## Principe fondamental
 

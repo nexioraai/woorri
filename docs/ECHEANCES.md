@@ -6,6 +6,8 @@
 
 | Avant le | Chantier | Contenu | Pourquoi cette date |
 |---|---|---|---|
+| **2027-01-15** | **Juge des écritures promises** (moteur direct) | Vérifier qu'une écriture promise par le document de l'appli (ajouter, modifier, retirer) arrive **vraiment** dans la base. Le juge d'exécution compte les boutons muets ; il ne suit pas l'écriture | Les premiers clients sont activés à la main dès Dary : en décembre, on peut les regarder un par un ; en janvier, non. Une écriture qui n'atterrit pas chez un client qui paie se paie en remboursement et en confiance perdue. C'est le trou par lequel sont passées l'insertion cassée (`produit.emplacement`) et « Retirer » mort pendant deux semaines |
+| **2027-01-31** | **Export des données en CSV** | Clients, ventes, stocks : chaque table de l'appli, téléchargeable par son propriétaire | **MÊME PROMESSE que le chemin hors-ligne ci-dessous : les deux partent ensemble, ou ni l'un ni l'autre.** On ne met pas une appli en pause en annonçant « vos données sont gardées 90 jours » si le commerçant ne peut pas les sortir |
 | **2027-01-31** | Abonnement non renouvelé — la suite | Préavis au propriétaire (compte à rebours dans le tableau de bord) ; **retrait de la ligne après 30 jours** de retard, avec une page neutre pour ses clients ; **données conservées au moins 90 jours**, intactes au paiement ; retour immédiat au paiement ; un test qui échoue si le chemin du retrait écrit ou supprime quoi que ce soit | Les premiers abonnements sont payés au festival Dary (fin décembre 2026). Aucun ne peut avoir 30 jours de retard avant fin janvier. La demi-journée d'avant Dary (état, rappel, arrêt des modifications) fait partie du chantier du paiement. |
 
 **La règle elle-même** (décision du propriétaire, 2026-11-18 ; c'est une règle, pas un réglage) :
@@ -17,12 +19,3 @@
 - **jamais de suppression sans préavis, jamais de perte de données pour cause d'impayé.**
 
 La raison : couper une appli punit aussi les clients du commerçant, qui n'ont rien demandé. Au Tchad, avec le mobile money, les retards seront fréquents et souvent innocents.
-
-## Après Dary — DATE À FIXER PAR LE PROPRIÉTAIRE
-
-> Consignés le 2026-11-18. Selon la règle en tête de ce fichier, un chantier sans date est un chantier abandonné : chacun attend sa date.
-
-| Avant le | Chantier | Contenu | Pourquoi |
-|---|---|---|---|
-| **à fixer** | **Juge des écritures promises** (moteur direct) | Vérifier qu'une écriture promise par le document de l'appli (ajouter, modifier, retirer) arrive **vraiment** dans la base. Le juge d'exécution compte les boutons muets ; il ne suit pas l'écriture | C'est le trou par lequel sont passées l'insertion cassée (`produit.emplacement`) et « Retirer » mort pendant deux semaines. Révélé par l'outil manuel `outils-manuels/une-app.comportement.une.tsx` (moteur AIR) |
-| **à fixer** | **Export des données en CSV** | Clients, ventes, stocks : chaque table de l'appli, téléchargeable par son propriétaire | Garder les données 90 jours ne vaut rien si le commerçant ne peut pas les sortir. C'est ce qui rend crédible la promesse des 90 jours |
