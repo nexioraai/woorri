@@ -29,6 +29,7 @@ import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { declarationDe } from '@/lib/apps/declaration-depuis-schema'
 import { projectAirSchema } from '@deribfy/air-schema'
 import {
+  FICHIER_DECLARATION,
   fusionnerEntites,
   lireDeclarationEnRoute,
 } from '@/lib/apps/declaration-en-route'
@@ -92,6 +93,7 @@ import {
   PERIMETRE_RETOUCHE,
   plafondRetouche,
   etapeRetouche,
+  phraseDeclarationRejetee,
   refusHorsPerimetre,
   type NoteJuge,
 } from '@/lib/apps/retouche'
@@ -482,6 +484,21 @@ export async function POST(req: Request) {
     declaration.entites.length > 0
       ? fusionnerEntites(entitesAvant, declaration.entites)
       : { entites: entitesAvant, pertes: [] }
+  // ── CE QUE LA DÉCLARATION N'A PAS OBTENU SE DIT (défaut A).
+  //
+  // Refus du contrat, pertes de la fusion, fichier illisible : aucun des
+  // trois n'était lu ici. Ils ne bloquent pas à eux seuls — le juge des
+  // colonnes refuse la version si le code écrit ce qui manque — mais ils
+  // partent à l'écran dans tous les cas.
+  const brutDeclaration = apres.get(FICHIER_DECLARATION)
+  let illisible = false
+  if (brutDeclaration !== undefined) {
+    try { JSON.parse(brutDeclaration) } catch { illisible = true }
+  }
+  const declarationRejetee = phraseDeclarationRejetee({
+    illisible, refus: declaration.refus, pertes: fusion.pertes,
+  })
+  if (declarationRejetee !== null) console.warn('[retouche] déclaration rejetée', declarationRejetee)
   const plan = comparerDeclarations(entitesAvant, fusion.entites)
   // ── UN ARRÊT DE M1 NE SE DISCUTE PAS, ET NE SE CONFIRME PAS.
   //
@@ -539,7 +556,7 @@ export async function POST(req: Request) {
       {
         error: verdict.regressions.some((x) => x.juge === 'colonnes inexistantes')
           // LA DONNÉE NOMMÉE, DANS LES MOTS DU COMMERÇANT — pas un compteur.
-          ? `Cette modification abîmerait votre application : ${phraseColonnes(colonnesNouvelles(avant, contexte.entites, fichiersLivres, fusion.entites))}. Je ne l’ai pas appliquée.`
+          ? `Cette modification abîmerait votre application : ${phraseColonnes(colonnesNouvelles(avant, contexte.entites, fichiersLivres, fusion.entites))}. Je ne l’ai pas appliquée.${declarationRejetee === null ? '' : ` ${declarationRejetee}`}`
           : `Cette modification abîmerait votre application (${quoi}). Je ne l’ai pas appliquée.`,
         coutUsd,
       },
@@ -750,7 +767,8 @@ export async function POST(req: Request) {
       // `comparerJuges` ne pouvait pas comparer la couverture : elle valait
       // `null` avant comme après. Sans ce drapeau, son silence se lisait
       // comme « pas de régression » — et l'écran l'aurait répété.
-      couvertureNonMesuree: verdict.couvertureNonMesuree },
+      couvertureNonMesuree: verdict.couvertureNonMesuree,
+      ...(declarationRejetee === null ? {} : { declarationRejetee }) },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }

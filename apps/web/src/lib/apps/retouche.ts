@@ -110,6 +110,15 @@ export const PERIMETRE_RETOUCHE =
  * laisserait le modèle croire qu'on a omis de lui montrer quelque
  * chose — et il inventerait pour combler.
  */
+/**
+ * ── LE GABARIT MONTRÉ EST UN GABARIT QUI PASSE (défaut A, 2026-11-18).
+ *
+ * Il montrait `fld_nom « nom » text` : ni `required`, ni la forme JSON. Une
+ * recopie fidèle était REFUSÉE par le contrat (mesuré sur le vrai
+ * validateur, RAPPORT_RETOUCHE_PHARMA.md §A) — la table entière, et le champ
+ * neuf avec. Chaque table est désormais montrée telle qu'elle est stockée :
+ * elle a passé le contrat, sa recopie le passe aussi.
+ */
 export function blocDeclaration(entites: readonly { id: string; name: string; fields: readonly { id: string; name: string; type: string }[]; appendOnly?: boolean }[]): string {
   if (entites.length === 0) {
     return [
@@ -124,12 +133,30 @@ export function blocDeclaration(entites: readonly { id: string; name: string; fi
     'croire que les tables actuelles sont abandonnées, et la modification',
     'serait refusée pour protéger les données déjà saisies.',
     '',
-    ...entites.map(
-      (e) =>
-        `- ${e.id} (« ${e.name} »${e.appendOnly === true ? ', journal' : ''}) : ` +
-        e.fields.map((f) => `${f.id} « ${f.name} » ${f.type}`).join(', '),
-    ),
+    ...entites.map((e) => JSON.stringify(e)),
   ].join('\n')
+}
+
+/**
+ * UNE DÉCLARATION REJETÉE SE DIT (défaut A, 2026-11-18).
+ *
+ * La route ne lisait ni les refus du contrat ni les pertes de la fusion, et
+ * un JSON illisible valait « rien déclaré » : trois chemins vers le même
+ * silence. Le commerçant croyait sa donnée ajoutée ; la colonne n'existait
+ * pas. `null` quand rien n'a été rejeté.
+ */
+export function phraseDeclarationRejetee(o: {
+  readonly illisible: boolean
+  readonly refus: readonly { readonly quoi: string; readonly motif: string }[]
+  readonly pertes: readonly { readonly table: string; readonly quoi: string; readonly pourquoi: string }[]
+}): string | null {
+  const morceaux = [
+    ...(o.illisible ? ['la description des données était illisible'] : []),
+    ...o.refus.map((r) => `« ${r.quoi} » : ${r.motif}`),
+    ...o.pertes.map((x) => `« ${x.quoi} » dans « ${x.table} » : ${x.pourquoi}`),
+  ]
+  if (morceaux.length === 0) return null
+  return `Une donnée demandée n’a pas pu être ajoutée à votre base (${morceaux.join(' ; ')}).`
 }
 
 /** Le marqueur que le modèle rend quand la demande sort du périmètre. */
@@ -162,16 +189,26 @@ export const CONSIGNE_RETOUCHE = [
   'suivi de la raison en une phrase, et NE RENDS AUCUN FICHIER.',
   '',
   'ET SI TA MODIFICATION A BESOIN D’UNE DONNÉE DE PLUS, DÉCLARE-LA — ne la',
-  'range ni dans un état React ni dans le navigateur. Rends ce fichier EN',
-  'PLUS des autres (il ne part pas dans l’application) :',
+  'range ni dans un état React ni dans le navigateur. Sans déclaration, la',
+  'colonne n’existe pas et la modification est refusée. Rends ce fichier EN',
+  'PLUS des autres (il ne part pas dans l’application).',
+  '',
+  'NE DÉCLARE QUE CE QUE TU AJOUTES. Un champ de plus dans une table qui',
+  'existe : la table avec SON id, et SEULEMENT le champ neuf. Ce que tu ne',
+  'cites pas reste tel quel.',
   '',
   '   === DONNEES.json ===',
-  '   [{"name":"chose","fields":[{"name":"champ","type":"text"}]}]',
-  '   (`chose` est REFUSÉ par le moteur : nomme ce que la table conserve.)',
+  '   [{"id":"ent_produit","name":"produit","fields":[{"id":"fld_emplacement","name":"emplacement","type":"text","required":false}]}]',
   '',
-  'REPRENDS LA LISTE CI-DESSOUS TELLE QUELLE et ajoute à côté. Une table',
-  'que tu renommes ou que tu omets sera comprise comme ABANDONNÉE, et la',
-  'modification sera refusée pour protéger ce qui y est déjà saisi.',
+  'Une table neuve : un id « ent_<nom> », et chaque champ un id « fld_<nom> »,',
+  'un type, et "required". Un champ ajouté à une table déjà remplie est',
+  '"required": false — les lignes existantes ne l’ont pas.',
+  '',
+  '   [{"id":"ent_rendez_vous","name":"rendez_vous","fields":[{"id":"fld_date_prevue","name":"date_prevue","type":"date","required":true}]}]',
+  '',
+  'Types : string, text, number, decimal, boolean, date, datetime.',
+  'Un nom de table vague (« chose », « element ») est refusé : nomme ce',
+  'qu’elle conserve.',
   '',
   'TA RAISON NE CITE JAMAIS UN FICHIER NI UN DOCUMENT DE L’APPLICATION.',
   'La personne ne sait pas qu’ils existent, et ils n’ont aucune autorité sur',
