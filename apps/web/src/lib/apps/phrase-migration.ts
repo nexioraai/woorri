@@ -110,6 +110,17 @@ export function phraseAvantMigration(
 }
 
 /**
+ * LE FILET NE VOIT PAS : ON NE TOUCHE À RIEN (2026-11-18).
+ *
+ * Dit quand l'instantané d'avant ne peut pas être pris. On ne promet pas
+ * que les données seront conservées, et on ne dit surtout pas qu'il n'y
+ * en a pas : on ne sait pas, donc on ne migre pas.
+ */
+export const PHRASE_COMPTAGE_IMPOSSIBLE =
+  'Je ne peux pas compter les données déjà saisies dans votre application : ' +
+  'je ne modifie donc pas sa base. Votre application n’a pas changé.'
+
+/**
  * CE QUI S'EST PASSÉ, AVEC LES NOMBRES QUE LE PIPELINE A COMPTÉS.
  *
  * ── PAS UNE NARRATION.

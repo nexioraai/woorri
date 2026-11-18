@@ -57,32 +57,26 @@ const sain = (x: string): boolean => /^[a-z_][a-z0-9_]*$/u.test(x)
  */
 export async function prendreInstantane(q: Interroge, schema: string): Promise<Instantane> {
   if (!sain(schema)) throw new Error(`schéma au nom inattendu : ${schema}`)
-  const tables = (
-    await q(
-      `select table_name from information_schema.tables ` +
-        `where table_schema = '${schema}' and table_type = 'BASE TABLE'`,
-    )
-  )
-    .map((r) => String(r.table_name))
-    .filter(sain)
-
+  // ── LE COMPTE PASSE PAR LA FONCTION DÉDIÉE, JAMAIS PAR UN `count` DIRECT
+  // (2026-11-18, `supabase/sql/compte_oeuvre.sql`).
+  //
+  // MESURÉ EN PRODUCTION : les tables des œuvres ont `force row level
+  // security`. Un `count(*)` du migrateur passait SOUS la sécurité par
+  // ligne et rendait 0 — « rien à conserver » à une pharmacie de 4
+  // produits, et un contrôle d'après-migration qui comparait 0 à 0.
+  //
+  // Si la fonction manque ou échoue, ON LÈVE : un instantané qu'on ne peut
+  // pas prouver n'est pas un instantané vide. L'appelant refuse alors de
+  // toucher à la base (« je ne peux pas compter vos données »).
+  const lus = await q(`select cible, n from public.deribfy_compte_oeuvre('${schema}')`)
   const lignes: Record<string, number> = {}
   const remplies: Record<string, number> = {}
-  for (const t of tables) {
-    lignes[t] = Number((await q(`select count(*)::int as n from ${schema}.${t}`))[0]?.n ?? 0)
-    const colonnes = (
-      await q(
-        `select column_name from information_schema.columns ` +
-          `where table_schema = '${schema}' and table_name = '${t}'`,
-      )
-    )
-      .map((r) => String(r.column_name))
-      .filter(sain)
-    for (const c of colonnes) {
-      remplies[`${t}.${c}`] = Number(
-        (await q(`select count(${c})::int as n from ${schema}.${t}`))[0]?.n ?? 0,
-      )
-    }
+  for (const r of lus) {
+    const cible = String(r.cible)
+    const n = Number(r.n)
+    if (!Number.isFinite(n)) throw new Error(`compte illisible pour ${cible}`)
+    if (cible.includes('.')) remplies[cible] = n
+    else lignes[cible] = n
   }
   // ── LE NOMBRE DE COMPTES, SANS AUCUN ACCÈS AUX COMPTES.
   //

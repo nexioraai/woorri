@@ -34,7 +34,7 @@ import {
   lireDeclarationEnRoute,
 } from '@/lib/apps/declaration-en-route'
 import { comparerDeclarations, phraseArret } from '@/lib/apps/migration-oeuvre'
-import { phraseApresMigration, phraseAvantMigration } from '@/lib/apps/phrase-migration'
+import { PHRASE_COMPTAGE_IMPOSSIBLE, phraseApresMigration, phraseAvantMigration } from '@/lib/apps/phrase-migration'
 import { emettreMigrationSql } from '@/lib/apps/migration-sql'
 import { appliquerMigration } from '@/lib/apps/connexion-migrateur'
 import { emettrePolitiquesSql, emettreSchemaSql } from '@deribfy/compiler'
@@ -242,6 +242,13 @@ async function appliquerEnAttente(
   const entitesApres = etat.entites ?? entitesAvant
   const plan = comparerDeclarations(entitesAvant, entitesApres)
   const avant = await instantaneDeLOeuvre(id)
+  // ── SANS INSTANTANÉ, ON NE MIGRE PAS — ET ON N'ÉCRIT PAS NON PLUS.
+  //
+  // L'ancienne forme sautait la migration et écrivait quand même le
+  // document : le code attendait une colonne qui n'existait pas.
+  if (plan.ajouts.length > 0 && avant === null) {
+    return NextResponse.json({ error: PHRASE_COMPTAGE_IMPOSSIBLE }, { status: 409 })
+  }
 
   if (plan.ajouts.length > 0 && avant !== null) {
     const m = emettreMigrationSql(plan, entitesApres, id)
@@ -694,6 +701,12 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
   let instantaneAvant: Instantane | null = null
   if (plan.ajouts.length > 0) {
     instantaneAvant = await instantaneDeLOeuvre(id)
+    // ── LE FILET NE VOIT PAS : ON REFUSE (2026-11-18). Sans instantané,
+    // l'ancienne forme sautait la migration et livrait quand même une
+    // version qui écrit dans une colonne inexistante.
+    if (instantaneAvant === null) {
+      return NextResponse.json({ error: PHRASE_COMPTAGE_IMPOSSIBLE, coutUsd }, { status: 409 })
+    }
     const phrase =
       instantaneAvant === null ? null : phraseAvantMigration(plan, instantaneAvant)
     if (phrase !== null && !confirme) {
