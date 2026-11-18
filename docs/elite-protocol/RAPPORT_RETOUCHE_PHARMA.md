@@ -133,6 +133,23 @@ v3 → v4 : **195 lignes changées** dans `Pharmacie.tsx` pour une demande d'**u
 | ⑨ | Rien n'indique la progression d'une retouche | L'écran annonce « une vingtaine de secondes » puis se tait. **Mesuré** depuis le 2026-11-18 : **52,6 s** en moyenne pour une réussite, **70,0 s** pour un refus | `atelier/[id]/page.tsx:357` ; `vercel metrics` |
 | ⑩ | Aucune confirmation avant d'ajouter une colonne | **Prémisse à corriger : aucune colonne n'a été ajoutée en base** (mesuré). La confirmation n'est demandée que si le plan de migration change. La déclaration étant refusée en silence (A), le plan était vide | A ; `retoucher/route.ts:470-474, 556-600` |
 
+## Défauts ⑪ à ⑬ — « Retirer » (2026-11-18, consignés, non corrigés)
+
+**Ce n'est pas une régression du transfert de propriété.** Mesuré en lecture seule après le transfert : `authenticated` garde le droit de supprimer (`arwd`) sur la table `vente` de pharma. La politique de sécurité laisse voir la vente « oko test » au compte de pharma. Les seules tables sans droit de suppression sont les 3 journaux (`transaction`, `releve`, `mouvement_stock`), et c'est voulu.
+
+**Cause, mesurée.** Les applications publiées sont servies avec `Content-Security-Policy: … sandbox allow-scripts allow-same-origin` (`publication.ts:223`, `cspSousDomaine`), sans `allow-modals`. Depuis le 2026-11-05 (`54b0d4b9`), le navigateur ignore donc `confirm()` : il rend `false` sans rien afficher. Mesuré dans Chromium et WebKit : sans `allow-modals`, `confirm=false` et aucune boîte ; avec, `confirm=true` et une boîte. Chaque « Retirer » de pharma commence par `window.confirm(…)` : il s'arrête avant même la base. Aucune suppression de pharma n'a jamais pu passer sur son adresse publique.
+
+**Portée.** Toute appli publiée dont le code appelle `confirm()`, `alert()` ou `prompt()` :
+- 17 documents sur 58 dans le corpus en appellent un ;
+- pharma : 4 appels, un par liste ;
+- atita : 0 appel.
+
+| # | Défaut | Où |
+|---|---|---|
+| ⑪ | « Retirer » échoue sans aucun message. Chez pharma, la boîte de confirmation est bloquée en silence. Et si une suppression échoue, `if (error) return;` se tait aussi | `publication.ts:223` ; `Pharmacie.tsx` (chaque `retirer`) |
+| ⑫ | Les applis générées ne donnent aucun retour d'action : ni confirmation, ni transition, rien qui dise que le geste a été pris en compte. Un bouton qui ne dit rien est un bouton cassé, même quand il fonctionne (mot du propriétaire) | consigne de génération ; bibliothèque `systeme/ui` |
+| ⑬ | atita supprime **sans confirmation** et **ignore l'échec**. `await base.from(…).delete()` ne lit pas l'erreur, puis la ligne est retirée de l'écran dans tous les cas : si la base refuse, l'écran ment | code servi par atita.deribfy.app (5 suppressions) |
+
 ## Observations de passage
 
 - **Une retouche refusée ou ratée ne laisse aucune trace dans Deribfy** : la route n'écrit ni alerte ni journal. Seul Vercel garde le code de réponse. Le motif n'existe qu'à l'écran de la personne.
