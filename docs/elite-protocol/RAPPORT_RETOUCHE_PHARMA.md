@@ -169,6 +169,11 @@ Bilan des six demandes : 4 passent ; « Photographier » est à retester ; « bo
 | ⑮ | **Premier RETRAIT non demandé** : la retouche de l'emplacement a remplacé la tuile « Produits en stock bas — 1 » par « Rayon non précisé — 4 ». Un commerçant perd un chiffre qu'il surveillait, sans être prévenu. Une retouche ne doit jamais retirer un élément existant sans le dire. Rangé avec ⑫ et le juge | juges de la retouche (aucun ne compare les éléments affichés avant/après) |
 | ⑯ | La trace d'une retouche mise de côté reste `en_attente` pour toujours : l'accord (« Appliquer ? ») n'appelle pas le modèle et n'écrit rien. Ni la réussite (versions 6 et 7), ni l'échec du premier essai du cas 3 (« must be owner », version 5) ne sont tracés | `retoucher/route.ts` (`appliquerEnAttente`) |
 
+## ⑮ et ⑯ confirmés (2026-11-18, propriétaire)
+
+- **⑮ deux fois de suite.** La quatrième tuile du tableau de bord de pharma est remplacée à chaque retouche qui touche les produits : « Produits en stock bas — 1 » → « Rayon non précisé — 4 » (emplacement) → « Produits sans fournisseur — 5 » (fournisseur). Le modèle traite cette place comme libre. Ajouter sans qu'on demande agace ; **retirer sans qu'on demande fait perdre de l'information**. C'est le défaut le plus coûteux de la série. Rangé avec ⑫ et le juge (une retouche ne retire jamais un élément existant sans le dire).
+- **⑯** : les versions 8 et 9 portent encore « EN ATTENTE DE VOTRE ACCORD » alors qu'elles sont appliquées et servies. Ni l'étiquette de la version, ni la trace ne sont réécrites à l'accord.
+
 ## Défaut ⑰ (2026-11-18, consigné, non corrigé)
 
 | # | Défaut | Où |
