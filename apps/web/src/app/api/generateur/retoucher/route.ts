@@ -567,6 +567,26 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     )
   }
 
+  // ── `systeme/` EST FERMÉ À LA RÉÉCRITURE (2026-11-18).
+  //
+  // Ces fichiers sont la bibliothèque de Deribfy, partagée par toutes les
+  // applis. On REFUSE plutôt que d'écarter le fichier en silence : le code
+  // de l'appli peut dépendre de ce que le modèle y a changé, et l'écarter
+  // livrerait un code amputé de sa moitié.
+  const systemeTouche = rendus.map((f) => f.chemin).filter((c) => c.startsWith('systeme/'))
+  if (systemeTouche.length > 0) {
+    return NextResponse.json(
+      {
+        error:
+          'Cette modification voulait réécrire des composants fournis par Deribfy ' +
+          `(${systemeTouche.join(', ')}), qui ne se modifient pas depuis une appli. ` +
+          'Reformulez la demande sur ce que vous voulez voir à l’écran. Votre application n’a pas changé.',
+        coutUsd,
+      },
+      { status: 409 },
+    )
+  }
+
   // ── LA FUSION : un fichier rendu REMPLACE l'ancien, les autres ne bougent
   // pas. C'est ce qui rend la retouche moins risquée qu'une régénération.
   const apres = new Map(avant)

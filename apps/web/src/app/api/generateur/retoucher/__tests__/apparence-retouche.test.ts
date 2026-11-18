@@ -8,7 +8,8 @@
  *   et la version portent la couleur, les fichiers sont INCHANGÉS et ne
  *   contiennent pas `APPARENCE.json` ;
  * ② une couleur illisible est refusée avec sa raison, et rien n'est écrit ;
- * ③ une retouche sans couleur GARDE celle du document.
+ * ③ une retouche sans couleur GARDE celle du document ;
+ * ④ ⑤ `systeme/` est fermé à la réécriture (consigne + refus dans la route).
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { journalVierge, type JournalPostgrest } from '@/lib/testing/postgrest'
@@ -103,6 +104,22 @@ describe('surcharge de thème · la route', () => {
     expect(d.error).toMatch(motifTexte('texte blanc des boutons deviendrait illisible'))
     expect(ecrits(TABLE_GENERATIONS, 'update')).toEqual([])
     expect(ecrits(TABLE_VERSIONS, 'insert')).toEqual([])
+  })
+
+  it('④ systeme/ est fermé : une retouche qui le réécrit est refusée, rien n’est écrit', async () => {
+    etat.texte = '=== systeme/ui.tsx ===\nexport const b = 3\n=== index.tsx ===\nexport const a = 9'
+    const r = await appel()
+    const d = (await r.json()) as { error?: string }
+    expect(r.status).toBe(409)
+    expect(d.error).toMatch(motifTexte('composants fournis par Deribfy (systeme/ui.tsx)'))
+    expect(ecrits(TABLE_GENERATIONS, 'update')).toEqual([])
+    expect(ecrits(TABLE_VERSIONS, 'insert')).toEqual([])
+  })
+
+  it('⑤ la consigne ferme systeme/ et n’invite plus à retoucher le composant partagé', async () => {
+    const { CONSIGNE_RETOUCHE } = await import('@/lib/apps/retouche')
+    expect(CONSIGNE_RETOUCHE).toMatch(motifTexte('LES FICHIERS DE `systeme/` SONT FOURNIS PAR DERIBFY : tu ne les rends'))
+    expect(CONSIGNE_RETOUCHE).not.toMatch(motifTexte('retouche ce composant et lui seul'))
   })
 
   it('③ une retouche sans couleur garde celle du document', async () => {

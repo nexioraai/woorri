@@ -21,6 +21,15 @@
  * Personne ne le lui avait expliqué. Rendre les seize fichiers aurait fait
  * payer la réécriture de ce que personne ne demandait de toucher — et pris
  * le risque d'abîmer ailleurs.
+ *
+ * ── MAIS CE COMPOSANT PARTAGÉ EST CELUI DE DERIBFY (2026-11-18).
+ *
+ * Réécrire `systeme/ui.tsx` (49 Ko) pour une couleur, c'est ce qui faisait
+ * couper la réponse chez pharma — deux refus sur deux. Et c'est réécrire,
+ * dans UNE appli, la bibliothèque que toutes partagent. `systeme/` est donc
+ * fermé à la réécriture : la couleur passe par `APPARENCE.json`, l'allure
+ * d'un composant par ses réglages, et une retouche qui rend un fichier de
+ * `systeme/` est refusée.
  */
 
 /**
@@ -236,8 +245,11 @@ export const CONSIGNE_RETOUCHE = [
   'pas encore, mets-la en règle au passage :',
   ...REGLE_ECRITURES,
   '',
-  'Cherche l’endroit JUSTE : si tous les boutons passent par un composant',
-  'partagé, retouche ce composant et lui seul.',
+  'LES FICHIERS DE `systeme/` SONT FOURNIS PAR DERIBFY : tu ne les rends',
+  'JAMAIS. Ils se lisent, ils ne se réécrivent pas — une retouche qui en',
+  'rend un est refusée. Pour changer l’allure d’un composant fourni, passe-lui',
+  'd’autres réglages depuis l’écran qui l’emploie ; pour la couleur,',
+  '`APPARENCE.json`. Cherche l’endroit JUSTE dans les fichiers de l’appli.',
   '',
   'Réponds dans la langue de la demande.',
 ].join('\n')
