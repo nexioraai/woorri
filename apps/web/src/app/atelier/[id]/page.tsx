@@ -565,7 +565,10 @@ export default function AtelierPage() {
   const echanges = echangesDe(app?.demande ?? '', versions?.liste ?? []);
 
   return (
-    <main className="flex h-[100dvh] flex-col overflow-hidden bg-[#0A050E] text-white">
+    // IDENTITÉ COURTE (2026-11-18) : les jetons de Deribfy (globals.css @theme) — fond
+    // bg-deep, barre du haut prune et or, colonne de gauche bleue. Sans halo, dégradé
+    // ni maquette : la version longue attend après Dary.
+    <main className="flex h-[100dvh] flex-col overflow-hidden bg-bg-deep text-white">
       {/* ── ① LA BARRE DU HAUT, MINIMALE.
           Rien de marketing. La marque, le retour vers les projets, le nom
           de l'application ; au CENTRE le choix de l'appareil ; à droite
@@ -577,7 +580,7 @@ export default function AtelierPage() {
           ── SOUS 1024 PX, TROIS RANGÉES. Mesuré à 390 px : sur une seule
           rangée, les gestes chevauchaient le titre. La barre passe donc à
           la ligne — identité, puis l'appareil centré, puis les gestes. */}
-      <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-white/[0.07] px-4 py-2.5 lg:flex-nowrap">
+      <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-brand-gold/45 bg-brand-prune/[0.35] px-4 py-2.5 lg:flex-nowrap">
         <div className="flex min-w-0 flex-1 basis-full items-center gap-3 lg:basis-0">
         {/* L'IDENTITÉ DE DERIBFY : la même marque que la barre latérale.
             L'atelier s'ouvre seul après une génération — on doit savoir
@@ -678,7 +681,7 @@ export default function AtelierPage() {
       </header>
 
       {/* ── M2 : LES ONGLETS, SOUS 1024 PX SEULEMENT. */}
-      <div role="tablist" aria-label="Atelier" className="flex shrink-0 gap-1 border-b border-white/[0.07] px-3 py-1.5 lg:hidden">
+      <div role="tablist" aria-label="Atelier" className="flex shrink-0 gap-1 border-b border-brand-gold/45 bg-brand-prune/[0.30] px-3 py-1.5 lg:hidden">
         {([['application', 'Application'], ['conversation', 'Conversation']] as const).map(([cle, libelle]) => (
           <button
             key={cle}
@@ -709,7 +712,7 @@ export default function AtelierPage() {
           aria-labelledby="onglet-conversation"
           className={`${onglet === 'conversation' ? 'flex' : 'hidden'} w-full min-w-0 shrink-0 flex-col gap-2 p-3 lg:flex lg:w-1/3 lg:max-w-[26rem] lg:p-0`}
         >
-          <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3">
+          <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-brand-blue/35 bg-brand-blue/[0.12] p-3">
             {echanges.length === 0 ? (
               <p className="text-xs text-slate-400">
                 Le fil se remplira à mesure que vous demanderez des changements.
@@ -750,7 +753,7 @@ export default function AtelierPage() {
           {/* LE CHAMP EN BAS, TOUJOURS VISIBLE : il est hors de la zone qui
               défile. Un champ qui part avec le fil oblige à remonter pour
               écrire — et c'est exactement ce qu'un atelier doit éviter. */}
-          <div className="shrink-0 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-2.5">
+          <div className="shrink-0 rounded-2xl border border-brand-blue/35 bg-brand-blue/[0.12] p-2.5">
             {avis !== null && <p className="mb-2 text-[11px] text-emerald-400">{avis}</p>}
             {erreur !== null && <p className="mb-2 text-[11px] text-red-400">{erreur}</p>}
             {/* ── LE REFUS N'EST PLUS LA FIN DU CHEMIN.
