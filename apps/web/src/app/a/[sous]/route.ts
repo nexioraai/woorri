@@ -68,7 +68,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ sous: string }
     // ── `servie` ET NON `apercu` : sans base, la phrase juste n'est pas
     //    « ce sera créé » — on y EST. Mesuré sur sneapp, publiée et sans
     //    aucun `create table`.
-    pageAutonome(v.code, titre, base, 'servie', null, apparenceDuDocument(lu.data.document)),
+    // LE LIEN « COMPTE » seulement si l'appli a une base : sans elle, pas de compte.
+    pageAutonome(v.code, titre, base, 'servie', null, apparenceDuDocument(lu.data.document), base !== undefined && base.url !== ''),
     { status: 200, headers: entetesSousDomaine(base?.url ?? '') },
   )
 }

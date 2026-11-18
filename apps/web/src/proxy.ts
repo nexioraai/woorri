@@ -90,7 +90,7 @@ export async function proxy(req: NextRequest) {
     }
     // ③ Sinon, une application publiée.
     const url = req.nextUrl.clone()
-    url.pathname = `/a/${nom}`
+    url.pathname = cheminApplication(nom, pathname)
     return NextResponse.rewrite(url)
   }
 
@@ -119,7 +119,7 @@ export async function proxy(req: NextRequest) {
       const nom = host.slice(0, -'.deribfy.com'.length)
       if (nom !== '' && !nom.includes('.') && !NOMS_RESERVES.has(nom)) {
         const url = req.nextUrl.clone()
-        url.pathname = `/a/${nom}`
+        url.pathname = cheminApplication(nom, pathname)
         return NextResponse.rewrite(url)
       }
     }
@@ -213,6 +213,14 @@ export async function proxy(req: NextRequest) {
  * fonction pour les deux branches : un cas spécial ne peut plus manquer à
  * l'une d'elles.
  */
+/**
+ * LE CHEMIN INTERNE D'UNE APPLI PUBLIÉE. Tout chemin sert l'appli (document
+ * autonome), SAUF `/compte` : la page Compte, servie par Deribfy (2026-11-18).
+ */
+export function cheminApplication(nom: string, pathname: string): string {
+  return pathname === '/compte' ? `/a/${nom}/compte` : `/a/${nom}`
+}
+
 function adresseInterneDuSite(req: NextRequest, slug: string, pathname: string) {
   const url = req.nextUrl.clone()
   // L'icône du MARCHAND, jamais celle de la plateforme : sans cette

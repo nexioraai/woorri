@@ -169,7 +169,11 @@ describe('EP-270 · le web se publie', () => {
       .toString('utf8')
       .split('\n')
       .filter((f) => f !== '')
+    // ── LE SECOND PORTEUR (2026-11-18) : la page Compte, `<nom>.deribfy.app/compte`.
+    //    Écrite par Deribfy, pas par un modèle ; même sous-domaine, même CSP —
+    //    il FAUT la même origine que l'appli pour partager sa session.
     expect(porteurs, 'une route inattendue porte le régime permissif').toEqual([
+      'src/app/a/[sous]/compte/route.ts',
       'src/app/a/[sous]/route.ts',
     ])
   })

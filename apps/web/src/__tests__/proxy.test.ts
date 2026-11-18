@@ -25,6 +25,9 @@ vi.mock('../app/sites/[slug]/themes/shared', () => ({
     return slug ? { slug, lang: langueDuSiteDouble } : null;
   },
   fetchLangueParSlug: (...a: unknown[]) => fetchLangueParSlugMock(...a),
+  // Aucun SITE à ce nom : le sous-domaine sert donc une application.
+  fetchSiteParSlug: async () => null,
+  fetchSiteParNomPublic: async () => null,
 }));
 
 /** Langue rendue par le double pour le site résolu. */
@@ -240,5 +243,21 @@ describe('une boutique reste marquée comme boutique', () => {
     const res = await proxy(req('www.deribfy.com', '/sites/ma-boutique'));
     expect(res.headers.get('x-middleware-request-x-deribfy-lang')).toBe('en');
     expect(res.headers.get('x-middleware-request-x-deribfy-site')).toBe('1');
+  });
+});
+
+// ── LA PAGE COMPTE D'UNE APPLI (2026-11-18) : `/compte` va à la page servie par
+//    Deribfy ; tout autre chemin sert toujours l'application elle-même.
+describe('le sous-domaine d’une appli : /compte et le reste', () => {
+  const reecrit = (res: Response) => new URL(res.headers.get('x-middleware-rewrite') ?? 'https://x.invalid/').pathname;
+  it.each([
+    ['pharma.deribfy.app', '/compte', '/a/pharma/compte'],
+    ['pharma.deribfy.com', '/compte', '/a/pharma/compte'],
+    ['pharma.deribfy.app', '/', '/a/pharma'],
+    ['pharma.deribfy.app', '/comptes', '/a/pharma'],
+    ['pharma.deribfy.app', '/compte/autre', '/a/pharma'],
+    ['pharma.deribfy.com', '/produits', '/a/pharma'],
+  ])('%s%s → %s', async (hote, chemin, attendu) => {
+    expect(reecrit(await proxy(req(hote, chemin)))).toBe(attendu);
   });
 });

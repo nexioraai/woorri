@@ -19,6 +19,7 @@
  * arrêté » — c'est écrit dans le moteur actuel.
  */
 import { cssApparence, type Apparence } from './apparence'
+import { LIEN_COMPTE_EMIS } from './page-compte'
 import { assembler } from './bac-a-sable'
 import {
   importsInterdits,
@@ -1326,6 +1327,12 @@ export function pageAutonome(
    * ligne du code de l'appli. Voir `apparence.ts`.
    */
   apparence: Apparence | null = null,
+  /**
+   * LE LIEN « COMPTE » (2026-11-18) — vers `<nom>.deribfy.app/compte`, la page
+   * servie par Deribfy. Seule la route `a/[sous]` le demande : l'aperçu et
+   * l'archive n'ont pas de page Compte derrière eux.
+   */
+  lienCompte = false,
 ): string {
   const sur = titre.replace(/[<>&"]/gu, '')
   // ── LA CONFIGURATION EST SÉRIALISÉE EN JSON, PAS INTERPOLÉE À LA MAIN.
@@ -1398,6 +1405,7 @@ export function pageAutonome(
           : adressePubliee !== null
             ? BANDEAU_PUBLIEE(adressePubliee)
             : BANDEAU_APERCU,
+    lienCompte ? LIEN_COMPTE_EMIS : '',
     '<div id="racine"></div>',
     `<script type="module">${ENVELOPPE_MODULE.avant}${code}${ENVELOPPE_MODULE.apres}</script>`,
     '</body></html>',
