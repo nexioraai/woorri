@@ -45,6 +45,7 @@ import { lireEntites } from '@/lib/apps/entites-declarees'
 import { FUSIBLE_SIGNES, lectureAEnregistrer } from '@/lib/apps/lecture-brief'
 import { deploiementQuiSert } from '@/lib/apps/deploiement'
 import { ecrireTentative, type Issue } from '@/lib/apps/tentatives'
+import { NOTE_EPROUVEE_PARTIELLEMENT, NOTE_JUGE_INDISPONIBLE } from '@/lib/apps/notes-internes'
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { TEMOIN_FICHIERS } from '@/lib/apps/temoin-sonde'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
@@ -786,7 +787,7 @@ export async function POST(req: Request) {
           resultat.execution.indisponible === undefined &&
           (resultat.execution.ecransDecouverts ?? 0) > (resultat.execution.ecransVisites ?? 0)
             ? [
-                'Application PARTIELLEMENT éprouvée : ' +
+                NOTE_EPROUVEE_PARTIELLEMENT +
                   proportionEprouvee(
                     resultat.execution.ecransVisites ?? 0,
                     resultat.execution.ecransDecouverts ?? 0,
@@ -796,7 +797,7 @@ export async function POST(req: Request) {
             : []),
           ...(resultat.execution !== null && resultat.execution.indisponible !== undefined
             ? [
-                'Le juge de demarrage n a pas pu s executer : cette application ' +
+                NOTE_JUGE_INDISPONIBLE + ' : cette application ' +
                   'n a PAS ete eprouvee (' +
                   resultat.execution.indisponible.slice(0, 120) +
                   ')',

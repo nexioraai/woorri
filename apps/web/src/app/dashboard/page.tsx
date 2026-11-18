@@ -8,6 +8,8 @@ import { Plus, ExternalLink, Pencil, LogOut, Globe, Users, Inbox, BookOpen } fro
 import Sidebar from '@/components/Sidebar';
 import AccueilProjet from '@/components/dashboard/AccueilProjet';
 import { supabase } from '@/lib/supabase';
+import { estAdmin } from '@/lib/admin-emails';
+import { diagnosticsPourLeCommercant, estNoteInterne } from '@/lib/apps/notes-internes';
 import { IdentifiantsOeuvre, type EtatCompteOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { computeAiScore } from '@/app/lib/aiScore';
 import { useTranslation } from '@/lib/translations';
@@ -749,16 +751,22 @@ export default function DashboardPage() {
                   <p className="text-white/40 text-xs leading-relaxed line-clamp-3">{a.demande}</p>
                   {/* LES POINTS À SURVEILLER, DITS (2026-11-16) : une œuvre livrée avec
                       des défauts non bloquants les porte ici, repliés mais visibles. */}
-                  {a.statut === 'livree' && (a.diagnostics ?? []).length > 0 && (
-                    <details className="text-xs text-amber-300/80">
-                      <summary className="cursor-pointer">
-                        {`⚠ ${String((a.diagnostics ?? []).length)} point(s) à surveiller`}
-                      </summary>
-                      <ul className="mt-1 space-y-1 list-disc pl-4 text-white/50">
-                        {(a.diagnostics ?? []).map((x, i) => <li key={i}>{x}</li>)}
-                      </ul>
-                    </details>
-                  )}
+                  {/* POINT 5 (2026-11-18) : les notes de NOTRE contrôle qualité
+                      (« 24 sur N contrôles… ») ne sont plus montrées au
+                      commerçant — il n'y pouvait rien. L'administrateur les voit. */}
+                  {(() => {
+                    const points = estAdmin(user?.email) ? (a.diagnostics ?? []) : diagnosticsPourLeCommercant(a.diagnostics ?? []);
+                    return a.statut === 'livree' && points.length > 0 && (
+                      <details className="text-xs text-amber-300/80">
+                        <summary className="cursor-pointer">
+                          {`⚠ ${String(points.length)} point(s) à surveiller`}
+                        </summary>
+                        <ul className="mt-1 space-y-1 list-disc pl-4 text-white/50">
+                          {points.map((x, i) => <li key={i}>{estNoteInterne(x) ? `(interne) ${x}` : x}</li>)}
+                        </ul>
+                      </details>
+                    );
+                  })()}
                   {/* ── SON ADRESSE, EN CLAIR ET CLIQUABLE.
                        C'est la seule information qui distingue une carte
                        des cinq autres — et c'est celle qui manquait. */}

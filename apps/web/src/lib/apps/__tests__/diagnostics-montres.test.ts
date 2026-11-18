@@ -49,6 +49,10 @@ describe('Les diagnostics, montrés à l’utilisateur', () => {
   it('② la carte d’une œuvre livrée les affiche', () => {
     const carte = lireSource(join(__dirname, '..', '..', '..', 'app', 'dashboard', 'page.tsx'))
     expect(carte).toMatch(motifTexte('point(s) à surveiller'))
-    expect(carte).toMatch(motifTexte('(a.diagnostics ?? []).map('))
+    // POINT 5 (2026-11-18) : ce qui est montré au commerçant, ce sont les
+    // diagnostics MOINS nos notes de contrôle internes (l'administrateur voit
+    // tout). Une vraie anomalie reste toujours affichée — notes-internes.test.ts ①.
+    expect(carte).toMatch(motifTexte('diagnosticsPourLeCommercant(a.diagnostics ?? [])'))
+    expect(carte).toMatch(motifTexte('points.map('))
   })
 })
