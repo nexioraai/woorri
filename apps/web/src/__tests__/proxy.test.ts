@@ -261,3 +261,32 @@ describe('le sous-domaine d’une appli : /compte et le reste', () => {
     expect(reecrit(await proxy(req(hote, chemin)))).toBe(attendu);
   });
 });
+
+// ── LA FAILLE FERMÉE LE 2026-11-18 — et ce bloc rougit si on la rouvre.
+//
+// `www.deribfy.com/a/pharma` servait l'appli avec `allow-same-origin` DANS
+// l'origine de Deribfy : son code pouvait lire la session du visiteur. Les
+// routes `/a/...` ne s'atteignent que par la réécriture d'un sous-domaine.
+describe('les routes internes des applis ne se demandent jamais en direct', () => {
+  it.each([
+    ['www.deribfy.com', '/a/pharma'],
+    ['www.deribfy.com', '/a/pharma/compte'],
+    ['deribfy.com', '/a/pharma'],
+    ['localhost', '/a/pharma'],
+    ['woorri-git-x.vercel.app', '/a/pharma'],
+    ['admin.deribfy.com', '/a/pharma'],
+    ['inconnu.example', '/a/pharma'],
+    ['www.deribfy.com', '/a'],
+    ['www.deribfy.com', '/a/'],
+    ['pharma.deribfy.app', '/a/autre'],
+  ])('%s%s → 404, sans réécriture', async (hote, chemin) => {
+    const res = await proxy(req(hote, chemin));
+    expect(res.status).toBe(404);
+    expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+  });
+
+  it.each(['/about', '/apercu', '/admin', '/aide/a/b'])('www.deribfy.com%s passe comme avant', async (chemin) => {
+    const res = await proxy(req('www.deribfy.com', chemin));
+    expect(res.status).not.toBe(404);
+  });
+});

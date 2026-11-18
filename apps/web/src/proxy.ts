@@ -53,11 +53,33 @@ function avecLangue(req: NextRequest, lang: string | null, estSiteMarchand = tru
  * Les balises `hreflang` étaient, elles, déjà justes : c'est bien le seul
  * attribut `lang` qui manquait.
  */
+/** `/a` et tout ce qui est dessous : les routes internes des applis publiées. */
+export const CHEMIN_INTERNE_APPLI = /^\/a(?:\/|$)/
+
 const DOCUMENTATION_ANGLAISE = /^\/documentation\/en(?:\/|$)/
 
 export async function proxy(req: NextRequest) {
   const host = (req.headers.get('host') || '').split(':')[0].toLowerCase()
   const pathname = req.nextUrl.pathname
+
+  // ── LES ROUTES INTERNES DES APPLIS NE SE DEMANDENT JAMAIS EN DIRECT (2026-11-18).
+  //
+  // MESURÉ : `curl -i https://www.deribfy.com/a/pharma` répondait 200, avec la
+  // CSP du sous-domaine — `sandbox allow-scripts allow-same-origin`. Le code
+  // d'une appli générée tournait alors DANS l'origine www.deribfy.com et
+  // pouvait lire la session Deribfy du visiteur. Avec des comptes étrangers,
+  // une porte sur la session d'administrateur.
+  //
+  // `/a/<nom>` n'est servi qu'au travers de la RÉÉCRITURE des branches
+  // ci-dessous, sous l'origine `<nom>.deribfy.app` ; une réécriture ne repasse
+  // pas par ce proxy. Toute requête qui ARRIVE avec ce chemin est donc
+  // directe, quel que soit l'hôte : 404, le même texte que la route.
+  if (CHEMIN_INTERNE_APPLI.test(pathname)) {
+    return new NextResponse('Cette application est introuvable.', {
+      status: 404,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
+    })
+  }
 
   // ── deribfy.app : LE DOMAINE DU CONTENU CLIENT (EP-291, 2026-10-30).
   //
