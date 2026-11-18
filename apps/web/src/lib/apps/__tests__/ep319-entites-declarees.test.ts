@@ -276,7 +276,8 @@ describe('EP-319 · les données déclarées', () => {
     // de champ, « Entree », « succes »/« alerte » à l'écran). Mesuré : 9 983.
     // ── 10 100 → 10 400 le 2026-11-16 : D13/D14/D15 — GrilleTableau est une grille
     // de cartes, ChoixApparence se pose tel quel (Atelier b010d704). Mesuré : 10 216.
-    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(10400)
+    // ── 10 400 → 10 700 le 2026-11-18 : ⑬, 2026-11-18 : REGLE_ECRITURES dans le bloc COMMUN — lire `error`, l'écran ne change qu'après succès, retirer se confirme, chaque geste se dit (atita supprimait sans confirmer et sans lire l'erreur, mesuré en production). Mesuré : 10 621.
+    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(10700)
   })
 
   it('⑥ter LA DÉROGATION DE PORTABILITÉ EST BORNÉE À `blocBase`', () => {
@@ -468,7 +469,8 @@ describe('EP-319 · les données déclarées', () => {
     // variantes. Mesuré : 13 930.
     // ── 14 000 → 14 800 le 2026-11-16 : D7/D8/D9 (voir ⑥). Mesuré : 14 679.
     // ── 14 800 → 15 100 le 2026-11-16 : D13/D14/D15 (voir ⑥). Mesuré : 14 912.
-    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(15100)
+    // ── 15 100 → 15 400 le 2026-11-18 : ⑬, 2026-11-18 : REGLE_ECRITURES dans le bloc COMMUN — lire `error`, l'écran ne change qu'après succès, retirer se confirme, chaque geste se dit (atita supprimait sans confirmer et sans lire l'erreur, mesuré en production). Mesuré : 15 317.
+    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(15400)
 
     // ── ET LE BANDEAU N'EST PLUS DEMANDÉ À L'ŒUVRE (2026-11-05).
     //
@@ -542,7 +544,8 @@ describe('EP-319 · les données déclarées', () => {
       // nommé). Mesurée PAR CE CLIQUET : 20 002.
       // ── 20 100 → 20 900 le 2026-11-16 : D7/D8/D9 (⑥). Mesurée PAR CE CLIQUET : 20 751.
       // ── 20 900 → 21 200 le 2026-11-16 : D13/D14/D15 (⑥). Mesurée PAR CE CLIQUET : 20 984.
-    ).toBeLessThan(21200)
+      // ── 21 200 → 21 500 le 2026-11-18 : ⑬, REGLE_ECRITURES dans le bloc commun. Mesurée PAR CE CLIQUET : 21 389.
+    ).toBeLessThan(21500)
 
     // ── ③ ET LA PORTE DES DONNÉES RESTE UNE PORTE ÉTROITE.
     //

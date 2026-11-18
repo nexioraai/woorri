@@ -49,6 +49,8 @@
  * sera posé dans `fournisseur.ts`, ce calcul deviendra une estimation serrée
  * et l'affichage passera de « au plus » à « environ ».
  */
+import { REGLE_ECRITURES } from './entites-declarees'
+
 export const JETONS_PAR_OCTET = 0.3
 
 export function plafondRetouche(
@@ -217,6 +219,11 @@ export const CONSIGNE_RETOUCHE = [
   'Exemple de ce qu’il ne faut PAS écrire : « le document X exclut cette',
   'fonctionnalité ». Exemple juste : « changer la façon dont le montant est',
   'calculé demande de refaire l’application. »',
+  '',
+  'SI TU ÉCRIS OU TOUCHES UNE ÉCRITURE EN BASE (ajouter, modifier,',
+  'retirer), elle suit ces règles — et si celle que tu touches ne les suit',
+  'pas encore, mets-la en règle au passage :',
+  ...REGLE_ECRITURES,
   '',
   'Cherche l’endroit JUSTE : si tous les boutons passent par un composant',
   'partagé, retouche ce composant et lui seul.',

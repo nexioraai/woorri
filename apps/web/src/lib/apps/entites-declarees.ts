@@ -345,7 +345,30 @@ export const CONSIGNE_ENTITES = [
  */
 export const ADRESSE_GESTION = '#gestion'
 
+/**
+ * CHAQUE ÉCRITURE DIT CE QU'ELLE A FAIT, OU POURQUOI ELLE A ÉCHOUÉ (⑬).
+ *
+ * MESURÉ sur atita, servie en production (2026-11-18) : cinq suppressions
+ * sans confirmation, `await base.from(…).delete()` sans lire l'erreur, et la
+ * ligne retirée de l'écran QUOI QUE la base ait répondu — si elle refusait,
+ * l'écran mentait. Chez pharma, un échec de « Retirer » se taisait (⑪). La
+ * règle vit dans le générateur, jamais dans une œuvre. Elle est COMMUNE :
+ * confirmer et dire ce qui est fait valent aussi sans base.
+ *
+ * Exportée : la consigne de retouche la reprend, pour qu'une appli
+ * RETOUCHÉE en bénéficie comme une appli régénérée.
+ */
+export const REGLE_ECRITURES: readonly string[] = [
+  '   CHAQUE ÉCRITURE DIT CE QU’ELLE A FAIT, OU POURQUOI ELLE A ÉCHOUÉ :',
+  '   · lis TOUJOURS `error` (`const { error } = await base.from(…)…`) ; si',
+  '     erreur, affiche-la (« Impossible de retirer cette vente. ») ;',
+  '   · l’écran ne change qu’APRÈS une réponse sans erreur — sinon il ment ;',
+  '   · RETIRER SE CONFIRME : « Retirer … ? », et rien sans « oui » ;',
+  '   · chaque geste réussi se dit (« Vente retirée. »).',
+]
+
 export const REGLE_6_COMMUN: readonly string[] = [
+  ...REGLE_ECRITURES,
   '',
   '   N’ÉCRIS AUCUN BANDEAU sur l’état de la base : la page en porte déjà',
   '   un, posé par nous, juste dans les trois cas.',
