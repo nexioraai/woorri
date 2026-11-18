@@ -12,6 +12,7 @@ import EditorialTheme from './themes/EditorialTheme'
 import { avisDuSite } from './themes/avisDuSite'
 import { fetchAvisEntries } from './appels-offres/fetchAvis'
 import { fetchMenu, fetchPage } from './pages/fetchPage'
+import { lireBlocs } from './pages/blocs'
 import NoirTheme from './themes/NoirTheme'
 import VifTheme from './themes/VifTheme'
 import AuroraTheme from './themes/AuroraTheme'
@@ -142,6 +143,12 @@ export default async function SitePage({ params, searchParams }: Props) {
       }
     : null
 
+  // SOUS LE HERO : les blocs suivants de la même page, lus UN PAR UN pour
+  // garder leur rang stocké (un bloc mal formé est écarté sans décaler les autres).
+  const suiteHero = (Array.isArray(pageHero?.blocs) ? (pageHero!.blocs as unknown[]) : [])
+    .map((b, i) => ({ i, bloc: lireBlocs([b])[0] }))
+    .filter((x) => x.i > 0 && x.bloc)
+
   const key = (site.theme as keyof typeof themes) || 'editorial'
   const Theme = themes[key] ?? EditorialTheme
 
@@ -154,7 +161,7 @@ export default async function SitePage({ params, searchParams }: Props) {
       <JsonLd site={site} url={url} />
       <PromoBanner slug={site.slug} primary={primary} mode={site.mode} labels={cartLabels} currency={resolveShopCurrency(site.products)} />
       <CartShell primary={primary} labels={cartLabels} slug={site.slug} mode={site.mode} products={site.products} shippingFlat={site.shipping_flat} variant={key === 'noir' ? 'dark' : 'light'}>
-        <Theme site={site} hasAvis={hasAvis} host={host} menu={menu} partenaires={partenaires} liensLegaux={liensLegaux} heroVitrine={heroVitrine} encreDeMarque={encreDeMarque} />
+        <Theme site={site} hasAvis={hasAvis} host={host} menu={menu} partenaires={partenaires} liensLegaux={liensLegaux} heroVitrine={heroVitrine} suiteHero={suiteHero} encreDeMarque={encreDeMarque} />
         {site.mode === 3 && showsVisitorCatalogSearch(site.dropship_type) && site.theme !== 'aurora' && <CatalogSearch slug={site.slug} primary={primary} lang={site.lang} theme={key as ThemeKey} dropshipType={site.dropship_type} />}
       </CartShell>
       <ScrollRevealInit />

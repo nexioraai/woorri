@@ -181,6 +181,8 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
     // Zones de l'accueil (ids posés par le thème).
     const zones: [string, Selection][] = []
     if (hero) zones.push(['home', { quoi: 'bloc', id: hero.id, i: 0 }])
+    // Les blocs posés SOUS le hero (mot du directeur…) : `accueil-bloc-<rang stocké>`.
+    if (hero && Array.isArray(hero.blocs)) (hero.blocs as unknown[]).forEach((_, i) => { if (i > 0) zones.push([`accueil-bloc-${i}`, { quoi: 'bloc', id: hero.id, i }]) })
     sections.forEach((_, i) => zones.push([i === 0 ? 'services' : `section-${i}`, { quoi: 'section', i }]))
     for (const [idZone] of zones) doc.getElementById(idZone)?.setAttribute('data-ed-cible', '')
     // Blocs d'une page : chacun porte son repère `data-bloc` (BlocsDePage).
@@ -198,7 +200,7 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
     // Surlignage.
     let cible: Element | null = null
     if (sel?.quoi === 'section') cible = doc.getElementById(sel.i === 0 ? 'services' : `section-${sel.i}`)
-    else if (sel?.quoi === 'bloc' && pageSel?.chemin === CHEMIN_HERO) cible = doc.getElementById('home')
+    else if (sel?.quoi === 'bloc' && pageSel?.chemin === CHEMIN_HERO) cible = doc.getElementById(sel.i === 0 ? 'home' : `accueil-bloc-${sel.i}`)
     else if (sel?.quoi === 'bloc') cible = conteneur?.querySelector(`[data-ed-bloc="${sel.i}"]`) ?? null
     if (cible) {
       cible.setAttribute('data-ed-sel', '')
@@ -383,7 +385,11 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
   const champs = (p: Page, i: number) => {
     const b = blocsSel[i] as Bloc | undefined
     if (!b) return null
-    const estHero = p.chemin === CHEMIN_HERO
+    // La page du hero porte le hero (rang 0) puis les blocs posés SOUS lui.
+    // Aucun n'a de flèche ni de retour vers la page : déplacer un bloc au
+    // rang 0 remplacerait le hero.
+    const pageHero = p.chemin === CHEMIN_HERO
+    const estHero = pageHero && i === 0
     const majChamp = (chemin: Chemin, valeur: string) => {
       const c = [...blocsSel]; c[i] = poser(b, chemin, valeur); void ecrireBlocs(p, c)
     }
@@ -397,7 +403,7 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
         <div>
           <div className="text-[11px] font-semibold tracking-[0.14em] text-white/45">BLOC SÉLECTIONNÉ</div>
           <div className="mt-1 text-[17px] font-bold text-white">{estHero ? 'Hero — photos de l’accueil' : `${ETIQUETTES[b.type] ?? b.type}`}</div>
-          {!estHero && (
+          {!pageHero && (
             <button type="button" onClick={() => setSel({ quoi: 'page', id: p.id })} className="mt-1 text-[13px] text-[#FFB08F] hover:underline">← {p.titre}</button>
           )}
         </div>
@@ -449,7 +455,7 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
             </div>
           )
         })}
-        {!estHero && (
+        {!pageHero && (
           <div className="flex gap-2 border-t border-white/10 pt-4">
             <button type="button" onClick={() => bouger(-1)} aria-label="Monter le bloc" className="rounded-lg border border-white/12 p-2 text-white/80 hover:bg-white/5"><ArrowUp className="h-4 w-4" /></button>
             <button type="button" onClick={() => bouger(1)} aria-label="Descendre le bloc" className="rounded-lg border border-white/12 p-2 text-white/80 hover:bg-white/5"><ArrowDown className="h-4 w-4" /></button>

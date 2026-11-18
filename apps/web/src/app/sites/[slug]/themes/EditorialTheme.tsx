@@ -39,6 +39,7 @@ import HeroDiapo, { photosDAccueil } from './HeroDiapo'
 import TexteQuiSEcrit from './TexteQuiSEcrit'
 import HeroVitrine from '../pages/HeroVitrine'
 import ParcoursDefilement from '../pages/ParcoursDefilement'
+import BlocsDePage from '../pages/BlocsDePage'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
 import ReseauxSociaux from './ReseauxSociaux'
@@ -86,7 +87,7 @@ function PremiumButton({
 }
 
 // ---------- Theme ----------
-export default function EditorialTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [], liensLegaux = [], heroVitrine = null, encreDeMarque = false }: { site: Site } & AvisDuSite) {
+export default function EditorialTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [], liensLegaux = [], heroVitrine = null, suiteHero = [], encreDeMarque = false }: { site: Site } & AvisDuSite) {
   // ── LES PRODUITS, POUR LES PAGES PERSONNALISÉES.
   //
   // Les sections boutique calculent déjà cette liste chacune de leur côté ;
@@ -285,6 +286,21 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
           {t.hero.scroll}
         </div>
       </section>
+      )}
+
+      {/* SOUS LE HERO : les blocs suivants de la page `accueil-hero` (le mot
+          du directeur…). Un repère `accueil-bloc-<rang>` par bloc : l'éditeur
+          visuel les sélectionne au clic. */}
+      {!hidden('Home') && suiteHero.length > 0 && (
+        <section id="accueil-suite" className="py-20 md:py-28" style={{ background: 'linear-gradient(180deg, #f6f7f9 0%, #ffffff 100%)' }}>
+          <div className="max-w-6xl mx-auto px-6 md:px-10 flex flex-col gap-16">
+            {suiteHero.map(({ i, bloc }) => (
+              <div key={i} id={`accueil-bloc-${i}`}>
+                <BlocsDePage blocs={[bloc]} base={lienAccueil(site, host)} primary={primary} lang={site.lang} />
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* =================== ABOUT =================== */}

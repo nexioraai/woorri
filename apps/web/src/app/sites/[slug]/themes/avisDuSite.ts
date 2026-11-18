@@ -1,3 +1,4 @@
+import type { Bloc } from '../pages/blocs'
 // ============================================================
 // A2 d0/e0 -- COMMENT UN THEME APPREND QU'UN SITE PUBLIE DES AVIS.
 //
@@ -79,6 +80,14 @@ export type AvisDuSite = {
     duree?: number
     pieces: { titre: string; texte?: string; image?: string; libelle?: string }[]
   } | null
+
+  /**
+   * SOUS LE HERO (CPA, 2026-11-18). Les blocs de la page `accueil-hero` APRÈS
+   * le premier (le hero lui-même) : un mot du directeur, un encadré… Chaque
+   * bloc garde son RANG STOCKÉ `i`, pour que l'éditeur visuel le retrouve.
+   * Absent ou vide : l'accueil d'avant, inchangé.
+   */
+  suiteHero?: { i: number; bloc: Bloc }[]
 
   /**
    * L'ENCRE DE MARQUE (CPA, 2026-11-11). `true` quand le site déclare une page
