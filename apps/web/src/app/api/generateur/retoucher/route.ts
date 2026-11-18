@@ -74,6 +74,7 @@ async function instantaneDeLOeuvre(id: string): Promise<Instantane | null> {
 import { jugerExecution } from '@/lib/apps/juge-execution'
 import { jugerDevise } from '@/lib/apps/juge-devise'
 import { jugerPersistance } from '@/lib/apps/juge-persistance'
+import { colonnesNouvelles, jugerColonnes, phraseColonnes } from '@/lib/apps/juge-colonnes'
 import type { EntiteDeclaree } from '@/lib/apps/entites-declarees'
 import { blocDeclaration } from '@/lib/apps/retouche'
 import { CONFIGS, fournisseurChoisi, tarifDe, tarifPlafond } from '@/lib/apps/fournisseur'
@@ -136,6 +137,12 @@ async function noter(
     readonly demande: string
     readonly entites: readonly EntiteDeclaree[]
     readonly devise: string | undefined
+    /**
+     * LES COLONNES QUI EXISTERONT (défaut A, 2026-11-18). Avant : la
+     * déclaration d'origine. Après : la déclaration FUSIONNÉE — un champ que
+     * la retouche déclare correctement sera migré, il ne compte pas.
+     */
+    readonly colonnes: readonly EntiteDeclaree[]
   },
 ): Promise<{ notes: NoteJuge[]; taux: number | null }> {
   const systeme = fichiersSysteme(undefined)
@@ -159,6 +166,11 @@ async function noter(
       },
       { nom: 'exigences muettes', defauts: couverture.absentes.length },
       { nom: 'persistance', defauts: jugerPersistance(o.entites, fichiers).length },
+      // ── LE CODE N'ÉCRIT QUE DANS DES COLONNES QUI EXISTENT (défaut A).
+      // Mesuré sur pharma.deribfy.app : une retouche « réussie » écrivait
+      // `produit.emplacement`, jamais créée — l'ajout et la modification d'un
+      // produit cassés en silence (PGRST204). Aucun des six juges ne le voyait.
+      { nom: 'colonnes inexistantes', defauts: jugerColonnes(fichiers, o.colonnes).inconnues.length },
     ],
     taux: couverture.taux,
   }
@@ -512,8 +524,8 @@ export async function POST(req: Request) {
         ? ((docAvant as { configuration: { currency: string } }).configuration.currency)
         : undefined,
   }
-  const noteAvant = await noter(avant, contexte)
-  const noteApres = await noter(fichiersLivres, contexte)
+  const noteAvant = await noter(avant, { ...contexte, colonnes: contexte.entites })
+  const noteApres = await noter(fichiersLivres, { ...contexte, colonnes: fusion.entites })
   const verdict = comparerJuges(noteAvant.notes, noteApres.notes, {
     avant: noteAvant.taux,
     apres: noteApres.taux,
@@ -525,7 +537,10 @@ export async function POST(req: Request) {
       .join(', ')
     return NextResponse.json(
       {
-        error: `Cette modification abîmerait votre application (${quoi}). Je ne l’ai pas appliquée.`,
+        error: verdict.regressions.some((x) => x.juge === 'colonnes inexistantes')
+          // LA DONNÉE NOMMÉE, DANS LES MOTS DU COMMERÇANT — pas un compteur.
+          ? `Cette modification abîmerait votre application : ${phraseColonnes(colonnesNouvelles(avant, contexte.entites, fichiersLivres, fusion.entites))}. Je ne l’ai pas appliquée.`
+          : `Cette modification abîmerait votre application (${quoi}). Je ne l’ai pas appliquée.`,
         coutUsd,
       },
       { status: 409 },

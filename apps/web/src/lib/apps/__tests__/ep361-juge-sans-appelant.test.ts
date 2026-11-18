@@ -62,6 +62,10 @@ const HORS_BOUCLE: Readonly<Record<string, string>> = {
   // nomme aucun mot. Le brancher d'ici là coûterait une heure pour un
   // juge qu'on retire.
   'juge-bandeau.ts': 'limité aux formulations connues · remplacé par le montage double',
+  // Défaut A (2026-11-18, RAPPORT_RETOUCHE_PHARMA.md) : la casse mesurée est
+  // venue d'une RETOUCHE ; le juge refuse la version dans la route de
+  // retouche. La génération ne l'appelle pas encore — décision à part.
+  'juge-colonnes.ts': 'garde la retouche (route retoucher, avant/après) · pas encore la génération',
 }
 
 const juges = (): { fichier: string; fonctions: string[] }[] =>
