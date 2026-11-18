@@ -931,6 +931,7 @@ export default function OnboardingChat({
           <p><span className="text-slate-200 font-medium">{t('home.mode.website')}</span> — {t('home.mode.website.desc')}</p>
           <p><span className="text-slate-200 font-medium">{t('home.mode.store')}</span> — {t('home.mode.store.desc')}</p>
           <p><span className="text-slate-200 font-medium">{t('home.mode.dropshipping')}</span> — {t('home.mode.dropshipping.desc')}</p>
+          <p><span className="text-slate-200 font-medium">{t('home.mode.application')}</span> — {t('home.mode.application.desc')}</p>
         </div>
       )}
     </section>

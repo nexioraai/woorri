@@ -87,6 +87,8 @@ export default defineConfig({
       'src/components/onboarding/**/*.test.tsx',
       // 2026-11-17 — la barre de l'atelier (choix de l'appareil, abonnement).
       'src/components/atelier/**/*.test.tsx',
+      // Le pied de page commun à toutes les pages publiques (2026-11-18).
+      'src/components/__tests__/**/*.test.tsx',
       'src/app/__tests__/**/*.test.ts',
       'src/lib/cj/**/*.test.ts',
       'src/lib/shop/**/*.test.ts',

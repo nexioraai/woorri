@@ -9,7 +9,12 @@ export const en: Record<TranslationKey, string> = {
   'nav.dashboard': 'My dashboard',
 
   // Footer
-  'footer.copyright': '© 2026 Deribfy. All rights reserved.',
+  'footer.copyright': '© 2026 Dougouma IA. All rights reserved.',
+  'footer.col.product': 'Product',
+  'footer.col.resources': 'Resources',
+  'footer.col.company': 'Company',
+  'footer.col.legal': 'Legal',
+  'footer.operatedBy': 'Deribfy is operated by Dougouma IA, a business registered in Quebec — NEQ 2281989782.',
   'footer.privacy': 'Privacy',
   'footer.terms': 'Terms',
   'footer.cookies': 'Cookies',
@@ -79,6 +84,7 @@ export const en: Record<TranslationKey, string> = {
   'home.mode.website.desc': 'showcase your business online (no sales).',
   'home.mode.store.desc': 'sell your own products (you manage the stock).',
   'home.mode.dropshipping.desc': 'sell with no stock or capital: everything is automated, a supplier ships directly to your customers.',
+  'home.mode.application.desc': 'run your business day to day (customers, stock, sales…): an online app under your own name, with its own data, that you change by describing what you want.',
   'home.dropshipping.question': 'What kind of dropshipping?',
   'edit.aivis.title': 'AI Visibility',
   'edit.aivis.max': 'Maximum visibility reached 🎯',

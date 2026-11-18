@@ -9,7 +9,12 @@ export const ar: Record<TranslationKey, string> = {
   'nav.dashboard': 'لوحة التحكم',
 
   // Footer
-  'footer.copyright': '© 2026 Deribfy. جميع الحقوق محفوظة.',
+  'footer.copyright': '© 2026 Dougouma IA. جميع الحقوق محفوظة.',
+  'footer.col.product': 'المنتج',
+  'footer.col.resources': 'الموارد',
+  'footer.col.company': 'الشركة',
+  'footer.col.legal': 'الإشعارات القانونية',
+  'footer.operatedBy': 'تُشغِّل Deribfy شركة Dougouma IA المسجّلة في كيبيك — NEQ 2281989782.',
   'footer.privacy': 'الخصوصية',
   'footer.terms': 'الشروط',
   'footer.cookies': 'ملفات تعريف الارتباط',
@@ -78,6 +83,7 @@ export const ar: Record<TranslationKey, string> = {
   'home.mode.website.desc': 'اعرض نشاطك على الإنترنت (بدون بيع).',
   'home.mode.store.desc': 'بِع منتجاتك الخاصة (أنت تدير المخزون).',
   'home.mode.dropshipping.desc': 'بِع بدون مخزون أو رأس مال: كل شيء آلي، ومورّد يشحن مباشرة إلى عملائك.',
+  'home.mode.application.desc': 'إدارة نشاطك اليومي (العملاء، المخزون، المبيعات…): تطبيق على الإنترنت باسمك، ببياناته الخاصة، تطوّره بمجرد وصف ما تريد.',
   'home.dropshipping.question': 'أي نوع من الدروبشيبينغ؟',
   'edit.aivis.title': 'ظهور الذكاء الاصطناعي',
   'edit.aivis.max': 'تم الوصول إلى أقصى ظهور 🎯',

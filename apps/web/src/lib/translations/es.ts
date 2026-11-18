@@ -7,7 +7,12 @@ export const es = {
   'nav.dashboard': 'Mi panel',
 
   // Footer
-  'footer.copyright': '© 2026 Deribfy. Todos los derechos reservados.',
+  'footer.copyright': '© 2026 Dougouma IA. Todos los derechos reservados.',
+  'footer.col.product': 'Producto',
+  'footer.col.resources': 'Recursos',
+  'footer.col.company': 'Empresa',
+  'footer.col.legal': 'Aviso legal',
+  'footer.operatedBy': 'Deribfy es operado por Dougouma IA, empresa registrada en Quebec — NEQ 2281989782.',
   'footer.privacy': 'Privacidad',
   'footer.terms': 'Condiciones',
   'footer.cookies': 'Cookies',
@@ -77,6 +82,7 @@ export const es = {
   'home.mode.website.desc': 'presenta tu negocio en linea (sin ventas).',
   'home.mode.store.desc': 'vende tus propios productos (tu gestionas el stock).',
   'home.mode.dropshipping.desc': 'vende sin stock ni capital: todo es automatico, un proveedor envia directamente a tus clientes.',
+  'home.mode.application.desc': 'gestiona tu actividad día a día (clientes, stock, ventas…): una aplicación en línea a tu nombre, con sus propios datos, que haces evolucionar describiéndola.',
   'home.dropshipping.question': 'Que tipo de dropshipping?',
   'edit.aivis.title': 'Visibilidad IA',
   'edit.aivis.max': 'Visibilidad maxima alcanzada 🎯',
