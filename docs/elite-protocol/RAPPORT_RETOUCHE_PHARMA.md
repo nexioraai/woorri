@@ -97,7 +97,7 @@ C'est un petit échantillon, d'un seul point par famille sauf une. Il désigne l
 - **Réécrire le seul fichier métier frôle déjà la limite.** Les trois retouches réussies ne touchaient que lui, et sont passées de justesse.
 - **« Mets les boutons en vert » passe par `ui.tsx` : à ces tailles, elle ne peut jamais tenir.**
 - **Signature des coûts.** Une réponse coupée coûte environ 32 000 jetons d'entrée × 0,30 $ + 16 000 de sortie × 1,20 $, soit environ 0,029 $ (DeepSeek, modèle léger, tarif de pointe ; retouches vers 01:30 UTC). C'est exactement les refus 1 (0,028 $) et 6 (0,029 $).
-- **Le refus 4 (0,023 $) n'est pas une coupure** : environ 11 000 jetons de sortie. C'est un autre des refus possibles : assemblage, juge qui empire, ou donnée abandonnée (`:474-530`). **Son motif est INCONNU** : il ne s'affichait qu'à l'écran, et la route ne le journalise pas.
+- ~~Le refus 4 (0,023 $) n'est pas une coupure~~ **CORRIGÉ le 2026-11-18 : c'ÉTAIT une coupure.** Le propriétaire a relevé le message mot pour mot. Or ce message n'existe qu'**à un seul endroit**, la branche `max_tokens` (`retoucher/route.ts:425`, seule occurrence dans `src`). Ma déduction par le coût était fausse : le coût affiché n'est pas une facture (§E), et un même plafond de sortie peut coûter 0,023 $ ou 0,029 $ selon les jetons d'entrée comptés.
 - **Le moteur promet ce que la sortie interdit.** La consigne dit « TU PEUX CHANGER LA LOGIQUE ET AJOUTER DES ÉCRANS » (`retouche.ts`). Avec des fichiers de cette taille à réécrire en entier, l'ajout d'un écran dépasse presque toujours la sortie.
 - Et un écran qui demande une table nouvelle (Fournisseurs) heurterait de toute façon le défaut A : sa déclaration serait refusée en silence.
 - **Observation :** « Photographier » est aussi exclu par une règle de génération : « AUCUN FICHIER : ni téléversement, ni PDF, ni image envoyée » (`entites-declarees.ts:353`). La retouche ne le dit pas : elle a été coupée avant.
@@ -145,3 +145,79 @@ v3 → v4 : **195 lignes changées** dans `Pharmacie.tsx` pour une demande d'**u
 | **P0** (casse une fonction qui marchait, en silence) | A : déclaration refusée en silence + aucun juge des colonnes écrites ; ⑩ qui en découle |
 | **P1** | B : message faux et limite de sortie incompatible avec des fichiers de 47–49 Ko réécrits en entier ; C : changements non demandés ; ⑧ ; ② ; ⑤ |
 | **P2** | ⑨ ; ⑥ ; ④ ; ⑦ ; et les deux tensions de conception ① et ③, qui demandent une décision et non une correction |
+
+
+## Suite du 2026-11-18
+
+### Le message unique : une seule cause, mais mal nommée et mal conseillée
+
+Il n'y a pas deux causes sous un même message : il n'y a que la coupure. Mais le message dit « trop de fichiers », alors que la cause est la **taille de la sortie**. Et son conseil, « découpez-la en deux demandes », est **impossible à suivre** quand une seule demande exige de réécrire un fichier de 49 Ko : « mets les boutons en vert » ne se découpe pas.
+
+### B — les trois voies, chiffrées (estimations de travail, non mesurées)
+
+**Ce que la mesure a ajouté :**
+
+- **La même demande** « mets les boutons en vert » **a réussi le 2026-11-02 pour 0,0025 $**, sur une application de 16 fichiers et 73 Ko dont le plus gros faisait 13,6 Ko (`fa0ede2c`, version 7).
+- **La bibliothèque `systeme/ui.tsx`, injectée par Deribfy, pesait 6 868 octets le 2026-11-02, et 48 980 aujourd'hui** (× 7,1).
+- **Les couleurs ne sont dans aucun fichier de l'application.** Ce sont des variables CSS déclarées par la page de Deribfy (`systeme/jetons.ts` : « déclarées dans la page elle-même »). Pour changer la couleur des boutons, le modèle n'a donc d'autre prise que de réécrire la bibliothèque (49 Ko).
+- **Les fichiers `systeme/` sont marqués « fournis par Deribfy, ne pas modifier », mais ils sont envoyés en entier au modèle, et réécrivables.** La route ne s'en sert que pour les juges (`retoucher/route.ts:141`). Ils font **56 %** de ce qu'on envoie à chaque retouche de la pharmacie : 59 364 octets sur 106 485.
+- **La vitesse mesurée :** une coupure à 16 000 jetons prend 70,0 s en moyenne (environ 230 jetons/s). La route a `maxDuration = 300` s (`retoucher/route.ts:99`).
+
+| Voie | Ce qu'elle règle | Ce qu'elle ne règle pas | Coût en travail |
+|---|---|---|---|
+| **1. Augmenter la limite** (16 000 → 64 000 jetons ; DeepSeek annonce « MAXIMUM: 384K » en sortie, sans dire pour quel modèle) | Les demandes juste au-dessus du seuil | **La latence** : 64 000 jetons ≈ 4,6 min au débit mesuré, contre 300 s de délai (**risque de coupure par la plateforme**). Une coupure coûterait jusqu'à environ 0,087 $ au lieu de 0,029 $. Les réécritures complètes de fichiers de 49 Ko amplifient C | 0,5 j |
+| **2. Modifications partielles** : le modèle rend des blocs « AVANT / APRÈS », que Deribfy applique à l'exact | Sortie de quelques centaines de jetons, donc **la retouche passe à toute taille**, plus vite et moins cher. **Ce qui change est borné aux lignes touchées** (C devient mesurable). Le refus est honnête si un bloc « AVANT » ne se trouve pas | Il faut un format robuste aux blancs, et une mesure payante sur de vraies applications pour connaître le taux de blocs introuvables | **2 à 3 j**, dont une mesure d'environ 20 retouches (≤ 0,60 $) |
+| **3. Découper les fichiers** (côté générateur, et la bibliothèque en modules) | Des fichiers plus petits à réécrire | Seulement les applications **nouvelles** : la pharmacie et atita restent telles quelles. Le coût d'entrée ne baisse pas. Les fichiers regrossissent avec l'usage | 3 à 5 j, plus des générations d'essai payantes |
+| **Pour Dary : surcharger le thème** | L'apparence (couleurs, rayons, tailles) se retouche par une **surcharge des variables CSS** de la page. Quelques dizaines de jetons, sans toucher au code | Ce n'est pas une retouche générale | 1 à 1,5 j |
+| **Partout : fermer `systeme/` à la retouche** | Le modèle ne réécrit plus la bibliothèque, et l'entrée diminue d'environ la moitié sur la pharmacie (56 % du corpus) | — | 0,5 j, cumulable |
+
+**Recommandation (à arbitrer) :**
+
+- **la voie 2** comme vraie correction ;
+- **précédée, pour Dary, de la surcharge de thème et de la fermeture de `systeme/`.**
+
+Total estimé : environ **4 à 5 jours**, compatible avec les cinq semaines avant Dary. La voie 1 seule ne passe pas le délai de 300 s.
+
+### D — l'économie des refus (mesuré)
+
+- **Réussites** : 0,0146 $, 0,0174 $ et 0,0177 $ (base, `app_generation_versions`).
+- **Refus** : 0,028 $, 0,023 $ et 0,029 $ (écran).
+- **Total des 6 : 0,1297 $** ; la génération a coûté 0,1358 $.
+
+**Mécanisme :**
+
+- Une coupure paie **toute** la sortie autorisée (16 000 jetons × 1,20 $ = 0,0192 $ en pointe), puis la jette.
+- Une réussite sort environ 4 000 à 6 500 jetons.
+- Les essais ont eu lieu entre 01:31 et 01:43 UTC un mardi : **heure de pointe** officielle.
+
+**Le chiffre de 0,003 $ n'est pas faux comme mesure, mais il n'est plus représentatif.** Il vient de deux retouches du 2026-11-02 à 11:09 UTC (**hors pointe**, donc moitié prix) sur une application de 73 Ko aux petits fichiers, avec une bibliothèque sept fois plus petite. Sur une application de 100 Ko en pointe, une réussite coûte **0,015 à 0,018 $** (environ la moitié hors pointe), et un refus **0,023 à 0,029 $**.
+
+### E — le chiffre affiché est-il réel ?
+
+**Ce qu'il est (lu dans le code) :** une **estimation**, pas une facture.
+
+- Il vaut `usage.input_tokens × prix + usage.output_tokens × prix`, avec les jetons **rendus par DeepSeek** dans la réponse et les prix d'un **tableau du dépôt**.
+- Pointe ou creuse est choisi selon l'heure UTC de l'appel (`retoucher/route.ts:396-397` ; `fournisseur.ts:186-197`, `estPointe`).
+
+**Ce qui est vérifié (page officielle de DeepSeek, lue le 2026-11-18)** :
+
+- les prix de `deepseek-flash` sont exacts : 0,30 / 1,20 $ en pointe, la moitié hors pointe, entrée en cache à 0,006 / 0,003 $ ;
+- les heures de pointe sont exactes : 01:00–04:00 et 06:00–10:00 UTC, du lundi au vendredi ;
+- **une seule réserve** : DeepSeek exclut aussi les jours fériés chinois, que le dépôt ignore. Ces jours-là, le chiffre affiché est **deux fois trop haut**.
+
+**Ce qui est INCONNU :**
+
+- Si `input_tokens` compte ou non les jetons servis **depuis le cache** (facturés 50 fois moins cher). La formule ne fait pas la différence.
+- L'écart entre les refus 1 et 4 (même sortie coupée, 0,029 $ contre 0,023 $) suggère environ 32 700 contre 12 700 jetons d'entrée comptés pour le même corpus. C'est compatible avec un cache exclu du compte, mais **c'est déduit, pas mesuré** : la réponse brute de DeepSeek n'est pas conservée.
+
+**Le rapprochement avec la facture ne peut pas se faire depuis le dépôt :**
+
+- Le solde DeepSeek se lit (**17,90 $** le 2026-11-18 à 02:06 UTC, `GET /user/balance`), mais pas la consommation par jour.
+- **Deribfy n'enregistre pas toute sa propre dépense.** Pour le 2026-11-18, il a 1 génération (0,1358 $) et 3 retouches réussies (0,0497 $). **Les 3 retouches refusées (0,080 $) n'existent nulle part**, ni les appels de lecture du cahier et de pré-vol (`ai_usage_log` : 0 ligne).
+
+**Pour fermer l'INCONNU**, il faut un geste du propriétaire : l'export de consommation DeepSeek du 2026-11-18, par modèle (platform.deepseek.com → Usage). Il se compare à ce que l'écran a affiché :
+
+- `deepseek-flash` : 6 retouches à 0,1297 $, plus la lecture du cahier ;
+- `deepseek-v4-pro` : la génération à 0,1358 $.
+
+Tant que les refus ne sont pas enregistrés, ce rapprochement restera partiel.
