@@ -1,5 +1,9 @@
 # CLAUDE.md — Règles d'exécution Deribfy
 
+## Échéances écrites — à relire en début de session
+
+Les chantiers reportés portent une date limite dans `docs/ECHEANCES.md`. **Avant le 2027-01-31** : la suite de l'abonnement non renouvelé (préavis, retrait de la ligne après 30 jours, données gardées au moins 90 jours). Une échéance ne se retire que faite et prouvée, ou replanifiée par le propriétaire.
+
 ## Principe fondamental
 
 Une nouvelle fonctionnalité, correction ou modification visuelle ne doit jamais casser, remplacer, supprimer ou modifier involontairement une fonctionnalité existante qui fonctionne.
