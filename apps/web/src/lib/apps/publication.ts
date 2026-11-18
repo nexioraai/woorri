@@ -213,6 +213,24 @@ const CSP_TRONC: readonly string[] = [
 ]
 
 /**
+ * LE BAC À SABLE D'UNE APPLI PUBLIÉE — et `allow-modals` (⑪, 2026-11-18).
+ *
+ * MESURÉ (Chromium et WebKit) : sans `allow-modals`, `confirm()` rend
+ * `false` SANS RIEN AFFICHER. Chaque « Retirer » de pharma commence par
+ * `window.confirm(…)` : aucune suppression n'est passée sur son adresse
+ * publique depuis le 2026-11-05, et personne ne l'a vu pendant deux
+ * semaines. `allow-modals` ne laisse que la page afficher SES boîtes de
+ * dialogue : ni réseau, ni autre origine.
+ *
+ * C'est une RÉPARATION, pas la correction (mot du propriétaire) : une appli
+ * de gestion ne devrait pas s'en remettre à la boîte du navigateur — elle
+ * ne porte pas l'identité de l'appli, ne se traduit pas, et peut être
+ * désactivée en silence. La correction est rangée avec ⑫ : le générateur
+ * cesse d'émettre `confirm()` et produit une confirmation dans l'appli.
+ */
+export const SANDBOX_SOUS_DOMAINE = 'sandbox allow-scripts allow-same-origin allow-modals'
+
+/**
  * LE RÉGIME DU SOUS-DOMAINE — une vraie origine, un réseau borné.
  *
  * `allow-same-origin` est ici indispensable et non dangereux : voir la
@@ -220,7 +238,7 @@ const CSP_TRONC: readonly string[] = [
  * depuis `deribfy.com`.
  */
 export const cspSousDomaine = (urlProjet: string): string =>
-  [...CSP_TRONC, connectSrcPour(urlProjet), 'sandbox allow-scripts allow-same-origin'].join('; ')
+  [...CSP_TRONC, connectSrcPour(urlProjet), SANDBOX_SOUS_DOMAINE].join('; ')
 
 /** Les en-têtes d'une page servie sous son propre sous-domaine. */
 export const entetesSousDomaine = (urlProjet: string): Readonly<Record<string, string>> => ({

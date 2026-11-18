@@ -1,0 +1,18 @@
+import { chromium, webkit } from 'playwright'
+const page = `<!doctype html><script>
+  let r = 'non appelé'; try { r = String(window.confirm('Retirer cette vente ?')) } catch (e) { r = 'exception ' + e }
+  document.title = 'confirm=' + r
+</script>`
+for (const [nom, moteur] of [['Chromium', chromium], ['WebKit', webkit]]) {
+  const b = await moteur.launch()
+  for (const sandbox of ['sandbox allow-scripts allow-same-origin', 'sandbox allow-scripts allow-same-origin allow-modals']) {
+    const p = await b.newPage()
+    let dialogue = false
+    p.on('dialog', (d) => { dialogue = true; d.accept() })
+    await p.route('https://essai.test/', (r) => r.fulfill({ status: 200, contentType: 'text/html', headers: { 'content-security-policy': `default-src 'none'; script-src 'unsafe-inline'; ${sandbox}` }, body: page }))
+    await p.goto('https://essai.test/')
+    console.log(`${nom.padEnd(8)} · ${sandbox.padEnd(52)} → ${await p.title()} · boîte affichée : ${dialogue}`)
+    await p.close()
+  }
+  await b.close()
+}

@@ -1,0 +1,5 @@
+Mesure du 2026-11-18 (playwright, page servie avec l'en-tête des applis publiées) :
+Chromium · sandbox allow-scripts allow-same-origin              → confirm=false · boîte affichée : false
+Chromium · sandbox allow-scripts allow-same-origin allow-modals → confirm=true · boîte affichée : true
+WebKit   · sandbox allow-scripts allow-same-origin              → confirm=false · boîte affichée : false
+WebKit   · sandbox allow-scripts allow-same-origin allow-modals → confirm=true · boîte affichée : true
