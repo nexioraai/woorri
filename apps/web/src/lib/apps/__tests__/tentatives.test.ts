@@ -26,6 +26,8 @@ import { TABLE_GENERATIONS, TABLE_VERSIONS } from '../journal'
 import { motifTexte } from './motif-texte'
 
 const SQL = readFileSync(join(__dirname, '../../../../supabase/sql/app_generation_attempts.sql'), 'utf8')
+/** Point 2 (2026-11-18) : les retouches élargissent les deux listes fermées. */
+const RETOUCHE = readFileSync(join(__dirname, '../../../../supabase/sql/app_generation_attempts_retouche.sql'), 'utf8')
 const ANNULATION = readFileSync(
   join(__dirname, '../../../../supabase/sql/app_generation_attempts_annulation.sql'),
   'utf8',
@@ -72,10 +74,17 @@ describe('Manque 4 · la table des tentatives', () => {
   })
 
   it('③ les issues et les natures admises par la base sont celles du module', () => {
-    const issues = /issue in \(([^)]*)\)/.exec(SQL)?.[1] ?? ''
-    expect(issues.split(',').map((x) => x.trim().replace(/'/g, ''))).toEqual([...ISSUES])
-    const natures = /nature in \(([^)]*)\)/.exec(SQL)?.[1] ?? ''
-    expect(natures.split(',').map((x) => x.trim().replace(/'/g, ''))).toEqual([...NATURES])
+    // LA DERNIÈRE DÉFINITION FAIT FOI : la table, puis la migration des
+    // retouches qui élargit ses deux listes (point 2, 2026-11-18).
+    const derniere = (motif: RegExp): string[] => {
+      const toutes = [...`${SQL}\n${RETOUCHE}`.matchAll(motif)]
+      return (toutes.at(-1)?.[1] ?? '').split(',').map((x) => x.trim().replace(/'/g, ''))
+    }
+    expect(derniere(/issue in \(([^)]*)\)/g)).toEqual([...ISSUES])
+    expect(derniere(/nature in \(([^)]*)\)/g)).toEqual([...NATURES])
+    // Et la migration des retouches ne touche AUCUNE ligne : contraintes seules.
+    const sansCommentaires = RETOUCHE.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n')
+    expect(sansCommentaires).not.toMatch(/\b(update|delete|insert|truncate)\b/i)
   })
 
   it('④ la base refuse toute mise à jour (déclencheur), et la table est fermée au navigateur', () => {

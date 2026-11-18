@@ -74,6 +74,8 @@ const abonnerEcranEtroit = (prevenir: () => void): (() => void) => {
   return () => { m.removeEventListener('change', prevenir); };
 };
 const ecranEtroit = (): boolean => window.matchMedia(REQUETE_ETROIT).matches;
+/** L'horloge, hors du composant : elle ne se lit que dans un geste, jamais au rendu. */
+const maintenant = (): number => Date.now();
 
 type Application = {
   id: string;
@@ -354,7 +356,21 @@ export default function AtelierPage() {
     if (t === null) return;
     setErreur(null);
     setEnCours(true);
-    setAvis('Modification en cours — une vingtaine de secondes.');
+    // ── LE TEMPS QUI PASSE SE VOIT (⑨, point 2, 2026-11-18).
+    //
+    // L'écran annonçait « une vingtaine de secondes » puis se taisait. Mesuré :
+    // 52,6 s en moyenne pour une réussite, 70 s pour un refus — et depuis que
+    // la retouche hérite du régime de la génération (65 536 jetons), une
+    // grosse modification peut durer plusieurs minutes. On compte, on ne
+    // promet pas de durée.
+    const debutRetouche = maintenant();
+    const direAttente = () => {
+      const s = Math.round((maintenant() - debutRetouche) / 1000);
+      const ecoule = s < 60 ? `${String(s)} s` : `${String(Math.floor(s / 60))} min ${String(s % 60).padStart(2, '0')} s`;
+      setAvis(`Modification en cours — ${ecoule}. Une modification importante peut prendre plusieurs minutes : restez sur cette page.`);
+    };
+    direAttente();
+    const minuteur = window.setInterval(direAttente, 1000);
     try {
       const res = await fetch(
         `/api/generateur/retoucher?id=${encodeURIComponent(id)}${confirme ? '&confirme=1' : ''}`,
@@ -364,6 +380,9 @@ export default function AtelierPage() {
           body: JSON.stringify({ demande }),
         },
       );
+      // Le compteur s'arrête AVANT qu'on écrive l'issue : sinon un dernier
+      // battement l'écraserait.
+      window.clearInterval(minuteur);
       const d = (await res.json().catch(() => ({}))) as {
         ok?: boolean; error?: string; horsPerimetre?: boolean; raison?: string;
         aConfirmer?: boolean; message?: string; fichiers?: string[]; coutUsd?: number; rang?: number;
@@ -435,6 +454,7 @@ export default function AtelierPage() {
       setAvis(null);
       setErreur('La modification a échoué. Réessayez.');
     } finally {
+      window.clearInterval(minuteur);
       setEnCours(false);
     }
   };

@@ -105,13 +105,16 @@ vi.mock('@/lib/apps/juge-execution', async () => {
   return { jugerExecution: jugeMuet }
 })
 
+// La route appelle en FLUX depuis le point 2 (2026-11-18) : `stream(…).finalMessage()`.
 vi.mock('@anthropic-ai/sdk', () => ({
   default: class {
     messages = {
-      create: () => ({
-        content: [{ type: 'text', text: etat.texte }],
-        stop_reason: etat.stop,
-        usage: { input_tokens: 20_000, output_tokens: 16_000 },
+      stream: () => ({
+        finalMessage: () => Promise.resolve({
+          content: [{ type: 'text', text: etat.texte }],
+          stop_reason: etat.stop,
+          usage: { input_tokens: 20_000, output_tokens: 16_000 },
+        }),
       }),
     }
   },

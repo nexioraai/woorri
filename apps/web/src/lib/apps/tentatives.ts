@@ -31,11 +31,18 @@ export const TABLE_TENTATIVES = 'app_generation_attempts'
  *   défaut du code) — le plan disait `erreur_fournisseur`, mais rien ne
  *   garantit que la cause soit le fournisseur ;
  * - `ecriture_echouee` : la boucle a abouti, la ligne de l'œuvre a été refusée.
+ *
+ * RETOUCHE (point 2, 2026-11-18) — rien ne l'enregistrait, ni réussie ni
+ * refusée : les six essais de pharma n'existaient que dans Vercel et l'export
+ * DeepSeek. Deux issues de plus, propres à elle :
+ * - `refusee` : la retouche a été refusée (juges, coupure, hors périmètre,
+ *   données) — le motif est dans la trace ;
+ * - `en_attente` : mise de côté, elle attend l'accord du propriétaire.
  */
-export const ISSUES = ['livree', 'non_convergee', 'interrompue', 'ecriture_echouee'] as const
+export const ISSUES = ['livree', 'non_convergee', 'interrompue', 'ecriture_echouee', 'refusee', 'en_attente'] as const
 export type Issue = (typeof ISSUES)[number]
 
-export const NATURES = ['generation', 'regeneration'] as const
+export const NATURES = ['generation', 'regeneration', 'retouche'] as const
 export type Nature = (typeof NATURES)[number]
 
 /** Les colonnes ÉCRITES par la route — `id` et `cree_le` sont posés par la base. */

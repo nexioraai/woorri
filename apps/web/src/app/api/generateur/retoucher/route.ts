@@ -78,7 +78,10 @@ import { jugerPersistance } from '@/lib/apps/juge-persistance'
 import { colonnesNouvelles, jugerColonnes, phraseColonnes } from '@/lib/apps/juge-colonnes'
 import type { EntiteDeclaree } from '@/lib/apps/entites-declarees'
 import { blocDeclaration } from '@/lib/apps/retouche'
-import { CONFIGS, fournisseurChoisi, tarifDe, tarifPlafond } from '@/lib/apps/fournisseur'
+import { CONFIGS, coutAppel, fournisseurChoisi, tarifDe, tarifPlafond, tarifsDuModele } from '@/lib/apps/fournisseur'
+import { deploiementQuiSert } from '@/lib/apps/deploiement'
+import { ecrireTentative, type Issue } from '@/lib/apps/tentatives'
+import { alerter } from '@/lib/alertes'
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { fichiersSysteme } from '@/lib/apps/bibliotheque-ui'
@@ -99,10 +102,17 @@ import {
 } from '@/lib/apps/retouche'
 
 export const runtime = 'nodejs'
-export const maxDuration = 300
+// ── 900 s, LE RÉGIME DE LA GÉNÉRATION (point 2, 2026-11-18).
+//
+// À 300 s et 16 000 jetons, la retouche coupait tout fichier réécrit de plus
+// de ~45 Ko : trois refus sur six chez pharma. 65 536 jetons à ~230 jetons/s
+// (flash) demandent jusqu'à ~280 s pour l'appel seul, plus les juges.
+export const maxDuration = 900
 
 /** La sortie autorisée : c'est elle qui borne le plafond annoncé à l'écran. */
-export const SORTIE_MAX_RETOUCHE = 16_000
+// Hérité de la génération (`CONFIGS.deepseek.maxJetons`). Flash en accepte
+// 384 K (documentation DeepSeek, relevée le 2026-11-18).
+export const SORTIE_MAX_RETOUCHE = 65_536
 
 /**
  * LES SIX JUGES, COMME LA GÉNÉRATION — et plus deux (b, 2026-11-04).
@@ -322,14 +332,92 @@ export async function GET(req: Request) {
   const config = CONFIGS[fournisseurChoisi(process.env.GENERATEUR_FOURNISSEUR)]
   // LE TARIF DE POINTE : un plafond qui suppose l'heure creuse n'est plus un
   // plafond — l'opération peut démarrer à 00:59 et facturer à 01:00.
-  const p = plafondRetouche(octets, SORTIE_MAX_RETOUCHE, tarifPlafond(config.prixLeger))
+  const p = plafondRetouche(octets, SORTIE_MAX_RETOUCHE, tarifPlafond(tarifsDuModele(config, MODELE_LEGER)))
   return NextResponse.json(
     { octets, plafond: p.phrase, perimetre: PERIMETRE_RETOUCHE },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }
 
+/**
+ * CE QU'UNE RETOUCHE A COÛTÉ ET COMMENT ELLE A FINI — rempli en route.
+ *
+ * Point 2 (2026-11-18) : aucune retouche n'était tracée. Une ligne par
+ * retouche qui a APPELÉ le modèle part dans `app_generation_attempts`
+ * (nature `retouche`), réussie, refusée ou interrompue.
+ */
+type SuiviRetouche = {
+  appele: boolean
+  debut: Date
+  generationId: string
+  demande: string
+  jetonsEntree: number
+  jetonsCache: number
+  jetonsSortie: number
+  coutUsd: number
+  tronquee: boolean
+  /** Posée explicitement là où la réponse seule ne le dit pas. */
+  issue: Issue | null
+}
+
 export async function POST(req: Request) {
+  const suivi: SuiviRetouche = {
+    appele: false, debut: new Date(), generationId: '', demande: '',
+    jetonsEntree: 0, jetonsCache: 0, jetonsSortie: 0, coutUsd: 0, tronquee: false, issue: null,
+  }
+  const reponse = await retoucher(req, suivi)
+  if (suivi.appele) await consignerRetouche(suivi, reponse)
+  return reponse
+}
+
+/**
+ * L'ISSUE SE LIT SUR CE QUI EST PARTI À L'ÉCRAN — la même réponse, donc le
+ * même motif que celui que le commerçant a lu. Ne jette jamais : une trace
+ * perdue ne fait pas échouer la retouche, mais elle se dit (journal et alerte),
+ * comme pour la génération.
+ */
+async function consignerRetouche(suivi: SuiviRetouche, reponse: Response): Promise<void> {
+  const corps = (await reponse.clone().json().catch(() => ({}))) as {
+    ok?: boolean; aConfirmer?: boolean; rang?: unknown; error?: string; raison?: string; message?: string
+    horsPerimetre?: boolean; declarationRejetee?: string; fichiers?: string[]
+  }
+  const issue: Issue =
+    suivi.issue ?? (corps.ok === true ? 'livree' : corps.aConfirmer === true ? 'en_attente' : 'refusee')
+  const motif = corps.error ?? corps.raison ?? corps.message ?? null
+  const r = await ecrireTentative(supabaseAdmin as unknown as Parameters<typeof ecrireTentative>[0], {
+    generationId: suivi.generationId,
+    nature: 'retouche',
+    issue,
+    debut: suivi.debut,
+    fin: new Date(),
+    versionRang: typeof corps.rang === 'number' ? corps.rang : null,
+    fournisseur: `${fournisseurChoisi(process.env.GENERATEUR_FOURNISSEUR)}/${MODELE_LEGER}`,
+    deploiement: deploiementQuiSert(process.env),
+    coutUsd: suivi.coutUsd,
+    jetonsEntree: suivi.jetonsEntree + suivi.jetonsCache,
+    jetonsSortie: suivi.jetonsSortie,
+    tirages: 1,
+    diagnostics: motif === null ? [] : [motif],
+    trace: {
+      demande: suivi.demande,
+      statut: reponse.status,
+      tronquee: suivi.tronquee,
+      horsPerimetre: corps.horsPerimetre === true,
+      jetonsCache: suivi.jetonsCache,
+      fichiers: corps.fichiers ?? null,
+      declarationRejetee: corps.declarationRejetee ?? null,
+    },
+  }).catch((e: unknown) => ({ ok: false as const, cause: e instanceof Error ? e.message : String(e) }))
+  if (!r.ok) {
+    console.error(`[tentatives] retouche ${issue} non écrite pour ${suivi.generationId} — ${r.cause}`)
+    await alerter({
+      sujet: 'oeuvre', sujetId: suivi.generationId, motif: `trace : retouche « ${issue} » non écrite`,
+      etape: 'ecriture', detail: r.cause, coutUsd: Number(suivi.coutUsd.toFixed(4)),
+    }).catch(() => undefined)
+  }
+}
+
+async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
   const proprietaire = garde.userId
@@ -395,23 +483,33 @@ export async function POST(req: Request) {
   // BONS — en silence. Le propriétaire ne l'aurait découvert qu'en
   // ouvrant son application.
   let tronquee = false
+  suivi.appele = true
+  suivi.generationId = id
+  suivi.demande = demande
   try {
-    const r = await clientIA().messages.create({
+    // ── EN FLUX (point 2). Le SDK refuse un appel non streamé dès que
+    // `max_tokens` autorise plus de dix minutes de réponse — la même raison
+    // que la génération (`fournisseur.ts`).
+    const r = await clientIA().messages.stream({
       model: MODELE_LEGER,
       max_tokens: SORTIE_MAX_RETOUCHE,
       system: `${CONSIGNE_RETOUCHE}\n\n${blocDeclaration(declarationDe(docAvant))}`,
       messages: [{ role: 'user', content: `${corpus}\n\n=== DEMANDE ===\n${demande}` }],
-    })
+    }).finalMessage()
     texte = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
     tronquee = r.stop_reason === 'max_tokens'
-    // LE TARIF DU MODÈLE LÉGER, À L'HEURE DE L'APPEL. Facturer une retouche
-    // au prix du modèle lourd la rendait quatre fois plus chère qu'elle
-    // n'est ; supposer l'heure creuse la rendait deux fois moins.
-    const tarif = tarifDe(config.prixLeger, new Date())
-    coutUsd =
-      (r.usage.input_tokens * tarif.entree + r.usage.output_tokens * tarif.sortie) / 1e6
+    // LE TARIF DU MODÈLE APPELÉ, À L'HEURE DE L'APPEL, CACHE COMPRIS.
+    const tarif = tarifDe(tarifsDuModele(config, MODELE_LEGER), new Date())
+    const usage = r.usage as { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number | null }
+    suivi.jetonsEntree = usage.input_tokens
+    suivi.jetonsCache = usage.cache_read_input_tokens ?? 0
+    suivi.jetonsSortie = usage.output_tokens
+    suivi.tronquee = tronquee
+    coutUsd = coutAppel({ entree: suivi.jetonsEntree, entreeCache: suivi.jetonsCache, sortie: suivi.jetonsSortie }, tarif)
+    suivi.coutUsd = coutUsd
   } catch (erreur) {
     console.error('[retouche] appel', erreur)
+    suivi.issue = 'interrompue'
     return NextResponse.json(
       { error: 'Le modèle n’a pas répondu. Votre application n’a pas changé.', coutUsd: 0 },
       { status: 502 },
@@ -432,6 +530,7 @@ export async function POST(req: Request) {
   // 17 générations réelles). Avec `SORTIE_MAX_RETOUCHE = 16 000`, une
   // réponse porte au plus ~45 800 octets — contre une médiane d'œuvre à
   // 49 525 octets. Le plafond n'est pas lointain : il est déjà là.
+  // (Écrit à 16 000. Depuis le point 2 — 65 536 jetons —, ~187 000 octets.)
   if (tronquee) {
     return NextResponse.json(
       {
@@ -622,6 +721,7 @@ export async function POST(req: Request) {
         etat: enAttente,
       })
       if (pose.error !== null) {
+        suivi.issue = 'ecriture_echouee'
         return NextResponse.json(
           { error: 'La modification n’a pas pu être mise de côté. Réessayez.', coutUsd },
           { status: 502 },
@@ -719,6 +819,7 @@ export async function POST(req: Request) {
     etat: version,
   })
   if (ecrit.error !== null) {
+    suivi.issue = 'ecriture_echouee'
     return NextResponse.json(
       { error: 'La modification n’a pas pu être enregistrée. Votre application n’a pas changé.', coutUsd },
       { status: 502 },
@@ -739,6 +840,7 @@ export async function POST(req: Request) {
     .eq('id', id)
     .eq('owner_id', proprietaire)
   if (maj.error !== null) {
+    suivi.issue = 'ecriture_echouee'
     return NextResponse.json(
       { error: 'La version est enregistrée mais l’application n’a pas changé — réessayez.', coutUsd },
       { status: 502 },

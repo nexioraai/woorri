@@ -145,6 +145,32 @@ export function tarifPlafond(modele: TarifsModele): Tarif {
   return modele.pointe
 }
 
+/**
+ * LE TARIF DU MODÈLE QUI A RÉELLEMENT RÉPONDU (point 2, 2026-11-18).
+ *
+ * La retouche lisait `prixLeger` en dur : rejouée sur `v4-pro`, elle
+ * affichait 0,02 $ pour 0,06 à 0,09 $ facturés (mesuré). Le tarif se choisit
+ * par le NOM du modèle appelé ; un modèle sans tarif connu est une erreur,
+ * pas un repli silencieux sur le moins cher.
+ */
+export function tarifsDuModele(c: Config, modele: string): TarifsModele {
+  if (modele === c.modele) return c.prix
+  if (modele === c.modeleLeger) return c.prixLeger
+  throw new Error(`aucun tarif connu pour le modèle « ${modele} »`)
+}
+
+/**
+ * LE COÛT D'UN APPEL, CACHE COMPRIS.
+ *
+ * `entree` est l'entrée HORS cache (dialecte Anthropic : `input_tokens`
+ * exclut `cache_read_input_tokens` — mesuré sur DeepSeek le 2026-11-18,
+ * 90 jetons hors cache pour 32 640 en cache). La retouche ignorait le cache ;
+ * l'export DeepSeek du 17 l'a montré à 0,0006 $ près.
+ */
+export function coutAppel(u: { readonly entree: number; readonly entreeCache: number; readonly sortie: number }, t: Tarif): number {
+  return (u.entree * t.entree + u.entreeCache * t.entreeCache + u.sortie * t.sortie) / 1e6
+}
+
 export const CONFIGS: Readonly<Record<Fournisseur, Config>> = {
   anthropic: {
     modele: 'claude-opus-5',
