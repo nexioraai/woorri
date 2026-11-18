@@ -137,7 +137,7 @@ try {
       "vitest",
       "run",
       "--config",
-      "docs/elite-protocol/evidence/observation/une-app.config.ts",
+      "docs/elite-protocol/evidence/outils-manuels/une-app.config.ts",
       "une-app.une",
     ],
     { cwd: REPO, stdio: "inherit", env: { ...process.env, DERIBFY_APP: DEST } },
@@ -341,7 +341,7 @@ try {
       "run",
       "--reporter=verbose",
       "--config",
-      "docs/elite-protocol/evidence/observation/une-app.config.ts",
+      "docs/elite-protocol/evidence/outils-manuels/une-app.config.ts",
       "une-app.comportement",
     ],
     {

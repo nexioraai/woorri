@@ -17,3 +17,12 @@
 - **jamais de suppression sans préavis, jamais de perte de données pour cause d'impayé.**
 
 La raison : couper une appli punit aussi les clients du commerçant, qui n'ont rien demandé. Au Tchad, avec le mobile money, les retards seront fréquents et souvent innocents.
+
+## Après Dary — DATE À FIXER PAR LE PROPRIÉTAIRE
+
+> Consignés le 2026-11-18. Selon la règle en tête de ce fichier, un chantier sans date est un chantier abandonné : chacun attend sa date.
+
+| Avant le | Chantier | Contenu | Pourquoi |
+|---|---|---|---|
+| **à fixer** | **Juge des écritures promises** (moteur direct) | Vérifier qu'une écriture promise par le document de l'appli (ajouter, modifier, retirer) arrive **vraiment** dans la base. Le juge d'exécution compte les boutons muets ; il ne suit pas l'écriture | C'est le trou par lequel sont passées l'insertion cassée (`produit.emplacement`) et « Retirer » mort pendant deux semaines. Révélé par l'outil manuel `outils-manuels/une-app.comportement.une.tsx` (moteur AIR) |
+| **à fixer** | **Export des données en CSV** | Clients, ventes, stocks : chaque table de l'appli, téléchargeable par son propriétaire | Garder les données 90 jours ne vaut rien si le commerçant ne peut pas les sortir. C'est ce qui rend crédible la promesse des 90 jours |

@@ -16,6 +16,12 @@ Demande du propriétaire après comparaison avec replit.com. **Tout passe après
   - Brouillon de cinq questions donné au propriétaire le 2026-11-18, à corriger par lui.
   - **Attention à la vérité du texte :** la sauvegarde nocturne chiffrée couvre aujourd'hui la base de **Deribfy** (nexiora-ai), **pas encore** celle des applications. Ce chantier figure dans l'ordre des cinq semaines. La FAQ ne doit pas promettre la sauvegarde des données des applications avant qu'elle existe et soit prouvée par une restauration d'essai.
 
+**RÈGLE DE LA FAQ (propriétaire, 2026-11-18) : aucune phrase ne s'écrit sans que la chose soit CONSTRUITE et PROUVÉE. Une FAQ publique est un engagement, pas un brouillon.**
+
+- **« 30 jours en ligne, données gardées 90 jours »** : à écrire (c'est là que nous faisons mieux que les concurrents), mais **la FAQ ne se publie pas avant que le chemin hors-ligne soit construit et prouvé** (échéance `docs/ECHEANCES.md`, avant le 2027-01-31).
+- **Téléchargement** : la phrase devient « vous pouvez télécharger le code de votre application », et seulement après que le propriétaire l'a testée en production. Mesuré le 2026-11-18 (localement, sur le document de pharma) : l'archive contient le code, `schema.sql`, `politiques.sql` et un `README`, et **aucune donnée**. L'export des données est consigné dans `docs/ECHEANCES.md`.
+- **Sauvegarde** : ne jamais écrire que les données des applications sont sauvegardées tant que la sauvegarde de la base des œuvres n'est pas construite et prouvée par une restauration d'essai.
+
 Rang inchangé : **après Stripe**.
 
 ## Point 2 — ce que Stripe demande, et ce que le site montre (relevé le 2026-11-18)

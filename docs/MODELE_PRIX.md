@@ -7,7 +7,8 @@
 | | |
 |---|---|
 | **Une application gratuite** | générée, visible par son auteur seul |
-| **Retoucher ou publier** | demande l'abonnement |
+| **Retoucher l'appli gratuite** | **3 modifications gratuites**, puis l'abonnement (décidé le 2026-11-18). Une première génération est rarement juste du premier coup : quelqu'un qui ne peut pas y toucher repart en pensant que ça ne marche pas. Coût : environ 0,21 $ par visiteur qui essaie (0,136 $ + 3 × 0,026 $) ; une seule appli gratuite par compte |
+| **Publier** | demande l'abonnement |
 | **Prix** | **20 $ par mois**, par application publiée, **affiché en dollars américains**. Deribfy est universel, pas tchadien. Pas d'affichage dans la monnaie du visiteur avant Dary : le propriétaire dit « environ 12 000 FCFA » lui-même au stand |
 | **Inclus** | **50 modifications par mois** |
 | **Lot supplémentaire** | 50 modifications pour 5 $ (activé à la main depuis l'administration avant Dary, sans écran d'achat) |
@@ -18,7 +19,7 @@ L'unité s'appelle **« modification »**, jamais « crédit » ni « jeton ». 
 ## Les règles
 
 1. **Une modification refusée ne compte pas.** Nous la payons au fournisseur, mais la facturer serait faire payer notre propre panne.
-2. **Le compteur se voit AVANT de cliquer** : « 37 modifications restantes ce mois-ci ».
+2. **Le compteur se voit AVANT de cliquer** : « 3 modifications gratuites restantes » avant l'abonnement, « 37 modifications restantes ce mois-ci » après (50 par mois).
 3. **À zéro, l'application publiée RESTE EN LIGNE.** Elle ne peut plus être modifiée, c'est tout. On ne coupe jamais le commerce de quelqu'un parce qu'il a épuisé un quota.
 4. **Abonnement non renouvelé** — c'est une règle, pas un réglage. Voir `docs/ECHEANCES.md` :
    - de 1 à 30 jours de retard, l'application reste en ligne ; seules les modifications s'arrêtent ; un rappel s'affiche au propriétaire seul ;
@@ -35,6 +36,6 @@ L'unité s'appelle **« modification »**, jamais « crédit » ni « jeton ». 
 - **Après Dary** : Stripe pour les cartes, sous l'entité québécoise. Libellé sur le relevé de carte : `DERIBFY.COM`.
 - **Mobile money intégré** : selon les devis demandés (Monerails, Bizao, CinetPay).
 
-## À confirmer par le propriétaire
+## Tranché
 
-- **« Retoucher demande l'abonnement »** : la note du 18 novembre disait « créer, voir, tester : gratuit ». L'application gratuite ne peut-elle donc **pas du tout** être retouchée avant l'abonnement ? Le compteur et les écrans en dépendent.
+- **Retoucher l'appli gratuite** : trois retouches gratuites, puis l'abonnement (2026-11-18).

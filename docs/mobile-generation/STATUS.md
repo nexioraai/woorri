@@ -659,7 +659,10 @@
 > consigné et réparé (SyntaxError latente emit-v3 l.68) + `gate:bench-parse`.
 > Cliquet zéro-réseau : exemption NOMMÉE, chemin de compilation intact.
 > **997/997 · tsc 0 · lint 0 · app-compile 27/27 · e33-remote 🟢 · e3-magasin
-> 🟢 · invariants/composition/navigation/contrôles 🟢 · corpus byte-intact ·
+> 🟢 [CORRECTION 2026-11-18 : ce 🟢 vient d'un LANCEMENT MANUEL le 2026-09-02 ;
+> `e3-magasin.obs.tsx` n'est nommé par AUCUN script `gate:*` et ne tourne dans AUCUNE CI.
+> Un document qui dit vert sans que rien ne tourne, c'est la panne ⑤ déplacée dans la
+> documentation.] · invariants/composition/navigation/contrôles 🟢 · corpus byte-intact ·
 > 0 $.** Scellement : SUR ARBITRAGE.)
 >
 > *Entrée précédente —* **2026-09-02 (19)** (**🛰️ AMENDEMENT AIR 1.7.1 — `D-131`, NON COMMITTÉ** : la

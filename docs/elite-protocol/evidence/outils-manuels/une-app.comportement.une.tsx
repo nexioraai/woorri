@@ -1,3 +1,7 @@
+// OUTIL MANUEL — NE TOURNE DANS AUCUNE CI. Il demande qu'on lui PASSE UNE APPLI :
+//   npm run verifier:une-app -- <document.air.json>   (variable DERIBFY_APP)
+// Moteur AIR / chantier mobile. Le MANQUE qu'il révèle pour le moteur direct est
+// consigné dans docs/ECHEANCES.md (l'écriture promise n'est suivie par aucun juge).
 // ════════════════════════════════════════════════════════════════════
 //  LOT 6 — NIVEAU ⑤ : VOTRE APPLICATION AGIT-ELLE ?
 // ════════════════════════════════════════════════════════════════════
