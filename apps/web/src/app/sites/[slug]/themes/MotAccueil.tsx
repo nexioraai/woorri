@@ -36,7 +36,8 @@ export default function MotAccueil({
         .motAccueil .maBadge i { width: 8px; height: 8px; border-radius: 50%; background: ${VERT_SANTE}; box-shadow: 0 0 0 3px rgba(47,158,90,.3) }
         .motAccueil .maPortrait { position: relative; z-index: 1; margin: 26px 0 22px; width: 100%; max-width: 280px; aspect-ratio: 4 / 5;
           border-radius: 22px; padding: 6px; background: rgba(255,255,255,.95); box-shadow: 0 24px 40px -18px rgba(0,0,0,.55) }
-        .motAccueil .maPortrait img { width: 100%; height: 100%; object-fit: cover; border-radius: 17px; display: block }
+        .motAccueil .maCadre { width: 100%; height: 100%; border-radius: 17px; overflow: hidden }
+        .motAccueil .maPortrait img { width: 100%; height: 100%; object-fit: cover; display: block }
         .motAccueil .maNom { position: relative; z-index: 1; font-size: 19px; font-weight: 700; line-height: 1.3 }
         .motAccueil .maFonction { position: relative; z-index: 1; font-size: 14px; opacity: .78; margin-top: 4px }
         .motAccueil .maTexte { position: relative; padding: 52px 56px 48px }
@@ -53,6 +54,31 @@ export default function MotAccueil({
         .motAccueil footer i { width: 4px; align-self: stretch; border-radius: 4px; background: linear-gradient(${primary}, ${VERT_SANTE}) }
         .motAccueil footer b { display: block; font-family: var(--font-fraunces), Georgia, serif; font-style: italic; font-weight: 500; font-size: 19px; color: ${primary} }
         .motAccueil footer small { display: block; font-size: 13.5px; color: #6b7590; margin-top: 2px }
+        /* LE SURVOL (demande CPA, 2026-11-18 : « il n'y a pas d'animation quand
+           je pose la flèche »). La carte se soulève, le portrait s'avance et
+           la photo respire, les filets s'allongent. Court, et coupé pour qui
+           demande moins de mouvement. */
+        .motAccueil { transition: transform .45s cubic-bezier(.22,.8,.3,1), box-shadow .45s ease }
+        .motAccueil:hover { transform: translateY(-6px); box-shadow: 0 44px 80px -36px rgba(0,30,70,.55), 0 0 0 1px rgba(0,30,70,.08) }
+        .motAccueil .maPortrait { transition: transform .5s cubic-bezier(.22,.8,.3,1), box-shadow .5s ease }
+        .motAccueil:hover .maPortrait { transform: translateY(-6px) rotate(-1.5deg); box-shadow: 0 34px 50px -20px rgba(0,0,0,.6) }
+        .motAccueil .maPortrait img { transition: transform .8s cubic-bezier(.22,.8,.3,1) }
+        .motAccueil:hover .maPortrait img { transform: scale(1.06) }
+        .motAccueil .maPanneau::before, .motAccueil .maPanneau::after { transition: transform .9s cubic-bezier(.22,.8,.3,1) }
+        .motAccueil:hover .maPanneau::before { transform: translate(-24px, 18px) scale(1.08) }
+        .motAccueil:hover .maPanneau::after { transform: translate(14px, -12px) rotate(20deg) }
+        .motAccueil .maBadge i { transition: box-shadow .4s ease }
+        .motAccueil:hover .maBadge i { box-shadow: 0 0 0 6px rgba(47,158,90,.22) }
+        .motAccueil .maSurtitre span { transition: width .45s cubic-bezier(.22,.8,.3,1) }
+        .motAccueil:hover .maSurtitre span { width: 68px }
+        .motAccueil .maGuillemet { transition: transform .7s cubic-bezier(.22,.8,.3,1), opacity .7s ease }
+        .motAccueil:hover .maGuillemet { transform: translateX(-14px); opacity: .12 }
+        .motAccueil footer i { transition: transform .45s cubic-bezier(.22,.8,.3,1); transform-origin: top }
+        .motAccueil:hover footer i { transform: scaleY(1.25) }
+        @media (prefers-reduced-motion: reduce) {
+          .motAccueil, .motAccueil * , .motAccueil .maPanneau::before, .motAccueil .maPanneau::after { transition: none !important }
+          .motAccueil:hover, .motAccueil:hover .maPortrait, .motAccueil:hover .maPortrait img { transform: none }
+        }
         @media (max-width: 860px) {
           .motAccueil { grid-template-columns: 1fr; border-radius: 22px }
           .motAccueil .maPanneau { padding: 34px 24px 28px }
@@ -65,7 +91,7 @@ export default function MotAccueil({
         <span className="maBadge"><i aria-hidden />Message officiel</span>
         <figure className="maPortrait">
           {/* eslint-disable-next-line @next/next/no-img-element -- fichier du site, hors loader */}
-          <img src={photo} alt={auteur ? `Portrait — ${auteur}` : 'Portrait'} loading="lazy" />
+          <div className="maCadre"><img src={photo} alt={auteur ? `Portrait — ${auteur}` : 'Portrait'} loading="lazy" /></div>
         </figure>
         {auteur && <div className="maNom">{auteur}</div>}
         {fonction && <div className="maFonction">{fonction}</div>}

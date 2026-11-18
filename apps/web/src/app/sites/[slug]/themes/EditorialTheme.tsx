@@ -301,7 +301,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
                 {/* Le mot du dirigeant AVEC photo prend la forme de l'accueil ;
                     tout autre bloc garde le rendu des pages. */}
                 {bloc.type === 'citation' && photoValable(bloc.photo)
-                  ? <MotAccueil photo={bloc.photo} titre={bloc.titre} texte={bloc.texte} auteur={bloc.auteur} fonction={bloc.fonction} primary={primary} />
+                  ? <Reveal><MotAccueil photo={bloc.photo} titre={bloc.titre} texte={bloc.texte} auteur={bloc.auteur} fonction={bloc.fonction} primary={primary} /></Reveal>
                   : <BlocsDePage blocs={[bloc]} base={lienAccueil(site, host)} primary={primary} lang={site.lang} />}
               </div>
             ))}
