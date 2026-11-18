@@ -75,6 +75,20 @@ describe('organigramme — boîtes cliquables, couleurs, poste latéral', () => 
     expect(rangee).not.toContain('Assistance')
   })
 
+  it('un poste latéral GAUCHE est rendu avant son supérieur, hors de la rangée (CPA 2026-11-18 : conseiller technique)', () => {
+    const h = rendre('boites', [
+      { cle: 'd', fonction: 'Direction' },
+      { cle: 'ct', parent: 'd', fonction: 'Conseiller', cote: 'lateral-gauche' },
+      { cle: 'ad', parent: 'd', fonction: 'Assistance', cote: 'lateral' },
+      { cle: 'x', parent: 'd', fonction: 'Division X' },
+    ])
+    const large = h.slice(h.indexOf('class="orgSeulementLarge"'), h.indexOf('class="orgSeulementEtroit"'))
+    expect(large).toMatch(/laterauxOrg laterauxGauche[^]*Conseiller[^]*Direction[^]*laterauxOrg"[^]*Assistance/)
+    const rangee = large.slice(large.indexOf('<ul', large.indexOf('<ul') + 1))
+    expect(rangee).toContain('Division X')
+    expect(rangee).not.toContain('Conseiller')
+  })
+
   it('sept niveaux sont rendus — la CPA du 2026-11-17 (Magasiniers PP disparaissait)', () => {
     const chaine = Array.from({ length: 7 }, (_, i) => ({ cle: `n${i}`, ...(i ? { parent: `n${i - 1}` } : {}), fonction: `Niveau${i + 1}` }))
     expect(rendre('boites', chaine)).toContain('Niveau7')

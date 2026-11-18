@@ -35,6 +35,13 @@ describe('les blocs posés sous le hero', () => {
     expect(html.indexOf('id="accueil-suite"')).toBeLessThan(html.indexOf('id="about"'))
   })
 
+  it('le mot avec photo prend la forme de l’accueil ; sans photo, le rendu des pages', () => {
+    expect(rendre({ suiteHero: [{ i: 1, bloc: MOT }] })).toContain('class="motAccueil"')
+    const sansPhoto = rendre({ suiteHero: [{ i: 1, bloc: { ...MOT, photo: '' } }] })
+    expect(sansPhoto).not.toContain('motAccueil')
+    expect(sansPhoto).toContain('Bienvenue.')
+  })
+
   it('le repère porte le RANG STOCKÉ, pas le rang affiché', () => {
     const html = rendre({ suiteHero: [{ i: 3, bloc: MOT }] })
     expect(html).toContain('id="accueil-bloc-3"')

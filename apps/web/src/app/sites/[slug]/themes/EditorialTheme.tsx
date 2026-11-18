@@ -40,6 +40,8 @@ import TexteQuiSEcrit from './TexteQuiSEcrit'
 import HeroVitrine from '../pages/HeroVitrine'
 import ParcoursDefilement from '../pages/ParcoursDefilement'
 import BlocsDePage from '../pages/BlocsDePage'
+import { photoValable } from '../pages/photoValable'
+import MotAccueil from './MotAccueil'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
 import ReseauxSociaux from './ReseauxSociaux'
@@ -296,7 +298,11 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
           <div className="max-w-6xl mx-auto px-6 md:px-10 flex flex-col gap-16">
             {suiteHero.map(({ i, bloc }) => (
               <div key={i} id={`accueil-bloc-${i}`}>
-                <BlocsDePage blocs={[bloc]} base={lienAccueil(site, host)} primary={primary} lang={site.lang} />
+                {/* Le mot du dirigeant AVEC photo prend la forme de l'accueil ;
+                    tout autre bloc garde le rendu des pages. */}
+                {bloc.type === 'citation' && photoValable(bloc.photo)
+                  ? <MotAccueil photo={bloc.photo} titre={bloc.titre} texte={bloc.texte} auteur={bloc.auteur} fonction={bloc.fonction} primary={primary} />
+                  : <BlocsDePage blocs={[bloc]} base={lienAccueil(site, host)} primary={primary} lang={site.lang} />}
               </div>
             ))}
           </div>

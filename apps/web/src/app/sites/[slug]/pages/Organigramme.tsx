@@ -33,9 +33,9 @@ export type EntreeOrg = {
   lien?: string
   /** Affichage « boîtes » : 'bleu' | 'orange' | 'vert'. Autre valeur : blanc. */
   couleur?: string
-  /** Affichage « boîtes » : 'lateral' place l'entrée À CÔTÉ de son supérieur
-   *  (un poste d'appui, pas un échelon). Dans l'arbre replié, c'est un
-   *  subordonné comme les autres. */
+  /** Affichage « boîtes » : 'lateral' place l'entrée À CÔTÉ de son supérieur,
+   *  à droite (un poste d'appui, pas un échelon) ; 'lateral-gauche', à gauche.
+   *  Dans l'arbre replié, c'est un subordonné comme les autres. */
   cote?: string
 }
 
@@ -167,7 +167,8 @@ const COULEURS: Record<string, { fond: string; bord: string }> = {
   vert: { fond: '#92D050', bord: '#6FA735' },
 }
 
-const estLateral = (e: EntreeOrg) => e.cote === 'lateral'
+const estLateralGauche = (e: EntreeOrg) => e.cote === 'lateral-gauche'
+const estLateral = (e: EntreeOrg) => e.cote === 'lateral' || estLateralGauche(e)
 
 function Boite({ e, base }: { e: EntreeOrg; base: string }) {
   const teinte = e.couleur ? COULEURS[e.couleur] : undefined
@@ -190,13 +191,20 @@ function BrancheBoites({ items, parent, niveau, base }: { items: EntreeOrg[]; pa
     <ul>
       {enfants.map((e) => {
         const lateraux = enfantsDe(items, e.cle).filter(estLateral)
+        const aDroite = lateraux.filter((l) => !estLateralGauche(l))
+        const aGauche = lateraux.filter(estLateralGauche)
         return (
           <li key={e.cle}>
             <div className="porteurOrg">
+              {aGauche.length > 0 && (
+                <div className="laterauxOrg laterauxGauche" role="list">
+                  {aGauche.map((l) => <div key={l.cle} role="listitem"><Boite e={l} base={base} /></div>)}
+                </div>
+              )}
               <Boite e={e} base={base} />
-              {lateraux.length > 0 && (
+              {aDroite.length > 0 && (
                 <div className="laterauxOrg" role="list">
-                  {lateraux.map((l) => <div key={l.cle} role="listitem"><Boite e={l} base={base} /></div>)}
+                  {aDroite.map((l) => <div key={l.cle} role="listitem"><Boite e={l} base={base} /></div>)}
                 </div>
               )}
             </div>
@@ -245,6 +253,8 @@ function OrganigrammeBoites({ items, titre, base }: { items: EntreeOrg[]; titre?
         .organigrammeBoites .laterauxOrg::before {
           content: ''; position: absolute; right: 100%; top: 32px; width: 36px; border-top: 1.5px solid ${TRAIT_BOITES};
         }
+        .organigrammeBoites .laterauxGauche { left: auto; right: calc(100% + 36px) }
+        .organigrammeBoites .laterauxGauche::before { right: auto; left: 100% }
         .organigrammeBoites .boiteOrg {
           background: #ffffff; border: 1px solid #3c3c3c; border-radius: 10px;
           box-shadow: 0 2px 5px rgba(0,0,0,.14);
