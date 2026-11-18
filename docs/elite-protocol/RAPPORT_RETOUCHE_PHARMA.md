@@ -150,6 +150,25 @@ v3 → v4 : **195 lignes changées** dans `Pharmacie.tsx` pour une demande d'**u
 | ⑫ | Les applis générées ne donnent aucun retour d'action : ni confirmation, ni transition, rien qui dise que le geste a été pris en compte. Un bouton qui ne dit rien est un bouton cassé, même quand il fonctionne (mot du propriétaire) | consigne de génération ; bibliothèque `systeme/ui` |
 | ⑬ | atita supprime **sans confirmation** et **ignore l'échec**. `await base.from(…).delete()` ne lit pas l'erreur, puis la ligne est retirée de l'écran dans tous les cas : si la base refuse, l'écran ment | code servi par atita.deribfy.app (5 suppressions) |
 
+## Second tir sur pharma (2026-11-18) — cas 3 et cas 5 passent
+
+Mesuré par le propriétaire dans l'appli publiée, et dans la trace (`app_generation_attempts`, nature `retouche`) :
+
+| Cas | Version | Coût | Sortie | Résultat |
+|---|---|---|---|---|
+| 3 « emplacement du produit » | 6 | 0,014 $ | 15 568 jetons | colonne créée, chiffres vrais (« 4 avant, 4 après »), l'ajout de produit refonctionne |
+| 5 « page Fournisseurs » | 7 | 0,016 $ | **18 518 jetons** | table créée, page, menu, état vide. Sous l'ancien plafond (16 000), cette réponse aurait été coupée |
+
+Bilan des six demandes : 4 passent ; « Photographier » est à retester ; « boutons en vert » attend la surcharge de thème.
+
+## Défauts ⑭ à ⑯ (2026-11-18, consignés, non corrigés)
+
+| # | Défaut | Où |
+|---|---|---|
+| ⑭ | La confirmation de migration montre les noms techniques au commerçant (« vos 3 ligne_ventes ») et enchaîne « et… et… et… » au lieu de virgules | `phrase-migration.ts` (`phraseAvantMigration`, `combien`) |
+| ⑮ | **Premier RETRAIT non demandé** : la retouche de l'emplacement a remplacé la tuile « Produits en stock bas — 1 » par « Rayon non précisé — 4 ». Un commerçant perd un chiffre qu'il surveillait, sans être prévenu. Une retouche ne doit jamais retirer un élément existant sans le dire. Rangé avec ⑫ et le juge | juges de la retouche (aucun ne compare les éléments affichés avant/après) |
+| ⑯ | La trace d'une retouche mise de côté reste `en_attente` pour toujours : l'accord (« Appliquer ? ») n'appelle pas le modèle et n'écrit rien. Ni la réussite (versions 6 et 7), ni l'échec du premier essai du cas 3 (« must be owner », version 5) ne sont tracés | `retoucher/route.ts` (`appliquerEnAttente`) |
+
 ## Observations de passage
 
 - **Une retouche refusée ou ratée ne laisse aucune trace dans Deribfy** : la route n'écrit ni alerte ni journal. Seul Vercel garde le code de réponse. Le motif n'existe qu'à l'écran de la personne.
