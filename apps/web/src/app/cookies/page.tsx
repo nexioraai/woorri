@@ -4,12 +4,16 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useTranslation } from '@/lib/translations';
 
-const LAST_UPDATED = '18 novembre 2026';
+// UNE SEULE DATE, ÉCRITE DANS CHAQUE LANGUE (2026-11-18) : la version anglaise
+// affichait « Last updated: 2 août 2026 » — la date française, recopiée.
+const MISE_A_JOUR = new Date('2026-11-18T12:00:00Z');
+const dateEn = (langue: string) =>
+  new Intl.DateTimeFormat(langue, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(MISE_A_JOUR);
 
 const CONTENT = {
   fr: {
     title: 'Politique relative aux témoins',
-    updated: `Dernière mise à jour : ${LAST_UPDATED}`,
+    updated: `Dernière mise à jour : ${dateEn('fr-CA')}`,
     intro:
       "La présente politique explique ce que sont les témoins (« cookies »), lesquels Deribfy utilise, à quelles fins et comment vous pouvez les gérer. Deribfy est un service exploité par Dougouma IA (Montréal, Québec, Canada). Conformément à la Loi 25 du Québec, nous demandons votre consentement avant de déposer les témoins qui ne sont pas strictement nécessaires au fonctionnement du service.",
     sections: [
@@ -57,7 +61,7 @@ const CONTENT = {
   },
   en: {
     title: 'Cookie Policy',
-    updated: `Last updated: ${LAST_UPDATED}`,
+    updated: `Last updated: ${dateEn('en-US')}`,
     intro:
       "This policy explains what cookies are, which ones Deribfy uses, for what purposes, and how you can manage them. Deribfy is a service operated by Dougouma IA (Montreal, Quebec, Canada). In accordance with Quebec's Law 25, we ask for your consent before placing cookies that are not strictly necessary for the service to function.",
     sections: [
