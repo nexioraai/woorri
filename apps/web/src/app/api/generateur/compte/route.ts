@@ -26,6 +26,7 @@
  * n'a rien à faire dans un paquet navigateur — EP-322 ⑥ l'interdit pour le
  * module qui pose les schémas, et la même raison vaut ici.
  */
+import { oeuvreExiste } from '@/lib/apps/oeuvre-existe'
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
@@ -33,6 +34,7 @@ import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { preuvesDeMemoire } from '@/lib/apps/juge-persistance'
 import { configBaseOeuvres } from '@/lib/apps/base-oeuvres'
 import {
+  adresseActuelle,
   adresseCompteOeuvre,
   CE_QUE_LE_COMPTE_OUVRE,
   renouvelerMotDePasse,
@@ -52,6 +54,8 @@ async function oeuvreDe(
   proprietaire: string,
 ): Promise<{
   publiee: boolean
+  /** Le nom publié (`pharma`), d'où l'adresse lisible. */
+  nom: string | null
   aDesDonnees: boolean
   enMemoire: readonly { table: string; lue: boolean; ecrite: boolean }[]
   /** Ce que le code LIVRÉ range dans le navigateur — mesuré, pas supposé. */
@@ -59,7 +63,7 @@ async function oeuvreDe(
 } | null> {
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('publication_jeton, document, sections_acquises')
+    .select('publication_jeton, publication_slug, document, sections_acquises')
     .eq('id', id)
     .eq('owner_id', proprietaire)
     .maybeSingle()
@@ -79,6 +83,7 @@ async function oeuvreDe(
   } | null
   return {
     publiee: typeof lu.data.publication_jeton === 'string' && lu.data.publication_jeton !== '',
+    nom: typeof lu.data.publication_slug === 'string' && lu.data.publication_slug !== '' ? lu.data.publication_slug : null,
     aDesDonnees: (doc?.schema ?? '').includes('create table'),
     enMemoire: sections?.persistance ?? [],
     // ── ON RELIT LES FICHIERS, parce que la phrase porte sur EUX.
@@ -135,7 +140,13 @@ export async function GET(req: Request) {
   return NextResponse.json(
     {
       etat: 'actif',
-      adresse: adresseCompteOeuvre(id),
+      // L'ADRESSE LUE, JAMAIS RECALCULÉE (2026-11-18) : un compte d'avant
+      // porte encore l'adresse longue jusqu'à son passage à l'adresse lisible.
+      adresse: await (async () => {
+        const cfg = configBaseOeuvres(process.env)
+        if (!cfg.ok) return adresseCompteOeuvre(id)
+        return (await adresseActuelle({ idOeuvre: id, url: cfg.config.url, cleSecrete: cfg.config.cleSecrete }).catch(() => null)) ?? adresseCompteOeuvre(id)
+      })(),
       // CE QUI NE SE CONSERVE PAS, dit sur l'écran des DONNÉES — là où la
       // personne revient quand elle cherche ses données.
       enMemoire: oeuvre.enMemoire,
@@ -185,6 +196,8 @@ export async function POST(req: Request) {
       idOeuvre: id,
       url: cfg.config.url,
       cleSecrete: cfg.config.cleSecrete,
+      nom: oeuvre.nom,
+      oeuvreExiste,
     })
     return NextResponse.json(
       {

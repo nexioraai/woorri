@@ -144,158 +144,206 @@ const administration = (url: string, cleSecrete: string) =>
   createClient(url, cleSecrete, { auth: { persistSession: false, autoRefreshToken: false } })
 
 /**
- * ASSURE LE COMPTE D'UNE ŒUVRE — sans jamais le recréer.
+ * L'ADRESSE LISIBLE — `admin@<nom>.deribfy.app` (décision du propriétaire, 2026-11-18).
  *
- * Même discipline que le schéma : une republication retrouve le compte et
- * n'y touche pas. Le recréer donnerait au propriétaire de nouveaux
- * identifiants sans raison, et laisserait l'ancien compte dans `auth.users`
- * avec sa revendication.
+ * « Je ne peux pas montrer ça sur un stand » : l'adresse longue
+ * (`oeuvre-<32 signes>@apps.deribfy.app`) ne se tape pas sur un téléphone.
+ *
+ * ── MAIS UN NOM EST RÉUTILISABLE, ET C'EST LE QUATRIÈME COSTUME.
+ *
+ * Une adresse dérivée du NOM n'est plus une identité : un nom peut changer
+ * de main (une appli qui se renomme libère l'ancien ; une purge future des
+ * pierres tombales libérerait celui d'une appli supprimée). Si l'adresse
+ * restait l'identité, l'ancien mot de passe ouvrirait la nouvelle appli.
+ * L'IDENTITÉ du compte est donc sa REVENDICATION (`app_metadata.oeuvre`) ;
+ * l'adresse n'est qu'une ÉTIQUETTE qu'on déplace. Voir `identites-derivees.ts`.
+ */
+export const DOMAINE_LISIBLE = 'deribfy.app'
+
+export function adresseLisible(nom: string): string {
+  const n = nom.trim().toLowerCase()
+  // Les noms publiés : minuscules, chiffres, tirets, 3 à 40 signes (`nomValide`).
+  if (!/^[a-z0-9](?:[a-z0-9-]{1,38})[a-z0-9]$/u.test(n)) {
+    throw new Error(`COMPTE_OEUVRE_NOM_INVALIDE: « ${nom} » ne fait pas une adresse`)
+  }
+  return `admin@${n}.${DOMAINE_LISIBLE}`
+}
+
+type UtilisateurAdmin = {
+  readonly id: string
+  readonly email?: string | null
+  readonly app_metadata?: Record<string, unknown> | null
+}
+
+/** Le sous-ensemble de l'API d'administration dont ce module a besoin — injectable. */
+export type AdminComptes = {
+  listUsers(p: { page: number; perPage: number }): Promise<{ data: { users: readonly UtilisateurAdmin[] }; error: { message: string } | null }>
+  createUser(a: Record<string, unknown>): Promise<{ error: { message: string } | null }>
+  updateUserById(id: string, a: Record<string, unknown>): Promise<{ error: { message: string } | null }>
+}
+
+const adminDe = (o: { url: string; cleSecrete: string; admin?: AdminComptes }): AdminComptes =>
+  o.admin ?? (administration(o.url, o.cleSecrete).auth.admin as unknown as AdminComptes)
+
+const revendication = (u: UtilisateurAdmin): string => {
+  const v = (u.app_metadata ?? {}).oeuvre
+  return typeof v === 'string' ? v : ''
+}
+
+/** Le ban qu'on pose sur le compte d'une appli disparue : cent ans. */
+const BAN_DEFINITIF = '876000h'
+
+/**
+ * LIBÈRE UNE ADRESSE OCCUPÉE PAR LE COMPTE D'UNE AUTRE APPLI — sans jamais le prendre.
+ *
+ * Le compte retrouve son adresse longue (unique, dérivée de SON identifiant).
+ * Si son appli n'existe plus, son mot de passe est remplacé par un tirage jeté
+ * et le compte est banni : l'ancien mot de passe n'ouvre plus RIEN. Si elle
+ * existe encore (elle a changé de nom), on ne touche ni à son mot de passe ni
+ * à sa revendication : son propriétaire garde sa clé.
+ */
+async function liberer(
+  admin: AdminComptes,
+  occupant: UtilisateurAdmin,
+  oeuvreExiste: (id: string) => Promise<boolean>,
+): Promise<void> {
+  const porte = revendication(occupant)
+  const existe = porte === '' ? false : await oeuvreExiste(porte)
+  const ailleurs = porte === ''
+    ? `libere-${occupant.id.replace(/[^a-z0-9]/giu, '').toLowerCase()}@${DOMAINE_COMPTES}`
+    : adresseCompteOeuvre(porte)
+  const maj = await admin.updateUserById(occupant.id, {
+    email: ailleurs,
+    email_confirm: true,
+    ...(existe ? {} : { password: engendrerMotDePasse(), ban_duration: BAN_DEFINITIF }),
+  })
+  if (maj.error !== null) throw new Error(`COMPTE_OEUVRE_LIBERATION: ${maj.error.message}`)
+}
+
+/**
+ * ASSURE LE COMPTE D'UNE ŒUVRE — sans jamais le recréer, et sans jamais en prendre un autre.
+ *
+ * ① On le cherche par sa REVENDICATION (puis, pour les comptes d'avant le
+ *   2026-11-18, par l'adresse longue : revendication absente → réparée ;
+ *   différente → REFUS, comme toujours).
+ * ② L'adresse voulue est `admin@<nom>.deribfy.app` si l'appli a un nom.
+ * ③ Si un AUTRE compte occupe cette adresse, il est déplacé (`liberer`).
+ * ④ Le compte de l'œuvre prend l'adresse voulue, ou il est créé.
  */
 export async function assurerCompteOeuvre(o: {
   readonly idOeuvre: string
   readonly url: string
   readonly cleSecrete: string
+  /** Le nom publié de l'appli (`pharma`), s'il existe. */
+  readonly nom?: string | null
+  /** L'appli porteuse d'une revendication existe-t-elle encore ? Inconnu = oui (on n'enferme personne). */
+  readonly oeuvreExiste?: (id: string) => Promise<boolean>
+  readonly admin?: AdminComptes
 }): Promise<Compte> {
-  const adresse = adresseCompteOeuvre(o.idOeuvre)
-  const admin = administration(o.url, o.cleSecrete)
+  const admin = adminDe(o)
+  const oeuvreExiste = o.oeuvreExiste ?? (() => Promise.resolve(true))
+  const voulue = o.nom ? adresseLisible(o.nom) : adresseCompteOeuvre(o.idOeuvre)
 
-  // ── ON CHERCHE AVANT DE CRÉER. `listUsers` est paginé : on filtre sur
-  // l'adresse exacte plutôt que de supposer qu'elle est sur la première page.
-  const existant = await trouverParAdresse(admin, adresse)
-
-  if (existant === null) {
-    const motDePasse = engendrerMotDePasse()
-    const cree = await admin.auth.admin.createUser({
-      email: adresse,
-      password: motDePasse,
-      // SANS CECI, LE COMPTE RESTE NON CONFIRMÉ ET NE SE CONNECTE JAMAIS :
-      // la confirmation partirait vers une boîte qui n'existe pas.
-      email_confirm: true,
-      app_metadata: { oeuvre: o.idOeuvre },
-    })
-    if (cree.error !== null) {
-      throw new Error(`COMPTE_OEUVRE_CREATION: ${cree.error.message}`)
+  let mien = await trouver(admin, (u) => revendication(u) === o.idOeuvre)
+  let revendicationReparee = false
+  if (mien === null) {
+    const ancienne = adresseCompteOeuvre(o.idOeuvre)
+    const ancien = await trouver(admin, (u) => u.email === ancienne)
+    if (ancien !== null) {
+      const porte = (ancien.app_metadata ?? {}).oeuvre
+      if (porte !== undefined && porte !== null && porte !== '' && porte !== o.idOeuvre) {
+        throw new Error(
+          `COMPTE_OEUVRE_APPARTIENT_AILLEURS: le compte « ${ancienne} » porte déjà ` +
+            `l'œuvre « ${String(porte)} », pas « ${o.idOeuvre} ». Le réparer serait le ` +
+            'prendre à une autre œuvre, dont le propriétaire ne pourrait plus ouvrir ' +
+            'son application.',
+        )
+      }
+      if (porte === undefined || porte === null || porte === '') {
+        const r = await admin.updateUserById(ancien.id, {
+          app_metadata: { ...(ancien.app_metadata ?? {}), oeuvre: o.idOeuvre },
+        })
+        if (r.error !== null) throw new Error(`COMPTE_OEUVRE_REVENDICATION: ${r.error.message}`)
+        revendicationReparee = true
+      }
+      mien = ancien
     }
-    return { adresse, motDePasse, cree: true, revendicationReparee: false }
+  }
+  if (mien !== null && mien.email === voulue) {
+    return { adresse: voulue, motDePasse: null, cree: false, revendicationReparee }
   }
 
-  // ── DEUX CAS QUI NE SE RESSEMBLENT PAS, ET C'EST LA DIFFÉRENCE ENTRE
-  //    RÉPARER ET VOLER.
-  //
-  // ABSENTE : on répare. Le serveur connaît l'identifiant de l'œuvre qu'il
-  // publie, il repose la même valeur de la même main. Un compte sans
-  // revendication ne peut pas ouvrir son application, et le symptôme est un
-  // écran vide sans message.
-  //
-  // DIFFÉRENTE : on REFUSE, bruyamment. Ce compte appartient à une AUTRE
-  // œuvre, et le « réparer » le lui prendrait — son propriétaire ne pourrait
-  // plus ouvrir sa propre application, sans rien pour l'expliquer.
-  //
-  // J'avais confondu les deux : une seule branche qui réparait dès que la
-  // valeur ne correspondait pas. Le défaut s'est manifesté le 2026-11-02
-  // quand deux œuvres ont partagé une adresse tronquée — la seconde
-  // publication a volé le compte de la première, et ma mesure a lu le
-  // résultat à l'envers avant que je comprenne.
-  //
-  // L'unicité de l'adresse est désormais garantie, mais elle peut se rompre
-  // un jour par un autre chemin. C'EST CE REFUS-LÀ QUI TIENDRA ENCORE.
-  const metadonnees = (existant.app_metadata ?? {}) as Record<string, unknown>
-  const porte = metadonnees.oeuvre
+  const occupant = await trouver(admin, (u) => u.email === voulue)
+  if (occupant !== null && occupant.id !== mien?.id) await liberer(admin, occupant, oeuvreExiste)
 
-  if (porte === o.idOeuvre) {
-    return { adresse, motDePasse: null, cree: false, revendicationReparee: false }
+  if (mien !== null) {
+    const r = await admin.updateUserById(mien.id, { email: voulue, email_confirm: true })
+    if (r.error !== null) throw new Error(`COMPTE_OEUVRE_ADRESSE: ${r.error.message}`)
+    return { adresse: voulue, motDePasse: null, cree: false, revendicationReparee }
   }
 
-  if (porte !== undefined && porte !== null && porte !== '') {
-    throw new Error(
-      `COMPTE_OEUVRE_APPARTIENT_AILLEURS: le compte « ${adresse} » porte déjà ` +
-        `l'œuvre « ${String(porte)} », pas « ${o.idOeuvre} ». Le réparer serait le ` +
-        'prendre à une autre œuvre, dont le propriétaire ne pourrait plus ouvrir ' +
-        'son application.',
-    )
-  }
-
-  const maj = await admin.auth.admin.updateUserById(existant.id, {
-    app_metadata: { ...metadonnees, oeuvre: o.idOeuvre },
+  const motDePasse = engendrerMotDePasse()
+  const cree = await admin.createUser({
+    email: voulue,
+    password: motDePasse,
+    // SANS CECI, LE COMPTE RESTE NON CONFIRMÉ ET NE SE CONNECTE JAMAIS :
+    // la confirmation partirait vers une boîte qui n'existe pas.
+    email_confirm: true,
+    app_metadata: { oeuvre: o.idOeuvre },
   })
-  if (maj.error !== null) {
-    throw new Error(`COMPTE_OEUVRE_REVENDICATION: ${maj.error.message}`)
-  }
-  return { adresse, motDePasse: null, cree: false, revendicationReparee: true }
+  if (cree.error !== null) throw new Error(`COMPTE_OEUVRE_CREATION: ${cree.error.message}`)
+  return { adresse: voulue, motDePasse, cree: true, revendicationReparee: false }
 }
 
 /**
- * REFAIT LE MOT DE PASSE — ce qui rend la limite du compte partagé vivable.
- *
- * Un mot de passe partagé ne se révoque pas individuellement : le jour où
- * quelqu'un quitte l'équipe, où la clé a traîné dans un groupe de
- * discussion, où l'on ne sait plus qui l'a, il faut pouvoir la changer.
- *
- * Sans ce geste, la seule réponse à une fuite serait « republiez » — et
- * personne ne le devinerait. Avec lui, la limite devient « un mot de passe
- * partagé qu'on renouvelle », ce qui est l'usage normal d'une clé d'atelier.
+ * REFAIT LE MOT DE PASSE — sur le compte retrouvé par sa REVENDICATION.
+ * L'adresse est d'abord mise en place (`assurerCompteOeuvre`) : un
+ * renouvellement est aussi le moment où un compte d'avant passe à son
+ * adresse lisible.
  */
 export async function renouvelerMotDePasse(o: {
   readonly idOeuvre: string
   readonly url: string
   readonly cleSecrete: string
+  readonly nom?: string | null
+  readonly oeuvreExiste?: (id: string) => Promise<boolean>
+  readonly admin?: AdminComptes
 }): Promise<Compte> {
-  const adresse = adresseCompteOeuvre(o.idOeuvre)
-  const admin = administration(o.url, o.cleSecrete)
-  const existant = await trouverParAdresse(admin, adresse)
-  if (existant === null) {
-    // Pas de compte : on en crée un. Renouveler ce qui n'existe pas serait
-    // un refus incompréhensible pour qui vient de cliquer.
-    return assurerCompteOeuvre(o)
-  }
-  // MÊME REFUS QU'À LA POSE : on ne renouvelle pas la clé d'une porte qui
-  // n'est pas la nôtre. Sans cette ligne, le renouvellement serait le chemin
-  // de vol que la pose refuse.
-  const metadonnees = (existant.app_metadata ?? {}) as Record<string, unknown>
-  const porte = metadonnees.oeuvre
-  if (porte !== undefined && porte !== null && porte !== '' && porte !== o.idOeuvre) {
-    throw new Error(
-      `COMPTE_OEUVRE_APPARTIENT_AILLEURS: le compte « ${adresse} » porte l'œuvre ` +
-        `« ${String(porte)} ». Renouveler son mot de passe le couperait de son ` +
-        'application.',
-    )
-  }
+  const admin = adminDe(o)
+  const place = await assurerCompteOeuvre({ ...o, admin })
+  if (place.motDePasse !== null) return place
+  const mien = await trouver(admin, (u) => revendication(u) === o.idOeuvre)
+  if (mien === null) throw new Error('COMPTE_OEUVRE_INTROUVABLE: le compte vient d’être placé et ne se retrouve pas')
   const motDePasse = engendrerMotDePasse()
-  const maj = await administration(o.url, o.cleSecrete).auth.admin.updateUserById(existant.id, {
-    password: motDePasse,
-    // La revendication ABSENTE est reposée au passage : un renouvellement est
-    // aussi une occasion de réparer. Une revendication DIFFÉRENTE a déjà fait
-    // échouer ci-dessus.
-    app_metadata: { ...metadonnees, oeuvre: o.idOeuvre },
-  })
-  if (maj.error !== null) {
-    throw new Error(`COMPTE_OEUVRE_RENOUVELLEMENT: ${maj.error.message}`)
-  }
-  return { adresse, motDePasse, cree: false, revendicationReparee: false }
+  const maj = await admin.updateUserById(mien.id, { password: motDePasse })
+  if (maj.error !== null) throw new Error(`COMPTE_OEUVRE_RENOUVELLEMENT: ${maj.error.message}`)
+  return { adresse: place.adresse, motDePasse, cree: false, revendicationReparee: place.revendicationReparee }
 }
 
-/**
- * CHERCHE UN COMPTE PAR SON ADRESSE, EN PARCOURANT LES PAGES.
- *
- * `listUsers` est paginé. Supposer que l'adresse est sur la première page
- * marcherait jusqu'au cinquante-et-unième compte, puis créerait des doublons
- * en silence — chacun avec sa revendication, et l'un des deux portant un
- * mot de passe que personne n'a.
- */
-async function trouverParAdresse(
-  admin: ReturnType<typeof administration>,
-  adresse: string,
-): Promise<{ id: string; app_metadata: Record<string, unknown> | null } | null> {
+/** L'adresse ACTUELLE du compte d'une œuvre, lue — jamais recalculée. */
+export async function adresseActuelle(o: {
+  readonly idOeuvre: string
+  readonly url: string
+  readonly cleSecrete: string
+  readonly admin?: AdminComptes
+}): Promise<string | null> {
+  const admin = adminDe(o)
+  const mien =
+    (await trouver(admin, (u) => revendication(u) === o.idOeuvre)) ??
+    (await trouver(admin, (u) => u.email === adresseCompteOeuvre(o.idOeuvre)))
+  return mien?.email ?? null
+}
+
+/** `listUsers` est paginé : on parcourt, on ne suppose pas la première page. */
+async function trouver(
+  admin: AdminComptes,
+  critere: (u: UtilisateurAdmin) => boolean,
+): Promise<UtilisateurAdmin | null> {
   for (let page = 1; page <= 50; page += 1) {
-    const r = await admin.auth.admin.listUsers({ page, perPage: 200 })
+    const r = await admin.listUsers({ page, perPage: 200 })
     if (r.error !== null) throw new Error(`COMPTE_OEUVRE_LISTE: ${r.error.message}`)
-    const trouve = r.data.users.find((u) => u.email === adresse)
-    if (trouve !== undefined) {
-      return {
-        id: trouve.id,
-        app_metadata: (trouve.app_metadata ?? null) as Record<string, unknown> | null,
-      }
-    }
+    const trouve = r.data.users.find(critere)
+    if (trouve !== undefined) return trouve
     if (r.data.users.length < 200) return null
   }
   return null

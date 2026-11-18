@@ -133,17 +133,22 @@ describe('EP-324 · le compte d’une œuvre', () => {
     // le `return` et le contrôle restait vert.
     expect(pose, 'la réparation n’écrit plus rien : un compte sans revendication reste muré')
       .toMatch(/updateUserById\([\s\S]{0,160}app_metadata/u)
-    expect(pose, 'la pose ne dit plus qu’elle a réparé').toContain('revendicationReparee: true')
+    // 2026-11-18 : la pose rend aussi l'adresse lisible ; le drapeau se pose
+    // dans une variable (`= true`) avant les deux retours. Même exigence.
+    expect(pose, 'la pose ne dit plus qu’elle a réparé').toMatch(/revendicationReparee(?::|\s*=)\s*true/u)
 
     // ── LE RENOUVELLEMENT N'EST PAS UN CHEMIN DE CONTOURNEMENT.
     //
     // C'est le cas que je n'avais pas vu : sans le même garde, le bouton
     // « refaire le mot de passe » aurait coupé le voisin de son application.
     // Prouvé sur la vraie base le 2026-11-02 : REFUSÉ.
+    // 2026-11-18 : le renouvellement PASSE PAR la pose (qui porte le refus)
+    // avant d'écrire quoi que ce soit ; preuve par le comportement :
+    // compte-nom-reutilise.test.ts ⑥.
     expect(
       corpsDe('renouvelerMotDePasse'),
       'le renouvellement est devenu le chemin de vol que la pose refuse',
-    ).toContain('COMPTE_OEUVRE_APPARTIENT_AILLEURS')
+    ).toMatch(/await assurerCompteOeuvre\(/u)
   })
 
   it('④ LE MOT DE PASSE EST LONG ET CRYPTOGRAPHIQUE', () => {

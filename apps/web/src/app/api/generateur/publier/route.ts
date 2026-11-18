@@ -27,6 +27,7 @@ import { contenusPublics, phraseContenus, PHRASE_LISTE_ENTIERE } from '@/lib/app
 import { configBaseOeuvres } from '@/lib/apps/base-oeuvres'
 import { poserOeuvre } from '@/lib/apps/poser-oeuvre'
 import { assurerCompteOeuvre } from '@/lib/apps/compte-oeuvre'
+import { oeuvreExiste } from '@/lib/apps/oeuvre-existe'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { creerSousDomaine, nomValide } from '@/lib/apps/sous-domaine'
 import { supabaseAdmin } from '@/lib/supabase-admin'
@@ -91,7 +92,7 @@ export async function POST(req: Request) {
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('publication_jeton, document, statut, demande, sections_acquises')
+    .select('publication_jeton, publication_slug, document, statut, demande, sections_acquises')
     .eq('id', id)
     .eq('owner_id', garde.userId)
     .maybeSingle()
@@ -345,6 +346,10 @@ export async function POST(req: Request) {
         idOeuvre: id,
         url: cfg.config.url,
         cleSecrete: cfg.config.cleSecrete,
+        // L'ADRESSE LISIBLE (2026-11-18) : admin@<nom>.deribfy.app — le nom
+        // demandé, sinon celui déjà publié. Sans nom, l'adresse longue reste.
+        nom: sous !== '' ? sous : ((lu.data as { publication_slug?: string | null }).publication_slug ?? null),
+        oeuvreExiste,
       })
       compte = { adresse: c.adresse, motDePasse: c.motDePasse }
     } catch (e) {

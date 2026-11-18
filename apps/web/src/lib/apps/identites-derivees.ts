@@ -74,4 +74,8 @@ export const COSTUMES_CONNUS: readonly string[] = [
   'la saisie bornée à 50 signes, qui donnait 57 octets « sous la limite »',
   'le nom de schéma à 63 octets, que Postgres tronque sans rien dire',
   'l’adresse de compte à 8 signes, « suffisants à l’unicité pratique »',
+  // 2026-11-18 : la QUATRIÈME, reconnue avant d'être écrite. Pas une troncature :
+  // un nom RÉUTILISABLE dans le temps. L'identité est la revendication ; l'adresse,
+  // une étiquette (`compte-oeuvre.ts`, `compte-nom-reutilise.test.ts`).
+  'l’adresse de compte tirée du nom publié (`admin@<nom>`), qu’un autre peut reprendre',
 ]
