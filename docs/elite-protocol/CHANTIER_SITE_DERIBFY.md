@@ -34,7 +34,7 @@ Sources : *Website checklist* et *Account checklist* de la documentation Stripe 
 | Politique d'**annulation** (abonnements) | présente dans les CGU (« l'annulation prend effet à la fin de la période ») — à rendre visible, page dédiée ou section nommée |
 | Contact du service client, **plusieurs moyens**, pas seulement un formulaire | seulement `contact@deribfy.com` ; **pas de téléphone**, `/contact` en 404 |
 | Adresse de l'entreprise (recommandée) | **absente** |
-| Nom de l'entreprise, cohérent avec le compte Stripe et le descripteur bancaire | **« Dougouma IA » n'apparaît nulle part** (CGU de droit québécois, « Deribfy ») |
+| Nom de l'entreprise, cohérent avec le compte Stripe et le descripteur bancaire | **fait le 2026-11-18** : « Dougouma IA », immatriculée au Québec, **NEQ 2281989782** (donnés par le propriétaire) — dans les Conditions, la Confidentialité, les Témoins et « À propos » ; l'ancien « Dougma IA Technologies » a disparu du dépôt |
 | Devise des prix | présente : « Tous les prix sont en dollars canadiens (CAD) » |
 | Description de ce qui est vendu | présente (`/pricing`) |
 | Conditions des promotions | la création gratuite d'une première application est une promotion : ses conditions doivent être écrites là où on l'accepte |
@@ -42,4 +42,4 @@ Sources : *Website checklist* et *Account checklist* de la documentation Stripe 
 | Politique de confidentialité | présente (`/privacy`) |
 | Livraison / retours | sans objet (service numérique) — à dire explicitement |
 
-**Ce qui revient au propriétaire** (Deribfy ne l'invente pas) : les conditions de remboursement, un numéro de téléphone ou un canal de discussion, l'adresse, le nom légal exact, et le pays d'immatriculation de Dougouma IA, qui doit être un pays où Stripe ouvre des comptes.
+**Ce qui revient au propriétaire** (Deribfy ne l'invente pas) : les conditions de remboursement, un numéro de téléphone ou un canal de discussion, l'adresse postale au Québec. Le nom légal (Dougouma IA), le pays d'immatriculation (Québec, Canada) et le NEQ (2281989782) sont donnés depuis le 2026-11-18.

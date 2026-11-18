@@ -4,14 +4,14 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useTranslation } from '@/lib/translations';
 
-const LAST_UPDATED = '2 août 2026';
+const LAST_UPDATED = '18 novembre 2026';
 
 const CONTENT = {
   fr: {
     title: 'Politique relative aux témoins',
     updated: `Dernière mise à jour : ${LAST_UPDATED}`,
     intro:
-      "La présente politique explique ce que sont les témoins (« cookies »), lesquels Deribfy utilise, à quelles fins et comment vous pouvez les gérer. Deribfy est un service exploité par Dougma IA Technologies (Montréal, Québec, Canada). Conformément à la Loi 25 du Québec, nous demandons votre consentement avant de déposer les témoins qui ne sont pas strictement nécessaires au fonctionnement du service.",
+      "La présente politique explique ce que sont les témoins (« cookies »), lesquels Deribfy utilise, à quelles fins et comment vous pouvez les gérer. Deribfy est un service exploité par Dougouma IA (Montréal, Québec, Canada). Conformément à la Loi 25 du Québec, nous demandons votre consentement avant de déposer les témoins qui ne sont pas strictement nécessaires au fonctionnement du service.",
     sections: [
       {
         h: "1. Qu'est-ce qu'un témoin",
@@ -59,7 +59,7 @@ const CONTENT = {
     title: 'Cookie Policy',
     updated: `Last updated: ${LAST_UPDATED}`,
     intro:
-      "This policy explains what cookies are, which ones Deribfy uses, for what purposes, and how you can manage them. Deribfy is a service operated by Dougma IA Technologies (Montreal, Quebec, Canada). In accordance with Quebec's Law 25, we ask for your consent before placing cookies that are not strictly necessary for the service to function.",
+      "This policy explains what cookies are, which ones Deribfy uses, for what purposes, and how you can manage them. Deribfy is a service operated by Dougouma IA (Montreal, Quebec, Canada). In accordance with Quebec's Law 25, we ask for your consent before placing cookies that are not strictly necessary for the service to function.",
     sections: [
       {
         h: '1. What is a cookie',
