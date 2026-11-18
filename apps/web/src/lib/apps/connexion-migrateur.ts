@@ -31,6 +31,7 @@
  * n'atteint jamais la base. Fail-closed.
  */
 import { verifierMigration, type RefusInstruction } from './migration-sql'
+import { SQL_GARDER_TABLES } from './garde-tables'
 import {
   comparerInstantanes,
   prendreInstantane,
@@ -245,6 +246,12 @@ export async function appliquerMigration(o: {
     await client.query('set local role deribfy_oeuvres')
     await client.query(`set local search_path to ${o.schema}, extensions`)
     await client.query(o.sql)
+    // Une table créée par la retouche reçoit sa garde `truncate` DANS la
+    // même transaction : sans elle, son propriétaire pourrait la vider.
+    const garde = (await client.query(SQL_GARDER_TABLES(o.schema))) as { rows?: { restantes?: unknown }[] }
+    if (Number(garde.rows?.[0]?.restantes) !== 0) {
+      throw new Error('garde truncate incomplète : des tables restent sans garde')
+    }
     await client.query('commit')
   } catch (e) {
     try {

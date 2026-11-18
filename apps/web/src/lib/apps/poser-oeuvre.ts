@@ -52,6 +52,7 @@
  * leçon de `juge-execution`, tiré un jour dans un paquet navigateur.
  */
 import { Client } from 'pg'
+import { SQL_GARDER_TABLES } from './garde-tables'
 
 /**
  * LE NOM DU SCHÉMA D'UNE ŒUVRE.
@@ -199,6 +200,9 @@ export type Pose =
  * part dans le zip et atterrit dans le `public` de celui qui le télécharge.
  * Mesuré sur Postgres : deux destinations, un seul octet de source.
  */
+/** Le rôle propriétaire de toute œuvre — celui dont hérite le migrateur. */
+export const ROLE_OEUVRES = 'deribfy_oeuvres'
+
 export async function poserOeuvre(o: {
   readonly id: string
   readonly schemaSql: string
@@ -240,7 +244,14 @@ export async function poserOeuvre(o: {
       // On se donne de la marge SANS en dépendre : le tout-ou-rien est la
       // garantie, pas le budget.
       await client.query("set local statement_timeout = '120s'")
-      await client.query(`create schema if not exists ${schema}`)
+      // ── L'ŒUVRE APPARTIENT À `deribfy_oeuvres` DÈS SA NAISSANCE (2026-11-18).
+      //
+      // Créées en tant que `postgres`, les tables refusaient toute retouche
+      // qui ajoute une donnée : « must be owner of table produit » (pharma,
+      // mesuré). Le migrateur hérite de `deribfy_oeuvres` — le dessin de
+      // `garde-migration.sql` — et ses gardes, qui regardent `session_user`,
+      // restent armées. Œuvres déjà publiées : `proprietaire_oeuvres.sql`.
+      await client.query(`create schema if not exists ${schema} authorization ${ROLE_OEUVRES}`)
       // ── QUI A LE DROIT D'ENTRER DANS LE SCHÉMA, ET QUI N'Y EST PAS.
       //
       // `anon` reçoit `usage` SANS aucun droit sur les tables : il franchit
@@ -260,9 +271,14 @@ export async function poserOeuvre(o: {
       // de l'œuvre. `extensions` y reste pour que les fonctions d'extension
       // restent résolvables (le rôle `postgres` les a dans son chemin par
       // défaut, mesuré).
+      await client.query(`set local role ${ROLE_OEUVRES}`)
       await client.query(`set local search_path to ${schema}, extensions`)
       await client.query(o.schemaSql)
       await client.query(o.politiquesSql)
+      const garde = await client.query(SQL_GARDER_TABLES(schema)) as { rows?: { restantes?: unknown }[] }
+      if (Number(garde.rows?.[0]?.restantes) !== 0) {
+        throw new Error('garde truncate incomplète : des tables restent sans garde')
+      }
       await client.query('commit')
     } catch (e) {
       try {
