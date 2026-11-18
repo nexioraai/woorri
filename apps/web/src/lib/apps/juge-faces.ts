@@ -50,6 +50,8 @@ export type Montage = {
    * téléphones.
    */
   readonly tablesMontrees: readonly string[]
+  /** Les liens vers l'espace de gestion dans la face publique rendue (point 1). */
+  readonly liensGestion?: number
   readonly erreurs: readonly { readonly quoi: string; readonly message: string }[]
 }
 
@@ -83,6 +85,11 @@ export type VerdictFaces = {
    */
   readonly silencesIndiscernables: boolean
   readonly montages: readonly Montage[]
+  /**
+   * POINT 1 (2026-11-18) : le nombre de liens vers l'espace de gestion dans la
+   * face publique rendue (montage `vide`). Plus d'un est un défaut qui se voit.
+   */
+  readonly liensGestion?: number
 }
 
 const PLAFOND_MS = 30_000
@@ -137,6 +144,17 @@ export function reprocheFaces(v: VerdictFaces): string | null {
         'lit qu\'il n\'y a rien ; il y a quelque chose.\n' +
         'Traite le cas `error` SÉPARÉMENT du cas « zéro ligne », et dis à l\'écran ' +
         'laquelle des deux situations se présente.',
+    )
+  }
+  // ── POINT 1 (2026-11-18) : UN SEUL CHEMIN VERS LA GESTION.
+  //
+  // Mesuré chez pharma : « Ouvrir l'espace de gestion » deux fois sur la
+  // vitrine, dans l'en-tête et dans la carte. Compté dans le RENDU.
+  if ((v.liensGestion ?? 0) > 1) {
+    morceaux.push(
+      `TA FACE PUBLIQUE PORTE ${String(v.liensGestion)} LIENS VERS L'ESPACE DE GESTION — mesuré en ` +
+        'la montant sans session. UN SEUL suffit : garde celui de l’en-tête et retire les autres. ' +
+        'La répétition se voit, et elle fait paraître l’application maladroite.',
     )
   }
   return morceaux.length === 0 ? null : morceaux.join('\n\n')
@@ -241,7 +259,7 @@ export async function jugerFaces(
       temoin.tablesMontrees.length > 0 &&
       refus.monte && vide.monte && comparable(refus.texte) === comparable(vide.texte)
 
-    return { aTourne: true, motif: null, defauts, silencesIndiscernables, montages }
+    return { aTourne: true, motif: null, defauts, silencesIndiscernables, montages, liensGestion: vide.liensGestion ?? 0 }
   } catch (e) {
     return {
       aTourne: false,

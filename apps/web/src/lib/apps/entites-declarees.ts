@@ -426,7 +426,8 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     // docs/elite-protocol/PLAN_CHEMIN_VISIBLE.md §0.
     '   · PORTER UN CHEMIN VISIBLE ET NOMMÉ VERS LA GESTION :',
     `     <a href="${ADRESSE_GESTION}">Espace de gestion</a>, sur chaque écran`,
-    '     public ; la gestion ne s’ouvre JAMAIS sans compte ;',
+    '     public — UN SEUL par écran, dans l’en-tête ; la gestion ne',
+    '     s’ouvre JAMAIS sans compte ;',
     '   · N’AFFICHER AUCUN FORMULAIRE DE CONNEXION. Il n’a rien à faire là ;',
     '   · ne laisser filtrer AUCUNE donnée privée — pas même un tableau',
     '     vide, pas même dans un message d’erreur.',

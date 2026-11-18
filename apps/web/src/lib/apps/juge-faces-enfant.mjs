@@ -206,6 +206,10 @@ writeFileSync(
     tables: [...new Set(vues.filter((v) => !/ (auth|inconnu)$/u.test(v)).map((v) => v.split(' ')[1]))],
     requetes: [...new Set(vues)].slice(0, 30),
     texte: texte.slice(0, 1200),
+    // POINT 1 (2026-11-18) : combien de liens vers l'espace de gestion la face
+    // publique porte. Mesuré chez pharma : deux (en-tête + carte) — un visiteur
+    // de stand le voit. On compte dans le RENDU, pas dans le source.
+    liensGestion: racine ? racine.querySelectorAll('a[href$="#gestion"]').length : 0,
     // QUELLES tables l'écran public montre réellement — une par une.
     tablesMontrees: [...new Set(vues.map((v) => v.split(' ')[1]))]
       .filter((t) => t !== undefined && t !== 'auth' && t !== 'inconnu')
