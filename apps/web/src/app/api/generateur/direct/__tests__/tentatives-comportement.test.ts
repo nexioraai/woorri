@@ -25,6 +25,15 @@ vi.mock('@/lib/auth/require-authenticated-user', () => ({
 }))
 
 /** Base PostgREST minimale À ÉTAT : select/insert/update/delete + eq/neq/in/order. */
+// ── LE JUGE D'EXÉCUTION EST MUET ICI (2026-11-18), comme dans EP-343.
+//
+// Ce fichier éprouve les LIGNES DE TENTATIVE, pas le démarrage de l'œuvre
+// (EP-302 et EP-346 le paient). Le juge réel montait un processus par passe :
+// 640 à 1 290 ms par cas isolé, 1 865 ms en gate — rouge au cliquet de marge.
+vi.mock('@/lib/apps/juge-execution', async () => {
+  const { jugeMuet } = await import('@/lib/apps/__tests__/juge-muet')
+  return { jugerExecution: jugeMuet }
+})
 vi.mock('@/lib/supabase-admin', () => {
   const table = (nom: string): Ligne[] => {
     if (!base.tables.has(nom)) base.tables.set(nom, [])

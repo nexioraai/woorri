@@ -8,7 +8,7 @@
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import {
   formatDuFichier,
   raisonDuRefus,
@@ -101,6 +101,12 @@ describe('l extraction, sur de VRAIS PDF (pdfjs en Node)', () => {
     )
     return m as unknown as import('../extraction-pdf').Pdfjs
   }
+  // ── LE CHARGEMENT DE pdfjs SE PAIE UNE FOIS, DANS UN CROCHET (2026-11-18).
+  //
+  // Le premier cas le payait seul : ~0,5 s isolé, 2,2 s sur le runner du CI
+  // (9699b493), rouge au cliquet de marge. Ce cas éprouve l'EXTRACTION, pas
+  // l'import ; le crochet a son propre délai, et le module chargé est le même.
+  beforeAll(async () => { await legacy(); await import('../extraction-pdf') })
   const lire = (nom: string): ArrayBuffer => {
     const o = readFileSync(join(FIXTURES, nom))
     return o.buffer.slice(o.byteOffset, o.byteOffset + o.byteLength) as ArrayBuffer
