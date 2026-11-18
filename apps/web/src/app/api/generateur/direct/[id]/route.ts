@@ -114,7 +114,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       // rend la protection NON CONTOURNABLE : meme servie en document
       // direct, la page tourne en origine opaque. Deux verrous, un seul
       // suffit, aucun ne depend de l'autre.
-      'Content-Security-Policy': 'sandbox allow-scripts',
+      // `allow-modals` (⑪) : sans lui, `confirm()` rend `false` sans rien afficher.
+      'Content-Security-Policy': 'sandbox allow-scripts allow-modals',
     },
   })
 }

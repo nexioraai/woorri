@@ -1,0 +1,15 @@
+Mesure du 2026-11-18 — vraie page de pharma (code v4 assemblé), dans un cadre de 1 280 px, sous
+`sandbox`, réduit par `transform: scale` (cadre ENTIER, largeur réelle conservée).
+
+1. LARGEUR VUE PAR L'APPLICATION
+Chromium échelle 1    · largeur vue PAR L APPLI 1280 · (min-width:1024px) true · mobile false · À L ÉCRAN 1280 px
+Chromium échelle 0.7  · largeur vue PAR L APPLI 1280 · (min-width:1024px) true · mobile false · À L ÉCRAN 896 px
+WebKit   échelle 1    · largeur vue PAR L APPLI 1280 · (min-width:1024px) true · mobile false · À L ÉCRAN 1280 px
+WebKit   échelle 0.7  · largeur vue PAR L APPLI 1280 · (min-width:1024px) true · mobile false · À L ÉCRAN 896 px
+
+2. LES CLICS TOMBENT JUSTE (clic À L'ÉCRAN, par coordonnées de la page hôte, sur « Produits »)
+Chromium échelle 0.7 · clic en 18 202 · titres après : Produits | Catalogue, stock et emplacement
+WebKit   échelle 0.7 · clic en 16 203 · titres après : Produits | Catalogue, stock et emplacement
+
+Conclusion : la raison écrite d'EP-317 (« l'application lirait la largeur du conteneur ») ne tient
+pas pour une réduction du cadre entier. Décision du propriétaire (2026-11-18) : on réduit.

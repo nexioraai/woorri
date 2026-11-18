@@ -164,8 +164,12 @@ describe('EP-287 · revoir une application', () => {
     )
     // Et le serveur impose lui-même l'origine opaque : même servie en
     // document direct, l'œuvre ne porte jamais l'origine de Deribfy.
+    // `allow-modals` (⑪, 2026-11-18) ne change pas l'origine : il permet
+    // seulement à la page d'afficher ses boîtes de dialogue. C'est
+    // `allow-same-origin` qui la rendrait non opaque — et il reste interdit.
     expect(REVOIR, 'le serveur n’impose plus l’origine opaque').toMatch(
-      /Content-Security-Policy[^:]*:\s*['"]sandbox allow-scripts['"]/u,
+      /Content-Security-Policy[^:]*:\s*['"]sandbox allow-scripts(?: allow-modals)?['"]/u,
     )
+    expect(REVOIR, 'l’aperçu reçoit allow-same-origin : son origine n’est plus opaque').not.toMatch(/allow-same-origin['"]/u)
   })
 })

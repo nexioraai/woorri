@@ -58,6 +58,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { CadreApercu } from '@/components/atelier/CadreApercu';
+import { useEchelleApercu } from '@/components/atelier/useEchelleApercu';
 import { ChoixAppareil } from '@/components/atelier/ChoixAppareil';
 import { BoutonAbonnement } from '@/components/atelier/BoutonAbonnement';
 import { IdentifiantsOeuvre } from '@/components/apps/IdentifiantsOeuvre';
@@ -102,6 +103,8 @@ export default function AtelierPage() {
   const [largeurChoisie, setLargeur] = useState<number | null>(null);
   const etroit = useSyncExternalStore(abonnerEcranEtroit, ecranEtroit, () => false);
   const largeur = largeurChoisie ?? (etroit ? 390 : 1280);
+  // L'aperçu se réduit pour tenir dans sa colonne (EP-317 levé par la mesure).
+  const echelleApercu = useEchelleApercu(largeur);
   /**
    * M2 — SOUS 1024 PX, DEUX ONGLETS (décision du propriétaire, 2026-11-17).
    *
@@ -922,7 +925,7 @@ export default function AtelierPage() {
           aria-labelledby="onglet-application"
           className={`${onglet === 'application' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 flex-col lg:flex`}
         >
-          <CadreApercu titre={nom} srcDoc={html} etat={etatApercu} largeur={largeur} />
+          <CadreApercu titre={nom} srcDoc={html} etat={etatApercu} largeur={largeur} echelle={echelleApercu.echelle} hauteur={echelleApercu.hauteur} mesurer={echelleApercu.mesurer} />
         </div>
       </div>
     </main>

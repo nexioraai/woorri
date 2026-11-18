@@ -35,6 +35,7 @@
  *    pas.
  */
 import { describe, expect, it } from 'vitest'
+import { motifTexte } from './motif-texte'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { echangesDe, heureCourte } from '../fil-atelier'
@@ -114,9 +115,19 @@ describe('EP-317 · l’atelier', () => {
     // LE CONTENU DÉFILE DANS LE CADRE au lieu d'être tronqué.
     expect(c, 'le cadre ne défile pas : un contenu plus grand serait inatteignable')
       .toMatch(/overflow-auto/u)
-    // Et la largeur reste RÉELLE, jamais une mise à l'échelle trompeuse.
+    // Et la largeur du CADRE reste RÉELLE : c'est elle que l'application lit.
     expect(c, 'la largeur n’est pas pilotée').toMatch(/style=\{\{\s*width:/u)
-    expect(c, 'une mise à l’échelle trompeuse est utilisée').not.toMatch(/scale\(/u)
+    // ── LA RÉDUCTION DU CADRE ENTIER EST PERMISE DEPUIS LE 2026-11-18.
+    //
+    // Mesuré (Chromium, WebKit, vraie page de pharma, cadre de 1 280 px réduit
+    // à 70 %) : l'application lit toujours 1 280 px et garde sa mise en page
+    // « bureau » (docs/elite-protocol/evidence/ep317-echelle/). Ce qui reste
+    // INTERDIT, c'est de réduire autre chose que le cadre entier, ou de le
+    // réduire sans garder sa largeur réelle, ou sans le dire à l'écran.
+    expect(c, 'le cadre réduit ne garde pas sa largeur réelle').toMatch(motifTexte(
+      'width: `${String(largeur)}px`, height: `${String((hauteur ?? 0) / echelle)}px`, transform: `scale(${String(echelle)})`,'))
+    expect(c, 'la réduction n’est pas dite à l’écran').toMatch(motifTexte('affichée à ${String(Math.round(echelle * 100))} %'))
+    expect((c.match(/scale\(/gu) ?? []).length, 'une seconde mise à l’échelle est apparue').toBe(1)
   })
 
   it('③ LE CHAMP DE SAISIE EST HORS DE LA ZONE QUI DÉFILE', () => {
