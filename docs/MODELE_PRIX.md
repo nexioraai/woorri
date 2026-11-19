@@ -9,9 +9,9 @@
 | **Une application gratuite** | générée, visible par son auteur seul |
 | **Retoucher l'appli gratuite** | **3 modifications gratuites**, puis l'abonnement (décidé le 2026-11-18). Une première génération est rarement juste du premier coup : quelqu'un qui ne peut pas y toucher repart en pensant que ça ne marche pas. Coût : environ 0,21 $ par visiteur qui essaie (0,136 $ + 3 × 0,026 $) ; une seule appli gratuite par compte |
 | **Publier** | demande l'abonnement |
-| **Prix** | **20 $ par mois**, par application publiée, **affiché en dollars américains**. Deribfy est universel, pas tchadien. Pas d'affichage dans la monnaie du visiteur avant Dary : le propriétaire dit « environ 12 000 FCFA » lui-même au stand |
+| **Prix** | **20 $ par mois**, par application publiée, **affiché en dollars américains**. Deribfy est universel, pas tchadien. Le dollar US est la devise de base pour que Stripe puisse afficher la monnaie locale du visiteur. Le prix en FCFA d'un paiement à la main est un **réglage** (décision de marché du propriétaire : « 12 000 FCFA à Moundou ne valent pas 20 $ à Montréal ») |
 | **Inclus** | **50 modifications par mois** |
-| **Lot supplémentaire** | 50 modifications pour 5 $ (activé à la main depuis l'administration avant Dary, sans écran d'achat) |
+| **Lot supplémentaire** | 50 modifications pour 5 $ — taille et prix sont des **réglages** ; par Stripe ou à la main, comme l'abonnement |
 | **Une deuxième application** | un second abonnement |
 
 L'unité s'appelle **« modification »**, jamais « crédit » ni « jeton ». C'est une décision de produit : les concurrents comptent des jetons que personne ne comprend.
@@ -22,7 +22,7 @@ L'unité s'appelle **« modification »**, jamais « crédit » ni « jeton ». 
 2. **Le compteur se voit AVANT de cliquer** : « 3 modifications gratuites restantes » avant l'abonnement, « 37 modifications restantes ce mois-ci » après (50 par mois).
 3. **À zéro, l'application publiée RESTE EN LIGNE.** Elle ne peut plus être modifiée, c'est tout. On ne coupe jamais le commerce de quelqu'un parce qu'il a épuisé un quota.
 4. **Abonnement non renouvelé** — c'est une règle, pas un réglage (précisée par le propriétaire le 2026-11-19). Voir `docs/ECHEANCES.md` :
-   - **jour 1**, l'échéance passe sans paiement (avant Dary, il n'y a pas de prélèvement qui « échoue » : c'est l'activation manuelle qui n'arrive pas) : **les modifications s'arrêtent, l'application reste en ligne** ;
+   - **jour 1**, l'échéance passe sans paiement (par Stripe : le prélèvement échoue ; à la main : le paiement n'arrive pas) : **les modifications s'arrêtent, l'application reste en ligne** ;
    - **jour 27** : un avertissement ; **jour 29** : un deuxième avertissement — au propriétaire seul, jamais à ses clients ;
    - **jour 30 : mise en pause.** L'adresse de l'application affiche une **page sobre** : « momentanément indisponible ». Pas une erreur, pas une publicité pour Deribfy ;
    - **les 90 jours partent de la mise en pause** : les données restent intactes du jour 30 au jour 120. Il paie quand il veut pendant ces 90 jours et tout revient : **même adresse, mêmes données, même compte** ;
@@ -42,9 +42,10 @@ L'unité s'appelle **« modification »**, jamais « crédit » ni « jeton ». 
 
 ## Comment on encaisse
 
-- **Avant Dary** : activation **manuelle**. Le commerçant paie par Airtel Money ou Moov Money au numéro de l'entité tchadienne ; l'administrateur active l'abonnement ou le lot avec la référence de la transaction. Le registre des paiements est conçu avec un **fournisseur interchangeable**.
-- **Après Dary** : Stripe pour les cartes, sous l'entité québécoise. Libellé sur le relevé de carte : `DERIBFY.COM`.
-- **Mobile money intégré** : selon les devis demandés (Monerails, Bizao, CinetPay).
+- **Par défaut, automatique** : Stripe pour les cartes. Un paiement arrive, l'abonnement devient actif, le compteur repart — sans le propriétaire (décision du 2026-11-19 : « je m'en sors à la main avec dix clients, pas avec mille »). Libellé sur le relevé de carte : `DERIBFY.COM`.
+- **À la main, pour ceux que la carte ne couvre pas** — Stripe ne couvre pas le Tchad : le client contacte le propriétaire et paie en espèces, ou par Airtel Money / Moov Money ; l'administrateur active avec la référence (transaction ou reçu).
+- **Demain, automatique aussi** : un agrégateur mobile money (Monerails, Bizao, CinetPay ; devis demandés le 2026-11-19) se branche sur le même registre, qui accepte les deux sources dès le départ.
+- Voir `docs/elite-protocol/PLAN_QUOTA_ACTIVATION.md`.
 
 ## Tranché
 

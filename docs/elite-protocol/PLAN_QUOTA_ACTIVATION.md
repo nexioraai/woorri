@@ -5,7 +5,7 @@
 > v2 : prix définitifs en USD ; identité du registre corrigée par la mesure Stripe du 2026-11-19 ; vue de la consommation et compteur ajoutés (demande du propriétaire).
 > **v3 (corrections du propriétaire, 2026-11-19) : l'activation est AUTOMATIQUE par défaut** — le bouton manuel ne sert qu'au mobile money tchadien, tant qu'aucun agrégateur n'est signé ; **le 50, le 3, la durée, le prix en FCFA et les numéros sont des RÉGLAGES**, modifiables sans toucher au code ; la consommation réelle des premiers clients se mesure avant de figer quoi que ce soit.
 >
-> **Réponses déjà données** : 1A · 2 comme proposé · 3A · 4 réécrit selon l'activation automatique · 5A · 6 A+C · 7A après Dary. Durée : **30 jours à partir de l'activation**. Les 10 applis publiées : **payées jusqu'au 31 décembre 2026**. **Pas encore donnés** : le prix en FCFA et les numéros Airtel/Moov (décision de marché, cette semaine) — le chemin se construit sans eux.
+> **Réponses déjà données** : 1A · 2 comme proposé · 3A · 4 réécrit selon l'activation automatique · 5A · 6 A+C · 7A (voir son ordre) · **9A, inclus dans ce chantier**. Durée : **30 jours à partir de l'activation**. Les 10 applis publiées : **payées jusqu'au 31 décembre 2026**. **Pas encore donnés** : le prix en FCFA et les numéros Airtel/Moov (décision de marché, cette semaine) — le chemin se construit sans eux.
 
 ## Ce que le chantier doit rendre vrai
 
@@ -68,7 +68,7 @@ Tes applis (et celles d'abbasissay, `EMAILS_SANS_QUOTA`) ne sont jamais bloquée
 |---|---|
 | `owner_id`, `app_id` | qui paie, pour quoi — jamais la fiche Stripe (une par site, mesuré) |
 | `source` | `automatique` ou `manuelle` |
-| `fournisseur` | `stripe` aujourd'hui ; `airtel`, `moov` à la main ; demain `cinetpay`, `bizao`, `monerails` |
+| `fournisseur` | `stripe` (automatique) ; `especes`, `airtel`, `moov` (à la main) ; `offert` (les 10 applis publiées, jusqu'au 31 décembre 2026) ; demain `cinetpay`, `bizao`, `monerails` (automatique) |
 | `reference` | **unique par fournisseur** : l'identifiant de la facture Stripe, ou la référence de la transaction mobile money. Le même paiement reçu deux fois (Stripe renvoie ses événements) ne compte qu'une fois |
 | `objet` | `abonnement` ou `lot` |
 | `montant`, `devise` | ce qui a été payé, tel quel (USD par Stripe, XAF par mobile money) |
@@ -86,11 +86,11 @@ Tes applis (et celles d'abbasissay, `EMAILS_SANS_QUOTA`) ne sont jamais bloquée
 - Chaque mois, le renouvellement refait la même chose. Toi : rien.
 - Un paiement refusé par la banque n'écrit rien : l'impayé suit la règle du modèle de prix.
 
-**② Mobile money, à la main (le seul cas, en attendant un agrégateur).**
+**② Espèces et mobile money, à la main (le seul cas : un client que la carte ne couvre pas, en attendant un agrégateur).**
 Dans `/admin`, réservé aux adresses d'administration, vérifié côté serveur :
 1. chercher l'appli (nom publié ou adresse du propriétaire) ;
 2. abonnement ou lot ;
-3. Airtel ou Moov, et **la référence de la transaction, obligatoire** ;
+3. espèces, Airtel ou Moov, et **la référence, obligatoire** (le numéro de la transaction, ou celui du reçu remis pour des espèces) ;
 4. le montant reçu en FCFA — comparé au prix réglé, l'écart est dit avant de confirmer ;
 5. une confirmation dessinée : « Activer pharma jusqu'au 19 décembre 2026 ? » ;
 6. le résultat : la nouvelle date et la ligne du registre.
@@ -126,12 +126,12 @@ Ce qu'elle montre : modifications **utilisées**, **restantes**, la **liste du m
 
 Je recommande A **et** C : la page Compte pour le commerçant, le même chiffre dans l'atelier pour toi.
 
-## Décision 7 — Une seule fiche Stripe par compte (pour après Dary)
+## Décision 7 — Une seule fiche Stripe par compte
 
 | | **A. Une fiche par compte Deribfy, retrouvée avant d'en créer (recommandé)** | B. Laisser une fiche par site |
 |---|---|---|
 | Comment | `profiles.stripe_customer_id` ; `checkout` et l'achat de domaine la retrouvent ; les anciennes fiches restent, rattachées à leurs sites | rien |
-| Quand | avec le Stripe complet, **après Dary** — avant, aucun paiement n'arrive par Stripe | — |
+| Quand | **pour les applis : dès ce chantier** — la page de paiement des applis est neuve (décision 9), elle naît avec la fiche du compte. **Pour les sites et les domaines : quand on reprendra leur paiement** — aujourd'hui une fiche par site fonctionne (mesuré, aucun client lésé) ; la reprendre maintenant serait toucher un paiement qui marche | — |
 | Ce qu'il faut garder | le webhook d'annulation reste ciblé sur les sites **de l'abonnement annulé** (métadonnée du site), pas sur toute la fiche — sinon une seule fiche par compte élargirait le rayon d'une annulation à tous les sites de la personne | — |
 
 ## Décision 8 — Les chiffres sont des réglages, et la consommation réelle se mesure
@@ -151,24 +151,28 @@ Je recommande A **et** C : la page Compte pour le commerçant, le même chiffre 
 - Un changement s'applique à la **période suivante** de chaque appli, jamais au milieu : un commerçant ne voit pas son compteur fondre sous ses yeux.
 - Le prix en USD de Stripe, lui, vit dans Stripe : le réglage dit ce que la page **affiche**, la variable dit ce que Stripe **facture**. Un test vérifie qu'ils disent le même chiffre.
 
-**La mesure** : dans `/admin`, une vue « consommation » par appli abonnée — modifications faites, refusées, par période, et la répartition (combien d'applis en ont utilisé moins de 10, 10 à 25, 25 à 50, ont atteint le plafond). Tu figes le chiffre quand les dix premiers clients ont fait une période complète.
+**La mesure : RETIRÉE du chantier** (propriétaire, en échange de la décision 9). La vue par tranches attendra d'avoir de vrais clients à mesurer. Ce qui reste : les modifications sont enregistrées une par une (décision 1), donc la mesure pourra se faire plus tard sur des données déjà là, sans rien reconstruire.
 
-## Décision 9 — Le paiement Stripe des applis : maintenant ou après Dary ?
+## Décision 9 — Le paiement Stripe des applis : TRANCHÉ, maintenant
 
-L'activation automatique suppose une **page de paiement Stripe pour les applis**, qui n'existe pas (celle d'aujourd'hui ne sert que les sites). Jusqu'ici l'ordre disait « Stripe complet après Dary ».
+**A, dans ce chantier** (propriétaire, 2026-11-19). Sa raison : « sans page de paiement Stripe pour les applis, l'activation automatique qu'on vient de décider est construite et dormante. Chaque client passerait par mon bouton manuel. Ce n'est pas un chantier de plus, c'est la pièce qui manque à celui-ci. »
 
-| | **A. Maintenant, dans ce chantier (recommandé)** | B. Après Dary |
+- « Publier » ouvre le paiement Stripe à 20 $ US (`STRIPE_PRICE_APPLICATION`, vérifié) ; le webhook active seul (`invoice.paid`).
+- **Ce que le propriétaire retire pour tenir sa règle** : la **vue d'analyse de consommation par tranches** dans `/admin` (décision 8). Le réglage reste modifiable sans déploiement — « c'est ça qui compte » ; mesurer finement attendra d'avoir de vrais clients à mesurer.
+
+## Qui paie comment
+
+| Qui | Chemin | Activation |
 |---|---|---|
-| Ce que ça fait | « Publier » ouvre le paiement Stripe à 20 $ US ; le webhook active seul | avant Dary, tout passe par le bouton manuel |
-| Coût | **+1 jour environ** (page de paiement, webhook `invoice.paid` pour les applis, tests) — le prix Stripe existe déjà | 0 avant Dary |
-| Au stand | un visiteur avec une carte paie et repart avec son appli publiée | tu actives chaque client à la main |
-| Ta règle des cinq semaines | **c'est un ajout** : le chantier passe de 4–5 à 5–6 jours | rien ne bouge |
+| Une carte bancaire (Stripe couvre le pays) | page de paiement Stripe | **automatique** |
+| Un client qui ne peut pas payer par carte — **le Tchad n'est pas couvert par Stripe** | il contacte le propriétaire et paie **en espèces** (ou par Airtel / Moov) | **à la main**, bouton `/admin` : fournisseur `especes`, `airtel` ou `moov`, référence obligatoire (pour les espèces : le numéro du reçu remis) |
+| Demain, un agrégateur signé (Monerails, Bizao, CinetPay — devis demandés le 2026-11-19) | sa page de paiement | **automatique**, par la même fonction `enregistrer_paiement` |
 
-La règle : « Aucun nouveau chantier sans en retirer un autre. » A en est un morceau. Si tu choisis A, dis ce que tu retires — ou confirme que c'est inclus dans ce chantier.
+Les espèces ne marchent qu'avec des gens que le propriétaire peut rencontrer : c'est pourquoi l'agrégateur reste à signer, même si rien n'en dépend pour démarrer.
 
 ## Hors chantier, consigné
 
-- **Après Dary** : l'achat de domaine (`api/domains/purchase`) prend la première fiche Stripe trouvée par adresse — avec plusieurs fiches pour une même personne, laquelle est arbitraire. À corriger avec la décision 7.
+- **Quand on reprendra le paiement des sites et des domaines** (décision 7) : l'achat de domaine (`api/domains/purchase`) prend la première fiche Stripe trouvée par adresse — avec plusieurs fiches pour une même personne, laquelle est arbitraire. Aucun client n'en souffre aujourd'hui (une seule personne a plusieurs fiches : le propriétaire).
 
 ## Ce qui reste à TOI avant la première activation
 
@@ -176,7 +180,7 @@ La règle : « Aucun nouveau chantier sans en retirer un autre. » A en est un m
 2. **Les numéros Airtel et Moov** et le motif — même chose.
 3. ~~La durée~~ : **30 jours à partir de l'activation** (tranché).
 4. ~~Les 10 applis publiées~~ : **payées jusqu'au 31 décembre 2026** (tranché).
-5. **La décision 9.**
+5. ~~La décision 9~~ : **A** (tranché).
 
 ## Ordre de construction et preuves
 
@@ -187,13 +191,13 @@ La règle : « Aucun nouveau chantier sans en retirer un autre. » A en est un m
 | ③ Le compteur dans l'atelier, les dollars pour l'administration seule | rendu testé ; vu par toi en production |
 | ④ `enregistrer_paiement` + le webhook Stripe des applis (si 9A) | même facture reçue deux fois → une seule ligne ; facture d'une autre appli → refusée |
 | ④ bis Le bouton manuel mobile money dans `/admin` | double référence refusée ; non-admin → 403 ; prix FCFA vide → refus |
-| ④ ter Les réglages et la vue de consommation dans `/admin` | changement historisé ; s'applique à la période suivante ; page et Stripe disent le même prix |
+| ④ ter Les réglages dans `/admin` | changement historisé ; s'applique à la période suivante ; page et Stripe disent le même prix |
 | ⑤ La consommation dans la page Compte | jeton d'une AUTRE appli → refusé ; vu par toi sur pharma |
 | ⑥ Publier demande l'abonnement, avec le chemin de paiement | parcours complet en production, sur un compte de test, par toi |
 | ⑦ Les quatre textes du site | relus par toi |
 
-Estimation : **5 à 6 jours** avec 9A, **4,5 à 5,5** avec 9B (réglages et mesure : environ un demi-jour). Non mesurée. Aucune dépense de modèle nécessaire pour prouver.
+Estimation : **5 à 5,5 jours** (9A inclus, vue de consommation retirée). Non mesurée. Aucune dépense de modèle nécessaire pour prouver.
 
 ## Pour répondre d'un coup
 
-> Il ne reste que **la décision 9** (et, plus tard dans la semaine, le prix en FCFA et les numéros). Les réglages de la décision 8 sont la traduction de ta correction ; dis-moi seulement si un chiffre de départ ne te va pas.
+> Tout est tranché. Restent, cette semaine : le prix en FCFA et les numéros Airtel / Moov — réglages vides en attendant.
