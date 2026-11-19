@@ -9,9 +9,8 @@ const CONTENT = {
     home: 'Accueil',
     kicker: 'Tarifs',
     title: 'Un abonnement simple, sans surprise.',
-    lead: "Choisissez le plan adapté à votre projet. Changez ou annulez à tout moment. Tous les prix sont en dollars canadiens (CAD), par mois.",
+    lead: "Choisissez le plan adapté à votre projet. Changez ou annulez à tout moment. Tous les prix sont en dollars américains (USD), par mois.",
     perMonth: '/mois',
-    cad: 'CAD',
     popular: 'Le plus complet',
     cta: 'Commencer',
     plans: [
@@ -19,6 +18,7 @@ const CONTENT = {
         name: 'Vitrine',
         ancre: 'vitrine',
         price: '10',
+        devise: 'USD',
         tagline: "Présentez votre activité avec un site professionnel généré par IA.",
         featured: false,
         features: [
@@ -34,6 +34,7 @@ const CONTENT = {
         name: 'Boutique',
         ancre: 'boutique',
         price: '15',
+        devise: 'USD',
         tagline: 'Vendez vos propres produits avec une boutique en ligne complète.',
         featured: false,
         features: [
@@ -49,6 +50,7 @@ const CONTENT = {
         name: 'Dropshipping',
         ancre: 'dropshipping',
         price: '20',
+        devise: 'USD',
         tagline: 'Une boutique clé en main, entièrement automatisée par l’IA.',
         featured: true,
         features: [
@@ -59,6 +61,22 @@ const CONTENT = {
           'Tarification et marges automatiques',
           'Agent IA intégré',
           'Contenu marketing généré par IA',
+        ],
+        excluded: [],
+      },
+      {
+        name: 'Application',
+        ancre: 'application',
+        price: '20',
+        devise: 'USD',
+        tagline: "Une application de gestion à votre nom (clients, stock, ventes…), que vous faites évoluer en la décrivant.",
+        featured: false,
+        features: [
+          'Prix par application publiée',
+          '50 modifications par mois incluses',
+          'Publiée à votre adresse : votre-nom.deribfy.app',
+          'Ses propres données et son compte d’administration',
+          'Une modification refusée ne compte pas',
         ],
         excluded: [],
       },
@@ -74,9 +92,8 @@ const CONTENT = {
     home: 'Home',
     kicker: 'Pricing',
     title: 'Simple subscriptions, no surprises.',
-    lead: 'Choose the plan that fits your project. Upgrade, downgrade or cancel anytime. All prices are in Canadian dollars (CAD), per month.',
+    lead: 'Choose the plan that fits your project. Upgrade, downgrade or cancel anytime. All prices are in US dollars (USD), per month.',
     perMonth: '/mo',
-    cad: 'CAD',
     popular: 'Most complete',
     cta: 'Get started',
     plans: [
@@ -84,6 +101,7 @@ const CONTENT = {
         name: 'Showcase',
         ancre: 'vitrine',
         price: '10',
+        devise: 'USD',
         tagline: 'Present your business with a professional AI-generated website.',
         featured: false,
         features: [
@@ -99,6 +117,7 @@ const CONTENT = {
         name: 'Store',
         ancre: 'boutique',
         price: '15',
+        devise: 'USD',
         tagline: 'Sell your own products with a full online store.',
         featured: false,
         features: [
@@ -114,6 +133,7 @@ const CONTENT = {
         name: 'Dropshipping',
         ancre: 'dropshipping',
         price: '20',
+        devise: 'USD',
         tagline: 'A turnkey store, fully automated by AI.',
         featured: true,
         features: [
@@ -124,6 +144,22 @@ const CONTENT = {
           'Automatic pricing and margins',
           'Built-in AI agent',
           'AI-generated marketing content',
+        ],
+        excluded: [],
+      },
+      {
+        name: 'Application',
+        ancre: 'application',
+        price: '20',
+        devise: 'USD',
+        tagline: 'A management app under your own name (customers, stock, sales…) that you change by describing what you want.',
+        featured: false,
+        features: [
+          'Price per published app',
+          '50 modifications per month included',
+          'Published at your address: your-name.deribfy.app',
+          'Its own data and its own admin account',
+          'A refused modification does not count',
         ],
         excluded: [],
       },
@@ -155,7 +191,7 @@ export default function PricingContent() {
           <p className="mt-5 text-lg text-white/70 max-w-2xl mx-auto leading-relaxed">{c.lead}</p>
         </section>
 
-        <section className="grid md:grid-cols-3 gap-6 mb-20">
+        <section className="grid md:grid-cols-2 xl:grid-cols-4 gap-6 mb-20">
           {c.plans.map((plan) => (
             <div
               key={plan.name}
@@ -175,7 +211,7 @@ export default function PricingContent() {
               <h2 className="text-xl font-bold">{plan.name}</h2>
               <div className="mt-4 flex items-end gap-1">
                 <span className="text-4xl font-bold">${plan.price}</span>
-                <span className="text-white/50 mb-1">{c.cad}{c.perMonth}</span>
+                <span className="text-white/50 mb-1">{plan.devise}{c.perMonth}</span>
               </div>
               <p className="mt-4 text-sm text-white/70 leading-relaxed">{plan.tagline}</p>
 

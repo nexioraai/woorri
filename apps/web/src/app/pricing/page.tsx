@@ -5,7 +5,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.deribfy.com';
 
 const TITLE = 'Tarifs — Deribfy';
 const DESCRIPTION =
-  'Choisissez le plan adapté à votre projet. Changez ou annulez à tout moment. Tous les prix sont en dollars canadiens (CAD), par mois.';
+  'Choisissez le plan adapté à votre projet. Changez ou annulez à tout moment. Tous les prix sont en dollars américains (USD), par mois.';
 
 export const metadata: Metadata = {
   title: TITLE,
