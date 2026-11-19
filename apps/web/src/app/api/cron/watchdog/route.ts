@@ -18,6 +18,9 @@ const EXPECTED_CRONS: Record<string, number> = {
   'domain-retry': 4,
   // meme cadence (toutes les 2h) que domain-retry : meme marge.
   'domain-indexing-byod': 4,
+  // Le declencheur des sauvegardes de nuit (03:17 UTC) : une nuit manquee se
+  // voit le lendemain matin, au passage de 09:30.
+  'sauvegardes': 26,
 };
 
 // Crons de la chaine domaine/Google : un cron qui tourne a l'heure mais dont

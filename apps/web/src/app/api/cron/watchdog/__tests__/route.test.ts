@@ -96,6 +96,7 @@ function baseCronRuns() {
     'catalog-suggest': [ALL_PRESENT],
     'domain-retry': [ALL_PRESENT],
     'domain-indexing-byod': [ALL_PRESENT],
+    'sauvegardes': [ALL_PRESENT],
   };
 }
 
