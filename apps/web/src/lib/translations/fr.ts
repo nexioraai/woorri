@@ -12,7 +12,6 @@ export const fr = {
   'footer.col.resources': 'Ressources',
   'footer.col.company': 'Entreprise',
   'footer.col.legal': 'Mentions légales',
-  'footer.operatedBy': 'Deribfy est exploité par Dougouma IA, entreprise immatriculée au Québec — NEQ 2281989782.',
   'footer.privacy': 'Confidentialité',
   'footer.terms': 'Conditions',
   'footer.cookies': 'Témoins',
@@ -79,10 +78,6 @@ export const fr = {
   'home.mode.store': 'Boutique en ligne',
   'home.mode.dropshipping': 'Dropshipping',
   'home.mode.application': 'Application',
-  'home.mode.website.desc': 'présenter votre activité en ligne (sans vente).',
-  'home.mode.store.desc': 'vendre vos propres produits (vous gérez le stock).',
-  'home.mode.dropshipping.desc': 'vendre sans stock ni capital : tout est automatisé, un fournisseur expédie directement à vos clients.',
-  'home.mode.application.desc': 'gérer votre activité au quotidien (clients, stock, ventes…) : une application en ligne à votre nom, avec ses propres données, que vous faites évoluer en la décrivant.',
   'home.dropshipping.question': 'Quel type de dropshipping ?',
   // Edit — Visibilite IA
   'edit.aivis.title': 'Visibilité IA',

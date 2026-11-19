@@ -3,7 +3,8 @@
  *
  * ① quatre colonnes titrées ; Confidentialité, Conditions et Témoins sont sous
  *   « Mentions légales », plus noyés entre Blog et Tarifs ;
- * ② l'entité qui exploite Deribfy et son NEQ sont écrits ;
+ * ② la ligne de l'entité et du NEQ est RETIRÉE (2026-11-19) : le propriétaire
+ *   règle d'abord la différence entre l'entité tchadienne et la québécoise ;
  * ③ un réseau SANS adresse n'affiche aucune icône — pas de bouton vers nulle
  *   part ; avec une adresse, l'icône mène au compte, dans un nouvel onglet.
  *
@@ -27,16 +28,16 @@ const colonne = (html: string, titre: string): string[] => {
 describe('le pied de page en colonnes', () => {
   it('① quatre colonnes titrées, les mentions légales ensemble', () => {
     const html = rendre()
-    expect(colonne(html, 'Produit')).toEqual(['/pricing', '/visibilite-ia'])
-    expect(colonne(html, 'Ressources')).toEqual(['/documentation', '/blog'])
+    expect(colonne(html, 'Produit')).toEqual(['/pricing#vitrine', '/pricing#boutique', '/pricing#dropshipping', '/pricing#application', '/pricing'])
+    expect(html).toContain('>Site web<')
+    expect(html).toContain('>Application<')
+    expect(colonne(html, 'Ressources')).toEqual(['/documentation', '/blog', '/visibilite-ia'])
     expect(colonne(html, 'Entreprise')).toEqual(['/about', 'mailto:contact@deribfy.com'])
     expect(colonne(html, 'Mentions légales')).toEqual(['/privacy', '/terms', '/cookies'])
   })
 
-  it('② l’entité et son NEQ', () => {
-    const html = rendre()
-    expect(html).toContain('Dougouma IA')
-    expect(html).toContain('NEQ 2281989782')
+  it('② plus de ligne d’entité ni de NEQ dans le pied de page', () => {
+    expect(rendre()).not.toContain('NEQ')
   })
 
   it('③ pas d’adresse, pas d’icône ; une adresse, une icône qui y mène', () => {

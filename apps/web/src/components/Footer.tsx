@@ -23,9 +23,10 @@ import { RESEAUX_SOCIAUX, type ReseauSocial } from '@/lib/reseaux-sociaux';
 // ============================================================
 
 // ── EN COLONNES DEPUIS LE 2026-11-18 (décision du propriétaire) : Produit ·
-// Ressources · Entreprise · Mentions légales, et l'entité qui exploite
-// Deribfy avec son NEQ. Les mentions légales ne sont plus noyées entre Blog
-// et Tarifs. Les liens restent ÉCRITS EN TOUTES LETTRES (`href="/…"`) : le
+// Ressources · Entreprise · Mentions légales. Les mentions légales ne sont
+// plus noyées entre Blog et Tarifs. La ligne de l'entité et du NEQ est
+// retirée le 2026-11-19, le temps que le propriétaire règle quelle entité
+// signe. Les liens restent ÉCRITS EN TOUTES LETTRES (`href="/…"`) : le
 // cliquet `pagesPubliquesAtteignables` les lit dans ce fichier.
 
 const lien = 'text-white/45 hover:text-white transition-colors duration-200'
@@ -84,8 +85,12 @@ export default function Footer({ reseaux = RESEAUX_SOCIAUX }: { reseaux?: readon
           <nav aria-label={t('footer.col.product')}>
             <h2 className="text-[11px] font-semibold uppercase tracking-wider text-white/80">{t('footer.col.product')}</h2>
             <ul className="mt-4 space-y-3 text-xs">
+              {/* LES VRAIS PRODUITS (2026-11-19) : chacun mène à SA carte de la page Tarifs. */}
+              <li><Link href="/pricing#vitrine" className={lien}>{t('home.mode.website')}</Link></li>
+              <li><Link href="/pricing#boutique" className={lien}>{t('home.mode.store')}</Link></li>
+              <li><Link href="/pricing#dropshipping" className={lien}>{t('home.mode.dropshipping')}</Link></li>
+              <li><Link href="/pricing#application" className={lien}>{t('home.mode.application')}</Link></li>
               <li><Link href="/pricing" className={lien}>{t('footer.pricing')}</Link></li>
-              <li><Link href="/visibilite-ia" className={lien}>{t('footer.visibiliteIa')}</Link></li>
             </ul>
           </nav>
 
@@ -94,6 +99,7 @@ export default function Footer({ reseaux = RESEAUX_SOCIAUX }: { reseaux?: readon
             <ul className="mt-4 space-y-3 text-xs">
               <li><Link href="/documentation" className={lien}>{t('footer.documentation')}</Link></li>
               <li><Link href="/blog" className={lien}>{t('footer.blog')}</Link></li>
+              <li><Link href="/visibilite-ia" className={lien}>{t('footer.visibiliteIa')}</Link></li>
             </ul>
           </nav>
 
@@ -118,7 +124,6 @@ export default function Footer({ reseaux = RESEAUX_SOCIAUX }: { reseaux?: readon
 
         <div className="mt-10 pt-6 border-t border-white/8 flex flex-col md:flex-row gap-2 md:items-center md:justify-between text-[11px] text-white/30">
           <p>{t('footer.copyright')}</p>
-          <p>{t('footer.operatedBy')}</p>
         </div>
       </div>
     </footer>

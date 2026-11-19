@@ -926,14 +926,6 @@ export default function OnboardingChat({
         etiquette="Décrivez votre activité"
       />
 
-      {messages.length === 1 && !loading && !generating && !showDropshipPicker && (
-        <div className="mt-5 max-w-lg mx-auto text-left space-y-2 text-[13px] leading-relaxed text-slate-400">
-          <p><span className="text-slate-200 font-medium">{t('home.mode.website')}</span> — {t('home.mode.website.desc')}</p>
-          <p><span className="text-slate-200 font-medium">{t('home.mode.store')}</span> — {t('home.mode.store.desc')}</p>
-          <p><span className="text-slate-200 font-medium">{t('home.mode.dropshipping')}</span> — {t('home.mode.dropshipping.desc')}</p>
-          <p><span className="text-slate-200 font-medium">{t('home.mode.application')}</span> — {t('home.mode.application.desc')}</p>
-        </div>
-      )}
     </section>
   );
 }
