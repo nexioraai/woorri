@@ -4,7 +4,8 @@
  * MESURÉ : le paiement d'un site envoyait UN SEUL prix (`STRIPE_PRICE_ID`,
  * 15 CAD) quel que soit le plan. Qui choisissait Vitrine, affichée 10, était
  * facturé 15. Le prix suit désormais le type du site (`sites.mode`), en dollars
- * US comme la page Tarifs : Vitrine 10, Boutique 15, Dropshipping 20.
+ * US comme la page Tarifs : Vitrine 10, Boutique 15, Dropshipping 15
+ * (prix définitifs du 2026-11-19, vérifiés produit par produit dans Stripe).
  *
  * FERMÉ PAR DÉFAUT : un mode inconnu ou une variable absente REFUSE le
  * paiement, avec ce qui manque. Jamais un prix « par défaut » : c'est

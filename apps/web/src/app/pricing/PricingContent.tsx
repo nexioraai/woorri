@@ -49,7 +49,7 @@ const CONTENT = {
       {
         name: 'Dropshipping',
         ancre: 'dropshipping',
-        price: '20',
+        price: '15',
         devise: 'USD',
         tagline: 'Une boutique clé en main, entièrement automatisée par l’IA.',
         featured: true,
@@ -132,7 +132,7 @@ const CONTENT = {
       {
         name: 'Dropshipping',
         ancre: 'dropshipping',
-        price: '20',
+        price: '15',
         devise: 'USD',
         tagline: 'A turnkey store, fully automated by AI.',
         featured: true,

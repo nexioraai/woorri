@@ -2,8 +2,8 @@
  * LA PAGE TARIFS : QUATRE PRODUITS, UNE SEULE DEVISE (décision du propriétaire, 2026-11-19).
  *
  * « Je veux que Deribfy soit universel » : le dollar US est la devise de base,
- * Stripe affichera la monnaie locale du visiteur. Mêmes chiffres qu'avant :
- * Vitrine 10, Boutique 15, Dropshipping 20, Application 20. Mesuré avant de
+ * Stripe affichera la monnaie locale du visiteur. Prix définitifs (2026-11-19) :
+ * Vitrine 10, Boutique 15, Dropshipping 15, Application 20 — ceux des prix Stripe. Mesuré avant de
  * changer : le seul abonné payant était le propriétaire lui-même.
  *
  * Chaque carte porte une ancre (`/pricing#application`…) : c'est là que mène la
@@ -30,7 +30,7 @@ describe('la page Tarifs', () => {
     expect(cartes(html)).toEqual([
       '#vitrine Vitrine 10 USD/mois',
       '#boutique Boutique 15 USD/mois',
-      '#dropshipping Dropshipping 20 USD/mois',
+      '#dropshipping Dropshipping 15 USD/mois',
       '#application Application 20 USD/mois',
     ])
     expect(html).toContain('Tous les prix sont en dollars américains (USD), par mois.')
@@ -44,7 +44,7 @@ describe('la page Tarifs', () => {
     expect(cartes(html)).toEqual([
       '#vitrine Showcase 10 USD/mo',
       '#boutique Store 15 USD/mo',
-      '#dropshipping Dropshipping 20 USD/mo',
+      '#dropshipping Dropshipping 15 USD/mo',
       '#application Application 20 USD/mo',
     ])
     expect(html).not.toMatch(/CAD|Canadian/u)

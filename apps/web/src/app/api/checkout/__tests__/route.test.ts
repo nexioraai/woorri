@@ -105,7 +105,7 @@ beforeEach(() => {
   sessionsCreateMock.mockReset().mockResolvedValue({ url: 'https://checkout.stripe.test/session' });
   process.env.STRIPE_PRICE_VITRINE = 'price_vitrine10usd';
   process.env.STRIPE_PRICE_BOUTIQUE = 'price_boutique15usd';
-  process.env.STRIPE_PRICE_DROPSHIPPING = 'price_dropshipping20usd';
+  process.env.STRIPE_PRICE_DROPSHIPPING = 'price_dropshipping15usd';
 });
 
 describe('POST /api/checkout — clé d\'idempotence sur la création du client Stripe', () => {
@@ -303,7 +303,7 @@ describe('POST /api/checkout — le prix suit le plan du site', () => {
   it.each([
     [1, 'price_vitrine10usd'],
     [2, 'price_boutique15usd'],
-    [3, 'price_dropshipping20usd'],
+    [3, 'price_dropshipping15usd'],
   ])('mode %s -> le prix de SON plan', async (mode, prix) => {
     sitesRows = [siteRow({ mode, stripe_customer_id: 'cus_existing' })];
     const { POST } = await import('../route');
