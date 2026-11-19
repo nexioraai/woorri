@@ -42,3 +42,31 @@ export async function libererModification(app: string, proprietaire: string): Pr
 
 /** Les issues qui CONSOMMENT une modification : livrée, ou prête à confirmer. */
 export const ISSUES_DECOMPTEES: ReadonlySet<string> = new Set(['livree', 'en_attente'])
+
+// ── UNE APPLI GRATUITE PAR COMPTE (supabase/sql/quota_creations.sql).
+
+export type ReservationCreation =
+  | { readonly ok: true; readonly id: string }
+  | { readonly ok: false; readonly raison: 'occupee' | 'indisponible'; readonly detail?: string }
+
+export const PHRASE_CREATION_OCCUPEE =
+  'Vous avez déjà une application gratuite. Pour en créer une autre, abonnez celle-ci ' +
+  '(20 $ US par mois) ou supprimez-la. Une création déjà en cours compte aussi : attendez qu’elle se termine.'
+
+export async function reserverCreation(proprietaire: string): Promise<ReservationCreation> {
+  const r = await supabaseAdmin.rpc('reserver_creation', { p_owner: proprietaire })
+  if (r.error !== null) return { ok: false, raison: 'indisponible', detail: r.error.message }
+  if (r.data === null || r.data === undefined) return { ok: false, raison: 'occupee' }
+  return { ok: true, id: String(r.data) }
+}
+
+/** Solde la réservation : `livree` avec l'appli, ou `liberee`. Ne lève jamais. */
+export async function solderCreation(
+  id: string,
+  proprietaire: string,
+  issue: 'livree' | 'liberee',
+  app: string | null,
+): Promise<{ ok: boolean; detail?: string }> {
+  const r = await supabaseAdmin.rpc('solder_creation', { p_id: id, p_owner: proprietaire, p_issue: issue, p_app: app })
+  return r.error === null ? { ok: true } : { ok: false, detail: r.error.message }
+}

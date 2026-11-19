@@ -23,6 +23,7 @@ import pg from 'pg'
 const ICI = dirname(fileURLToPath(import.meta.url))
 const SQL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_modifications.sql'), 'utf8')
 const ANNULATION = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_modifications_annulation.sql'), 'utf8')
+const CREATIONS = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_creations.sql'), 'utf8')
 const PORT = 54000 + Math.floor(Math.random() * 900)
 const DOSSIER = mkdtempSync(join(tmpdir(), 'preuve-quota-'))
 const URL = `postgresql://postgres@127.0.0.1:${PORT}/postgres`
@@ -59,6 +60,8 @@ try {
   // ── Appliqué deux fois : idempotent.
   await admin.query(SQL)
   await admin.query(SQL)
+  await admin.query(CREATIONS)
+  await admin.query(CREATIONS)
   const reg = await admin.query('select count(*)::int n from public.quota_reglages')
   verdict(reg.rows[0].n === 9, 'appliqué deux fois : 9 réglages, pas 18 (idempotent)')
 
@@ -159,6 +162,27 @@ try {
   verdict(await refuse(admin, `delete from public.app_paiements`, [], 'AJOUT_SEUL'), 'registre : un delete est refusé, même au propriétaire de la base')
   verdict(await refuse(admin, `update public.quota_reglages_historique set apres = 'x'`, [], 'AJOUT_SEUL'), 'historique des réglages : un update est refusé')
 
+  // ════ LES CRÉATIONS : une appli gratuite par compte ════
+  const NOUVEAU = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+  // Six créations SIMULTANÉES d'un compte neuf : une seule réservation.
+  const creations = await Promise.all(Array.from({ length: 6 }, async () => {
+    const c = new pg.Client({ connectionString: `postgresql://testeur_service@127.0.0.1:${PORT}/postgres` })
+    await c.connect()
+    try { return (await c.query('select public.reserver_creation($1) r', [NOUVEAU])).rows[0].r } finally { await c.end() }
+  }))
+  const accordees = creations.filter((x) => x !== null)
+  verdict(accordees.length === 1, `6 créations simultanées d’un compte neuf : ${accordees.length} accordée(s), ${6 - accordees.length} refusée(s)`)
+  // Libérée (la création a échoué) : la place revient.
+  const solde1 = (await svc.query(`select public.solder_creation($1, $2, 'liberee', null) r`, [accordees[0], NOUVEAU])).rows[0].r
+  const solde2 = (await svc.query(`select public.solder_creation($1, $2, 'livree', null) r`, [accordees[0], NOUVEAU])).rows[0].r
+  verdict(solde1 === true && solde2 === false, 'une réservation se solde une seule fois')
+  const encore = (await svc.query('select public.reserver_creation($1) r', [NOUVEAU])).rows[0].r
+  verdict(encore !== null, 'création échouée, libérée : la place revient')
+  // Le compte AUTRE a une appli livrée non payée (B) : refusé.
+  verdict((await svc.query('select public.reserver_creation($1) r', [AUTRE])).rows[0].r === null, 'un compte avec une appli livrée NON payée : nouvelle création refusée')
+  // Le compte PROPRIO : toutes ses applis livrées sont payées (A abonnée, la publiée offerte) → permis.
+  verdict((await svc.query('select public.reserver_creation($1) r', [PROPRIO])).rows[0].r !== null, 'un compte dont les applis sont payées : nouvelle création permise')
+
   // ── Personne d'autre que la clé de service.
   const anon = new pg.Client({ connectionString: `postgresql://testeur_anon@127.0.0.1:${PORT}/postgres` })
   await anon.connect()
@@ -166,6 +190,8 @@ try {
   verdict(await refuse(anon, 'select * from public.quota_reglages', [], 'permission denied'), 'anon ne lit pas les réglages')
   verdict(await refuse(anon, 'select public.reserver_modification($1, $2)', [A, PROPRIO], 'permission denied'), 'anon n’appelle pas la réservation')
   verdict(await refuse(anon, `select public.regler_quota('modifications_incluses', '999', 'pirate')`, [], 'permission denied'), 'anon ne change pas un réglage')
+  verdict(await refuse(anon, 'select public.reserver_creation($1)', [PROPRIO], 'permission denied'), 'anon ne réserve pas une création')
+  verdict(await refuse(anon, 'select * from public.app_creations_reservees', [], 'permission denied'), 'anon ne lit pas les créations réservées')
   await anon.end()
   await svc.end()
 

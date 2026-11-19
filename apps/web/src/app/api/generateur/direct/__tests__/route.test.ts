@@ -36,6 +36,13 @@ const lignesEcrites = (): Record<string, unknown>[] =>
     (e) => (e.charge ?? {}) as Record<string, unknown>,
   )
 
+// Le compteur des créations (étape ② du quota, 2026-11-19) est hors sujet ici :
+// il accepte. Sa règle a ses propres tests (quota-creation.test.ts).
+vi.mock('@/lib/apps/quota', async (orig) => ({
+  ...(await orig<typeof import('@/lib/apps/quota')>()),
+  reserverCreation: async () => ({ ok: true, id: 'resa-1' }),
+  solderCreation: async () => ({ ok: true }),
+}))
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
   requireAuthenticatedUser: () => ({ ok: true, userId: 'u-1', email: 'a@b.c' }),
 }))

@@ -49,3 +49,19 @@ describe('quota_modifications.sql', () => {
     expect(recherche).toBeGreaterThan(verrou)
   })
 })
+
+const creations = readFileSync(join(process.cwd(), 'supabase', 'sql', 'quota_creations.sql'), 'utf8')
+
+describe('quota_creations.sql', () => {
+  it('la réservation compte et écrit sous un verrou PAR COMPTE', () => {
+    expect(creations).toMatch(motifTexte("perform pg_advisory_xact_lock(hashtextextended('creation:' || p_owner::text, 0));"))
+  })
+  it('une réservation se solde une seule fois', () => {
+    expect(creations).toMatch(motifTexte('where id = p_id and owner_id = p_owner and issue is null;'))
+  })
+  it('table et fonctions retirées à anon et authenticated', () => {
+    expect(creations).toMatch(motifTexte('revoke all on public.app_creations_reservees from anon, authenticated, public;'))
+    expect(creations).toMatch(motifTexte('revoke all on function public.reserver_creation(uuid) from public, anon, authenticated;'))
+    expect(creations).toMatch(motifTexte('revoke all on function public.solder_creation(uuid, uuid, text, uuid) from public, anon, authenticated;'))
+  })
+})

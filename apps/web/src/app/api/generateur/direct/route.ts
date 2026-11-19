@@ -28,6 +28,8 @@
 import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
+import { PHRASE_COMPTEUR_INDISPONIBLE, PHRASE_CREATION_OCCUPEE, reserverCreation, solderCreation } from '@/lib/apps/quota'
+import { sansQuota } from '@/lib/admin-emails'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { regenerationOuverte } from '@/lib/apps/regeneration'
@@ -516,6 +518,25 @@ export async function POST(req: Request) {
   // JSON à la fin. Un lecteur qui prend la dernière ligne non vide lit aussi
   // bien ce flux qu'une réponse ordinaire — c'est ce qui permet aux refus
   // rapides ci-dessus de rester du JSON simple.
+  // ── UNE APPLI GRATUITE PAR COMPTE (étape ② du quota, 2026-11-19).
+  //
+  // Réservée AVANT le travail payé : la ligne de l'œuvre ne s'écrit qu'à la
+  // fin, deux créations lancées ensemble passeraient toutes les deux sans
+  // cette réservation (prouvé : 6 simultanées → 1 sans verrou… 2 ou 3).
+  // Soldée à la fin du flux : livrée avec l'appli, sinon libérée — une
+  // création échouée ne compte pas. Comptes exemptés : jamais comptés.
+  let reservationCreation: string | null = null
+  if (idExistant === '' && !sansQuota(garde.email)) {
+    const r = await reserverCreation(garde.userId)
+    if (!r.ok) {
+      return NextResponse.json(
+        { error: r.raison === 'occupee' ? PHRASE_CREATION_OCCUPEE : PHRASE_COMPTEUR_INDISPONIBLE, creationOccupee: r.raison === 'occupee' },
+        { status: r.raison === 'occupee' ? 402 : 503, headers: { 'Cache-Control': 'no-store' } },
+      )
+    }
+    reservationCreation = r.id
+  }
+
   const encodeur = new TextEncoder()
   const flux = new ReadableStream<Uint8Array>({
     async start(bouche) {
@@ -528,8 +549,13 @@ export async function POST(req: Request) {
       }, 10_000)
       try {
         const fin = await travailler()
+        if (reservationCreation !== null) {
+          const livree = fin.ok === true && typeof fin.id === 'string'
+          await solderCreation(reservationCreation, proprietaire, livree ? 'livree' : 'liberee', livree ? (fin.id as string) : null)
+        }
         bouche.enqueue(encodeur.encode(JSON.stringify(fin)))
       } catch (e: unknown) {
+        if (reservationCreation !== null) await solderCreation(reservationCreation, proprietaire, 'liberee', null)
         const message = e instanceof Error ? e.message : String(e)
         bouche.enqueue(
           encodeur.encode(JSON.stringify({ ok: false, error: message.slice(0, 200) })),
