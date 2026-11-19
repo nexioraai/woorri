@@ -9,7 +9,8 @@ export const en: Record<TranslationKey, string> = {
   'nav.dashboard': 'My dashboard',
 
   // Footer
-  'footer.copyright': '© 2026 Dougouma IA. All rights reserved.',
+  'footer.copyright': '© 2026 Deribfy. All rights reserved.',
+  'footer.developedBy': 'Deribfy is developed by Dougouma IA.',
   'footer.col.product': 'Product',
   'footer.col.resources': 'Resources',
   'footer.col.company': 'Company',

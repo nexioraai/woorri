@@ -24,8 +24,8 @@ describe('la date des pages légales suit la langue', () => {
     const Page = (await PAGES[nom]()).default
     const en = renderToStaticMarkup(<LanguageProvider langueImposee="en"><Page /></LanguageProvider>)
     const fr = renderToStaticMarkup(<LanguageProvider langueImposee="fr"><Page /></LanguageProvider>)
-    expect(en).toContain('Last updated: November 18, 2026')
+    expect(en).toContain('Last updated: November 19, 2026')
     expect(en).not.toContain('novembre')
-    expect(fr).toContain('Dernière mise à jour : 18 novembre 2026')
+    expect(fr).toContain('Dernière mise à jour : 19 novembre 2026')
   })
 })

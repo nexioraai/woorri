@@ -6,7 +6,7 @@ import { useTranslation } from '@/lib/translations';
 
 // UNE SEULE DATE, ÉCRITE DANS CHAQUE LANGUE (2026-11-18) : la version anglaise
 // affichait « Last updated: 2 août 2026 » — la date française, recopiée.
-const MISE_A_JOUR = new Date('2026-11-18T12:00:00Z');
+const MISE_A_JOUR = new Date('2026-11-19T12:00:00Z');
 const dateEn = (langue: string) =>
   new Intl.DateTimeFormat(langue, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(MISE_A_JOUR);
 
@@ -15,7 +15,7 @@ const CONTENT = {
     title: "Conditions d'utilisation",
     updated: `Dernière mise à jour : ${dateEn('fr-CA')}`,
     intro:
-      "Les présentes conditions d'utilisation (les « Conditions ») régissent votre utilisation de Deribfy, un service exploité par Dougouma IA, entreprise immatriculée au Québec (NEQ 2281989782), Montréal, Canada, ci-après « Deribfy », « nous » ou « notre ». En créant un compte ou en utilisant Deribfy, vous acceptez ces Conditions. Si vous ne les acceptez pas, vous ne pouvez pas utiliser le service.",
+      "Les présentes conditions d'utilisation (les « Conditions ») régissent votre utilisation de Deribfy, ci-après « Deribfy », « nous » ou « notre ». Deribfy est développé par Dougouma IA. En créant un compte ou en utilisant Deribfy, vous acceptez ces Conditions. Si vous ne les acceptez pas, vous ne pouvez pas utiliser le service.",
     sections: [
       {
         h: '1. Description du service',
@@ -61,7 +61,7 @@ const CONTENT = {
       {
         h: '7. Propriété intellectuelle',
         p: [
-          "Deribfy et sa technologie (code, design, marque « Deribfy ») demeurent la propriété de Dougouma IA. Le contenu que vous créez pour votre boutique (textes, images, produits) demeure le vôtre. En utilisant Deribfy, vous nous accordez une licence limitée nécessaire à l'hébergement et à l'affichage de votre boutique.",
+          "Deribfy et sa technologie (code, design, marque « Deribfy ») demeurent notre propriété. Le contenu que vous créez pour votre boutique (textes, images, produits) demeure le vôtre. En utilisant Deribfy, vous nous accordez une licence limitée nécessaire à l'hébergement et à l'affichage de votre boutique.",
         ],
       },
       {
@@ -102,7 +102,7 @@ const CONTENT = {
     title: 'Terms of Service',
     updated: `Last updated: ${dateEn('en-US')}`,
     intro:
-      "These Terms of Service (the “Terms”) govern your use of Deribfy, a service operated by Dougouma IA, a business registered in Quebec (NEQ 2281989782), Montreal, Canada, referred to below as “Deribfy,” “we,” or “our.” By creating an account or using Deribfy, you agree to these Terms. If you do not agree, you may not use the service.",
+      "These Terms of Service (the “Terms”) govern your use of Deribfy, referred to below as “Deribfy,” “we,” or “our.” Deribfy is developed by Dougouma IA. By creating an account or using Deribfy, you agree to these Terms. If you do not agree, you may not use the service.",
     sections: [
       {
         h: '1. Description of the service',
@@ -148,7 +148,7 @@ const CONTENT = {
       {
         h: '7. Intellectual property',
         p: [
-          "Deribfy and its technology (code, design, the “Deribfy” brand) remain the property of Dougouma IA. The content you create for your store (text, images, products) remains yours. By using Deribfy, you grant us a limited license necessary to host and display your store.",
+          "Deribfy and its technology (code, design, the “Deribfy” brand) remain our property. The content you create for your store (text, images, products) remains yours. By using Deribfy, you grant us a limited license necessary to host and display your store.",
         ],
       },
       {

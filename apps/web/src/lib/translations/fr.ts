@@ -7,7 +7,8 @@ export const fr = {
   'nav.dashboard': 'Mon tableau de bord',
 
   // Footer
-  'footer.copyright': '© 2026 Dougouma IA. Tous droits réservés.',
+  'footer.copyright': '© 2026 Deribfy. Tous droits réservés.',
+  'footer.developedBy': 'Deribfy est développé par Dougouma IA.',
   'footer.col.product': 'Produit',
   'footer.col.resources': 'Ressources',
   'footer.col.company': 'Entreprise',

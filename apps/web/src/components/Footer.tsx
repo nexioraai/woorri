@@ -124,6 +124,9 @@ export default function Footer({ reseaux = RESEAUX_SOCIAUX }: { reseaux?: readon
 
         <div className="mt-10 pt-6 border-t border-white/8 flex flex-col md:flex-row gap-2 md:items-center md:justify-between text-[11px] text-white/30">
           <p>{t('footer.copyright')}</p>
+          {/* UNE SEULE FORMULE, PARTOUT (décision du 2026-11-19) — aucune autre
+              mention d'entité tant que le propriétaire n'a pas tranché. */}
+          <p>{t('footer.developedBy')}</p>
         </div>
       </div>
     </footer>

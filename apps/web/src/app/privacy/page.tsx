@@ -6,7 +6,7 @@ import { useTranslation } from '@/lib/translations';
 
 // UNE SEULE DATE, ÉCRITE DANS CHAQUE LANGUE (2026-11-18) : la version anglaise
 // affichait « Last updated: 2 août 2026 » — la date française, recopiée.
-const MISE_A_JOUR = new Date('2026-11-18T12:00:00Z');
+const MISE_A_JOUR = new Date('2026-11-19T12:00:00Z');
 const dateEn = (langue: string) =>
   new Intl.DateTimeFormat(langue, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(MISE_A_JOUR);
 
@@ -15,13 +15,13 @@ const CONTENT = {
     title: 'Politique de confidentialité',
     updated: `Dernière mise à jour : ${dateEn('fr-CA')}`,
     intro:
-      "La présente politique explique quels renseignements personnels Deribfy recueille, pourquoi, comment ils sont utilisés et protégés, et quels sont vos droits. Deribfy est un service exploité par Dougouma IA (Montréal, Québec, Canada), ci-après « Deribfy », « nous » ou « notre ». Nous nous conformons à la Loi 25 du Québec (Loi modernisant des dispositions législatives en matière de protection des renseignements personnels) ainsi qu'à la loi fédérale canadienne (LPRPDE / PIPEDA).",
+      "La présente politique explique quels renseignements personnels Deribfy recueille, pourquoi, comment ils sont utilisés et protégés, et quels sont vos droits. Deribfy est développé par Dougouma IA. Dans cette politique, « Deribfy », « nous » et « notre » désignent Deribfy. Nous nous conformons à la Loi 25 du Québec (Loi modernisant des dispositions législatives en matière de protection des renseignements personnels) ainsi qu'à la loi fédérale canadienne (LPRPDE / PIPEDA).",
     sections: [
       {
         h: '1. Qui est responsable de vos renseignements',
         p: [
-          "Deribfy est un service exploité par Dougouma IA, une entreprise immatriculée au Québec (Canada) sous le NEQ 2281989782. Toute question relative à la protection des renseignements personnels peut être adressée à notre responsable de la protection des renseignements personnels :",
-          "Responsable de la protection des renseignements personnels\nDougouma IA (exploitant « Deribfy »)\nNEQ : 2281989782\nMontréal, Québec, Canada\nCourriel : contact@deribfy.com",
+          "Deribfy est développé par Dougouma IA. Toute question relative à la protection des renseignements personnels peut être adressée à notre responsable de la protection des renseignements personnels :",
+          "Responsable de la protection des renseignements personnels\nCourriel : contact@deribfy.com",
         ],
       },
       {
@@ -99,13 +99,13 @@ const CONTENT = {
     title: 'Privacy Policy',
     updated: `Last updated: ${dateEn('en-US')}`,
     intro:
-      "This policy explains what personal information Deribfy collects, why, how it is used and protected, and what your rights are. Deribfy is a service operated by Dougouma IA (Montreal, Quebec, Canada), referred to below as “Deribfy,” “we,” or “our.” We comply with Quebec's Law 25 (Act to modernize legislative provisions as regards the protection of personal information) and with Canadian federal law (PIPEDA).",
+      "This policy explains what personal information Deribfy collects, why, how it is used and protected, and what your rights are. Deribfy is developed by Dougouma IA. In this policy, “Deribfy,” “we,” and “our” refer to Deribfy. We comply with Quebec's Law 25 (Act to modernize legislative provisions as regards the protection of personal information) and with Canadian federal law (PIPEDA).",
     sections: [
       {
         h: '1. Who is responsible for your information',
         p: [
-          "Deribfy is a service operated by Dougouma IA, a business registered in Quebec, Canada, under enterprise number (NEQ) 2281989782. Any question regarding the protection of personal information may be directed to our privacy officer:",
-          "Privacy Officer\nDougouma IA (operating as “Deribfy”)\nQuebec enterprise number (NEQ): 2281989782\nMontreal, Quebec, Canada\nEmail: contact@deribfy.com",
+          "Deribfy is developed by Dougouma IA. Any question regarding the protection of personal information may be directed to our privacy officer:",
+          "Privacy Officer\nEmail: contact@deribfy.com",
         ],
       },
       {
