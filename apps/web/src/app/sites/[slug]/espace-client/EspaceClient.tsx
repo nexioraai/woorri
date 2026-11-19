@@ -69,6 +69,7 @@ export type MotsEspace = {
   // rideau du telephone pendant deux jours.
   mesCommandes: string
   agentDdm: string
+  messages: string
   /** Le cadre du tableau de bord (CPA, 2026-11-19). */
   tableauDeBord: string; passerCommande: string
   navPrincipal: string; navGestion: string; navFournisseur: string; navEchanges: string; navCompte: string

@@ -1,15 +1,19 @@
 import PageEspace, { metadonneesEspace, type PropsEspace } from '../espace/PageEspace'
 import ComptesClients from '../espace/ComptesClients'
+import { motsMessages } from '../espace/motsMessages'
+import { motsCommandes } from '../espace/motsCommandes'
 
-// LES COMPTES CLIENTS, gérés par la division DDM (CPA, 2026-11-19).
-const titre = () => 'Comptes clients'
-const phrase = () => 'Division DDM — les structures sanitaires inscrites. Suspendre un compte lui ferme l’espace client ; réactiver le lui rouvre.'
+// « CLIENTS » — la Division DDM voit tous les clients, leur écrit, suit leurs
+// commandes et gère leur compte (CPA, 2026-11-19). La route refuse quiconque
+// n'est ni propriétaire ni agent DDM.
+const titre = (lang: string | null) => motsMessages(lang).clients.titre
+const phrase = (lang: string | null) => motsMessages(lang).clients.phrase
 
 export const generateMetadata = (p: PropsEspace) => metadonneesEspace('comptes-clients', titre, p)
 
 export default function Page(p: PropsEspace) {
   return PageEspace({
     chemin: 'comptes-clients', titre, phrase, ...p,
-    rendu: ({ slug, accent }) => <ComptesClients slug={slug} accent={accent} />,
+    rendu: ({ slug, accent, lang }) => <ComptesClients slug={slug} accent={accent} mots={motsMessages(lang)} motsCmd={motsCommandes(lang)} />,
   })
 }

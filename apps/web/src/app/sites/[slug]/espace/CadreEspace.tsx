@@ -75,9 +75,18 @@ export default function CadreEspace({
         // traiter (DDM). Un compteur qui ne se lit pas n'est pas affiché.
         const n: Record<string, number> = {}
         if (c.role === 'structure' && rc.ok) n['mes-commandes'] = ((rc.d?.commandes ?? []) as unknown[]).length
+        if (c.role === 'structure') {
+          const rm = await lireAvecJeton(`${api}/mes-messages?compter=1`, j)
+          if (rm.ok && typeof rm.d?.nonLus === 'number' && rm.d.nonLus > 0) n['mes-messages'] = rm.d.nonLus as number
+        }
         if (g) {
           const rg = await lireAvecJeton(`${api}/commandes`, j)
           if (rg.ok) n['gestion-commandes'] = ((rg.d?.commandes ?? []) as { etat: string }[]).filter((x) => x.etat === 'recue').length
+          const rf = await lireAvecJeton(`${api}/messages-clients`, j)
+          if (rf.ok) {
+            const nonLus = Object.values((rf.d?.fils ?? {}) as Record<string, { nonLus: number }>).reduce((t, f) => t + (f.nonLus || 0), 0)
+            if (nonLus > 0) n['comptes-clients'] = nonLus
+          }
         }
         if (vivant) setCompteurs(n)
       } catch { if (vivant) setEtat('sans') }

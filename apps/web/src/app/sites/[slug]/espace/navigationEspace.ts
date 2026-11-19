@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, CirclePlus, ShoppingBag, ClipboardCheck, Users, FolderOpen, BadgeCheck, Gavel,
-  MessageSquare, TriangleAlert, FileText, Search, UserRound,
+  MessageSquare, TriangleAlert, FileText, Search, UserRound, MessagesSquare,
 } from 'lucide-react'
 import type { MotsEspace } from '../espace-client/EspaceClient'
 
@@ -19,7 +19,7 @@ import type { MotsEspace } from '../espace-client/EspaceClient'
 export type IconeNav =
   | 'tableau' | 'commander' | 'commandes' | 'gestion' | 'clients'
   | 'dossier' | 'prequalification' | 'consultations'
-  | 'demandes' | 'reclamations' | 'documents' | 'suivi' | 'profil'
+  | 'demandes' | 'reclamations' | 'documents' | 'suivi' | 'profil' | 'messages'
 
 export type EntreeNav = { chemin: string; libelle: string; icone: IconeNav }
 export type GroupeNav = { titre: string; entrees: EntreeNav[] }
@@ -28,6 +28,17 @@ export function navigationEspace(
   { role, gestion }: { role: 'structure' | 'fournisseur' | 'agent'; gestion: boolean },
   mots: MotsEspace,
 ): GroupeNav[] {
+  // L'AGENT DE LA DDM N'EST PAS UN CLIENT (CPA, 2026-11-19 : « le système doit
+  // absolument faire la différence ») : il a SON tableau de bord, ses clients,
+  // les commandes, son profil — et rien des écrans d'un client.
+  if (gestion) return [
+    { titre: mots.navGestion, entrees: [
+      { chemin: 'espace-client', libelle: mots.tableauDeBord, icone: 'tableau' },
+      { chemin: 'comptes-clients', libelle: mots.comptesClients, icone: 'clients' },
+      { chemin: 'gestion-commandes', libelle: mots.gestionCommandes, icone: 'gestion' },
+    ] },
+    { titre: mots.navCompte, entrees: [{ chemin: 'mon-profil', libelle: mots.monProfil, icone: 'profil' }] },
+  ]
   const groupes: GroupeNav[] = []
   groupes.push({ titre: mots.navPrincipal, entrees: [
     { chemin: 'espace-client', libelle: mots.tableauDeBord, icone: 'tableau' },
@@ -35,11 +46,8 @@ export function navigationEspace(
     // dans le tableau de bord et dans « Mes commandes », pas une 3e fois ici.
     ...(role === 'structure' ? [
       { chemin: 'mes-commandes', libelle: mots.mesCommandes, icone: 'commandes' as const },
+      { chemin: 'mes-messages', libelle: mots.messages, icone: 'messages' as const },
     ] : []),
-  ] })
-  if (gestion) groupes.push({ titre: mots.navGestion, entrees: [
-    { chemin: 'gestion-commandes', libelle: mots.gestionCommandes, icone: 'gestion' },
-    { chemin: 'comptes-clients', libelle: mots.comptesClients, icone: 'clients' },
   ] })
   if (role === 'fournisseur') groupes.push({ titre: mots.navFournisseur, entrees: [
     { chemin: 'mon-dossier', libelle: mots.monDossier, icone: 'dossier' },
@@ -68,5 +76,5 @@ export function estActif(entree: EntreeNav, actif: string): boolean {
 export const ICONES: Record<IconeNav, typeof LayoutDashboard> = {
   tableau: LayoutDashboard, commander: CirclePlus, commandes: ShoppingBag, gestion: ClipboardCheck, clients: Users,
   dossier: FolderOpen, prequalification: BadgeCheck, consultations: Gavel,
-  demandes: MessageSquare, reclamations: TriangleAlert, documents: FileText, suivi: Search, profil: UserRound,
+  demandes: MessageSquare, reclamations: TriangleAlert, documents: FileText, suivi: Search, profil: UserRound, messages: MessagesSquare,
 }
