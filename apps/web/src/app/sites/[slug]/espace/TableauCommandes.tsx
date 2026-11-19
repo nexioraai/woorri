@@ -126,7 +126,7 @@ export default function TableauCommandes({
         </div>
         <div className="tdbBloc">
           <h3>{t.statuts}</h3>
-          <p className="tdbBlocSous">{mots.titre}</p>
+          <p className="tdbBlocSous">{regard === 'ddm' ? t.toutes : mots.titre}</p>
           <div style={{ marginTop: 18 }}>
             <Anneau parts={etats.map((e) => ({ cle: e.etat, n: e.n, couleur: TEINTES_ETAT[e.etat] }))} libelles={{ ...mots.etapes, annulee: mots.etats.annulee }}
               total={liste.length} sousTitre={t.auTotal} />
