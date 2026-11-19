@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import TableauClient from '../espace/TableauClient'
+import TableauCommandes from '../espace/TableauCommandes'
 import { navigationEspace, ICONES } from '../espace/navigationEspace'
 import type { MotsCommandes } from '../espace/motsCommandes'
 
@@ -72,7 +72,7 @@ export type MotsEspace = {
   /** Le cadre du tableau de bord (CPA, 2026-11-19). */
   tableauDeBord: string; passerCommande: string
   navPrincipal: string; navGestion: string; navFournisseur: string; navEchanges: string; navCompte: string
-  compteActif: string; membreDepuis: string; bonjour: string; accesRapides: string
+  compteActif: string; membreDepuis: string; bonjour: string; accesRapides: string; vueEnsemble: string
   ong: string
   gestionCommandes: string
   comptesClients: string
@@ -86,8 +86,8 @@ export type MotsEspace = {
 }
 
 export default function EspaceClient({
-  slug, base, primary, mots, motsCmd,
-}: { slug: string; base: string; primary: string; mots: MotsEspace; motsCmd?: MotsCommandes }) {
+  slug, base, primary, mots, motsCmd, lang = null,
+}: { slug: string; base: string; primary: string; mots: MotsEspace; motsCmd?: MotsCommandes; lang?: string | null }) {
   const [etat, setEtat] = useState<'charge' | 'anonyme' | 'connu' | 'panne'>('charge')
   const [compte, setCompte] = useState<Compte | null>(null)
   // CPA, 2026-11-19 — un agent de la DDM gère l'espace client (dit par la route).
@@ -273,8 +273,10 @@ export default function EspaceClient({
       `}</style>
       {/* LE TABLEAU DE BORD DU CLIENT : ses chiffres, ses dernières commandes
           et leur suivi, le bouton pour commander. */}
-      {compte.role === 'structure' && motsCmd && <TableauClient slug={slug} base={base} accent={primary} mots={motsCmd} />}
-      <h2 style={{ fontSize: 17, fontWeight: 700, margin: '6px 0 12px' }}>{mots.accesRapides}</h2>
+      {compte.role === 'structure' && motsCmd && <TableauCommandes slug={slug} base={base} accent={primary} mots={motsCmd} regard="client" lang={lang} />}
+      {/* L'AGENT DE LA DDM voit le tableau de TOUTES les commandes. */}
+      {gestion && motsCmd && <TableauCommandes slug={slug} base={base} accent={primary} mots={motsCmd} regard="ddm" lang={lang} />}
+      <h2 style={{ fontSize: 18, fontWeight: 800, margin: '30px 0 14px' }}>{mots.accesRapides}</h2>
       <nav className="raccourcis" aria-label={mots.tableauDeBord}>
         {raccourcis.map((e) => {
           const I = ICONES[e.icone]

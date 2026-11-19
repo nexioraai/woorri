@@ -98,10 +98,10 @@ export default async function PageEspace({
   return (
     <div lang={s.lang ?? 'fr'}>
       <HtmlLang lang={s.lang ?? 'fr'} />
-      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 20px 80px' }}>
+      <main>
         {/* LE TABLEAU DE BORD (CPA, 2026-11-19) : barre latérale, identité, puis
             la page. Sans compte actif, la page se rend sans cadre, comme avant. */}
-        <CadreEspace slug={s.slug} base={base} accent={accent} lang={s.lang} actif={chemin}
+        <CadreEspace slug={s.slug} base={base} accent={accent} lang={s.lang} actif={chemin} nomSite={s.name}
           titre={titre(s.lang)} phrase={phrase?.(s.lang)}
           retour={{ href: `${base}/espace-client`, libelle: '← ' + motsEspace(s.lang).titre }}>
           {textes.length > 0 && (

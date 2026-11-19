@@ -16,6 +16,13 @@ export type MotsCommandes = {
   annulee: string
   /** Le tableau de bord du client (accueil de son espace). */
   tableau: { titre: string; enCours: string; livrees: string; total: string; dernieres: string; passer: string; toutes: string; aucune: string }
+  /** Le tableau de bord complet (cartes, graphiques). */
+  tdb: {
+    unites: string; aTraiter: string; clients: string; total6: string; ceMois: string; moisPrecedent: string; lignes: string
+    evolution: string; evolutionSous: string; parMois: string; parMoisSous: string; statuts: string; auTotal: string
+    produits: string; produitsSous: string; topClients: string; topClientsSous: string; recentes: string; voirTout: string
+    traiter: string; videProduits: string; videClients: string; commandesMois: string
+  }
 }
 
 const FR: MotsCommandes = {
@@ -35,6 +42,7 @@ const FR: MotsCommandes = {
   etapes: { recue: 'Reçue', en_cours: 'En cours', validee: 'Validée', livree: 'Livrée' },
   annulee: 'Commande annulée par la Centrale.',
   tableau: { titre: 'Mon tableau de bord', enCours: 'Commandes en cours', livrees: 'Commandes livrées', total: 'Commandes passées', dernieres: 'Mes dernières commandes', passer: 'Passer une commande', toutes: 'Voir toutes mes commandes', aucune: 'Vous n’avez encore passé aucune commande. Commencez par votre premier bon de commande.' },
+  tdb: { unites: 'Unités commandées', aTraiter: 'À traiter', clients: 'Clients', total6: 'Sur 6 mois', ceMois: 'Commandes du mois', moisPrecedent: 'Mois précédent', lignes: 'produits commandés ce mois', evolution: 'Évolution des commandes', evolutionSous: 'Nombre de commandes par mois', parMois: 'Unités par mois', parMoisSous: 'Quantités commandées', statuts: 'Répartition des statuts', auTotal: 'au total', produits: 'Produits les plus commandés', produitsSous: 'Quantités cumulées', topClients: 'Clients les plus actifs', topClientsSous: 'Nombre de commandes', recentes: 'Commandes récentes', voirTout: 'Tout voir', traiter: 'Traiter les commandes', videProduits: 'Aucun produit commandé pour l’instant.', videClients: 'Aucun client n’a encore commandé.', commandesMois: 'commandes ce mois' },
 }
 
 const EN: MotsCommandes = {
@@ -54,6 +62,7 @@ const EN: MotsCommandes = {
   etapes: { recue: 'Received', en_cours: 'Processing', validee: 'Approved', livree: 'Delivered' },
   annulee: 'Order cancelled by the Centrale.',
   tableau: { titre: 'My dashboard', enCours: 'Orders in progress', livrees: 'Delivered orders', total: 'Orders placed', dernieres: 'My latest orders', passer: 'Place an order', toutes: 'See all my orders', aucune: 'You have not placed any order yet. Start with your first purchase order.' },
+  tdb: { unites: 'Units ordered', aTraiter: 'To process', clients: 'Clients', total6: 'Last 6 months', ceMois: 'Orders this month', moisPrecedent: 'Previous month', lignes: 'products ordered this month', evolution: 'Orders over time', evolutionSous: 'Orders per month', parMois: 'Units per month', parMoisSous: 'Quantities ordered', statuts: 'Status breakdown', auTotal: 'in total', produits: 'Most ordered products', produitsSous: 'Total quantities', topClients: 'Most active clients', topClientsSous: 'Number of orders', recentes: 'Recent orders', voirTout: 'See all', traiter: 'Process orders', videProduits: 'No product ordered yet.', videClients: 'No client has ordered yet.', commandesMois: 'orders this month' },
 }
 
 const AR: MotsCommandes = {
@@ -73,6 +82,7 @@ const AR: MotsCommandes = {
   etapes: { recue: 'مُستلمة', en_cours: 'قيد المعالجة', validee: 'مقبولة', livree: 'مُسلَّمة' },
   annulee: 'ألغى المركز هذه الطلبية.',
   tableau: { titre: 'لوحة القيادة', enCours: 'طلبيات قيد المعالجة', livrees: 'طلبيات مُسلَّمة', total: 'الطلبيات المقدّمة', dernieres: 'آخر طلبياتي', passer: 'تقديم طلبية', toutes: 'عرض كل طلبياتي', aucune: 'لم تقدّم أي طلبية بعد. ابدأ بأول طلب شراء.' },
+  tdb: { unites: 'الوحدات المطلوبة', aTraiter: 'للمعالجة', clients: 'العملاء', total6: 'خلال 6 أشهر', ceMois: 'طلبيات هذا الشهر', moisPrecedent: 'الشهر السابق', lignes: 'منتجات مطلوبة هذا الشهر', evolution: 'تطور الطلبيات', evolutionSous: 'عدد الطلبيات شهرياً', parMois: 'الوحدات شهرياً', parMoisSous: 'الكميات المطلوبة', statuts: 'توزيع الحالات', auTotal: 'المجموع', produits: 'أكثر المنتجات طلباً', produitsSous: 'الكميات الإجمالية', topClients: 'أنشط العملاء', topClientsSous: 'عدد الطلبيات', recentes: 'آخر الطلبيات', voirTout: 'عرض الكل', traiter: 'معالجة الطلبيات', videProduits: 'لا منتجات مطلوبة بعد.', videClients: 'لم يطلب أي عميل بعد.', commandesMois: 'طلبيات هذا الشهر' },
 }
 
 const ES: MotsCommandes = {
@@ -92,6 +102,7 @@ const ES: MotsCommandes = {
   etapes: { recue: 'Recibido', en_cours: 'En curso', validee: 'Validado', livree: 'Entregado' },
   annulee: 'Pedido anulado por la Central.',
   tableau: { titre: 'Mi panel', enCours: 'Pedidos en curso', livrees: 'Pedidos entregados', total: 'Pedidos realizados', dernieres: 'Mis últimos pedidos', passer: 'Realizar un pedido', toutes: 'Ver todos mis pedidos', aucune: 'Todavía no ha realizado ningún pedido. Empiece por su primera orden de compra.' },
+  tdb: { unites: 'Unidades pedidas', aTraiter: 'Por tramitar', clients: 'Clientes', total6: 'En 6 meses', ceMois: 'Pedidos del mes', moisPrecedent: 'Mes anterior', lignes: 'productos pedidos este mes', evolution: 'Evolución de los pedidos', evolutionSous: 'Pedidos por mes', parMois: 'Unidades por mes', parMoisSous: 'Cantidades pedidas', statuts: 'Distribución de estados', auTotal: 'en total', produits: 'Productos más pedidos', produitsSous: 'Cantidades acumuladas', topClients: 'Clientes más activos', topClientsSous: 'Número de pedidos', recentes: 'Pedidos recientes', voirTout: 'Ver todo', traiter: 'Tramitar los pedidos', videProduits: 'Ningún producto pedido todavía.', videClients: 'Ningún cliente ha pedido todavía.', commandesMois: 'pedidos este mes' },
 }
 
 export function motsCommandes(lang: string | null | undefined): MotsCommandes {

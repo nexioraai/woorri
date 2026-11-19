@@ -63,16 +63,16 @@ export default async function Page({ params }: PropsAcces) {
   return (
     <div lang={s.lang ?? 'fr'}>
       <HtmlLang lang={s.lang ?? 'fr'} />
-      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 20px 80px' }}>
+      <main>
         {/* LE TABLEAU DE BORD (CPA, 2026-11-19) — voir CadreEspace. */}
-        <CadreEspace slug={s.slug} base={base} accent={accent} lang={s.lang} actif="espace-client"
-          titre={m.titre} retour={{ href: base, libelle: motsAcces(s.lang).accueil }}>
+        <CadreEspace slug={s.slug} base={base} accent={accent} lang={s.lang} actif="espace-client" nomSite={s.name}
+          titre={m.tableauDeBord} phrase={m.vueEnsemble} retour={{ href: base, libelle: motsAcces(s.lang).accueil }}>
           {textes.length > 0 && (
             <div style={{ marginBottom: 28 }}>
               <BlocsDePage blocs={textes} base={base} primary={accent} lang={s.lang} />
             </div>
           )}
-          <EspaceClient slug={s.slug} base={base} primary={accent} mots={m} motsCmd={motsCommandes(s.lang)} />
+          <EspaceClient slug={s.slug} base={base} primary={accent} mots={m} motsCmd={motsCommandes(s.lang)} lang={s.lang} />
         </CadreEspace>
       </main>
     </div>
