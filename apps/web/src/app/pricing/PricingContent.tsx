@@ -17,6 +17,7 @@ const CONTENT = {
     plans: [
       {
         name: 'Vitrine',
+        ancre: 'vitrine',
         price: '10',
         tagline: "Présentez votre activité avec un site professionnel généré par IA.",
         featured: false,
@@ -31,6 +32,7 @@ const CONTENT = {
       },
       {
         name: 'Boutique',
+        ancre: 'boutique',
         price: '15',
         tagline: 'Vendez vos propres produits avec une boutique en ligne complète.',
         featured: false,
@@ -45,6 +47,7 @@ const CONTENT = {
       },
       {
         name: 'Dropshipping',
+        ancre: 'dropshipping',
         price: '20',
         tagline: 'Une boutique clé en main, entièrement automatisée par l’IA.',
         featured: true,
@@ -79,6 +82,7 @@ const CONTENT = {
     plans: [
       {
         name: 'Showcase',
+        ancre: 'vitrine',
         price: '10',
         tagline: 'Present your business with a professional AI-generated website.',
         featured: false,
@@ -93,6 +97,7 @@ const CONTENT = {
       },
       {
         name: 'Store',
+        ancre: 'boutique',
         price: '15',
         tagline: 'Sell your own products with a full online store.',
         featured: false,
@@ -107,6 +112,7 @@ const CONTENT = {
       },
       {
         name: 'Dropshipping',
+        ancre: 'dropshipping',
         price: '20',
         tagline: 'A turnkey store, fully automated by AI.',
         featured: true,
@@ -153,7 +159,8 @@ export default function PricingContent() {
           {c.plans.map((plan) => (
             <div
               key={plan.name}
-              className="rounded-2xl border p-8 flex flex-col relative"
+              id={plan.ancre}
+              className="rounded-2xl border p-8 flex flex-col relative scroll-mt-24"
               style={
                 plan.featured
                   ? { borderColor: '#FA5D1E', background: '#FA5D1E0D' }
