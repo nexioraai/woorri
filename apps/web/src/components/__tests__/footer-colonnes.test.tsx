@@ -33,7 +33,7 @@ describe('le pied de page en colonnes', () => {
     expect(html).toContain('>Application<')
     expect(colonne(html, 'Ressources')).toEqual(['/documentation', '/blog', '/visibilite-ia'])
     expect(colonne(html, 'Entreprise')).toEqual(['/about', 'mailto:contact@deribfy.com'])
-    expect(colonne(html, 'Mentions légales')).toEqual(['/privacy', '/terms', '/cookies'])
+    expect(colonne(html, 'Mentions légales')).toEqual(['/privacy', '/terms', '/cookies', '/remboursement'])
   })
 
   it('② plus de ligne d’entité ni de NEQ dans le pied de page', () => {

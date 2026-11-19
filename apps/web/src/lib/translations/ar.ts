@@ -18,6 +18,7 @@ export const ar: Record<TranslationKey, string> = {
   'footer.privacy': 'الخصوصية',
   'footer.terms': 'الشروط',
   'footer.cookies': 'ملفات تعريف الارتباط',
+  'footer.refund': 'الاسترداد',
   'footer.documentation': 'التوثيق',
   'footer.blog': 'المدونة',
   'footer.visibiliteIa': 'الظهور في الذكاء الاصطناعي',

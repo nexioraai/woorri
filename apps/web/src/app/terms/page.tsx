@@ -47,7 +47,7 @@ const CONTENT = {
       {
         h: '5. Abonnement et facturation',
         p: [
-          "L'accès à certaines fonctionnalités de Deribfy est offert par abonnement. Les frais, la fréquence de facturation et les modalités sont indiqués au moment de la souscription. Sauf indication contraire, les abonnements se renouvellent automatiquement. Vous pouvez annuler votre abonnement à tout moment; l'annulation prend effet à la fin de la période de facturation en cours. Les montants déjà payés ne sont généralement pas remboursables, sauf disposition légale contraire.",
+          "L'accès à certaines fonctionnalités de Deribfy est offert par abonnement. Les frais, la fréquence de facturation et les modalités sont indiqués au moment de la souscription. Sauf indication contraire, les abonnements se renouvellent automatiquement. Vous pouvez annuler votre abonnement à tout moment; l'annulation prend effet à la fin de la période de facturation en cours. Remboursement : premier abonnement remboursé intégralement sur demande dans les 14 jours suivant le premier paiement ; renouvellements non remboursés ; modifications consommées jamais remboursées (une modification que Deribfy n'arrive pas à faire n'est jamais décomptée) ; modifications non utilisées expirées à la fin de la période en cours ; erreur de facturation remboursée intégralement, sans condition ; tout autre cas examiné à contact@deribfy.com. Le détail figure dans notre Politique de remboursement (deribfy.com/remboursement).",
         ],
       },
       {
@@ -134,7 +134,7 @@ const CONTENT = {
       {
         h: '5. Subscription and billing',
         p: [
-          "Access to certain Deribfy features is offered by subscription. Fees, billing frequency, and terms are shown at the time of subscription. Unless otherwise stated, subscriptions renew automatically. You may cancel your subscription at any time; cancellation takes effect at the end of the current billing period. Amounts already paid are generally non-refundable, except where required by law.",
+          "Access to certain Deribfy features is offered by subscription. Fees, billing frequency, and terms are shown at the time of subscription. Unless otherwise stated, subscriptions renew automatically. You may cancel your subscription at any time; cancellation takes effect at the end of the current billing period. Refunds: the first subscription is refunded in full on request within 14 days of the first payment; renewals are not refunded; used modifications are never refunded (a modification Deribfy fails to make is never counted); unused modifications expire at the end of the current period; billing errors are refunded in full, with no conditions; any other case is reviewed at contact@deribfy.com. Details are in our Refund policy (deribfy.com/remboursement).",
         ],
       },
       {

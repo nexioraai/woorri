@@ -33,6 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/privacy': { f: 'yearly', p: 0.3 },
     '/cookies': { f: 'yearly', p: 0.3 },
     '/terms': { f: 'yearly', p: 0.3 },
+    '/remboursement': { f: 'yearly', p: 0.3 },
   }
   const staticRoutes: MetadataRoute.Sitemap = Object.keys(PAGES_PUBLIQUES).map((chemin) => {
     const c: { f: Cadence; p: number } = CADENCE[chemin] ?? { f: 'monthly', p: 0.7 }

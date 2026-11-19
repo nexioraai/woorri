@@ -196,7 +196,7 @@ export const NOMS_RESERVES: ReadonlySet<string> = new Set([
   // aurait pris ce sous-domaine se serait posé par dessus.
   'a', 'about', 'admin', 'api', 'atelier', 'blog', 'comptes', 'cookies', 'dashboard',
   'documentation', 'domaine', 'edit', 'guide', 'login', 'modifier', 'offres', 'onboarding-chat', 'p', 'parametres',
-  'preview', 'pricing', 'privacy', 'reset-password', 'sites', 'terms', 'visibilite-ia',
+  'preview', 'pricing', 'privacy', 'remboursement', 'reset-password', 'sites', 'terms', 'visibilite-ia',
   'welcome', 'cancel-order',
 
   // ② Les sous-domaines réellement posés dans nos zones (Cloudflare).

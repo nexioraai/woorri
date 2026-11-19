@@ -137,6 +137,12 @@ export const PAGES_PUBLIQUES = {
       'Les cookies utilisés par Deribfy, leur rôle, leur durée de vie et la façon de les refuser ' +
       'ou de revenir sur votre choix.',
   },
+  '/remboursement': {
+    titre: 'Politique de remboursement — Deribfy',
+    description:
+      'Remboursement intégral sous 14 jours sur le premier abonnement, renouvellements non remboursés, ' +
+      'modifications refusées jamais décomptées, erreurs de facturation toujours remboursées.',
+  },
   '/terms': {
     titre: 'Conditions générales d’utilisation — Deribfy',
     description:

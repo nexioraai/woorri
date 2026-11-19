@@ -117,6 +117,7 @@ export default function Footer({ reseaux = RESEAUX_SOCIAUX }: { reseaux?: readon
               <li><Link href="/privacy" className={lien}>{t('footer.privacy')}</Link></li>
               <li><Link href="/terms" className={lien}>{t('footer.terms')}</Link></li>
               <li><Link href="/cookies" className={lien}>{t('footer.cookies')}</Link></li>
+              <li><Link href="/remboursement" className={lien}>{t('footer.refund')}</Link></li>
             </ul>
           </nav>
 

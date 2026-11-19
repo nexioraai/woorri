@@ -18,6 +18,7 @@ export const en: Record<TranslationKey, string> = {
   'footer.privacy': 'Privacy',
   'footer.terms': 'Terms',
   'footer.cookies': 'Cookies',
+  'footer.refund': 'Refunds',
   'footer.documentation': 'Documentation',
   'footer.blog': 'Blog',
   'footer.visibiliteIa': 'AI visibility',

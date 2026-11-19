@@ -16,6 +16,7 @@ export const fr = {
   'footer.privacy': 'Confidentialité',
   'footer.terms': 'Conditions',
   'footer.cookies': 'Témoins',
+  'footer.refund': 'Remboursement',
   'footer.documentation': 'Documentation',
   'footer.blog': 'Blog',
   'footer.visibiliteIa': 'Visibilité IA',
