@@ -81,6 +81,8 @@ import { blocDeclaration } from '@/lib/apps/retouche'
 import { CONFIGS, coutAppel, fournisseurChoisi, tarifDe, tarifPlafond, tarifsDuModele } from '@/lib/apps/fournisseur'
 import { deploiementQuiSert } from '@/lib/apps/deploiement'
 import { ecrireTentative, type Issue } from '@/lib/apps/tentatives'
+import { ISSUES_DECOMPTEES, libererModification, PHRASE_COMPTEUR_INDISPONIBLE, PHRASE_EPUISE, reserverModification } from '@/lib/apps/quota'
+import { sansQuota } from '@/lib/admin-emails'
 import { alerter } from '@/lib/alertes'
 import { apparenceDuDocument, lireApparenceEnRoute, type Apparence } from '@/lib/apps/apparence'
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
@@ -367,16 +369,54 @@ type SuiviRetouche = {
   tronquee: boolean
   /** Posée explicitement là où la réponse seule ne le dit pas. */
   issue: Issue | null
+  /** Une modification a été RÉSERVÉE au compteur (compte non exempté). */
+  reservee: { app: string; proprietaire: string; restantes: number } | null
 }
 
 export async function POST(req: Request) {
   const suivi: SuiviRetouche = {
     appele: false, debut: new Date(), generationId: '', demande: '',
-    jetonsEntree: 0, jetonsCache: 0, jetonsSortie: 0, coutUsd: 0, tronquee: false, issue: null,
+    jetonsEntree: 0, jetonsCache: 0, jetonsSortie: 0, coutUsd: 0, tronquee: false, issue: null, reservee: null,
   }
   const reponse = await retoucher(req, suivi)
   if (suivi.appele) await consignerRetouche(suivi, reponse)
-  return reponse
+  return await solderReservation(suivi, reponse)
+}
+
+/**
+ * LE COMPTEUR SE SOLDE SUR CE QUI EST PARTI À L'ÉCRAN (étape ②, 2026-11-19).
+ *
+ * Livrée ou prête à confirmer : la modification est décomptée, et la réponse
+ * dit combien il en reste. Tout le reste — refus des juges, hors périmètre,
+ * coupure, modèle muet, écriture échouée — est LIBÉRÉ : « une modification
+ * refusée ne compte pas ». Nous payons le fournisseur ; la facturer serait
+ * faire payer notre propre panne.
+ */
+async function solderReservation(suivi: SuiviRetouche, reponse: Response): Promise<Response> {
+  if (suivi.reservee === null) return reponse
+  const corps = (await reponse.clone().json().catch(() => ({}))) as Record<string, unknown>
+  const issue = issueDe(suivi, corps)
+  if (!ISSUES_DECOMPTEES.has(issue)) {
+    const l = await libererModification(suivi.reservee.app, suivi.reservee.proprietaire)
+    if (!l.ok) {
+      await alerter({
+        sujet: 'oeuvre', sujetId: suivi.reservee.app, motif: 'quota : modification refusée NON libérée',
+        etape: 'ecriture', detail: l.detail ?? '', coutUsd: Number(suivi.coutUsd.toFixed(4)),
+      }).catch(() => undefined)
+    }
+    return reponse
+  }
+  return NextResponse.json(
+    { ...corps, modificationsRestantes: suivi.reservee.restantes },
+    { status: reponse.status, headers: reponse.headers },
+  )
+}
+
+function issueDe(
+  suivi: SuiviRetouche,
+  corps: { ok?: unknown; aConfirmer?: unknown },
+): Issue {
+  return suivi.issue ?? (corps.ok === true ? 'livree' : corps.aConfirmer === true ? 'en_attente' : 'refusee')
 }
 
 /**
@@ -390,8 +430,7 @@ async function consignerRetouche(suivi: SuiviRetouche, reponse: Response): Promi
     ok?: boolean; aConfirmer?: boolean; rang?: unknown; error?: string; raison?: string; message?: string
     horsPerimetre?: boolean; declarationRejetee?: string; fichiers?: string[]
   }
-  const issue: Issue =
-    suivi.issue ?? (corps.ok === true ? 'livree' : corps.aConfirmer === true ? 'en_attente' : 'refusee')
+  const issue: Issue = issueDe(suivi, corps)
   const motif = corps.error ?? corps.raison ?? corps.message ?? null
   const r = await ecrireTentative(supabaseAdmin as unknown as Parameters<typeof ecrireTentative>[0], {
     generationId: suivi.generationId,
@@ -492,6 +531,24 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
   // BONS — en silence. Le propriétaire ne l'aurait découvert qu'en
   // ouvrant son application.
   let tronquee = false
+
+  // ── LE COMPTEUR, AVANT TOUT APPEL PAYANT (étape ②, 2026-11-19).
+  //
+  // Une instruction en base réserve ou refuse : deux clics simultanés, un
+  // seul passe (prouvé : 12 clics → 3 sur une appli gratuite). Les comptes
+  // exemptés ne sont jamais comptés — le stand ne tombe pas sur un quota.
+  if (!sansQuota(garde.email)) {
+    const r = await reserverModification(id, proprietaire)
+    if (!r.ok) {
+      return NextResponse.json(
+        r.raison === 'epuise'
+          ? { error: PHRASE_EPUISE, quotaEpuise: true, coutUsd: 0 }
+          : { error: PHRASE_COMPTEUR_INDISPONIBLE, coutUsd: 0 },
+        { status: r.raison === 'epuise' ? 402 : 503 },
+      )
+    }
+    suivi.reservee = { app: id, proprietaire, restantes: r.restantes }
+  }
   suivi.appele = true
   suivi.generationId = id
   suivi.demande = demande

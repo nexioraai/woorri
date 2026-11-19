@@ -37,6 +37,13 @@ import { journalVierge, type JournalPostgrest } from '@/lib/testing/postgrest'
 
 const etat = { stop: 'end_turn' as string, texte: '' }
 
+// Le compteur de modifications (étape ②, 2026-11-19) est hors sujet ici : il
+// accepte. Sa règle a ses propres tests (quota-retouche.test.ts).
+vi.mock('@/lib/apps/quota', async (orig) => ({
+  ...(await orig<typeof import('@/lib/apps/quota')>()),
+  reserverModification: async () => ({ ok: true, restantes: 10 }),
+  libererModification: async () => ({ ok: true }),
+}))
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
   requireAuthenticatedUser: () => ({ ok: true, userId: 'u-1', email: 'a@b.c' }),
 }))
