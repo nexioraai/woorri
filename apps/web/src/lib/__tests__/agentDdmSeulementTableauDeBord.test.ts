@@ -22,7 +22,7 @@ describe('un agent DDM ne naît que depuis le tableau de bord CPA', () => {
   it('🔴 toute route qui écrit `service: \'ddm\'` est gardée par le propriétaire', () => {
     const ecrivent = routes(API).filter((f) => /service:\s*'ddm'/.test(readFileSync(f, 'utf8')))
     expect(ecrivent.length, 'au moins la route des agents').toBeGreaterThan(0)
-    for (const f of ecrivent) expect(readFileSync(f, 'utf8'), f).toContain('requireSiteOwner(req, slug)')
+    for (const f of ecrivent) expect(readFileSync(f, 'utf8'), f).toMatch(/requireSiteOwner\(\s*req,\s*slug\s*\)/)
   })
 
   it('🔴 l’inscription du site ne connaît ni « agent » ni le service', () => {
