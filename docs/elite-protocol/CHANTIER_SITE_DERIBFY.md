@@ -20,7 +20,10 @@ Demande du propriétaire après comparaison avec replit.com. **Tout passe après
 
 - **« 30 jours en ligne, données gardées 90 jours »** : à écrire (c'est là que nous faisons mieux que les concurrents), mais **la FAQ ne se publie pas avant que le chemin hors-ligne soit construit et prouvé** (échéance `docs/ECHEANCES.md`, avant le 2027-01-31).
 - **Téléchargement** : la phrase devient « vous pouvez télécharger le code de votre application », et seulement après que le propriétaire l'a testée en production. Mesuré le 2026-11-18 (localement, sur le document de pharma) : l'archive contient le code, `schema.sql`, `politiques.sql` et un `README`, et **aucune donnée**. L'export des données est consigné dans `docs/ECHEANCES.md`.
-- **Sauvegarde** : ne jamais écrire que les données des applications sont sauvegardées tant que la sauvegarde de la base des œuvres n'est pas construite et prouvée par une restauration d'essai.
+- **Sauvegarde** : la base des applications est sauvegardée et prouvée **à la main** depuis le 2026-11-18 (restauration d'essai 77/77, contrôle faussé rouge, déchiffrement par le propriétaire). **« Chaque nuit » ne s'écrit qu'après trois nuits automatiques relevées** (19, 20, 21 novembre) ; si GitHub part avec des heures de retard, d'abord un autre déclencheur.
+- **Phrase EXIGÉE par le propriétaire (2026-11-19) :** « Une donnée effacée survit encore 30 jours dans nos sauvegardes chiffrées, puis disparaît. » **Deux conditions avant de la publier :**
+  - qu'un effacement existe (il n'est pas construit ; il attend l'export CSV) ;
+  - que la **règle de cycle de vie à 30 jours soit réellement posée dans R2** : elle figure dans le dessin (`SAUVEGARDE_NEXIORA.md` §4) mais **rien ne prouve qu'elle a été créée**. À vérifier par le propriétaire : Cloudflare → R2 → seau `deribfy-sauvegardes` → Settings → Object lifecycle rules. Sans elle, les copies ne disparaissent jamais et la phrase serait fausse.
 
 Rang inchangé : **après Stripe**.
 

@@ -17,8 +17,8 @@
 - un rappel s'affiche **au propriétaire seul**, jamais à ses clients ;
 - avertissements au jour 27 et au jour 29 ;
 - au jour 30, mise en pause : une page sobre « momentanément indisponible », ni erreur ni publicité ;
-- **les données restent intactes 90 jours** et tout revient au paiement : même adresse, mêmes données, même compte ;
-- au 90e jour, un dernier avertissement puis effacement ; l'export reste possible tout du long (précisé le 2026-11-19 ; deux points à trancher dans `MODELE_PRIX.md` règle 4) ;
+- **les données restent intactes 90 jours à partir de la mise en pause** (du jour 30 au jour 120) et tout revient au paiement : même adresse, mêmes données, même compte ;
+- avertissement final au jour 113, effacement au jour 120 ; l'export reste possible tout du long (tranché le 2026-11-19, `MODELE_PRIX.md` règle 4) ;
 - **jamais d'effacement sans avertissement.** L'effacement ne se construit pas avant l'export CSV.
 
 La raison : couper une appli punit aussi les clients du commerçant, qui n'ont rien demandé. Au Tchad, avec le mobile money, les retards seront fréquents et souvent innocents.

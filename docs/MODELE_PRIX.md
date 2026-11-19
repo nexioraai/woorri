@@ -25,17 +25,16 @@ L'unité s'appelle **« modification »**, jamais « crédit » ni « jeton ». 
    - **jour 1**, l'échéance passe sans paiement (avant Dary, il n'y a pas de prélèvement qui « échoue » : c'est l'activation manuelle qui n'arrive pas) : **les modifications s'arrêtent, l'application reste en ligne** ;
    - **jour 27** : un avertissement ; **jour 29** : un deuxième avertissement — au propriétaire seul, jamais à ses clients ;
    - **jour 30 : mise en pause.** L'adresse de l'application affiche une **page sobre** : « momentanément indisponible ». Pas une erreur, pas une publicité pour Deribfy ;
-   - **les données restent intactes 90 jours.** Il paie quand il veut pendant ces 90 jours et tout revient : **même adresse, mêmes données, même compte** ;
-   - **au 90e jour, un dernier avertissement, puis effacement.** L'export des données reste possible tout du long ;
+   - **les 90 jours partent de la mise en pause** : les données restent intactes du jour 30 au jour 120. Il paie quand il veut pendant ces 90 jours et tout revient : **même adresse, mêmes données, même compte** ;
+   - **jour 113 (7 jours avant l'effacement) : l'avertissement final** ;
+   - **jour 120 : effacement**, soit quatre mois après l'échéance. L'export des données reste possible tout du long ;
    - jamais d'effacement sans avertissement.
 
-   > **Ce qui change par rapport au 2026-11-18** : la règle disait « jamais de perte de données pour un impayé ». Elle prévoit désormais un effacement, annoncé, au bout des 90 jours.
+   > **Le propriétaire change sa règle du 2026-11-18 en connaissance de cause** (2026-11-19). Elle disait « jamais de perte de données pour un impayé ». Elle prévoit désormais un effacement, annoncé, quatre mois après l'échéance. Sa raison : « Garder éternellement les données d'un commerçant parti est une charge et un risque. »
    >
-   > **À TRANCHER par le propriétaire** (rien n'est construit avant) :
-   > - **le 90e jour de quoi ?** De l'échéance (pause au jour 30, effacement au jour 90 : 60 jours en pause) ou de la mise en pause (effacement au jour 120 depuis l'échéance) ?
-   > - **« un dernier avertissement, puis effacement »** : le même jour ne laisse pas le temps de réagir. Avertir 7 jours avant l'effacement ?
-   >
-   > **Ce qui conditionne l'effacement** : l'export CSV (échéance du 2027-01-31) doit exister AVANT qu'un seul effacement soit possible — sinon « l'export reste possible tout du long » serait faux. Et une donnée effacée de la base survit encore 30 jours dans les sauvegardes chiffrées de la nuit (R2) : l'effacement n'est complet qu'à leur expiration.
+   > **Deux conditions, gardées par le propriétaire :**
+   > - **aucun effacement avant que l'export CSV existe** (échéance du 2027-01-31) — sinon « l'export reste possible tout du long » serait faux ;
+   > - **une donnée effacée survit encore 30 jours dans les sauvegardes chiffrées de la nuit.** L'effacement n'est complet qu'à leur expiration. Cette phrase doit figurer dans la FAQ.
 
 ## Pourquoi ces chiffres
 
