@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { supabaseAdmin as supabase } from '@/lib/supabase-admin';
 import { getStripe } from '@/lib/stripe';
+import { prixDuSite } from '@/lib/payments/prix-abonnement';
 
 export async function POST(req: Request) {
   try {
@@ -33,9 +34,17 @@ export async function POST(req: Request) {
     //
     // ORDRE : la propriete est tranchee AVANT tout appel Stripe.
     // ============================================================
-    const auth = await requireSiteOwner(req, slug, 'id, slug, stripe_customer_id');
+    const auth = await requireSiteOwner(req, slug, 'id, slug, stripe_customer_id, mode');
     if (!auth.ok) return auth.response;
-    const site = auth.site as { id: string; slug: string; stripe_customer_id: string | null };
+    const site = auth.site as { id: string; slug: string; stripe_customer_id: string | null; mode: unknown };
+
+    // LE PRIX SUIT LE PLAN (2026-11-19) — avant tout appel à Stripe : un refus
+    // ici ne crée ni client ni session. Voir lib/payments/prix-abonnement.ts.
+    const prix = prixDuSite(site.mode, process.env);
+    if (!prix.ok) {
+      console.error('Checkout: prix introuvable', prix.motif);
+      return NextResponse.json({ error: 'Le paiement de ce plan n’est pas encore configuré.', motif: prix.motif }, { status: 503 });
+    }
 
     // L'adresse sert de DONNEE Stripe (email du client, metadata), jamais de
     // cle d'identite. La route exigeait deja une adresse presente : ce
@@ -102,7 +111,7 @@ export async function POST(req: Request) {
     const session = await getStripe().checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
-      line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
+      line_items: [{ price: prix.prix, quantity: 1 }],
       success_url: `${origin}/welcome?slug=${site.slug}`,
       cancel_url: `${origin}/dashboard?checkout=canceled`,
       metadata: { slug: site.slug, owner_email: ownerEmail },

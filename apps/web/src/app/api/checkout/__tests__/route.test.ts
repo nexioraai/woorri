@@ -83,6 +83,7 @@ function siteRow(over: Row = {}): Row {
     owner_id: USER.id,
     owner_email: USER.email,
     stripe_customer_id: null,
+    mode: 1,
     ...over,
   };
 }
@@ -102,7 +103,9 @@ beforeEach(() => {
   getUserMock.mockReset().mockResolvedValue({ data: { user: { ...USER } }, error: null });
   customersCreateMock.mockReset().mockResolvedValue({ id: 'cus_new' });
   sessionsCreateMock.mockReset().mockResolvedValue({ url: 'https://checkout.stripe.test/session' });
-  process.env.STRIPE_PRICE_ID = 'price_test';
+  process.env.STRIPE_PRICE_VITRINE = 'price_vitrine10usd';
+  process.env.STRIPE_PRICE_BOUTIQUE = 'price_boutique15usd';
+  process.env.STRIPE_PRICE_DROPSHIPPING = 'price_dropshipping20usd';
 });
 
 describe('POST /api/checkout — clé d\'idempotence sur la création du client Stripe', () => {
@@ -291,5 +294,42 @@ describe('DETTE 6a — l’écriture de stripe_customer_id vise la ligne déjà 
     await POST(req('my-shop'));
 
     expect(updates).toEqual([]);
+  });
+});
+
+// ── UN PRIX PAR PLAN (2026-11-19). MESURÉ : un seul prix (15 CAD) pour les
+//    trois plans — Vitrine, affichée 10, était facturée 15.
+describe('POST /api/checkout — le prix suit le plan du site', () => {
+  it.each([
+    [1, 'price_vitrine10usd'],
+    [2, 'price_boutique15usd'],
+    [3, 'price_dropshipping20usd'],
+  ])('mode %s -> le prix de SON plan', async (mode, prix) => {
+    sitesRows = [siteRow({ mode, stripe_customer_id: 'cus_existing' })];
+    const { POST } = await import('../route');
+    const res = await POST(req('my-shop'));
+    expect(res.status).toBe(200);
+    expect(sessionsCreateMock).toHaveBeenCalledWith(expect.objectContaining({ line_items: [{ price: prix, quantity: 1 }] }));
+  });
+
+  it('mode inconnu -> 503, ni client ni session Stripe', async () => {
+    sitesRows = [siteRow({ mode: 7 })];
+    const { POST } = await import('../route');
+    const res = await POST(req('my-shop'));
+    expect(res.status).toBe(503);
+    expect(customersCreateMock).not.toHaveBeenCalled();
+    expect(sessionsCreateMock).not.toHaveBeenCalled();
+  });
+
+  it('prix du plan absent -> 503 qui nomme la variable, jamais un prix par défaut', async () => {
+    delete process.env.STRIPE_PRICE_BOUTIQUE;
+    process.env.STRIPE_PRICE_ID = 'price_ancien15cad';
+    sitesRows = [siteRow({ mode: 2 })];
+    const { POST } = await import('../route');
+    const res = await POST(req('my-shop'));
+    expect(res.status).toBe(503);
+    expect((await res.json()).motif).toContain('STRIPE_PRICE_BOUTIQUE');
+    expect(sessionsCreateMock).not.toHaveBeenCalled();
+    delete process.env.STRIPE_PRICE_ID;
   });
 });

@@ -562,6 +562,14 @@ export const DOMAIN_REGISTRY: DomainDefinition[] = [
       'src/lib/agent-tools/modeGuidance.ts',
       'src/app/api/onboarding/route.ts',
       'src/app/api/chat/route.ts',
+      // 2026-11-19 -- ENTREE AJOUTEE, MEME MECANISME. Le paiement d'un site
+      // envoyait UN prix pour les trois plans (Vitrine facturee 15 au lieu de
+      // 10). Le prix Stripe se derive desormais de `sites.mode` : c'est une
+      // decision sur le mode, donc elle se declare ici -- avec la route qui
+      // lit le mode du site pour le facturer (l'allowlist des lecteurs
+      // transitifs est a son plafond : on declare, on ne l'elargit pas).
+      'src/lib/payments/prix-abonnement.ts',
+      'src/app/api/checkout/route.ts',
     ],
     forbiddenPatterns: SITE_MODE_ACQUISITION_RULES,
     ignoreLinePattern: IGNORE_COMMENT_LINES,

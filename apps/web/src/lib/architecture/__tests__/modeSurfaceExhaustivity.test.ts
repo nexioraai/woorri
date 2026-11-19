@@ -419,7 +419,10 @@ describe('ÉTAPE B — NIVEAU 2 : tout décideur est déclaré dans un domaine',
     // qui cesse d'etre implicite devient une surface nommee et declaree.
     // DEBT-054 -- 12 : quatre decideurs reels que le detecteur ne voyait pas
     // (toolCapabilities, modeGuidance, onboarding, chat) sont declares.
-    expect(d('site-mode-decision-surfaces').ownedFiles).toHaveLength(14)
+    // 2026-11-19 -- 16 : le prix Stripe d'un site suit son mode
+    // (`payments/prix-abonnement` et la route `checkout` qui le facture) ;
+    // avant, un seul prix pour trois plans.
+    expect(d('site-mode-decision-surfaces').ownedFiles).toHaveLength(16)
     // M2-247 -- 6 : l'editeur de page (Navbar) lit le mode pour proposer ou
     // non le choix des produits d'une page. Un site vitrine n'a pas de
     // catalogue a y poser. Choix d'affichage, aucune regle de vente.
