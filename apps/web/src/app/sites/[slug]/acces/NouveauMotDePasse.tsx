@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { motDePasseFort, libellesCriteres } from '@/lib/auth/motDePasseFort'
+import ExigencesMotDePasse from './ExigencesMotDePasse'
 
 // ============================================================================
 // LOT 19 — CHOISIR UN NOUVEAU MOT DE PASSE, depuis le lien reçu par courriel.
@@ -17,8 +19,8 @@ export type MotsNouveau = {
   minimum: string; differents: string; lienInvalide: string; fait: string; afficher: string; masquer: string
 }
 
-export default function NouveauMotDePasse({ jeton, destination, mots, primary }: {
-  jeton: string; destination: string; mots: MotsNouveau; primary: string
+export default function NouveauMotDePasse({ jeton, destination, mots, primary, lang = 'fr' }: {
+  jeton: string; destination: string; mots: MotsNouveau; primary: string; lang?: string | null
 }) {
   const [mdp, setMdp] = useState('')
   const [mdp2, setMdp2] = useState('')
@@ -29,7 +31,8 @@ export default function NouveauMotDePasse({ jeton, destination, mots, primary }:
   async function valider(e: React.FormEvent) {
     e.preventDefault()
     if (etat === 'envoi') return
-    if (mdp.length < 8) { setErreur(mots.minimum); return }
+    // CPA, 2026-11-19 — la même règle qu'à l'inscription (clients, fournisseurs, agents DDM).
+    if (!motDePasseFort(mdp)) { setErreur(libellesCriteres(lang).regle); return }
     if (mdp !== mdp2) { setErreur(mots.differents); return }
     setEtat('envoi'); setErreur('')
     const { error: e1 } = await supabase.auth.verifyOtp({ token_hash: jeton, type: 'recovery' })
@@ -54,7 +57,7 @@ export default function NouveauMotDePasse({ jeton, destination, mots, primary }:
         <label key={i} style={{ display: 'block', marginBottom: 14 }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>{libelle as string}</span>
           <span style={{ position: 'relative', display: 'block' }}>
-            <input type={visible ? 'text' : 'password'} required minLength={8} autoComplete="new-password"
+            <input type={visible ? 'text' : 'password'} required minLength={10} autoComplete="new-password"
               value={valeur as string} style={champ}
               onChange={(e) => { (poser as (v: string) => void)(e.target.value); setErreur('') }} />
             {i === 0 && (
@@ -70,6 +73,7 @@ export default function NouveauMotDePasse({ jeton, destination, mots, primary }:
               </button>
             )}
           </span>
+          {i === 0 && <ExigencesMotDePasse motDePasse={mdp} lang={lang} />}
         </label>
       ))}
       {erreur && <p role="alert" style={{ fontSize: 14, color: '#9b1c1c', margin: '0 0 14px' }}>{erreur}</p>}

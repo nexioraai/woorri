@@ -1,3 +1,4 @@
+import { motDePasseFort, libellesCriteres } from '@/lib/auth/motDePasseFort'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
@@ -90,7 +91,8 @@ export async function POST(req: Request, { params }: Params) {
   if (!(ROLES_INSCRIPTION as readonly string[]).includes(role)) return NON('Choisissez « fournisseur » ou « structure sanitaire ».')
   if (!TELEPHONE.test(telephone)) return NON('Indiquez un numéro de téléphone valable.')
   if (!COURRIEL.test(email)) return NON('Indiquez une adresse électronique valable.')
-  if (motDePasse.length < 8 || motDePasse.length > 72) return NON('Le mot de passe doit faire au moins huit caractères.')
+  // CPA, 2026-11-19 — 10 caractères, majuscule, minuscule, chiffre, signe.
+  if (!motDePasseFort(motDePasse)) return NON(libellesCriteres('fr').regle)
 
   // 1. L'ACCÈS — créé confirmé : aucun courriel à attendre.
   const { data: cree, error: eAcces } = await supabaseAdmin.auth.admin.createUser({

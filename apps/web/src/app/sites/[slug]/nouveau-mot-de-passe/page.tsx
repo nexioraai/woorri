@@ -43,7 +43,7 @@ export default async function Page({ params, searchParams }: Props) {
         <p style={{ fontSize: 14, margin: '0 0 18px' }}><Link href={base} style={{ color: accent }}>← {s.name}</Link></p>
         <h1 style={{ fontSize: 'clamp(26px, 6vw, 36px)', fontWeight: 700, margin: '0 0 10px' }}>{m.titre}</h1>
         <p style={{ fontSize: 16, lineHeight: 1.6, opacity: 0.78, margin: '0 0 28px' }}>{m.phrase}</p>
-        <NouveauMotDePasse jeton={jeton} destination={`${base}/espace-client`} mots={m} primary={accent} />
+        <NouveauMotDePasse jeton={jeton} destination={`${base}/espace-client`} mots={m} primary={accent} lang={s.lang} />
       </main>
     </div>
   )

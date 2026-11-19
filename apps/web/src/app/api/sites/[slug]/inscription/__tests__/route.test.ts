@@ -41,7 +41,7 @@ vi.mock('@/lib/audit/journaliser', () => ({ journaliser: (e: unknown) => journal
 import { POST } from '../route'
 
 const params = { params: Promise.resolve({ slug: 'cpa' }) }
-const BON = { nom: 'Amina Mahamat', organisation: 'Pharma Sahel', role: 'fournisseur', telephone: '+235 66 12 34 56', email: 'Amina@Exemple.td', motDePasse: 'motdepasse1' }
+const BON = { nom: 'Amina Mahamat', organisation: 'Pharma Sahel', role: 'fournisseur', telephone: '+235 66 12 34 56', email: 'Amina@Exemple.td', motDePasse: 'MotDePasse1!' }
 const inscrire = (corps: Record<string, unknown> = BON) =>
   POST(new Request('https://x.test/', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(corps) }), params)
 
@@ -56,7 +56,7 @@ describe('un seul geste, et le compte existe', () => {
     const r = await inscrire()
     expect(r.status).toBe(201)
     expect(createUser).toHaveBeenCalledTimes(1)
-    expect(createUser.mock.calls[0][0]).toMatchObject({ email: 'amina@exemple.td', password: 'motdepasse1', email_confirm: true })
+    expect(createUser.mock.calls[0][0]).toMatchObject({ email: 'amina@exemple.td', password: 'MotDePasse1!', email_confirm: true })
   })
 
   it('🔴 le compte de site porte nom, téléphone, organisation, rôle — et l’identité vient de l’accès créé', async () => {
@@ -175,4 +175,19 @@ describe('le type de client', () => {
     expect(ecrit()[1]).not.toHaveProperty('type_client')
   })
 
+})
+
+// CPA, 2026-11-19 — « 10 caractères minimum, majuscule, minuscule, chiffre,
+// signe » pour les clients, les fournisseurs et la DDM : le SERVEUR refuse,
+// pas seulement l'écran, et rien n'est créé.
+describe('le mot de passe fort', () => {
+  it('🔴 un mot de passe faible est refusé AVANT toute création', async () => {
+    for (const faible of ['motdepasse1', 'MOTDEPASSE1!', 'Motdepasse!', 'Mdp1!crt', 'MotDePasse12']) {
+      const r = await inscrire({ ...BON, motDePasse: faible })
+      expect(r.status, faible).toBe(400)
+      expect((await r.json()).error, faible).toContain('10 caractères')
+    }
+    expect(createUser).not.toHaveBeenCalled()
+    expect(journal.ecritures['site_comptes'] ?? []).toHaveLength(0)
+  })
 })

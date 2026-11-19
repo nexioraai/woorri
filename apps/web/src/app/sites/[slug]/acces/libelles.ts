@@ -13,7 +13,9 @@ import type { LibellesAcces, ChampsInscription } from './FormulaireAcces'
 // ============================================================================
 
 export type MotsAcces = {
-  connexion: { titre: string; phrase: string; libelles: LibellesAcces; pasDeCompte: string; creer: string; oublie: string }
+  connexion: { titre: string; phrase: string; libelles: LibellesAcces; pasDeCompte: string; creer: string; oublie: string
+    /** CPA, 2026-11-19 — la porte des agents de la Centrale (même formulaire). */
+    agentTitre: string; agentPhrase: string; agentLien: string; clientLien: string }
   inscription: { titre: string; phrase: string; libelles: LibellesAcces; champs: ChampsInscription; dejaInscrit: string; seConnecter: string }
   oubli: { titre: string; phrase: string; libelles: LibellesAcces; retour: string }
   accueil: string
@@ -33,6 +35,7 @@ const FR: MotsAcces = {
     titre: 'Se connecter',
     phrase: 'Entrez avec l’adresse électronique que vous avez enregistrée.',
     pasDeCompte: 'Pas encore de compte ?', creer: 'Créer un compte',
+    agentTitre: 'Connexion agent', agentPhrase: 'Réservé au personnel de la Centrale (Division DDM). Utilisez l’adresse enregistrée par la Centrale.', agentLien: 'Vous êtes agent de la Centrale ? Connexion agent', clientLien: 'Vous êtes client ou fournisseur ? Connexion habituelle',
     oublie: 'Mot de passe oublié',
     libelles: {
       courriel: 'Adresse électronique', motDePasse: 'Mot de passe',
@@ -75,6 +78,7 @@ const EN: MotsAcces = {
   connexion: {
     titre: 'Sign in', phrase: 'Sign in with the address you registered.',
     pasDeCompte: 'No access yet?', creer: 'Create access', oublie: 'Forgotten password',
+    agentTitre: 'Staff sign-in', agentPhrase: 'Reserved for Centrale staff (DDM division). Use the address registered by the Centrale.', agentLien: 'Centrale staff? Staff sign-in', clientLien: 'Client or supplier? Usual sign-in',
     libelles: { courriel: 'Email address', motDePasse: 'Password', envoyer: 'Sign in', envoi: 'Signing in…', succes: 'You are signed in.', refus: REFUS_EN, minimum: 'Eight characters minimum.' },
   },
   inscription: {
@@ -98,6 +102,7 @@ const AR: MotsAcces = {
   connexion: {
     titre: 'تسجيل الدخول', phrase: 'ادخل بالعنوان الإلكتروني الذي سجّلته.',
     pasDeCompte: 'ليس لديك وصول بعد؟', creer: 'إنشاء وصول', oublie: 'نسيت كلمة المرور',
+    agentTitre: 'دخول الموظفين', agentPhrase: 'مخصّص لموظفي المركز (قسم DDM). استخدم العنوان الذي سجّله المركز.', agentLien: 'هل أنت موظف في المركز؟ دخول الموظفين', clientLien: 'عميل أو مورّد؟ الدخول المعتاد',
     libelles: { courriel: 'العنوان الإلكتروني', motDePasse: 'كلمة المرور', envoyer: 'تسجيل الدخول', envoi: 'جارٍ الدخول…', succes: 'تم تسجيل دخولك.', refus: REFUS_AR, minimum: 'ثمانية أحرف على الأقل.' },
   },
   inscription: {
@@ -121,6 +126,7 @@ const ES: MotsAcces = {
   connexion: {
     titre: 'Iniciar sesión', phrase: 'Entre con la dirección que registró.',
     pasDeCompte: '¿Aún no tiene acceso?', creer: 'Crear acceso', oublie: 'Contraseña olvidada',
+    agentTitre: 'Acceso del personal', agentPhrase: 'Reservado al personal de la Central (división DDM). Use la dirección registrada por la Central.', agentLien: '¿Es personal de la Central? Acceso del personal', clientLien: '¿Cliente o proveedor? Acceso habitual',
     libelles: { courriel: 'Dirección electrónica', motDePasse: 'Contraseña', envoyer: 'Iniciar sesión', envoi: 'Entrando…', succes: 'Ha iniciado sesión.', refus: REFUS_ES, minimum: 'Ocho caracteres como mínimo.' },
   },
   inscription: {

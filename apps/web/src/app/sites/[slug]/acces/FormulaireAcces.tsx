@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { motDePasseFort, libellesCriteres } from '@/lib/auth/motDePasseFort'
+import ExigencesMotDePasse from './ExigencesMotDePasse'
 
 // ============================================================================
 // LOT 11 — LES TROIS ÉCRANS D'ACCÈS, UN SEUL COMPOSANT.
@@ -63,8 +65,10 @@ export type ChampsInscription = {
 }
 
 export default function FormulaireAcces({
-  ecran, destination, libelles, primary, slug, champs, voir, pour = 'client',
+  ecran, destination, libelles, primary, slug, champs, voir, pour = 'client', lang = 'fr',
 }: {
+  /** La langue du site, pour la liste des critères du mot de passe. */
+  lang?: string | null
   ecran: EcranAcces
   /** CPA, 2026-11-19 — « c'est l'espace client, le fournisseur n'a rien à
    *  voir ici ». `client` : structure sanitaire ou ONG ; `fournisseur` : le
@@ -104,6 +108,9 @@ export default function FormulaireAcces({
     // mais son refus arrive en anglais et après un aller-retour : le dire
     // avant évite à quelqu'un de croire que le service est en panne.
     if (demandeUnMotDePasse && motDePasse.length < 8) { setEtat('refus'); return }
+    // L'INSCRIPTION exige la règle complète (la connexion, non : un compte
+    // ancien doit pouvoir entrer).
+    if (ecran === 'inscription' && !motDePasseFort(motDePasse)) { setMessage(libellesCriteres(lang).regle); setEtat('refus'); return }
 
     setEtat('envoi')
     try {
@@ -223,7 +230,7 @@ export default function FormulaireAcces({
           <span style={{ fontSize: 14, fontWeight: 600 }}>{libelles.motDePasse}</span>
           {/* L'ŒIL : voir ce qu'on tape, surtout sur un téléphone. */}
           <span style={{ position: 'relative', display: 'block' }}>
-            <input type={visible ? 'text' : 'password'} required minLength={8} value={motDePasse}
+            <input type={visible ? 'text' : 'password'} required minLength={ecran === 'inscription' ? 10 : 8} value={motDePasse}
               style={{ ...champ, paddingRight: 48 }}
               autoComplete={ecran === 'inscription' ? 'new-password' : 'current-password'}
               onChange={(e) => { setMotDePasse(e.target.value); effacer() }} />
@@ -239,7 +246,9 @@ export default function FormulaireAcces({
               </svg>
             </button>
           </span>
-          <span style={{ fontSize: 13, opacity: 0.65, display: 'block', marginTop: 5 }}>{libelles.minimum}</span>
+          {ecran === 'inscription'
+            ? <ExigencesMotDePasse motDePasse={motDePasse} lang={lang} />
+            : <span style={{ fontSize: 13, opacity: 0.65, display: 'block', marginTop: 5 }}>{libelles.minimum}</span>}
         </label>
       )}
 

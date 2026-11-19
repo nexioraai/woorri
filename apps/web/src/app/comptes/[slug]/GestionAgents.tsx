@@ -55,7 +55,7 @@ export default function GestionAgents({ slug }: { slug: string }) {
       const { ok, d } = await appel('POST', { nom, email })
       if (!ok) { setMessage({ ok: false, texte: typeof d.error === 'string' ? d.error : 'Refusé.' }); return }
       setMessage({ ok: true, texte: d.nouvelAcces
-        ? `${nom} est agent DDM. Son accès est créé : sur le site, page « Se connecter », il choisit « Mot de passe oublié » avec ${email} pour définir son mot de passe.`
+        ? `${nom} est agent DDM. Son accès est créé : sur le site, page « Se connecter » puis « Connexion agent », il choisit « Mot de passe oublié » avec ${email} pour définir son mot de passe (10 caractères minimum, avec majuscule, minuscule, chiffre et signe).`
         : `${nom} est agent DDM. Il se connecte sur le site avec son mot de passe habituel.` })
       setNom(''); setEmail('')
       await relire()

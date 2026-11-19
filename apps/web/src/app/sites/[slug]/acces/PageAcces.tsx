@@ -134,9 +134,14 @@ export default async function PageAcces({ ecran, params, searchParams }: { ecran
   // menu « Espace client ») ; `?pour=fournisseur` ouvre celle du fournisseur.
   const pour: 'client' | 'fournisseur' = q?.pour === 'fournisseur' ? 'fournisseur' : 'client'
   const suite = retour ? `?retour=${encodeURIComponent(retour)}` : ''
-  const titreVu = ecran === 'inscription' && pour === 'fournisseur'
-    ? (s.lang?.startsWith('en') ? 'Create a supplier account' : 'Créer un compte fournisseur')
-    : titreDeclare
+  // CPA, 2026-11-19 — la PORTE DES AGENTS : le même formulaire de connexion,
+  // présenté au personnel de la Centrale (`?pour=agent`). Le rôle n'est pas
+  // choisi ici : c'est le compte qui le porte.
+  const agent = ecran === 'connexion' && q?.pour === 'agent'
+  const titreVu = agent ? mots.connexion.agentTitre
+    : ecran === 'inscription' && pour === 'fournisseur'
+      ? (s.lang?.startsWith('en') ? 'Create a supplier account' : 'Créer un compte fournisseur')
+      : titreDeclare
   const destination = ecran === 'connexion' || ecran === 'inscription'
     ? `${base}${retour ?? '/espace-client'}`
     : `${base}/connexion`
@@ -155,7 +160,7 @@ export default async function PageAcces({ ecran, params, searchParams }: { ecran
           {titreVu}
         </h1>
         <p style={{ fontSize: 16, lineHeight: 1.6, opacity: 0.78, margin: '0 0 28px', maxWidth: '58ch' }}>
-          {phraseVue}
+          {agent ? mots.connexion.agentPhrase : phraseVue}
         </p>
 
         {textes.length > 0 && (
@@ -165,14 +170,21 @@ export default async function PageAcces({ ecran, params, searchParams }: { ecran
         )}
 
         <FormulaireAcces ecran={ecran} destination={destination} libelles={libellesVus} primary={accent}
-          slug={slug} champs={champsVus} voir={mots.voir} pour={pour} />
+          slug={slug} champs={champsVus} voir={mots.voir} pour={pour} lang={s.lang} />
 
         <p style={{ fontSize: 14.5, lineHeight: 1.7, marginTop: 26, opacity: 0.85 }}>
-          {ecran === 'connexion' && (<>
+          {ecran === 'connexion' && !agent && (<>
             {mots.connexion.pasDeCompte}{' '}
             <Link href={`${base}/inscription${suite}`} style={lien}>{mots.connexion.creer}</Link>
             {' · '}
             <Link href={`${base}/mot-de-passe-oublie`} style={lien}>{mots.connexion.oublie}</Link>
+            <br />
+            <Link href={`${base}/connexion?pour=agent`} style={{ ...lien, fontWeight: 500, opacity: 0.8 }}>{mots.connexion.agentLien}</Link>
+          </>)}
+          {agent && (<>
+            <Link href={`${base}/mot-de-passe-oublie`} style={lien}>{mots.connexion.oublie}</Link>
+            <br />
+            <Link href={`${base}/connexion`} style={{ ...lien, fontWeight: 500, opacity: 0.8 }}>{mots.connexion.clientLien}</Link>
           </>)}
           {ecran === 'inscription' && (<>
             {mots.inscription.dejaInscrit}{' '}
