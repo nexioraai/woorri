@@ -273,6 +273,9 @@ export default function EspaceClient({
       {compte.role === 'structure' && motsCmd && <TableauCommandes slug={slug} base={base} accent={primary} mots={motsCmd} regard="client" lang={lang} />}
       {/* L'AGENT DE LA DDM voit le tableau de TOUTES les commandes. */}
       {gestion && motsCmd && <TableauCommandes slug={slug} base={base} accent={primary} mots={motsCmd} regard="ddm" lang={lang} />}
+      {/* LES RACCOURCIS ne doublent pas la barre latérale là où un tableau de
+          bord existe (client, DDM) ; ils restent l'accueil du fournisseur. */}
+      {compte.role !== 'structure' && !gestion && (<>
       <h2 style={{ fontSize: 18, fontWeight: 800, margin: '30px 0 14px' }}>{mots.accesRapides}</h2>
       <nav className="raccourcis" aria-label={mots.tableauDeBord}>
         {raccourcis.map((e) => {
@@ -285,6 +288,7 @@ export default function EspaceClient({
           )
         })}
       </nav>
+      </>)}
     </div>
   )
 }

@@ -31,8 +31,9 @@ export function navigationEspace(
   const groupes: GroupeNav[] = []
   groupes.push({ titre: mots.navPrincipal, entrees: [
     { chemin: 'espace-client', libelle: mots.tableauDeBord, icone: 'tableau' },
+    // « Évite la répétition » (CPA, 2026-11-19) : « Passer une commande » vit
+    // dans le tableau de bord et dans « Mes commandes », pas une 3e fois ici.
     ...(role === 'structure' ? [
-      { chemin: 'mes-commandes#nouvelle', libelle: mots.passerCommande, icone: 'commander' as const },
       { chemin: 'mes-commandes', libelle: mots.mesCommandes, icone: 'commandes' as const },
     ] : []),
   ] })
@@ -49,7 +50,8 @@ export function navigationEspace(
     { chemin: 'mes-demandes', libelle: mots.mesDemandes, icone: 'demandes' },
     { chemin: 'mes-reclamations', libelle: mots.mesReclamations, icone: 'reclamations' },
     { chemin: 'mes-documents', libelle: mots.mesDocuments, icone: 'documents' },
-    { chemin: 'demandes/suivi', libelle: mots.suivreDemande, icone: 'suivi' },
+    // « Suivre une demande par sa référence » sert au visiteur SANS compte ;
+    // connecté, « Mes demandes » montre déjà tout. Pas de doublon ici.
   ] })
   groupes.push({ titre: mots.navCompte, entrees: [
     { chemin: 'mon-profil', libelle: mots.monProfil, icone: 'profil' },

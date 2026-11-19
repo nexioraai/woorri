@@ -5,7 +5,7 @@ import { Clock, Truck, ShoppingBag, Package, Inbox, Users, ArrowRight, CirclePlu
 import { supabase } from '@/lib/supabase'
 import { lireAvecJeton } from './lectureEspace'
 import type { MotsCommandes } from './motsCommandes'
-import { MiniBarres, CourbeAire, BarresMois, Anneau, BarresHorizontales } from './Graphiques'
+import { MiniBarres, CourbeAire, BarresMois, Anneau, BarresHorizontales, Defile, STYLE_GRAPHIQUES } from './Graphiques'
 import {
   derniersMois, commandesParMois, unitesParMois, repartitionEtats, produitsLesPlusCommandes,
   clientsLesPlusActifs, TEINTES_ETAT, EN_COURS, type CommandeStat,
@@ -63,7 +63,9 @@ export default function TableauCommandes({
   const etats = repartitionEtats(liste)
   const n = (f: (c: CommandeStat) => boolean) => liste.filter(f).length
   const totalUnites = liste.filter((c) => c.etat !== 'annulee').reduce((t2, c) => t2 + c.lignes.reduce((s, l) => s + (Number(l.quantite) || 0), 0), 0)
-  const v = (x: number): React.ReactNode => (cs ? x.toLocaleString(lang ?? undefined) : <span className="tdbAttente" aria-label="…" />)
+  const v = (x: number): React.ReactNode => (cs ? <Defile valeur={x} lang={lang} /> : <span className="tdbAttente" aria-label="…" />)
+  // LA TENDANCE d'une carte : ce mois-ci contre le mois précédent.
+  const tendance = (serie: number[]) => { const d = serie[serie.length - 1] - serie[serie.length - 2]; return d }
 
   const cartes = regard === 'client'
     ? [
@@ -84,12 +86,17 @@ export default function TableauCommandes({
 
   return (
     <div className="tdb">
-      <style>{STYLE(accent)}</style>
+      <style>{STYLE(accent) + STYLE_GRAPHIQUES}</style>
 
       <div className="tdbCartes">
-        {cartes.map(({ titre, valeur, sous, I, serie }) => (
-          <div key={titre} className="tdbCarte">
-            <div className="tdbCarteTete"><span className="tdbIc"><I size={17} aria-hidden /></span><span>{titre}</span></div>
+        {cartes.map(({ titre, valeur, sous, I, serie }, k) => (
+          <div key={titre} className="tdbCarte" style={{ animationDelay: `${k * 80}ms` }}>
+            <div className="tdbCarteTete">
+              <span className="tdbIc"><I size={17} aria-hidden /></span><span style={{ flex: 1 }}>{titre}</span>
+              {cs && (() => { const d = tendance(serie); return (
+                <span className={`tdbTendance ${d > 0 ? 'haut' : d < 0 ? 'bas' : ''}`} title={t.moisPrecedent}>{d > 0 ? '↗' : d < 0 ? '↘' : '→'} {d > 0 ? `+${d}` : d}</span>
+              ) })()}
+            </div>
             <div className="tdbChiffre">{valeur}</div>
             <div className="tdbSous">{sous}</div>
             <MiniBarres valeurs={serie} couleur={accent} />
@@ -99,8 +106,9 @@ export default function TableauCommandes({
 
       <div className="tdbRangee">
         <div className="tdbSombre">
+          <span className="tdbReflet" aria-hidden />
           <span className="tdbSombreTitre">{t.ceMois}</span>
-          <div className="tdbSombreChiffre">{cs ? ceMois : <span className="tdbAttente tdbAttenteClair" />}</div>
+          <div className="tdbSombreChiffre">{cs ? <Defile valeur={ceMois} lang={lang} /> : <span className="tdbAttente tdbAttenteClair" />}</div>
           <span className="tdbSombreSous">{v(unites[MOIS - 1])} {t.lignes}</span>
           <div className="tdbSombreLigne"><span>{t.moisPrecedent}</span><strong>{cs ? avant : '—'}</strong></div>
           <a className="tdbSombreBouton" href={regard === 'client' ? `${base}/mes-commandes#nouvelle` : lienListe}>
@@ -112,8 +120,8 @@ export default function TableauCommandes({
         <div className="tdbBloc">
           <h3>{t.evolution}</h3>
           <p className="tdbBlocSous">{t.evolutionSous}</p>
-          <div className="tdbGrand">{cs ? liste.length : <span className="tdbAttente" />}</div>
-          <CourbeAire valeurs={parMois} libelles={libMois} couleur={accent} titre={t.evolution} />
+          <div className="tdbGrand">{v(liste.length)}</div>
+          <CourbeAire valeurs={parMois} libelles={libMois} couleur={accent} titre={t.evolution} vide={cs ? t.videGraphique : undefined} />
         </div>
       </div>
 
@@ -122,14 +130,14 @@ export default function TableauCommandes({
           <h3>{t.parMois}</h3>
           <p className="tdbBlocSous">{t.parMoisSous}</p>
           <div className="tdbGrand">{v(unites.reduce((a, b) => a + b, 0))}</div>
-          <BarresMois valeurs={unites} libelles={libMois} couleur={accent} titre={t.parMois} />
+          <BarresMois valeurs={unites} libelles={libMois} couleur={accent} titre={t.parMois} vide={cs ? t.videGraphique : undefined} />
         </div>
         <div className="tdbBloc">
           <h3>{t.statuts}</h3>
           <p className="tdbBlocSous">{regard === 'ddm' ? t.toutes : mots.titre}</p>
           <div style={{ marginTop: 18 }}>
             <Anneau parts={etats.map((e) => ({ cle: e.etat, n: e.n, couleur: TEINTES_ETAT[e.etat] }))} libelles={{ ...mots.etapes, annulee: mots.etats.annulee }}
-              total={liste.length} sousTitre={t.auTotal} />
+              total={liste.length} sousTitre={t.auTotal} lang={lang} />
           </div>
         </div>
       </div>
@@ -188,6 +196,15 @@ const STYLE = (a: string) => `
   .tdbCarte, .tdbBloc { background: #ffffff; border: 1px solid #e8eaee; border-radius: 20px; padding: 22px 22px 20px;
     box-shadow: 0 1px 0 rgba(17,24,39,.03), 0 18px 40px -34px rgba(17,24,39,.35); transition: transform .2s ease, box-shadow .2s ease }
   .tdbCarte:hover { transform: translateY(-3px); box-shadow: 0 24px 40px -30px color-mix(in srgb, ${a} 60%, #000) }
+  .tdbCarte, .tdbBloc, .tdbSombre { animation: tdbMonte .6s cubic-bezier(.22,.8,.3,1) both }
+  .tdbRangee > :nth-child(2) { animation-delay: 120ms }
+  @keyframes tdbMonte { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+  .tdbTendance { font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none; padding: 3px 8px; border-radius: 999px; color: #6b7280; background: #f3f4f6 }
+  .tdbTendance.haut { color: #15803d; background: #dcfce7 }
+  .tdbTendance.bas { color: #b91c1c; background: #fee2e2 }
+  .tdbSombre .tdbReflet { position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.10) 45%, transparent 60%);
+    transform: translateX(-100%); animation: tdbReflet 2.4s ease 0.6s 1 forwards; pointer-events: none }
+  @keyframes tdbReflet { to { transform: translateX(100%) } }
   .tdbCarteTete { display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #374151 }
   .tdbIc { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px;
     color: ${a}; background: color-mix(in srgb, ${a} 10%, #ffffff) }

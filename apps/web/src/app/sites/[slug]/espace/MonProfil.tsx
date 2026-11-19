@@ -53,6 +53,7 @@ export type MotsProfil = {
   changerMotDePasse: string
   courrielEnvoye: string
   coordonnees: string; nom: string; telephone: string
+  modifier: string; annuler: string; membreDepuis: string; ong: string; nonRenseigne: string; courriel: string
   supprimerTitre: string; supprimerTexte: string; supprimerBouton: string; supprimerConfirmer: string; supprime: string
 }
 
@@ -69,6 +70,9 @@ export default function MonProfil({
   const [etat, setEtat] = useState<'repos' | 'envoi' | 'fait' | 'erreur'>('repos')
   const [message, setMessage] = useState<string | null>(null)
   const [courrielEnvoye, setCourrielEnvoye] = useState(false)
+  // CPA, 2026-11-19 — les coordonnées se LISENT d'abord ; « Modifier » ouvre le formulaire.
+  const [edition, setEdition] = useState(false)
+  const [typeClient, setTypeClient] = useState<string | null>(null)
 
   const jeton = useCallback(async () => {
     const { data } = await supabase.auth.getSession()
@@ -89,6 +93,7 @@ export default function MonProfil({
       if (!encoreLa()) return
       const c = (d.compte ?? null) as Compte | null
       setCompte(c)
+      setTypeClient(typeof d.typeClient === 'string' ? d.typeClient : null)
       setOrganisation(c?.organisation ?? '')
       setNom(c?.nom ?? '')
       setTelephone(c?.telephone ?? '')
@@ -123,7 +128,7 @@ export default function MonProfil({
       // ON RELIT CE QUE LA ROUTE A RENDU, jamais ce qu'on a envoyé.
       const c = (d.compte ?? null) as Compte | null
       setCompte(c); setOrganisation(c?.organisation ?? ''); setNom(c?.nom ?? ''); setTelephone(c?.telephone ?? '')
-      setEtat('fait')
+      setEtat('fait'); setEdition(false)
     } catch { setEtat('erreur'); setMessage(mots.refus) }
   }
 
@@ -131,11 +136,6 @@ export default function MonProfil({
     width: '100%', maxWidth: 420, padding: '12px 14px', fontSize: 16, marginTop: 6,
     border: '1px solid #d9d9d9', borderRadius: 10, background: '#fff', color: '#111',
   }
-  const ligne = (cle: string, valeur: React.ReactNode) => (
-    <p style={{ margin: '0 0 10px', fontSize: 15.5, lineHeight: 1.6 }}>
-      <span style={{ opacity: 0.6 }}>{cle} : </span>{valeur}
-    </p>
-  )
 
   if (refus) return <p role="alert" style={{ color: '#9b1c1c' }}>{mots.refus}</p>
   if (!compte) return <p style={{ opacity: 0.6 }}>{mots.chargement}</p>
@@ -160,49 +160,96 @@ export default function MonProfil({
     } catch { setMessageSuppr(mots.refus); setSuppression('repos') }
   }
 
+  const qualite = compte.role === 'structure' && typeClient === 'ong' ? mots.ong : (mots.roles[compte.role] ?? compte.role)
+  const motsNom = (compte.nom || compte.organisation || '?').trim().split(/\s+/).filter(Boolean)
+  const initiales = ((motsNom[0]?.[0] ?? '?') + (motsNom.length > 1 ? motsNom[motsNom.length - 1][0] : '')).toUpperCase()
+  const depuis = (() => { try { return new Date(compte.cree_le).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) } catch { return '' } })()
+  const valeur = (v: string | null | undefined) => v?.trim() ? v : <span style={{ color: '#9ca3af' }}>{mots.nonRenseigne}</span>
+
   return (
-    <div>
-      <section style={{ padding: '20px 22px', border: '1px solid #e6e6e6', borderRadius: 14, background: '#fff', marginBottom: 22 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 14px' }}>{mots.identite}</h2>
-        {ligne(mots.role, mots.roles[compte.role] ?? compte.role)}
-        {ligne(mots.etat, <strong style={{ color: primary }}>{mots.etats[compte.etat] ?? compte.etat}</strong>)}
-        {compte.reference && ligne(mots.reference, <code style={{ fontFamily: 'ui-monospace, monospace' }}>{compte.reference}</code>)}
-        {ligne('Courriel', compte.email)}
+    <div className="monProfil">
+      <style>{`
+        .monProfil .pCarte { border: 1px solid #e8eaee; border-radius: 20px; background: #fff; padding: 22px 24px; margin-bottom: 18px;
+          box-shadow: 0 18px 40px -34px rgba(17,24,39,.35) }
+        .monProfil .pTete { display: flex; align-items: center; gap: 16px; flex-wrap: wrap }
+        .monProfil .pAvatar { width: 64px; height: 64px; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center;
+          font-size: 22px; font-weight: 800; color: #fff; background: linear-gradient(140deg, ${primary}, color-mix(in srgb, ${primary} 55%, #22c55e)) }
+        .monProfil .pNom { margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -0.01em }
+        .monProfil .pSous { margin: 2px 0 0; color: #4b5563; font-size: 14.5px }
+        .monProfil .pEtat { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px;
+          font-size: 12.5px; font-weight: 700; color: #166534; background: #dcfce7 }
+        .monProfil .pGrille { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 18px }
+        .monProfil .pInfo { padding: 12px 14px; border-radius: 14px; background: #f8f9fb; border: 1px solid #eef0f3 }
+        .monProfil .pInfo small { display: block; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #6b7280; margin-bottom: 4px }
+        .monProfil .pInfo span { font-size: 15px; overflow-wrap: anywhere }
+        .monProfil .pEnTete { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 4px }
+        .monProfil .pBouton { padding: 9px 16px; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: 14px;
+          background: transparent; color: ${primary}; border: 1px solid ${primary}; transition: background .18s ease, color .18s ease, transform .18s ease }
+        .monProfil .pBouton:hover { background: ${primary}; color: #fff; transform: translateY(-1px) }
+        .monProfil .pForm { animation: pOuvre .32s cubic-bezier(.22,.8,.3,1) both }
+        @keyframes pOuvre { from { opacity: 0; transform: translateY(-6px) } to { opacity: 1; transform: none } }
+        @media (prefers-reduced-motion: reduce) { .monProfil .pForm { animation: none } .monProfil .pBouton { transition: none } }
+      `}</style>
+
+      <section className="pCarte">
+        <div className="pTete">
+          <span className="pAvatar" aria-hidden>{initiales}</span>
+          <div style={{ minWidth: 0 }}>
+            <h2 className="pNom">{compte.nom || compte.organisation || compte.email}</h2>
+            <p className="pSous">{compte.organisation}{compte.organisation ? ' · ' : ''}{qualite}</p>
+          </div>
+          <span className="pEtat" style={compte.etat === 'actif' ? undefined : { color: '#9b1c1c', background: '#fee2e2' }}>
+            {mots.etat} : {mots.etats[compte.etat] ?? compte.etat}
+          </span>
+        </div>
+        <div className="pGrille">
+          <div className="pInfo"><small>{mots.courriel}</small><span>{compte.email}</span></div>
+          {depuis && <div className="pInfo"><small>{mots.membreDepuis}</small><span>{depuis}</span></div>}
+          {compte.reference && <div className="pInfo"><small>{mots.reference}</small><span style={{ fontFamily: 'ui-monospace, monospace' }}>{compte.reference}</span></div>}
+        </div>
       </section>
 
-      <section style={{ padding: '20px 22px', border: '1px solid #e6e6e6', borderRadius: 14, background: '#fff', marginBottom: 22 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 6px' }}>{mots.coordonnees}</h2>
-        {modifiable ? (
-          <form onSubmit={enregistrer}>
-            {([[mots.nom, nom, setNom, 'name', 'text'], [mots.organisation, organisation, setOrganisation, 'organization', 'text'], [mots.telephone, telephone, setTelephone, 'tel', 'tel']] as const).map(([libelle, valeur, poser, auto, type]) => (
+      <section className="pCarte">
+        <div className="pEnTete">
+          <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{mots.coordonnees}</h2>
+          {modifiable && !edition && (
+            <button type="button" className="pBouton" onClick={() => { setEdition(true); setEtat('repos'); setMessage(null) }}>{mots.modifier}</button>
+          )}
+        </div>
+        {etat === 'fait' && !edition && <p role="status" style={{ color: '#16794a', fontSize: 14, margin: '8px 0 0' }}>{mots.enregistre}</p>}
+        {!modifiable && <p style={{ margin: '8px 0 0', fontSize: 14, opacity: 0.7, lineHeight: 1.6 }}>{mots.figee}</p>}
+        {!edition ? (
+          <div className="pGrille">
+            <div className="pInfo"><small>{mots.nom}</small><span>{valeur(compte.nom)}</span></div>
+            <div className="pInfo"><small>{mots.organisation}</small><span>{valeur(compte.organisation)}</span></div>
+            <div className="pInfo"><small>{mots.telephone}</small><span>{valeur(compte.telephone)}</span></div>
+          </div>
+        ) : (
+          <form onSubmit={enregistrer} className="pForm">
+            {([[mots.nom, nom, setNom, 'name', 'text'], [mots.organisation, organisation, setOrganisation, 'organization', 'text'], [mots.telephone, telephone, setTelephone, 'tel', 'tel']] as const).map(([libelle, v, poser, auto, type]) => (
               <label key={libelle} style={{ display: 'block', marginTop: 12, fontSize: 14, fontWeight: 600 }}>
                 {libelle}
-                <input type={type} autoComplete={auto} required={auto === 'organization'} minLength={2} value={valeur} style={{ ...champ, display: 'block' }}
+                <input type={type} autoComplete={auto} required={auto === 'organization'} minLength={2} value={v} style={{ ...champ, display: 'block' }}
                   onChange={(e) => { poser(e.target.value); if (etat !== 'repos') setEtat('repos') }} />
               </label>
             ))}
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: 16, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <button type="submit" disabled={etat === 'envoi'} style={{
                 padding: '11px 20px', borderRadius: 999, border: 'none', cursor: 'pointer',
-                fontWeight: 600, fontSize: 14.5, background: primary, color: '#fff',
-                opacity: etat === 'envoi' ? 0.7 : 1,
+                fontWeight: 700, fontSize: 14.5, background: primary, color: '#fff', opacity: etat === 'envoi' ? 0.7 : 1,
               }}>{etat === 'envoi' ? mots.enregistrement : mots.enregistrer}</button>
-              {etat === 'fait' && <span style={{ marginInlineStart: 12, color: '#16794a', fontSize: 14 }}>{mots.enregistre}</span>}
+              <button type="button" onClick={() => { setEdition(false); setNom(compte.nom ?? ''); setOrganisation(compte.organisation ?? ''); setTelephone(compte.telephone ?? ''); setMessage(null) }}
+                style={{ padding: '11px 18px', borderRadius: 999, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: 14.5 }}>
+                {mots.annuler}
+              </button>
             </div>
             {message && <p role="alert" style={{ color: '#9b1c1c', fontSize: 14, marginTop: 12, lineHeight: 1.55 }}>{message}</p>}
           </form>
-        ) : (
-          <>
-            <p style={{ margin: '0 0 8px', fontSize: 15.5 }}>{compte.organisation || '—'}</p>
-            {/* ON DIT POURQUOI C'EST FIGÉ. Un champ absent sans explication se
-                lit comme une panne ; la phrase dit que c'est une décision. */}
-            <p style={{ margin: 0, fontSize: 14, opacity: 0.7, lineHeight: 1.6 }}>{mots.figee}</p>
-          </>
         )}
       </section>
 
-      <section style={{ padding: '20px 22px', border: '1px solid #e6e6e6', borderRadius: 14, background: '#fff' }}>
-        <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 10px' }}>{mots.motDePasse}</h2>
+      <section className="pCarte">
+        <h2 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 12px' }}>{mots.motDePasse}</h2>
         {courrielEnvoye ? (
           <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6 }}>{mots.courrielEnvoye}</p>
         ) : (
@@ -226,8 +273,8 @@ export default function MonProfil({
       </section>
 
       {/* LOT 19 — « ce n'est pas une prison » : la personne peut partir. */}
-      <section style={{ padding: '20px 22px', border: '1px solid #f1d5d5', borderRadius: 14, background: '#fff', marginTop: 22 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 8px' }}>{mots.supprimerTitre}</h2>
+      <section className="pCarte" style={{ borderColor: '#f1d5d5' }}>
+        <h2 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px' }}>{mots.supprimerTitre}</h2>
         <p style={{ margin: '0 0 14px', fontSize: 14.5, opacity: 0.75, lineHeight: 1.6 }}>{mots.supprimerTexte}</p>
         {suppression === 'fait' ? <p role="status">{mots.supprime}</p> : (
           <button type="button" onClick={() => void supprimer()} disabled={suppression === 'envoi'} style={{
