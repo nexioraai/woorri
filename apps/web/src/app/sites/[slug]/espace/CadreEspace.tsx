@@ -5,6 +5,7 @@ import { LogOut, Building2, HeartHandshake, ShieldCheck, Truck } from 'lucide-re
 import { supabase } from '@/lib/supabase'
 import { motsEspace } from '../espace-client/motsEspace'
 import { navigationEspace, estActif, ICONES } from './navigationEspace'
+import { lireAvecJeton } from './lectureEspace'
 
 // ============================================================================
 // LE CADRE DU TABLEAU DE BORD (CPA, 2026-11-19).
@@ -59,26 +60,25 @@ export default function CadreEspace({
       const j = (await supabase.auth.getSession()).data.session?.access_token
       if (!vivant) return
       if (!j) { setEtat('sans'); return }
+      const api = `/api/sites/${encodeURIComponent(slug)}`
       try {
-        const r = await fetch(`/api/sites/${encodeURIComponent(slug)}/mon-compte`, { headers: { Authorization: `Bearer ${j}` }, cache: 'no-store' })
+        // EN PARALLÈLE : le compte, et (pour un client) ses commandes. La
+        // seconde lecture est partagée avec le tableau de bord (lectureEspace).
+        const [r, rc] = await Promise.all([lireAvecJeton(`${api}/mon-compte`, j), lireAvecJeton(`${api}/mes-commandes`, j)])
         if (!vivant) return
-        const d = r.ok ? await r.json() : null
-        if (!vivant) return
+        const d = r.ok ? r.d : null
         const c = (d?.compte ?? null) as Compte | null
         if (!c || c.etat !== 'actif') { setEtat('sans'); return }
-        const g = d.gestionClients === true
-        setCompte(c); setGestion(g); setTypeClient(typeof d.typeClient === 'string' ? d.typeClient : null)
+        const g = d?.gestionClients === true
+        setCompte(c); setGestion(g); setTypeClient(typeof d?.typeClient === 'string' ? (d.typeClient as string) : null)
         setEtat('pret')
         // LES COMPTEURS de la barre : ses commandes (client), celles à
         // traiter (DDM). Un compteur qui ne se lit pas n'est pas affiché.
         const n: Record<string, number> = {}
-        if (c.role === 'structure') {
-          const rc = await fetch(`/api/sites/${encodeURIComponent(slug)}/mes-commandes`, { headers: { Authorization: `Bearer ${j}` }, cache: 'no-store' })
-          if (rc.ok) n['mes-commandes'] = ((await rc.json()).commandes ?? []).length
-        }
+        if (c.role === 'structure' && rc.ok) n['mes-commandes'] = ((rc.d?.commandes ?? []) as unknown[]).length
         if (g) {
-          const rg = await fetch(`/api/sites/${encodeURIComponent(slug)}/commandes`, { headers: { Authorization: `Bearer ${j}` }, cache: 'no-store' })
-          if (rg.ok) n['gestion-commandes'] = ((await rg.json()).commandes ?? []).filter((x: { etat: string }) => x.etat === 'recue').length
+          const rg = await lireAvecJeton(`${api}/commandes`, j)
+          if (rg.ok) n['gestion-commandes'] = ((rg.d?.commandes ?? []) as { etat: string }[]).filter((x) => x.etat === 'recue').length
         }
         if (vivant) setCompteurs(n)
       } catch { if (vivant) setEtat('sans') }

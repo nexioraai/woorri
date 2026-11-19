@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Clock, Truck, ShoppingBag, Package, Inbox, Users, ArrowRight, CirclePlus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { lireAvecJeton } from './lectureEspace'
 import type { MotsCommandes } from './motsCommandes'
 import { MiniBarres, CourbeAire, BarresMois, Anneau, BarresHorizontales } from './Graphiques'
 import {
@@ -40,10 +41,10 @@ export default function TableauCommandes({
       const j = (await supabase.auth.getSession()).data.session?.access_token
       if (!j || !vivant) return
       try {
-        const r = await fetch(`/api/sites/${encodeURIComponent(slug)}/${regard === 'client' ? 'mes-commandes' : 'commandes'}`, { headers: { Authorization: `Bearer ${j}` }, cache: 'no-store' })
-        if (!r.ok || !vivant) return
-        const d = await r.json()
-        if (!vivant) return
+        // LA MÊME LECTURE que la barre latérale : déjà partie, souvent déjà là.
+        const r = await lireAvecJeton(`/api/sites/${encodeURIComponent(slug)}/${regard === 'client' ? 'mes-commandes' : 'commandes'}`, j)
+        if (!r.ok || !vivant || !r.d) return
+        const d = r.d
         if (d.ouvert === false) { setFerme(true); return }
         setCs((d.commandes ?? []) as CommandeStat[])
       } catch { /* le tableau reste en chargement ; la navigation reste là */ }
@@ -62,7 +63,7 @@ export default function TableauCommandes({
   const etats = repartitionEtats(liste)
   const n = (f: (c: CommandeStat) => boolean) => liste.filter(f).length
   const totalUnites = liste.filter((c) => c.etat !== 'annulee').reduce((t2, c) => t2 + c.lignes.reduce((s, l) => s + (Number(l.quantite) || 0), 0), 0)
-  const v = (x: number) => (cs ? x.toLocaleString(lang ?? undefined) : '…')
+  const v = (x: number): React.ReactNode => (cs ? x.toLocaleString(lang ?? undefined) : <span className="tdbAttente" aria-label="…" />)
 
   const cartes = regard === 'client'
     ? [
@@ -99,9 +100,9 @@ export default function TableauCommandes({
       <div className="tdbRangee">
         <div className="tdbSombre">
           <span className="tdbSombreTitre">{t.ceMois}</span>
-          <div className="tdbSombreChiffre">{cs ? ceMois : '…'}</div>
+          <div className="tdbSombreChiffre">{cs ? ceMois : <span className="tdbAttente tdbAttenteClair" />}</div>
           <span className="tdbSombreSous">{v(unites[MOIS - 1])} {t.lignes}</span>
-          <div className="tdbSombreLigne"><span>{t.moisPrecedent}</span><strong>{cs ? avant : '…'}</strong></div>
+          <div className="tdbSombreLigne"><span>{t.moisPrecedent}</span><strong>{cs ? avant : '—'}</strong></div>
           <a className="tdbSombreBouton" href={regard === 'client' ? `${base}/mes-commandes#nouvelle` : lienListe}>
             {regard === 'client' ? <CirclePlus size={18} aria-hidden /> : <Inbox size={18} aria-hidden />}
             <span>{regard === 'client' ? mots.tableau.passer : t.traiter}</span>
@@ -111,7 +112,7 @@ export default function TableauCommandes({
         <div className="tdbBloc">
           <h3>{t.evolution}</h3>
           <p className="tdbBlocSous">{t.evolutionSous}</p>
-          <div className="tdbGrand">{cs ? liste.length : '…'}</div>
+          <div className="tdbGrand">{cs ? liste.length : <span className="tdbAttente" />}</div>
           <CourbeAire valeurs={parMois} libelles={libMois} couleur={accent} titre={t.evolution} />
         </div>
       </div>
@@ -210,6 +211,10 @@ const STYLE = (a: string) => `
   .tdbBlocSous { margin: 2px 0 0; font-size: 14px; color: #6b7280 }
   .tdbGrand { font-size: 30px; font-weight: 800; margin: 12px 0 10px; color: #111827; font-variant-numeric: tabular-nums }
   .tdbListe { padding: 0; overflow: hidden }
+  .tdbAttente { display: inline-block; width: 64px; height: .8em; border-radius: 8px; vertical-align: middle;
+    background: linear-gradient(90deg, #eef0f3, #f8f9fb, #eef0f3); background-size: 200% 100%; animation: tdbOnde 1.2s linear infinite }
+  .tdbAttenteClair { background: linear-gradient(90deg, rgba(255,255,255,.12), rgba(255,255,255,.28), rgba(255,255,255,.12)); background-size: 200% 100% }
+  @keyframes tdbOnde { from { background-position: 200% 0 } to { background-position: -200% 0 } }
   .tdbListeTete { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 14px; border-bottom: 1px solid #eef0f3 }
   .tdbListeTete a { color: ${a}; font-weight: 600; font-size: 14px; text-decoration: none }
   .tdbLigne { display: flex; align-items: center; gap: 14px; padding: 14px 24px; color: inherit; text-decoration: none; border-bottom: 1px solid #f1f2f5; transition: background .15s ease }
@@ -229,5 +234,5 @@ const STYLE = (a: string) => `
     .tdbLigne { padding: 12px 16px }
   }
   @media (max-width: 420px) { .tdbCartes { grid-template-columns: 1fr 1fr; gap: 10px } .tdbCarte { padding: 16px } .tdbChiffre { font-size: 26px } }
-  @media (prefers-reduced-motion: reduce) { .tdbCarte, .tdbSombreBouton, .tdbLigne { transition: none } .tdbCarte:hover, .tdbSombreBouton:hover { transform: none } }
+  @media (prefers-reduced-motion: reduce) { .tdbAttente { animation: none } .tdbCarte, .tdbSombreBouton, .tdbLigne { transition: none } .tdbCarte:hover, .tdbSombreBouton:hover { transform: none } }
 `
