@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { DOMAINE_PUBLIC } from '@/lib/apps/sous-domaine';
 import { supabase as supabaseAnon } from '@/lib/supabase';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { countsAsRevenue } from '@/lib/shop/orderStatusMachine';
@@ -23,6 +24,7 @@ export async function GET(req: NextRequest) {
     { data: recentCrons },
     { data: recentAnomalies },
     { data: toPayOrders },
+    { data: nomsPublics },
   ] = await Promise.all([
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
     // M2-218 — LES ARCHIVÉS NE SONT PLUS COMPTÉS NI LISTÉS. « Supprimer »
@@ -32,12 +34,14 @@ export async function GET(req: NextRequest) {
     // affichés comme vivants.
     supabaseAdmin.from('sites').select('*', { count: 'exact', head: true }).is('archived_at', null),
     supabaseAdmin.from('sites').select('*', { count: 'exact', head: true }).eq('published', true).is('archived_at', null),
-    supabaseAdmin.from('sites').select('mode, dropship_type, published, owner_email, name, slug, created_at').is('archived_at', null),
+    supabaseAdmin.from('sites').select('mode, dropship_type, published, owner_email, name, slug, created_at, custom_domain').is('archived_at', null),
     supabaseAdmin.from('shop_orders').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('shop_orders').select('nexiora_commission, supplier_cost, total, status'),
     supabaseAdmin.from('cron_runs').select('*').order('started_at', { ascending: false }).limit(50),
     supabaseAdmin.from('checkout_anomalies').select('*').order('created_at', { ascending: false }).limit(100),
     supabaseAdmin.from('shop_orders').select('id, cj_order_id, country_code, customer_name, shipping_amount, created_at').eq('cj_pay_status', 'awaiting_manual_payment').order('created_at', { ascending: false }).limit(50),
+    // L'ADRESSE PUBLIQUE DE CHAQUE SITE (2026-11-19) : la plus récente gagne.
+    supabaseAdmin.from('sites_sous_domaines').select('nom, site_slug, cree_le').order('cree_le', { ascending: true }),
   ]);
 
   // Revenue calculations
@@ -56,13 +60,24 @@ export async function GET(req: NextRequest) {
   const sites = allSites || [];
   const uniqueOwners = new Set(sites.map((s: any) => s.owner_email)).size;
 
+  // L'adresse deribfy.app en service : la plus récente des noms du site
+  // (parcourus du plus ancien au plus récent, le dernier écrase).
+  const adresseParSlug = new Map<string, string>();
+  for (const n of (nomsPublics || []) as { nom: string; site_slug: string }[]) {
+    adresseParSlug.set(n.site_slug, `https://${n.nom}.${DOMAINE_PUBLIC}`);
+  }
+
   const modeMap: Record<string, { total: number; published: number; sites: any[] }> = {};
   for (const s of sites) {
     const key = s.mode === 3 ? `3-${s.dropship_type || 'reseller'}` : String(s.mode);
     if (!modeMap[key]) modeMap[key] = { total: 0, published: 0, sites: [] };
     modeMap[key].total++;
     if (s.published) modeMap[key].published++;
-    modeMap[key].sites.push({ name: s.name, slug: s.slug, published: s.published, owner_email: s.owner_email, created_at: s.created_at });
+    modeMap[key].sites.push({
+      name: s.name, slug: s.slug, published: s.published, owner_email: s.owner_email, created_at: s.created_at,
+      adresse: adresseParSlug.get(s.slug) ?? null,
+      domaine: s.custom_domain ? `https://${s.custom_domain}` : null,
+    });
   }
 
   return NextResponse.json({

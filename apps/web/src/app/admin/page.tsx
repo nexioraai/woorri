@@ -41,6 +41,10 @@ interface SiteInfo {
   published: boolean;
   owner_email: string;
   created_at: string;
+  /** <nom>.deribfy.app, la plus récente ; null = aucune (2026-11-19). */
+  adresse: string | null;
+  /** Le domaine personnalisé du site, s'il en a un. */
+  domaine: string | null;
 }
 
 interface Stats {
@@ -345,7 +349,21 @@ export default function AdminDashboard() {
                   <tbody>
                     {sites.map((s: SiteInfo) => (
                       <tr key={s.slug} className="border-b border-white/10/50">
-                        <td className="py-2 pr-4 font-medium">{s.name}</td>
+                        <td className="py-2 pr-4 font-medium">
+                          {s.name}
+                          {/* L'ADRESSE RÉELLE (2026-11-19) : celle qui répond, ou le dire. */}
+                          <div className="mt-0.5 text-xs font-normal">
+                            {s.adresse === null && s.domaine === null ? (
+                              <span className="text-amber-300/80">Aucune adresse publique</span>
+                            ) : (
+                              [s.adresse, s.domaine].filter((u): u is string => u !== null).map((u) => (
+                                <a key={u} href={u} target="_blank" rel="noopener noreferrer" className="mr-3 text-white/50 hover:text-white underline-offset-2 hover:underline">
+                                  {new URL(u).hostname}
+                                </a>
+                              ))
+                            )}
+                          </div>
+                        </td>
                         <td className="py-2 pr-4 text-white/50 text-xs">{s.owner_email}</td>
                         <td className="py-2 pr-4 text-white/50 text-xs">{new Date(s.created_at).toLocaleDateString("fr-CA")}</td>
                         <td className="py-2">
@@ -361,12 +379,24 @@ export default function AdminDashboard() {
                                 domaine personnalisé. Rien de nouveau n'est
                                 créé — c'est le même chemin, affiché ici
                                 aussi dès que le site est en ligne. */}
+                            {/* LE GLOBE OUVRE LE SITE (2026-11-19) — il menait à la page
+                                « Domaine personnalisé ». Celle-ci reste à côté, nommée. */}
+                            {(s.adresse ?? s.domaine) !== null ? (
+                              <a
+                                href={(s.adresse ?? s.domaine) as string}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="ml-3 inline-flex items-center justify-center px-2.5 py-1 rounded-lg text-xs font-semibold border border-white/15 text-white/70 hover:bg-white/5 transition align-middle"
+                                title="Ouvrir le site"
+                              >
+                                <Globe className="w-3.5 h-3.5" />
+                              </a>
+                            ) : null}
                             <Link
                               href={`/domaine/${s.slug}`}
-                              className="ml-3 inline-flex items-center justify-center px-2.5 py-1 rounded-lg text-xs font-semibold border border-white/15 text-white/70 hover:bg-white/5 transition align-middle"
-                              title="Domaine personnalisé"
+                              className="ml-2 text-xs text-white/40 hover:text-white align-middle"
                             >
-                              <Globe className="w-3.5 h-3.5" />
+                              Domaine…
                             </Link>
                             <button
                               onClick={() => basculerPublication(s.slug, false)}

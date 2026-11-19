@@ -172,6 +172,9 @@ Les espèces ne marchent qu'avec des gens que le propriétaire peut rencontrer :
 
 ## Hors chantier, consigné
 
+- **À renommer quand on touchera au registre des paiements** (propriétaire, 2026-11-19) : `sites.subscription_status = 'offline'` veut dire « **en ligne, payé hors Stripe** » — écrit par le bouton admin `site-publish-override` (mesuré : 7 sites, journal `checkout_anomalies`). Le nom dit le contraire de ce qu'il fait ; il fera prendre une mauvaise décision à quelqu'un un jour.
+- **Ne pas corriger sans le redemander** : le titre du site « AlloufBusines » (un seul s) est probablement une faute de frappe ; son adresse sera `alloufbusiness.deribfy.app`, comme son domaine.
+
 - **Quand on reprendra le paiement des sites et des domaines** (décision 7) : l'achat de domaine (`api/domains/purchase`) prend la première fiche Stripe trouvée par adresse — avec plusieurs fiches pour une même personne, laquelle est arbitraire. Aucun client n'en souffre aujourd'hui (une seule personne a plusieurs fiches : le propriétaire).
 
 ## Ce qui reste à TOI avant la première activation
