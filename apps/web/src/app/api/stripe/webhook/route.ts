@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { sansQuota } from '@/lib/admin-emails';
 import { supabaseAdmin as supabase, supabaseAdmin } from '@/lib/supabase-admin';
 import { getStripe } from '@/lib/stripe';
 import { handlePaidCheckout } from '@/lib/shop/handlePaidCheckout';
@@ -191,13 +192,38 @@ export async function POST(req: Request) {
           break;
         }
 
-        await supabase
+        // ── LES SITES DU PROPRIÉTAIRE NE TOMBENT PAS (2026-11-19).
+        //
+        // Annuler un abonnement dépubliait TOUS les sites du client Stripe. Le
+        // propriétaire de Deribfy annule son propre abonnement de test (15 CAD,
+        // le seul abonné réel) : son site `yia-global-commodities` serait parti
+        // hors ligne. Les comptes exemptés (`sansQuota`) gardent leurs sites en
+        // ligne et leur état intact ; tous les autres sont dépubliés comme avant.
+        //
+        // UNE LECTURE QUI ÉCHOUE NE DÉPUBLIE RIEN AU HASARD : on lève, la route
+        // répond 500, et Stripe renvoie l'événement plus tard.
+        // L'IDENTITÉ VIENT DU COMPTE (`owner_id` → auth), jamais de la colonne
+        // `owner_email` (DETTE 6a) : c'est l'adresse du compte authentifié qui
+        // dit s'il est exempté.
+        const { data: lies, error: erreurLecture } = await supabase
           .from('sites')
-          .update({
-            published: false,
-            subscription_status: 'canceled',
-          })
+          .select('id, owner_id')
           .eq('stripe_customer_id', customerId);
+        if (erreurLecture) throw new Error('webhook: sites du client illisibles — ' + erreurLecture.message);
+        for (const site of (lies ?? []) as { id: string; owner_id: string | null }[]) {
+          if (site.owner_id) {
+            const { data: compte, error: erreurCompte } = await supabaseAdmin.auth.admin.getUserById(site.owner_id);
+            if (erreurCompte) throw new Error('webhook: compte du propriétaire illisible — ' + erreurCompte.message);
+            if (sansQuota(compte.user?.email)) continue;
+          }
+          await supabase
+            .from('sites')
+            .update({
+              published: false,
+              subscription_status: 'canceled',
+            })
+            .eq('id', site.id);
+        }
         break;
       }
     }

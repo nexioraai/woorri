@@ -66,6 +66,10 @@ function makeSupabaseMock(lignes: Record<string, unknown> = {}) {
       if (!brut || typeof brut !== 'object') return { data: brut ?? null, error: null };
       // Projection honoree, comme PostgREST.
       const liste = colonnes.split(',').map((c) => c.trim()).filter(Boolean);
+      // Plusieurs lignes : la même projection, ligne par ligne (2026-11-19).
+      if (Array.isArray(brut)) {
+        return { data: brut.map((l: Record<string, unknown>) => (!liste.length || liste.includes('*') ? l : Object.fromEntries(liste.filter((c) => c in l).map((c) => [c, l[c]])))), error: null };
+      }
       if (!liste.length || liste.includes('*')) return { data: brut, error: null };
       const out: Record<string, unknown> = {};
       for (const c of liste) if (c in (brut as Record<string, unknown>)) out[c] = (brut as Record<string, unknown>)[c];
@@ -76,7 +80,10 @@ function makeSupabaseMock(lignes: Record<string, unknown> = {}) {
     b.then = (resolve: any) => resolve(rendu());
     return b;
   });
-  return { supabaseAdmin: { from }, updateCalls, selects };
+  // Les comptes : `owner_id` → adresse, comme `auth.admin.getUserById`.
+  const comptes: Record<string, string> = { 'u-proprio': 'issayamiyoussouf@gmail.com', 'u-marchand': 'marchand@example.com' };
+  const auth = { admin: { getUserById: async (id: string) => ({ data: { user: id in comptes ? { id, email: comptes[id] } : null }, error: null }) } };
+  return { supabaseAdmin: { from, auth }, updateCalls, selects };
 }
 
 let currentMock: ReturnType<typeof makeSupabaseMock>;
@@ -305,10 +312,28 @@ describe('F-2 — annulation d’un abonnement domaine', () => {
       type: 'customer.subscription.deleted',
       data: { object: { customer: 'cus_1', metadata: {} } },
     });
-    currentMock = makeSupabaseMock();
+    currentMock = makeSupabaseMock({ sites: [{ id: 'site-1', owner_id: 'u-marchand' }] });
         await appelerWebhook();
     expect(currentMock.updateCalls.some((u) => u.table === 'sites' && u.payload.published === false)).toBe(true);
     expect(updateAutoRenewMock).not.toHaveBeenCalled();
+  });
+
+  // ── 2026-11-19 : le propriétaire annule son propre abonnement ; son site reste en ligne.
+  it('les sites d’un compte exempté ne sont JAMAIS dépubliés ; les autres du même client, si', async () => {
+    constructEventMock.mockReturnValue({
+      type: 'customer.subscription.deleted',
+      data: { object: { customer: 'cus_proprio', metadata: {} } },
+    });
+    currentMock = makeSupabaseMock({
+      sites: [
+        { id: 'site-proprio', owner_id: 'u-proprio' },
+        { id: 'site-autre', owner_id: 'u-marchand' },
+      ],
+    });
+    const res = await appelerWebhook();
+    expect(res.status).toBe(200);
+    const depublies = currentMock.updateCalls.filter((u) => u.table === 'sites' && u.payload.published === false)
+    expect(depublies.map((u) => u.eqCalls)).toEqual([[['id', 'site-autre']]]);
   });
 
   it('ligne de domaine introuvable -> aucun appel registraire, aucune exception', async () => {
