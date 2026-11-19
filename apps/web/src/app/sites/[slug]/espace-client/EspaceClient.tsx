@@ -64,6 +64,7 @@ export type MotsEspace = {
   // LOT 11 — les trois pages de l'espace. Une page qu'aucun lien n'atteint
   // n'existe pas : c'est le defaut qui avait laisse `/appels-offres` hors du
   // rideau du telephone pendant deux jours.
+  mesCommandes: string
   mesDemandes: string
   mesReclamations: string
   mesDocuments: string
@@ -252,6 +253,9 @@ export default function EspaceClient({
             // LOT 19 — les trois écrans du FOURNISSEUR (dossier, préqualification,
             // consultations) ne s'affichent qu'à un fournisseur : une structure
             // sanitaire n'a ni dossier fournisseur ni offre à déposer.
+            // LES COMMANDES (CPA, 2026-11-19) : réservées au client — la structure
+            // sanitaire commande ; le fournisseur, lui, vend à la Centrale.
+            ...(compte.role === 'structure' ? [[`${base}/mes-commandes`, mots.mesCommandes]] as const : []),
             ...(compte.role === 'fournisseur' ? [
               [`${base}/mon-dossier`, mots.monDossier],
               [`${base}/ma-prequalification`, mots.maPrequalification],

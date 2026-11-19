@@ -135,6 +135,12 @@ export default async function FicheProduitPage({ params }: Props) {
           <Link href={`${base}/catalogue/commander`} style={{ color: accent, fontWeight: 600 }}>
             Voir la marche à suivre
           </Link>
+          {/* CPA, 2026-11-19 — une structure ayant un compte commande depuis
+              son espace client ; la ligne arrive pré-remplie avec ce produit. */}
+          {' · '}
+          <Link href={`${base}/mes-commandes?produit=${encodeURIComponent(p.denomination)}`} style={{ color: accent, fontWeight: 600 }}>
+            Commander depuis mon espace client
+          </Link>
         </p>
       </main>
     </div>
