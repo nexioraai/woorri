@@ -21,10 +21,21 @@ L'unité s'appelle **« modification »**, jamais « crédit » ni « jeton ». 
 1. **Une modification refusée ne compte pas.** Nous la payons au fournisseur, mais la facturer serait faire payer notre propre panne.
 2. **Le compteur se voit AVANT de cliquer** : « 3 modifications gratuites restantes » avant l'abonnement, « 37 modifications restantes ce mois-ci » après (50 par mois).
 3. **À zéro, l'application publiée RESTE EN LIGNE.** Elle ne peut plus être modifiée, c'est tout. On ne coupe jamais le commerce de quelqu'un parce qu'il a épuisé un quota.
-4. **Abonnement non renouvelé** — c'est une règle, pas un réglage. Voir `docs/ECHEANCES.md` :
-   - de 1 à 30 jours de retard, l'application reste en ligne ; seules les modifications s'arrêtent ; un rappel s'affiche au propriétaire seul ;
-   - après 30 jours, elle est retirée de la ligne, mais **ses données sont conservées au moins 90 jours** et reviennent intactes au paiement ;
-   - jamais de suppression sans préavis, jamais de perte de données pour un impayé.
+4. **Abonnement non renouvelé** — c'est une règle, pas un réglage (précisée par le propriétaire le 2026-11-19). Voir `docs/ECHEANCES.md` :
+   - **jour 1**, l'échéance passe sans paiement (avant Dary, il n'y a pas de prélèvement qui « échoue » : c'est l'activation manuelle qui n'arrive pas) : **les modifications s'arrêtent, l'application reste en ligne** ;
+   - **jour 27** : un avertissement ; **jour 29** : un deuxième avertissement — au propriétaire seul, jamais à ses clients ;
+   - **jour 30 : mise en pause.** L'adresse de l'application affiche une **page sobre** : « momentanément indisponible ». Pas une erreur, pas une publicité pour Deribfy ;
+   - **les données restent intactes 90 jours.** Il paie quand il veut pendant ces 90 jours et tout revient : **même adresse, mêmes données, même compte** ;
+   - **au 90e jour, un dernier avertissement, puis effacement.** L'export des données reste possible tout du long ;
+   - jamais d'effacement sans avertissement.
+
+   > **Ce qui change par rapport au 2026-11-18** : la règle disait « jamais de perte de données pour un impayé ». Elle prévoit désormais un effacement, annoncé, au bout des 90 jours.
+   >
+   > **À TRANCHER par le propriétaire** (rien n'est construit avant) :
+   > - **le 90e jour de quoi ?** De l'échéance (pause au jour 30, effacement au jour 90 : 60 jours en pause) ou de la mise en pause (effacement au jour 120 depuis l'échéance) ?
+   > - **« un dernier avertissement, puis effacement »** : le même jour ne laisse pas le temps de réagir. Avertir 7 jours avant l'effacement ?
+   >
+   > **Ce qui conditionne l'effacement** : l'export CSV (échéance du 2027-01-31) doit exister AVANT qu'un seul effacement soit possible — sinon « l'export reste possible tout du long » serait faux. Et une donnée effacée de la base survit encore 30 jours dans les sauvegardes chiffrées de la nuit (R2) : l'effacement n'est complet qu'à leur expiration.
 
 ## Pourquoi ces chiffres
 
