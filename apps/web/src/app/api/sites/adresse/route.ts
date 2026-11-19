@@ -29,8 +29,8 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { TABLE_GENERATIONS } from '@/lib/apps/journal'
-import { creerSousDomaine, nomValide, DOMAINE_PUBLIC } from '@/lib/apps/sous-domaine'
+import { nomValide, DOMAINE_PUBLIC } from '@/lib/apps/sous-domaine'
+import { adresseDuSite, attribuerNomSite } from '@/lib/sites/adresse-site'
 
 export const runtime = 'nodejs'
 
@@ -47,12 +47,9 @@ export async function GET(req: Request) {
   if (!slug) return NextResponse.json({ error: 'slug manquant' }, { status: 400 })
   const garde = await requireSiteOwner(req, slug)
   if (!garde.ok) return garde.response
-  const { data, error } = await supabaseAdmin
-    .from('sites_sous_domaines').select('nom').eq('site_slug', slug)
-    .order('nom', { ascending: true }).limit(1).maybeSingle()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  const nom = (data as { nom?: string } | null)?.nom
-  return NextResponse.json({ lien: nom ? `https://${nom}.${DOMAINE_PUBLIC}` : null })
+  // LA PLUS RÉCENTE (2026-11-19) : après un changement de nom, c'est la
+  // nouvelle qui s'affiche — l'ordre alphabétique montrait l'ancienne.
+  return NextResponse.json({ lien: await adresseDuSite(slug) })
 }
 
 export async function POST(req: Request) {
@@ -83,60 +80,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'site inconnu' }, { status: 404 })
   }
 
-  // ── LES COLLISIONS, TOUTES : un nom ne désigne qu'UNE œuvre.
-  //
-  //   · une autre entrée de la table des noms (sauf la sienne : republier
-  //     le même nom reste possible) ;
-  //   · le nom public d'une APPLICATION (le proxy sert les sites d'abord —
-  //     prendre le nom d'une app l'éclipserait) ;
-  //   · le slug brut d'un autre site (servi en ②).
-  // ── NE FILTREZ JAMAIS PAR STATUT SUR `publication_slug`. C'EST VOLONTAIRE.
-  //
-  // Une application SUPPRIMEE garde son nom : la ligne survit en PIERRE
-  // TOMBALE, et c'est elle qui tient la quarantaine (EP-308). Ajouter
-  // `.eq('statut', 'livree')` ici rendrait ce nom disponible pour un SITE —
-  // et les anciens liens de l'application resoudraient vers autre chose,
-  // sans que personne le voie. Un nom publie ne se recycle pas, meme entre
-  // deux produits de la maison.
-  const [parNom, parApp, parSlug] = await Promise.all([
-    supabaseAdmin.from('sites_sous_domaines').select('site_slug').eq('nom', nom).maybeSingle(),
-    supabaseAdmin.from(TABLE_GENERATIONS).select('id').eq('publication_slug', nom).maybeSingle(),
-    supabaseAdmin.from('sites').select('slug').eq('slug', nom).neq('slug', slug).maybeSingle(),
-  ])
-  if (parNom.data !== null && parNom.data.site_slug !== slug) {
-    return NextResponse.json({ error: `« ${nom} » est déjà pris par un autre site.` }, { status: 409 })
-  }
-  if (parApp.data !== null) {
-    return NextResponse.json({ error: `« ${nom} » est déjà pris par une application.` }, { status: 409 })
-  }
-  if (parSlug.data !== null) {
-    return NextResponse.json({ error: `« ${nom} » est déjà pris.` }, { status: 409 })
-  }
-
-  // ── LE SOUS-DOMAINE : DNS + Vercel, idempotent.
-  const clefs = {
-    cloudflareToken: process.env.CLOUDFLARE_API_TOKEN ?? '',
-    vercelToken: process.env.VERCEL_API_TOKEN ?? '',
-    vercelProjectId: process.env.VERCEL_PROJECT_ID ?? '',
-  }
-  if (Object.values(clefs).some((v) => v === '')) {
-    return NextResponse.json({ error: 'clés de sous-domaine absentes du serveur' }, { status: 500 })
-  }
-  const sd = await creerSousDomaine(nom, clefs)
-  if (!sd.ok) {
-    return NextResponse.json({ error: sd.erreur }, { status: 502 })
-  }
-
-  // ── LE MAPPING : un nom par site — republier remplace, jamais ne duplique.
-  const ecrit = await supabaseAdmin
-    .from('sites_sous_domaines')
-    .upsert({ nom, site_slug: slug }, { onConflict: 'nom' })
-  if (ecrit.error !== null) {
-    return NextResponse.json(
-      { error: 'adresse créée mais non enregistrée — réessayez' },
-      { status: 500 },
-    )
-  }
+  // ── LE NOM, LES COLLISIONS, LE DNS, LE MAPPING : une seule fonction,
+  //    la même que celle qui donne l'adresse à la publication (2026-11-19).
+  //    Les règles de collision sont décrites dans lib/sites/adresse-site.ts.
+  const a = await attribuerNomSite(slug, nom)
+  if (!a.ok) return NextResponse.json({ error: a.erreur }, { status: a.status })
 
   return NextResponse.json(
     { lien: `https://${nom}.${DOMAINE_PUBLIC}` },

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { logAnomaly } from '@/lib/anomaly';
+import { assurerAdresseSite } from '@/lib/sites/adresse-site';
 
 // ============================================================
 // M2-212 — MISE EN LIGNE HORS STRIPE (paiement comptant).
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
 
   const { data: site, error: findError } = await supabaseAdmin
     .from('sites')
-    .select('id, slug, published, archived_at, subscription_status, owner_email')
+    .select('id, slug, name, published, archived_at, subscription_status, owner_email')
     .eq('slug', slug)
     .maybeSingle();
   if (findError) return NextResponse.json({ error: findError.message }, { status: 500 });
@@ -91,5 +92,14 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ success: true, slug, published: publish });
+  // ── L'ADRESSE, À LA PUBLICATION (2026-11-19) : comme une application. Un
+  //    échec ne défait pas la mise en ligne — il est rendu et journalisé.
+  let adresse: string | null = null;
+  if (publish) {
+    const a = await assurerAdresseSite(slug, (site as { name?: string | null }).name ?? null);
+    if (a.ok) adresse = a.lien;
+    else await logAnomaly({ type: 'site_adresse_non_attribuee', severity: 'warning', siteId: (site as { id: string }).id, details: { slug, erreur: a.erreur } });
+  }
+
+  return NextResponse.json({ success: true, slug, published: publish, adresse });
 }

@@ -274,9 +274,15 @@ describe('EP-291 · le middleware et les routes', () => {
       /\.eq\(\s*['"]owner_email['"]/u,
     )
     expect(ADRESSE).toContain('nomValide(')
-    expect(ADRESSE, 'la collision avec une application n’est plus vérifiée').toContain(
+    // 2026-11-19 — LES COLLISIONS VIVENT DANS lib/sites/adresse-site.ts,
+    // partagées avec l'adresse donnée à la publication. La route doit
+    // l'appeler, et la bibliothèque doit vérifier l'application.
+    expect(ADRESSE, 'la route n’emploie plus la fonction partagée des collisions').toContain('attribuerNomSite(')
+    const ADRESSE_LIB = readFileSync(join(process.cwd(), 'src', 'lib', 'sites', 'adresse-site.ts'), 'utf8')
+    expect(ADRESSE_LIB, 'la collision avec une application n’est plus vérifiée').toContain(
       'publication_slug',
     )
+    expect(ADRESSE_LIB, 'une appli supprimée a perdu sa quarantaine (EP-308)').not.toMatch(/publication_slug[\s\S]{0,80}statut/u)
     for (const interdit of ['clientIA', 'appelerFournisseur', 'messages.create']) {
       expect(ADRESSE, `l’adresse d’un site appelle un modèle (${interdit})`).not.toContain(interdit)
     }

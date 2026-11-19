@@ -95,6 +95,8 @@ export default defineConfig({
       'src/lib/fulfillment/**/*.test.ts',
       'src/lib/suppliers/**/*.test.ts',
       'src/lib/payments/**/*.test.ts',
+      // L'adresse publique des sites (2026-11-19).
+      'src/lib/sites/**/*.test.ts',
       'src/lib/domains/**/*.test.ts',
       'src/app/api/domains/**/*.test.ts',
       'src/app/api/catalog/**/*.test.ts',

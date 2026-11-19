@@ -86,6 +86,10 @@ function makeSupabaseMock(lignes: Record<string, unknown> = {}) {
   return { supabaseAdmin: { from, auth }, updateCalls, selects };
 }
 
+// L'adresse donnée à la publication (2026-11-19) : observée, pas exécutée ici.
+const assurerAdresseMock = vi.fn(async (..._a: unknown[]) => ({ ok: true as const, nom: 'x', lien: 'https://x.deribfy.app' }));
+vi.mock('@/lib/sites/adresse-site', () => ({ assurerAdresseSite: (...a: unknown[]) => assurerAdresseMock(...a) }));
+
 let currentMock: ReturnType<typeof makeSupabaseMock>;
 vi.mock('@/lib/supabase-admin', () => ({
   get supabaseAdmin() {
@@ -345,5 +349,25 @@ describe('F-2 — annulation d’un abonnement domaine', () => {
         const res = await appelerWebhook();
     expect(res.status).toBe(200);
     expect(updateAutoRenewMock).not.toHaveBeenCalled();
+  });
+});
+
+// ── 2026-11-19 : un site publié par un paiement reçoit son <nom>.deribfy.app.
+describe('l’adresse donnée à la publication', () => {
+  it('abonnement actif → chaque site du client reçoit son adresse', async () => {
+    assurerAdresseMock.mockClear();
+    constructEventMock.mockReturnValue({ type: 'customer.subscription.updated', data: { object: { customer: 'cus_1', status: 'active', metadata: {} } } });
+    currentMock = makeSupabaseMock({ sites: [{ id: 's1', slug: 'goura-doula-1', name: 'Goura Doula' }] });
+    const res = await appelerWebhook();
+    expect(res.status).toBe(200);
+    expect(assurerAdresseMock).toHaveBeenCalledWith('goura-doula-1', 'Goura Doula');
+  });
+
+  it('abonnement inactif → aucune adresse demandée', async () => {
+    assurerAdresseMock.mockClear();
+    constructEventMock.mockReturnValue({ type: 'customer.subscription.updated', data: { object: { customer: 'cus_1', status: 'past_due', metadata: {} } } });
+    currentMock = makeSupabaseMock({ sites: [{ id: 's1', slug: 'goura-doula-1', name: 'Goura Doula' }] });
+    await appelerWebhook();
+    expect(assurerAdresseMock).not.toHaveBeenCalled();
   });
 });

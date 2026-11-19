@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sansQuota } from '@/lib/admin-emails';
+import { assurerAdresseSite } from '@/lib/sites/adresse-site';
+import { logAnomaly } from '@/lib/anomaly';
 import { supabaseAdmin as supabase, supabaseAdmin } from '@/lib/supabase-admin';
 import { getStripe } from '@/lib/stripe';
 import { handlePaidCheckout } from '@/lib/shop/handlePaidCheckout';
@@ -156,6 +158,21 @@ export async function POST(req: Request) {
             subscription_status: status,
           })
           .eq('stripe_customer_id', customerId);
+
+        // ── L'ADRESSE, À LA PUBLICATION (2026-11-19) : chaque site publié par
+        //    ce paiement reçoit son <nom>.deribfy.app s'il n'en a pas. Un échec
+        //    ne fait pas échouer le webhook (Stripe le renverrait en boucle) :
+        //    il est journalisé, et la prochaine publication réessaie.
+        if (isActive) {
+          const { data: publies } = await supabase
+            .from('sites')
+            .select('id, slug, name')
+            .eq('stripe_customer_id', customerId);
+          for (const site of (publies ?? []) as { id: string; slug: string; name: string | null }[]) {
+            const a = await assurerAdresseSite(site.slug, site.name);
+            if (!a.ok) await logAnomaly({ type: 'site_adresse_non_attribuee', severity: 'warning', siteId: site.id, details: { slug: site.slug, erreur: a.erreur } });
+          }
+        }
         break;
       }
       // Abonnement annulé : on dépublie
