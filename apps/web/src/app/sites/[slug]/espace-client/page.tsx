@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { lecteurDuSite } from '@/lib/lecteurDuSite'
@@ -10,6 +9,7 @@ import BlocsDePage from '../pages/BlocsDePage'
 import { siteDe, type PropsAcces } from '../acces/PageAcces'
 import { motsAcces } from '../acces/libelles'
 import EspaceClient from './EspaceClient'
+import CadreEspace from '../espace/CadreEspace'
 import { motsEspace } from './motsEspace'
 import { motsCommandes } from '../espace/motsCommandes'
 import { ouvreDesComptes } from '../acces/ouvreDesComptes'
@@ -63,21 +63,17 @@ export default async function Page({ params }: PropsAcces) {
   return (
     <div lang={s.lang ?? 'fr'}>
       <HtmlLang lang={s.lang ?? 'fr'} />
-      <main style={{ maxWidth: 760, margin: '0 auto', padding: '56px 20px 80px' }}>
-        <p style={{ fontSize: 14, margin: '0 0 18px' }}>
-          <Link href={base} style={{ color: accent }}>{motsAcces(s.lang).accueil}</Link>
-        </p>
-        <h1 style={{ fontSize: 'clamp(26px, 6vw, 36px)', fontWeight: 700, margin: '0 0 24px' }}>
-          {m.titre}
-        </h1>
-
-        {textes.length > 0 && (
-          <div style={{ marginBottom: 28 }}>
-            <BlocsDePage blocs={textes} base={base} primary={accent} lang={s.lang} />
-          </div>
-        )}
-
-        <EspaceClient slug={s.slug} base={base} primary={accent} mots={m} motsCmd={motsCommandes(s.lang)} />
+      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 20px 80px' }}>
+        {/* LE TABLEAU DE BORD (CPA, 2026-11-19) — voir CadreEspace. */}
+        <CadreEspace slug={s.slug} base={base} accent={accent} lang={s.lang} actif="espace-client"
+          titre={m.titre} retour={{ href: base, libelle: motsAcces(s.lang).accueil }}>
+          {textes.length > 0 && (
+            <div style={{ marginBottom: 28 }}>
+              <BlocsDePage blocs={textes} base={base} primary={accent} lang={s.lang} />
+            </div>
+          )}
+          <EspaceClient slug={s.slug} base={base} primary={accent} mots={m} motsCmd={motsCommandes(s.lang)} />
+        </CadreEspace>
       </main>
     </div>
   )

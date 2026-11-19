@@ -53,6 +53,8 @@ export type ChampsInscription = {
   nom: string; organisation: string; role: string; fournisseur: string; structure: string
   /** CPA, 2026-11-19 — l'autre type de client. */
   ong: string
+  /** Le nom à saisir quand c'est un CLIENT (structure ou ONG). */
+  organisationClient: string
   /** Le lien vers l'AUTRE formulaire (client ↔ fournisseur). */
   basculeFournisseur: string; basculeClient: string
   telephone: string
@@ -175,7 +177,7 @@ export default function FormulaireAcces({
             onChange={(e) => { setNom(e.target.value); effacer() }} />
         </label>
         <label style={{ display: 'block', marginBottom: 14 }}>
-          <span style={{ fontSize: 14, fontWeight: 600 }}>{champs.organisation}</span>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>{pour === 'client' ? champs.organisationClient : champs.organisation}</span>
           <input type="text" required minLength={2} maxLength={300} autoComplete="organization" value={organisation} style={champ}
             onChange={(e) => { setOrganisation(e.target.value); effacer() }} />
         </label>

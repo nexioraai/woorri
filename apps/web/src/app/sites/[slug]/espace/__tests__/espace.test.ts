@@ -7,6 +7,7 @@ vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 import { motsEchanges, LANGUES_ECHANGES } from '../motsEchanges'
 import { motsProfil, LANGUES_PROFIL } from '../motsProfil'
 import { motsEspace, LANGUES_ESPACE } from '../../espace-client/motsEspace'
+import { navigationEspace } from '../navigationEspace'
 
 // ============================================================
 // LOT 11 TRANCHE B — LES PAGES D'ESPACE.
@@ -87,9 +88,17 @@ describe('les pages d’espace passent par UN gabarit', () => {
 describe('aucune page n’est inatteignable', () => {
   it('🔴 l’espace mène aux TROIS pages', () => {
     // Une page publiée que rien ne lie est une page qui n'existe pas.
+    // 2026-11-19 — la navigation vit dans `navigationEspace` (barre latérale
+    // du tableau de bord ET raccourcis de l'accueil). On teste ce qu'elle
+    // REND, tous rôles confondus : chaque page doit être atteinte par l'un.
+    const chemins = (['structure', 'fournisseur', 'agent'] as const)
+      .flatMap((role) => navigationEspace({ role, gestion: role === 'agent' }, motsEspace('fr')))
+      .flatMap((g) => g.entrees.map((e) => e.chemin))
     for (const p of PAGES) {
-      expect(ESPACE, `rien ne mène à /${p}`).toContain(`/${p}`)
+      expect(chemins, `rien ne mène à /${p}`).toContain(p)
     }
+    // Et l'écran d'accueil s'en sert bien.
+    expect(ESPACE).toContain('navigationEspace(')
   })
 
   it('🔴 et leurs libellés existent dans les quatre langues', () => {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import TableauClient from '../espace/TableauClient'
+import { navigationEspace, ICONES } from '../espace/navigationEspace'
 import type { MotsCommandes } from '../espace/motsCommandes'
 
 // ============================================================================
@@ -68,6 +69,10 @@ export type MotsEspace = {
   // rideau du telephone pendant deux jours.
   mesCommandes: string
   agentDdm: string
+  /** Le cadre du tableau de bord (CPA, 2026-11-19). */
+  tableauDeBord: string; passerCommande: string
+  navPrincipal: string; navGestion: string; navFournisseur: string; navEchanges: string; navCompte: string
+  compteActif: string; membreDepuis: string; bonjour: string; accesRapides: string
   ong: string
   gestionCommandes: string
   comptesClients: string
@@ -248,51 +253,39 @@ export default function EspaceClient({
     )
   }
 
+  // L'ACCUEIL DE L'ESPACE (CPA, 2026-11-19). L'identité, la navigation et la
+  // déconnexion sont dans le CADRE (CadreEspace) ; ici, le contenu : le
+  // tableau du client, puis des raccourcis en cartes vers chaque écran.
+  const raccourcis = navigationEspace({ role: compte.role, gestion }, mots)
+    .flatMap((g) => g.entrees)
+    .filter((e) => e.icone !== 'tableau' && e.icone !== 'commander')
   return (
-    <div>
-      {/* LE TABLEAU DE BORD DU CLIENT (CPA, 2026-11-19) : ses chiffres, ses
-          dernières commandes et leur suivi, le bouton pour commander. */}
+    <div className="accueilEspace">
+      <style>{`
+        .accueilEspace .raccourcis { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px }
+        .accueilEspace .raccourci { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 16px; background: #fff;
+          border: 1px solid #e6e6e6; color: #111; text-decoration: none; font-weight: 600; font-size: 15px;
+          transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease }
+        .accueilEspace .raccourci:hover { transform: translateY(-3px); border-color: ${primary}; box-shadow: 0 16px 30px -22px ${primary} }
+        .accueilEspace .raccourci .ic { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px;
+          color: ${primary}; background: color-mix(in srgb, ${primary} 10%, #ffffff); flex: 0 0 auto }
+        @media (prefers-reduced-motion: reduce) { .accueilEspace .raccourci { transition: none } .accueilEspace .raccourci:hover { transform: none } }
+      `}</style>
+      {/* LE TABLEAU DE BORD DU CLIENT : ses chiffres, ses dernières commandes
+          et leur suivi, le bouton pour commander. */}
       {compte.role === 'structure' && motsCmd && <TableauClient slug={slug} base={base} accent={primary} mots={motsCmd} />}
-      <div style={carte}>
-        <p style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700 }}>{mots.bienvenue}</p>
-        <p style={{ margin: '0 0 18px', fontSize: 14.5, opacity: 0.8 }}>
-          {compte.organisation} · {compte.email}
-          <br />
-          {mots.role} : {compte.role === 'fournisseur' ? mots.fournisseur : compte.role === 'agent' ? mots.agentDdm : typeClient === 'ong' ? mots.ong : mots.structure}
-          {compte.reference ? ` · ${compte.reference}` : ''}
-        </p>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {([
-            [`${base}/mes-demandes`, mots.mesDemandes],
-            [`${base}/mes-reclamations`, mots.mesReclamations],
-            [`${base}/mes-documents`, mots.mesDocuments],
-            // LOT 19 — les trois écrans du FOURNISSEUR (dossier, préqualification,
-            // consultations) ne s'affichent qu'à un fournisseur : une structure
-            // sanitaire n'a ni dossier fournisseur ni offre à déposer.
-            // LES COMMANDES (CPA, 2026-11-19) : réservées au client — la structure
-            // sanitaire commande ; le fournisseur, lui, vend à la Centrale.
-            ...(compte.role === 'structure' ? [[`${base}/mes-commandes`, mots.mesCommandes]] as const : []),
-            // L'AGENT DE LA DDM gère l'espace client : toutes les commandes et
-            // les comptes clients. La route décide ; l'écran ne fait qu'afficher.
-            ...(gestion ? [
-              [`${base}/gestion-commandes`, mots.gestionCommandes],
-              [`${base}/comptes-clients`, mots.comptesClients],
-            ] as const : []),
-            ...(compte.role === 'fournisseur' ? [
-              [`${base}/mon-dossier`, mots.monDossier],
-              [`${base}/ma-prequalification`, mots.maPrequalification],
-              [`${base}/mes-consultations`, mots.mesConsultations],
-            ] as const : []),
-            [`${base}/mon-profil`, mots.monProfil],
-            [`${base}/demandes/suivi`, mots.suivreDemande],
-          ] as const).map(([href, libelle]) => (
-            <a key={href} href={href} style={{ color: primary, fontWeight: 600, textDecoration: 'none' }}>
-              {libelle} →
+      <h2 style={{ fontSize: 17, fontWeight: 700, margin: '6px 0 12px' }}>{mots.accesRapides}</h2>
+      <nav className="raccourcis" aria-label={mots.tableauDeBord}>
+        {raccourcis.map((e) => {
+          const I = ICONES[e.icone]
+          return (
+            <a key={e.chemin} href={`${base}/${e.chemin}`} className="raccourci">
+              <span className="ic"><I size={20} aria-hidden /></span>
+              <span>{e.libelle}</span>
             </a>
-          ))}
-        </nav>
-      </div>
-      {deconnexion}
+          )
+        })}
+      </nav>
     </div>
   )
 }

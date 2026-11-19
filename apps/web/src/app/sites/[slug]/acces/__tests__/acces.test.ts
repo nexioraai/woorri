@@ -6,6 +6,7 @@ vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 
 import { motsAcces, LANGUES_ACCES } from '../libelles'
 import { motsEspace, LANGUES_ESPACE } from '../../espace-client/motsEspace'
+import { navigationEspace } from '../../espace/navigationEspace'
 
 // ============================================================
 // LOT 11 — LES ÉCRANS D'ACCÈS.
@@ -164,10 +165,24 @@ describe('l’inscription passe par UNE route, et l’écran ne décide de rien'
 })
 
 describe('LOT 19 — une structure sanitaire ne voit pas les écrans du fournisseur', () => {
+  // 2026-11-19 — la navigation vit dans `navigationEspace` (barre latérale et
+  // raccourcis). On teste ce qu'elle REND pour chaque rôle, plus le texte.
   it('🔴 dossier, préqualification et consultations sont sous la condition « fournisseur »', () => {
-    const i = ESPACE.indexOf("compte.role === 'fournisseur' ? [")
-    expect(i, 'condition de rôle absente').toBeGreaterThan(-1)
-    const bloc = ESPACE.slice(i, ESPACE.indexOf('] as const : []', i))
-    for (const c of ['mon-dossier', 'ma-prequalification', 'mes-consultations']) expect(bloc, c).toContain(c)
+    const chemins = (role: 'structure' | 'fournisseur' | 'agent') =>
+      navigationEspace({ role, gestion: false }, motsEspace('fr')).flatMap((g) => g.entrees.map((e) => e.chemin))
+    for (const c of ['mon-dossier', 'ma-prequalification', 'mes-consultations']) {
+      expect(chemins('fournisseur'), c).toContain(c)
+      expect(chemins('structure'), c).not.toContain(c)
+      expect(chemins('agent'), c).not.toContain(c)
+    }
+  })
+
+  it('🔴 seul un client commande ; seul un agent DDM gère', () => {
+    const chemins = (role: 'structure' | 'fournisseur' | 'agent', gestion = false) =>
+      navigationEspace({ role, gestion }, motsEspace('fr')).flatMap((g) => g.entrees.map((e) => e.chemin))
+    expect(chemins('structure')).toContain('mes-commandes')
+    expect(chemins('fournisseur')).not.toContain('mes-commandes')
+    expect(chemins('structure')).not.toContain('gestion-commandes')
+    expect(chemins('agent', true)).toEqual(expect.arrayContaining(['gestion-commandes', 'comptes-clients']))
   })
 })

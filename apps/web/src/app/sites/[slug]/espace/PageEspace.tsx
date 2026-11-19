@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { lecteurDuSite } from '@/lib/lecteurDuSite'
@@ -9,6 +8,7 @@ import { lireBlocs } from '../pages/blocs'
 import BlocsDePage from '../pages/BlocsDePage'
 import { ouvreDesComptes } from '../acces/ouvreDesComptes'
 import { motsEspace } from '../espace-client/motsEspace'
+import CadreEspace from './CadreEspace'
 
 // ============================================================================
 // LOT 11 — LE GABARIT DES PAGES D'ESPACE.
@@ -98,31 +98,19 @@ export default async function PageEspace({
   return (
     <div lang={s.lang ?? 'fr'}>
       <HtmlLang lang={s.lang ?? 'fr'} />
-      <main style={{ maxWidth: 820, margin: '0 auto', padding: '56px 20px 80px' }}>
-        <p style={{ fontSize: 14, margin: '0 0 18px' }}>
-          {/* LE LIBELLÉ DIT OÙ ON VA. Premier jet : « ← Accueil » pointant
-              vers l'espace — un lien qui ment sur sa destination fait
-              hésiter avant de cliquer, puis fait cliquer ailleurs. */}
-          <Link href={`${base}/espace-client`} style={{ color: accent }}>
-            {'← ' + motsEspace(s.lang).titre}
-          </Link>
-        </p>
-        <h1 style={{ fontSize: 'clamp(26px, 6vw, 36px)', fontWeight: 700, margin: '0 0 10px' }}>
-          {titre(s.lang)}
-        </h1>
-        {phrase && (
-          <p style={{ fontSize: 16, lineHeight: 1.6, opacity: 0.78, margin: '0 0 28px', maxWidth: '60ch' }}>
-            {phrase(s.lang)}
-          </p>
-        )}
-
-        {textes.length > 0 && (
-          <div style={{ marginBottom: 28 }}>
-            <BlocsDePage blocs={textes} base={base} primary={accent} lang={s.lang} />
-          </div>
-        )}
-
-        {rendu({ slug: s.slug, base, accent, lang: s.lang })}
+      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 20px 80px' }}>
+        {/* LE TABLEAU DE BORD (CPA, 2026-11-19) : barre latérale, identité, puis
+            la page. Sans compte actif, la page se rend sans cadre, comme avant. */}
+        <CadreEspace slug={s.slug} base={base} accent={accent} lang={s.lang} actif={chemin}
+          titre={titre(s.lang)} phrase={phrase?.(s.lang)}
+          retour={{ href: `${base}/espace-client`, libelle: '← ' + motsEspace(s.lang).titre }}>
+          {textes.length > 0 && (
+            <div style={{ marginBottom: 28 }}>
+              <BlocsDePage blocs={textes} base={base} primary={accent} lang={s.lang} />
+            </div>
+          )}
+          {rendu({ slug: s.slug, base, accent, lang: s.lang })}
+        </CadreEspace>
       </main>
     </div>
   )
