@@ -92,7 +92,6 @@ export default function EspaceClient({
   const [compte, setCompte] = useState<Compte | null>(null)
   // CPA, 2026-11-19 — un agent de la DDM gère l'espace client (dit par la route).
   const [gestion, setGestion] = useState(false)
-  const [typeClient, setTypeClient] = useState<string | null>(null)
   const [role, setRole] = useState<'structure' | 'fournisseur'>('structure')
   const [organisation, setOrganisation] = useState('')
   const [envoi, setEnvoi] = useState(false)
@@ -117,7 +116,6 @@ export default function EspaceClient({
       if (!encoreLa()) return
       setCompte(d.compte ?? null)
       setGestion(d.gestionClients === true)
-      setTypeClient(typeof d.typeClient === 'string' ? d.typeClient : null)
       setEtat('connu')
     } catch { if (encoreLa()) setEtat('panne') }
   }
@@ -165,7 +163,6 @@ export default function EspaceClient({
       const d = await r.json()
       setCompte(d.compte ?? null)
       setGestion(d.gestionClients === true)
-      setTypeClient(typeof d.typeClient === 'string' ? d.typeClient : null)
       setEtat('connu')
     } catch { setEtat('panne') } finally { setEnvoi(false) }
   }

@@ -71,19 +71,19 @@ export function Anneau({ parts, libelles, total, sousTitre }: {
   parts: { cle: string; n: number; couleur: string }[]; libelles: Record<string, string>; total: number; sousTitre: string
 }) {
   const r = 56, c = 2 * Math.PI * r
-  let deja = 0
+  // Le début de chaque part : la somme des parts qui la précèdent (calculée
+  // d'avance — aucune variable ne se modifie pendant le rendu).
+  const longueurs = parts.map((p) => (total ? (p.n / total) * c : 0))
+  const debuts = longueurs.map((_, i) => longueurs.slice(0, i).reduce((a, b) => a + b, 0))
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 26, flexWrap: 'wrap' }}>
       <svg width="150" height="150" viewBox="0 0 150 150" role="img"
         aria-label={`${sousTitre} : ${parts.map((p) => `${libelles[p.cle] ?? p.cle} ${p.n}`).join(', ') || '0'}`}>
         <circle cx="75" cy="75" r={r} fill="none" stroke="#eef0f3" strokeWidth="18" />
-        {parts.map((p) => {
-          const long = total ? (p.n / total) * c : 0
-          const el = <circle key={p.cle} cx="75" cy="75" r={r} fill="none" stroke={p.couleur} strokeWidth="18"
-            strokeDasharray={`${long} ${c - long}`} strokeDashoffset={-deja} transform="rotate(-90 75 75)" />
-          deja += long
-          return el
-        })}
+        {parts.map((p, i) => (
+          <circle key={p.cle} cx="75" cy="75" r={r} fill="none" stroke={p.couleur} strokeWidth="18"
+            strokeDasharray={`${longueurs[i]} ${c - longueurs[i]}`} strokeDashoffset={-debuts[i]} transform="rotate(-90 75 75)" />
+        ))}
         <text x="75" y="74" textAnchor="middle" fontSize="28" fontWeight="800" fill="#111827">{total}</text>
         <text x="75" y="96" textAnchor="middle" fontSize="12.5" fill="#6b7280">{sousTitre}</text>
       </svg>
