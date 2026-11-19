@@ -33,7 +33,7 @@ Sources : *Website checklist* et *Account checklist* de la documentation Stripe 
 
 | Exigence Stripe | deribfy.com aujourd'hui |
 |---|---|
-| Politique de **remboursement** | **absente** (`/refund` et `/remboursement` en 404) ; les CGU ne parlent que des remboursements de VOS clients |
+| Politique de **remboursement** | **écrite le 2026-11-19** (texte du propriétaire) : page `/remboursement` (fr/en) et résumé dans les Conditions §5 — 14 jours sur le premier abonnement, renouvellements non remboursés, modifications consommées jamais remboursées, non utilisées expirées en fin de période, erreur de facturation toujours remboursée |
 | Politique d'**annulation** (abonnements) | présente dans les CGU (« l'annulation prend effet à la fin de la période ») — à rendre visible, page dédiée ou section nommée |
 | Contact du service client, **plusieurs moyens**, pas seulement un formulaire | seulement `contact@deribfy.com` ; **pas de téléphone**, `/contact` en 404 |
 | Adresse de l'entreprise (recommandée) | **absente** |

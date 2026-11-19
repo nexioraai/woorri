@@ -9,7 +9,7 @@
 
 ## Ce que le chantier doit rendre vrai
 
-1. Une appli gratuite par compte, visible par son auteur seul ; **3 modifications gratuites** dessus.
+1. Une appli gratuite par compte, visible par son auteur seul ; **10 modifications gratuites** dessus (réglage, passé de 3 à 10 le 2026-11-19).
 2. Publier demande l'abonnement : **20 $ US par mois et par application publiée, 50 modifications par mois**.
 3. Une modification refusée ne compte pas. Le compteur se voit **avant** de cliquer.
 4. À zéro, l'appli publiée reste en ligne : elle ne se modifie plus, c'est tout.
@@ -104,7 +104,7 @@ La même référence saisie deux fois est refusée, avec le nom de l'appli qu'el
 
 | | **A. Le compteur partout, les dollars pour l'administration seule (recommandé)** | B. Le compteur partout, les dollars supprimés pour tous |
 |---|---|---|
-| Le bouton | « Modifier — **37 modifications restantes** » ; sur l'appli gratuite « **3 modifications gratuites restantes** » | idem |
+| Le bouton | « Modifier — **37 modifications restantes** » ; sur l'appli gratuite « **10 modifications gratuites restantes** » | idem |
 | Après une retouche | « Modification faite. Il vous en reste 36. » ; un refus : « Non décomptée. » | idem |
 | À zéro | le champ se ferme ; la phrase dit pourquoi, quand le compteur revient, et que l'appli reste en ligne | idem |
 | Les montants en $ | visibles pour toi seul, comme la note interne « 24 sur N » | plus personne ne les voit |

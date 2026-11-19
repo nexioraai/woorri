@@ -7,7 +7,7 @@
 | | |
 |---|---|
 | **Une application gratuite** | générée, visible par son auteur seul |
-| **Retoucher l'appli gratuite** | **3 modifications gratuites**, puis l'abonnement (décidé le 2026-11-18). Une première génération est rarement juste du premier coup : quelqu'un qui ne peut pas y toucher repart en pensant que ça ne marche pas. Coût : environ 0,21 $ par visiteur qui essaie (0,136 $ + 3 × 0,026 $) ; une seule appli gratuite par compte |
+| **Retoucher l'appli gratuite** | **10 modifications gratuites**, puis l'abonnement (passé de 3 à 10 le 2026-11-19 par le propriétaire, **par le réglage** `modifications_gratuites` — historisé). Sa raison : Lovable et Base44 donnent 25 à 30 crédits gratuits par mois ; à 3, quelqu'un qui découvre n'a pas le temps de voir ce que Deribfy sait faire, et c'est la retouche qui vend le produit. Coût : environ **0,40 $** par visiteur qui essaie vraiment (0,136 $ + 10 × 0,026 $), contre 0,21 $ à 3 — le prix d'acquisition le moins cher. Une seule appli gratuite par compte |
 | **Publier** | demande l'abonnement |
 | **Prix** | **20 $ par mois**, par application publiée, **affiché en dollars américains**. Deribfy est universel, pas tchadien. Le dollar US est la devise de base pour que Stripe puisse afficher la monnaie locale du visiteur. Le prix en FCFA d'un paiement à la main est un **réglage** (décision de marché du propriétaire : « 12 000 FCFA à Moundou ne valent pas 20 $ à Montréal ») |
 | **Inclus** | **50 modifications par mois** |
@@ -19,7 +19,7 @@ L'unité s'appelle **« modification »**, jamais « crédit » ni « jeton ». 
 ## Les règles
 
 1. **Une modification refusée ne compte pas.** Nous la payons au fournisseur, mais la facturer serait faire payer notre propre panne.
-2. **Le compteur se voit AVANT de cliquer** : « 3 modifications gratuites restantes » avant l'abonnement, « 37 modifications restantes ce mois-ci » après (50 par mois).
+2. **Le compteur se voit AVANT de cliquer** : « 10 modifications gratuites restantes » avant l'abonnement, « 37 modifications restantes ce mois-ci » après (50 par mois).
 3. **À zéro, l'application publiée RESTE EN LIGNE.** Elle ne peut plus être modifiée, c'est tout. On ne coupe jamais le commerce de quelqu'un parce qu'il a épuisé un quota.
 4. **Abonnement non renouvelé** — c'est une règle, pas un réglage (précisée par le propriétaire le 2026-11-19). Voir `docs/ECHEANCES.md` :
    - **jour 1**, l'échéance passe sans paiement (par Stripe : le prélèvement échoue ; à la main : le paiement n'arrive pas) : **les modifications s'arrêtent, l'application reste en ligne** ;
