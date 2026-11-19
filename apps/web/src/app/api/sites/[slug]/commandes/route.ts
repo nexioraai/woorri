@@ -25,6 +25,14 @@ type Params = { params: Promise<{ slug: string }> }
 
 const VU = 'id,reference,etat,note,reponse,repondu_le,cree_le,maj_le,compte_id'
 
+/** Les clients des commandes, avec leur TYPE s'il existe (colonne posée
+ *  par `site_comptes_type_client.sql`) — sans lui sinon. */
+async function lireClients(siteId: string, ids: string[]) {
+  const lire = (cols: string) => supabaseAdmin.from('site_comptes').select(cols).eq('site_id', siteId).in('id', ids)
+  const r = await lire('id,organisation,nom,email,telephone,type_client')
+  return r.error && /type_client/.test(r.error.message) ? lire('id,organisation,nom,email,telephone') : r
+}
+
 export async function GET(req: Request, { params }: Params) {
   const { slug } = await params
   const garde = await requireGestionClients(req, slug)
@@ -48,14 +56,11 @@ export async function GET(req: Request, { params }: Params) {
       .select('commande_id,rang,produit_reference,designation,quantite,unite')
       .in('commande_id', commandes.map((c) => c.id))
       .order('rang', { ascending: true }),
-    supabaseAdmin.from('site_comptes')
-      .select('id,organisation,nom,email,telephone')
-      .eq('site_id', siteId)
-      .in('id', [...new Set(commandes.map((c) => c.compte_id))]),
+    lireClients(siteId, [...new Set(commandes.map((c) => c.compte_id))]),
   ])
   if (eL || eC) return NextResponse.json({ error: (eL ?? eC)!.message }, { status: 500 })
 
-  const parCompte = new Map(((comptes ?? []) as { id: string }[]).map((c) => [c.id, c]))
+  const parCompte = new Map(((comptes ?? []) as unknown as { id: string }[]).map((c) => [c.id, c]))
   const toutes = (lignes ?? []) as { commande_id: string }[]
   return NextResponse.json({
     ouvert: true,

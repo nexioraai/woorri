@@ -34,7 +34,7 @@ import { ouvreDesComptes } from './ouvreDesComptes'
 // depuis `/edit`, sans que personne écrive une ligne.
 // ============================================================================
 
-export type PropsAcces = { params: Promise<{ slug: string }>; searchParams?: Promise<{ retour?: string }> }
+export type PropsAcces = { params: Promise<{ slug: string }>; searchParams?: Promise<{ retour?: string; pour?: string }> }
 
 type SitePublic = {
   id: string; slug: string; name: string
@@ -98,7 +98,7 @@ export default async function PageAcces({ ecran, params, searchParams }: { ecran
   // LOT 17 — « tout ce qui est visible doit être éditable » (propriétaire,
   // 2026-11-10). Le titre et la phrase d'introduction viennent de la page
   // déclarée au même chemin quand elle les porte ; sinon, les mots par défaut.
-  const titreVu = decl?.titre?.trim() || m.titre
+  const titreDeclare = decl?.titre?.trim() || m.titre
 
   // LES INTITULÉS DU FORMULAIRE — page NON PUBLIÉE, donc lue avec le rôle de
   // service (la vue publique ne la rend pas). Import tardif, comme le gabarit.
@@ -128,8 +128,15 @@ export default async function PageAcces({ ecran, params, searchParams }: { ecran
 
   // APRÈS LA CONNEXION, L'ESPACE — jamais l'accueil. Renvoyer à l'accueil
   // obligerait la personne à retrouver elle-même où elle allait.
-  const retour = retourValable((await searchParams)?.retour)
+  const q = await searchParams
+  const retour = retourValable(q?.retour)
+  // CPA, 2026-11-19 — l'inscription est CLIENT par défaut (on y arrive par le
+  // menu « Espace client ») ; `?pour=fournisseur` ouvre celle du fournisseur.
+  const pour: 'client' | 'fournisseur' = q?.pour === 'fournisseur' ? 'fournisseur' : 'client'
   const suite = retour ? `?retour=${encodeURIComponent(retour)}` : ''
+  const titreVu = ecran === 'inscription' && pour === 'fournisseur'
+    ? (s.lang?.startsWith('en') ? 'Create a supplier account' : 'Créer un compte fournisseur')
+    : titreDeclare
   const destination = ecran === 'connexion' || ecran === 'inscription'
     ? `${base}${retour ?? '/espace-client'}`
     : `${base}/connexion`
@@ -158,7 +165,7 @@ export default async function PageAcces({ ecran, params, searchParams }: { ecran
         )}
 
         <FormulaireAcces ecran={ecran} destination={destination} libelles={libellesVus} primary={accent}
-          slug={slug} champs={champsVus} voir={mots.voir} />
+          slug={slug} champs={champsVus} voir={mots.voir} pour={pour} />
 
         <p style={{ fontSize: 14.5, lineHeight: 1.7, marginTop: 26, opacity: 0.85 }}>
           {ecran === 'connexion' && (<>
@@ -170,6 +177,10 @@ export default async function PageAcces({ ecran, params, searchParams }: { ecran
           {ecran === 'inscription' && (<>
             {mots.inscription.dejaInscrit}{' '}
             <Link href={`${base}/connexion${suite}`} style={lien}>{mots.inscription.seConnecter}</Link>
+            <br />
+            {pour === 'client'
+              ? <Link href={`${base}/inscription?pour=fournisseur${retour ? `&retour=${encodeURIComponent(retour)}` : ''}`} style={lien}>{mots.inscription.champs.basculeFournisseur}</Link>
+              : <Link href={`${base}/inscription${suite}`} style={lien}>{mots.inscription.champs.basculeClient}</Link>}
           </>)}
           {ecran === 'oubli' && (
             <Link href={`${base}/connexion`} style={lien}>{mots.oubli.retour}</Link>

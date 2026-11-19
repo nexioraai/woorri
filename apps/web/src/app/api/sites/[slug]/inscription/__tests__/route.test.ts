@@ -144,3 +144,35 @@ describe('une adresse déjà connue n’est jamais reprise', () => {
     expect(deleteUser).toHaveBeenCalledWith('u-1')
   })
 })
+
+// CPA, 2026-11-19 — « parmi les clients, il y a des ONG ». Le client reste un
+// compte `structure` ; son TYPE est écrit. Un fournisseur n'en porte jamais.
+describe('le type de client', () => {
+  const ecrit = () => (journal.ecritures['site_comptes'] as { charge: Record<string, unknown> }[]).map((e) => e.charge)
+
+  it('🔴 une ONG s’inscrit comme client (`structure`) avec son type', async () => {
+    expect((await inscrire({ ...BON, role: 'structure', type_client: 'ong' })).status).toBe(201)
+    expect(ecrit()[0]).toMatchObject({ role: 'structure', type_client: 'ong' })
+  })
+
+  it('🔴 un fournisseur ne porte JAMAIS de type de client, même s’il en envoie un', async () => {
+    await inscrire({ ...BON, role: 'fournisseur', type_client: 'ong' })
+    expect(ecrit()[0]).not.toHaveProperty('type_client')
+  })
+
+  it('un type inconnu est ignoré', async () => {
+    await inscrire({ ...BON, role: 'structure', type_client: 'banque' })
+    expect(ecrit()[0]).not.toHaveProperty('type_client')
+  })
+
+  it('🔴 colonne pas encore créée : l’inscription retente SANS le type, au lieu d’être refusée', async () => {
+    // Le harnais rend la même réponse aux deux écritures : on vérifie qu'une
+    // SECONDE écriture, sans type, a bien été tentée après le refus de colonne.
+    erreurCompte = { message: 'Could not find the \'type_client\' column of \'site_comptes\'', code: 'PGRST204' }
+    await inscrire({ ...BON, role: 'structure', type_client: 'sante' })
+    expect(ecrit()).toHaveLength(2)
+    expect(ecrit()[0]).toHaveProperty('type_client', 'sante')
+    expect(ecrit()[1]).not.toHaveProperty('type_client')
+  })
+
+})

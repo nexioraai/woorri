@@ -30,12 +30,16 @@ export async function GET(req: Request, { params }: Params) {
   const garde = await requireGestionClients(req, slug)
   if (!garde.ok) return garde.response
 
-  const { data, error } = await supabaseAdmin
-    .from('site_comptes').select(COLS)
+  // Le TYPE (structure sanitaire / ONG) se lit s'il existe ; sans la
+  // colonne, la liste se rend quand même.
+  const lire = (cols: string) => supabaseAdmin
+    .from('site_comptes').select(cols)
     .eq('site_id', garde.g.siteId)
     .eq('role', 'structure')
     .order('cree_le', { ascending: false })
     .limit(500)
+  let { data, error } = await lire(`${COLS},type_client`)
+  if (error && /type_client/.test(error.message)) ({ data, error } = await lire(COLS))
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ clients: data ?? [], qui: garde.g.qui })
 }

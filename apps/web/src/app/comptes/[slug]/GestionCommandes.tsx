@@ -17,7 +17,7 @@ type Ligne = { designation: string; quantite: number; unite: string | null; prod
 type Commande = {
   id: string; reference: string; etat: EtatCommande; note: string | null
   reponse: string | null; repondu_le: string | null; cree_le: string
-  client: { organisation: string | null; nom: string | null; email: string; telephone: string | null } | null
+  client: { organisation: string | null; nom: string | null; email: string; telephone: string | null; type_client?: string | null } | null
   lignes: Ligne[]
 }
 
@@ -98,7 +98,7 @@ export default function GestionCommandes({ slug, clair = false, accent = '#FA5D1
             <div>
               <p style={{ margin: 0, fontWeight: 700 }}>
                 <span style={{ fontFamily: 'ui-monospace, monospace', marginInlineEnd: 8 }}>{c.reference}</span>
-                {c.client?.organisation ?? 'Client'}
+                {c.client?.organisation ?? 'Client'}{c.client?.type_client === 'ong' ? ' (ONG)' : ''}
               </p>
               <p style={{ margin: '3px 0 0', fontSize: 12.5, opacity: 0.55 }}>
                 {[c.client?.nom, c.client?.email, c.client?.telephone].filter(Boolean).join(' · ')} · {c.cree_le.slice(0, 10)}

@@ -49,6 +49,9 @@ import { journaliser } from '@/lib/audit/journaliser'
 type Params = { params: Promise<{ slug: string }> }
 
 export const ROLES_INSCRIPTION = ['fournisseur', 'structure'] as const
+
+/** Les types de client (CPA, 2026-11-19) : structure sanitaire, ONG. */
+export const TYPES_CLIENT = ['sante', 'ong'] as const
 const COURRIEL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const TELEPHONE = /^[+0-9 ().-]{6,30}$/
 
@@ -75,6 +78,11 @@ export async function POST(req: Request, { params }: Params) {
   const role = texte(corps.role)
   const telephone = texte(corps.telephone)
   const email = texte(corps.email).toLowerCase()
+  // CPA, 2026-11-19 — « parmi les clients, il y a des ONG ». Un client reste
+  // un compte `structure` ; son TYPE dit ce qu'il est. Ignoré pour un
+  // fournisseur : un type de client sur un fournisseur serait refusé en base.
+  const typeClient = role === 'structure' && (TYPES_CLIENT as readonly string[]).includes(texte(corps.type_client))
+    ? texte(corps.type_client) : null
   const motDePasse = typeof corps.motDePasse === 'string' ? corps.motDePasse : ''
 
   if (nom.length < 2 || nom.length > 120) return NON('Indiquez votre nom complet.')
@@ -97,13 +105,13 @@ export async function POST(req: Request, { params }: Params) {
       if (preuve?.user?.id !== existant) {
         return NextResponse.json({ error: 'Cette adresse est déjà utilisée. Saisissez le mot de passe que vous utilisez déjà avec elle, ou choisissez « Mot de passe oublié ».', code: 'deja' }, { status: 409 })
       }
-      return creerCompteDeSite(site.id, existant, { email, role, organisation, nom, telephone }, false)
+      return creerCompteDeSite(site.id, existant, { email, role, organisation, nom, telephone, typeClient }, false)
     }
     console.error('[inscription] création de l’accès refusée', eAcces?.message)
     return NON('Création impossible pour le moment. Réessayez plus tard.', 500)
   }
 
-  return creerCompteDeSite(site.id, userId, { email, role, organisation, nom, telephone }, true)
+  return creerCompteDeSite(site.id, userId, { email, role, organisation, nom, telephone, typeClient }, true)
 }
 
 /**
@@ -114,12 +122,20 @@ export async function POST(req: Request, { params }: Params) {
  */
 async function creerCompteDeSite(
   siteId: string, userId: string,
-  f: { email: string; role: string; organisation: string; nom: string; telephone: string },
+  f: { email: string; role: string; organisation: string; nom: string; telephone: string; typeClient: string | null },
   accesNeuf: boolean,
 ) {
-  const { error: eCompte } = await supabaseAdmin.from('site_comptes').insert({
+  const ligne: Record<string, unknown> = {
     site_id: siteId, user_id: userId, email: f.email, role: f.role, organisation: f.organisation, nom: f.nom, telephone: f.telephone,
-  })
+  }
+  // Le TYPE DE CLIENT est écrit seulement quand il y en a un. Si la colonne
+  // n'existe pas encore (SQL `site_comptes_type_client.sql` pas appliqué),
+  // on inscrit SANS lui plutôt que de refuser l'inscription.
+  let { error: eCompte } = await supabaseAdmin.from('site_comptes')
+    .insert(f.typeClient ? { ...ligne, type_client: f.typeClient } : ligne)
+  if (eCompte && f.typeClient && /type_client/.test(eCompte.message ?? '')) {
+    ({ error: eCompte } = await supabaseAdmin.from('site_comptes').insert(ligne))
+  }
   if (eCompte && eCompte.code !== '23505') {
     if (accesNeuf) await supabaseAdmin.auth.admin.deleteUser(userId)
     console.error('[inscription] compte de site refusé', eCompte.message)

@@ -11,6 +11,7 @@ import { siteDe, type PropsAcces } from '../acces/PageAcces'
 import { motsAcces } from '../acces/libelles'
 import EspaceClient from './EspaceClient'
 import { motsEspace } from './motsEspace'
+import { motsCommandes } from '../espace/motsCommandes'
 import { ouvreDesComptes } from '../acces/ouvreDesComptes'
 
 // ============================================================================
@@ -76,7 +77,7 @@ export default async function Page({ params }: PropsAcces) {
           </div>
         )}
 
-        <EspaceClient slug={s.slug} base={base} primary={accent} mots={m} />
+        <EspaceClient slug={s.slug} base={base} primary={accent} mots={m} motsCmd={motsCommandes(s.lang)} />
       </main>
     </div>
   )

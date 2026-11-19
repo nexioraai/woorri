@@ -11,6 +11,11 @@ export type MotsCommandes = {
   envoyer: string; envoi: string; envoyee: string; suggestions: string
   mesCommandes: string; vide: string; passeeLe: string; majLe: string; reponse: string
   etats: Record<string, string>
+  /** Les étapes courtes de la frise de suivi. */
+  etapes: Record<string, string>
+  annulee: string
+  /** Le tableau de bord du client (accueil de son espace). */
+  tableau: { titre: string; enCours: string; livrees: string; total: string; dernieres: string; passer: string; toutes: string; aucune: string }
 }
 
 const FR: MotsCommandes = {
@@ -27,6 +32,9 @@ const FR: MotsCommandes = {
   mesCommandes: 'Mes commandes passées', vide: 'Vous n’avez encore passé aucune commande.',
   passeeLe: 'Passée le', majLe: 'mise à jour le', reponse: 'Réponse de la Centrale',
   etats: { recue: 'Reçue par la Centrale', en_cours: 'En cours de traitement', validee: 'Validée', livree: 'Livrée', annulee: 'Annulée' },
+  etapes: { recue: 'Reçue', en_cours: 'En cours', validee: 'Validée', livree: 'Livrée' },
+  annulee: 'Commande annulée par la Centrale.',
+  tableau: { titre: 'Mon tableau de bord', enCours: 'Commandes en cours', livrees: 'Commandes livrées', total: 'Commandes passées', dernieres: 'Mes dernières commandes', passer: 'Passer une commande', toutes: 'Voir toutes mes commandes', aucune: 'Vous n’avez encore passé aucune commande. Commencez par votre premier bon de commande.' },
 }
 
 const EN: MotsCommandes = {
@@ -43,6 +51,9 @@ const EN: MotsCommandes = {
   mesCommandes: 'My past orders', vide: 'You have not placed any order yet.',
   passeeLe: 'Placed on', majLe: 'updated on', reponse: 'Answer from the Centrale',
   etats: { recue: 'Received by the Centrale', en_cours: 'Being processed', validee: 'Approved', livree: 'Delivered', annulee: 'Cancelled' },
+  etapes: { recue: 'Received', en_cours: 'Processing', validee: 'Approved', livree: 'Delivered' },
+  annulee: 'Order cancelled by the Centrale.',
+  tableau: { titre: 'My dashboard', enCours: 'Orders in progress', livrees: 'Delivered orders', total: 'Orders placed', dernieres: 'My latest orders', passer: 'Place an order', toutes: 'See all my orders', aucune: 'You have not placed any order yet. Start with your first purchase order.' },
 }
 
 const AR: MotsCommandes = {
@@ -59,6 +70,9 @@ const AR: MotsCommandes = {
   mesCommandes: 'طلبياتي السابقة', vide: 'لم تقدّم أي طلبية بعد.',
   passeeLe: 'بتاريخ', majLe: 'حُدّثت في', reponse: 'ردّ المركز',
   etats: { recue: 'استلمها المركز', en_cours: 'قيد المعالجة', validee: 'مقبولة', livree: 'مُسلَّمة', annulee: 'ملغاة' },
+  etapes: { recue: 'مُستلمة', en_cours: 'قيد المعالجة', validee: 'مقبولة', livree: 'مُسلَّمة' },
+  annulee: 'ألغى المركز هذه الطلبية.',
+  tableau: { titre: 'لوحة القيادة', enCours: 'طلبيات قيد المعالجة', livrees: 'طلبيات مُسلَّمة', total: 'الطلبيات المقدّمة', dernieres: 'آخر طلبياتي', passer: 'تقديم طلبية', toutes: 'عرض كل طلبياتي', aucune: 'لم تقدّم أي طلبية بعد. ابدأ بأول طلب شراء.' },
 }
 
 const ES: MotsCommandes = {
@@ -75,6 +89,9 @@ const ES: MotsCommandes = {
   mesCommandes: 'Mis pedidos anteriores', vide: 'Todavía no ha realizado ningún pedido.',
   passeeLe: 'Realizado el', majLe: 'actualizado el', reponse: 'Respuesta de la Central',
   etats: { recue: 'Recibido por la Central', en_cours: 'En tramitación', validee: 'Validado', livree: 'Entregado', annulee: 'Anulado' },
+  etapes: { recue: 'Recibido', en_cours: 'En curso', validee: 'Validado', livree: 'Entregado' },
+  annulee: 'Pedido anulado por la Central.',
+  tableau: { titre: 'Mi panel', enCours: 'Pedidos en curso', livrees: 'Pedidos entregados', total: 'Pedidos realizados', dernieres: 'Mis últimos pedidos', passer: 'Realizar un pedido', toutes: 'Ver todos mis pedidos', aucune: 'Todavía no ha realizado ningún pedido. Empiece por su primera orden de compra.' },
 }
 
 export function motsCommandes(lang: string | null | undefined): MotsCommandes {

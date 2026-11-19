@@ -127,7 +127,15 @@ export async function GET(req: Request, { params }: Params) {
       .from('site_comptes').select('service').eq('id', c.id).eq('site_id', site.id).maybeSingle()
     gestionClients = (s as { service?: string | null } | null)?.service === 'ddm'
   }
-  return NextResponse.json({ compte: data ?? null, courriel: moi.email, gestionClients })
+  // LE TYPE DE CLIENT (structure sanitaire / ONG), lu à part pour la même
+  // raison : sans la colonne, rien ne doit casser.
+  let typeClient: string | null = null
+  if (c?.role === 'structure' && c.id) {
+    const { data: t } = await supabaseAdmin
+      .from('site_comptes').select('type_client').eq('id', c.id).eq('site_id', site.id).maybeSingle()
+    typeClient = (t as { type_client?: string | null } | null)?.type_client ?? null
+  }
+  return NextResponse.json({ compte: data ?? null, courriel: moi.email, gestionClients, typeClient })
 }
 
 /** POST — je DEMANDE un accès. Le compte naît en attente, et ne renaît jamais. */

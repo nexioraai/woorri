@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase'
 type Client = {
   id: string; email: string; etat: 'actif' | 'suspendu' | 'en_attente'
   organisation: string | null; nom: string | null; telephone: string | null; cree_le: string
+  type_client?: string | null
 }
 
 export default function ComptesClients({ slug, accent }: { slug: string; accent: string }) {
@@ -76,7 +77,7 @@ export default function ComptesClients({ slug, accent }: { slug: string; accent:
             <li key={c.id} style={{ listStyle: 'none', padding: '14px 16px', marginBottom: 10, borderRadius: 14, border: '1px solid #e4e4e7', background: '#fff',
               display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <p style={{ margin: 0, fontWeight: 700 }}>{c.organisation ?? 'Structure'}</p>
+                <p style={{ margin: 0, fontWeight: 700 }}>{c.organisation ?? 'Structure'}{c.type_client && <span style={{ marginInlineStart: 8, fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#f1f5f9', color: '#334155' }}>{c.type_client === 'ong' ? 'ONG' : 'Structure sanitaire'}</span>}</p>
                 <p style={{ margin: '3px 0 0', fontSize: 13, opacity: 0.65 }}>
                   {[c.nom, c.email, c.telephone].filter(Boolean).join(' · ')} · inscrit le {c.cree_le.slice(0, 10)}
                 </p>

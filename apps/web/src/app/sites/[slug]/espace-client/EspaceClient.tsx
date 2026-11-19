@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import TableauClient from '../espace/TableauClient'
+import type { MotsCommandes } from '../espace/motsCommandes'
 
 // ============================================================================
 // LOT 11 — L'ESPACE, ET LES QUATRE SITUATIONS QU'IL DOIT NOMMER.
@@ -66,6 +68,7 @@ export type MotsEspace = {
   // rideau du telephone pendant deux jours.
   mesCommandes: string
   agentDdm: string
+  ong: string
   gestionCommandes: string
   comptesClients: string
   mesDemandes: string
@@ -78,12 +81,13 @@ export type MotsEspace = {
 }
 
 export default function EspaceClient({
-  slug, base, primary, mots,
-}: { slug: string; base: string; primary: string; mots: MotsEspace }) {
+  slug, base, primary, mots, motsCmd,
+}: { slug: string; base: string; primary: string; mots: MotsEspace; motsCmd?: MotsCommandes }) {
   const [etat, setEtat] = useState<'charge' | 'anonyme' | 'connu' | 'panne'>('charge')
   const [compte, setCompte] = useState<Compte | null>(null)
   // CPA, 2026-11-19 — un agent de la DDM gère l'espace client (dit par la route).
   const [gestion, setGestion] = useState(false)
+  const [typeClient, setTypeClient] = useState<string | null>(null)
   const [role, setRole] = useState<'structure' | 'fournisseur'>('structure')
   const [organisation, setOrganisation] = useState('')
   const [envoi, setEnvoi] = useState(false)
@@ -108,6 +112,7 @@ export default function EspaceClient({
       if (!encoreLa()) return
       setCompte(d.compte ?? null)
       setGestion(d.gestionClients === true)
+      setTypeClient(typeof d.typeClient === 'string' ? d.typeClient : null)
       setEtat('connu')
     } catch { if (encoreLa()) setEtat('panne') }
   }
@@ -155,6 +160,7 @@ export default function EspaceClient({
       const d = await r.json()
       setCompte(d.compte ?? null)
       setGestion(d.gestionClients === true)
+      setTypeClient(typeof d.typeClient === 'string' ? d.typeClient : null)
       setEtat('connu')
     } catch { setEtat('panne') } finally { setEnvoi(false) }
   }
@@ -244,12 +250,15 @@ export default function EspaceClient({
 
   return (
     <div>
+      {/* LE TABLEAU DE BORD DU CLIENT (CPA, 2026-11-19) : ses chiffres, ses
+          dernières commandes et leur suivi, le bouton pour commander. */}
+      {compte.role === 'structure' && motsCmd && <TableauClient slug={slug} base={base} accent={primary} mots={motsCmd} />}
       <div style={carte}>
         <p style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700 }}>{mots.bienvenue}</p>
         <p style={{ margin: '0 0 18px', fontSize: 14.5, opacity: 0.8 }}>
           {compte.organisation} · {compte.email}
           <br />
-          {mots.role} : {compte.role === 'fournisseur' ? mots.fournisseur : compte.role === 'agent' ? mots.agentDdm : mots.structure}
+          {mots.role} : {compte.role === 'fournisseur' ? mots.fournisseur : compte.role === 'agent' ? mots.agentDdm : typeClient === 'ong' ? mots.ong : mots.structure}
           {compte.reference ? ` · ${compte.reference}` : ''}
         </p>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

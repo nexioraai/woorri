@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { MotsCommandes } from './motsCommandes'
+import SuiviCommande from './SuiviCommande'
 
 // ============================================================================
 // MES COMMANDES — le bon de commande du client, et son suivi (CPA, 2026-11-19).
@@ -195,6 +196,8 @@ export default function MesCommandes({
                   <li key={k}>{l.designation} — <strong>{l.quantite.toLocaleString()}</strong>{l.unite ? ` ${l.unite}` : ''}</li>
                 ))}
               </ul>
+              {/* LE SUIVI, ÉTAPE PAR ÉTAPE (CPA, 2026-11-19). */}
+              <SuiviCommande etat={c.etat} libelles={mots.etapes} accent={primary} annulee={mots.annulee} />
               {c.note && <p style={{ margin: '8px 0 0', fontSize: 14, opacity: 0.75, whiteSpace: 'pre-wrap' }}>{c.note}</p>}
               {c.reponse && (
                 <p style={{ margin: '10px 0 0', padding: '10px 12px', borderRadius: 10, fontSize: 14.5, lineHeight: 1.55, whiteSpace: 'pre-wrap',

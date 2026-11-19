@@ -51,15 +51,23 @@ export type LibellesAcces = {
 /** Les champs propres à l'inscription (LOT 17). */
 export type ChampsInscription = {
   nom: string; organisation: string; role: string; fournisseur: string; structure: string
+  /** CPA, 2026-11-19 — l'autre type de client. */
+  ong: string
+  /** Le lien vers l'AUTRE formulaire (client ↔ fournisseur). */
+  basculeFournisseur: string; basculeClient: string
   telephone: string
   /** Quand l'adresse a déjà un compte. */
   deja: string
 }
 
 export default function FormulaireAcces({
-  ecran, destination, libelles, primary, slug, champs, voir,
+  ecran, destination, libelles, primary, slug, champs, voir, pour = 'client',
 }: {
   ecran: EcranAcces
+  /** CPA, 2026-11-19 — « c'est l'espace client, le fournisseur n'a rien à
+   *  voir ici ». `client` : structure sanitaire ou ONG ; `fournisseur` : le
+   *  formulaire du fournisseur, sans choix (`?pour=fournisseur`). */
+  pour?: 'client' | 'fournisseur'
   /** Où aller une fois entré. Toujours une adresse DE CE SITE. */
   destination: string
   libelles: LibellesAcces
@@ -76,7 +84,8 @@ export default function FormulaireAcces({
   const [etat, setEtat] = useState<'repos' | 'envoi' | 'fait' | 'refus'>('repos')
   const [nom, setNom] = useState('')
   const [organisation, setOrganisation] = useState('')
-  const [role, setRole] = useState<'fournisseur' | 'structure'>('fournisseur')
+  const role: 'fournisseur' | 'structure' = pour === 'fournisseur' ? 'fournisseur' : 'structure'
+  const [typeClient, setTypeClient] = useState<'sante' | 'ong'>('sante')
   const [telephone, setTelephone] = useState('')
   const [piege, setPiege] = useState('')
   // Le refus de l'inscription dit SA cause : la personne doit savoir quel
@@ -107,7 +116,7 @@ export default function FormulaireAcces({
         const site = encodeURIComponent(String(slug))
         const r = await fetch(`/api/sites/${site}/inscription`, {
           method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ nom, organisation, role, telephone, email: courriel.trim(), motDePasse, site_web: piege }),
+          body: JSON.stringify({ nom, organisation, role, ...(role === 'structure' ? { type_client: typeClient } : {}), telephone, email: courriel.trim(), motDePasse, site_web: piege }),
         })
         const d = await r.json().catch(() => ({}))
         if (!r.ok) {
@@ -170,21 +179,26 @@ export default function FormulaireAcces({
           <input type="text" required minLength={2} maxLength={300} autoComplete="organization" value={organisation} style={champ}
             onChange={(e) => { setOrganisation(e.target.value); effacer() }} />
         </label>
+        {/* LE CLIENT CHOISIT CE QU'IL EST ; le fournisseur n'a rien à choisir.
+            Le formulaire client ne propose JAMAIS « fournisseur » (CPA,
+            2026-11-19) : chacun a son formulaire, et un lien mène à l'autre. */}
+        {pour === 'client' && (
         <fieldset style={{ border: 'none', padding: 0, margin: '0 0 14px' }}>
           <legend style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>{champs.role}</legend>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {(['fournisseur', 'structure'] as const).map((r) => (
-              <label key={r} style={{
+            {(['sante', 'ong'] as const).map((t) => (
+              <label key={t} style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-                border: `1.5px solid ${role === r ? primary : '#d9d9d9'}`,
-                background: role === r ? `color-mix(in srgb, ${primary} 8%, #fff)` : '#fff', fontSize: 15,
+                border: `1.5px solid ${typeClient === t ? primary : '#d9d9d9'}`,
+                background: typeClient === t ? `color-mix(in srgb, ${primary} 8%, #fff)` : '#fff', fontSize: 15,
               }}>
-                <input type="radio" name="role" value={r} checked={role === r} onChange={() => setRole(r)} />
-                {r === 'fournisseur' ? champs.fournisseur : champs.structure}
+                <input type="radio" name="type_client" value={t} checked={typeClient === t} onChange={() => setTypeClient(t)} />
+                {t === 'sante' ? champs.structure : champs.ong}
               </label>
             ))}
           </div>
         </fieldset>
+        )}
         <label style={{ display: 'block', marginBottom: 14 }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>{champs.telephone}</span>
           <input type="tel" required autoComplete="tel" value={telephone} style={champ} placeholder="+235 …"

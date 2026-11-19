@@ -178,7 +178,7 @@ export default function Postuler({
         {titre}
         <p style={{ margin: '0 0 16px', lineHeight: 1.65 }}>{mots.connectezVous}</p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <a href={`${base}/inscription${chemin ? `?retour=${encodeURIComponent(chemin)}` : ''}`} style={{ ...bouton, display: 'inline-block', textDecoration: 'none' }}>
+          <a href={`${base}/inscription?pour=fournisseur${chemin ? `&retour=${encodeURIComponent(chemin)}` : ''}`} style={{ ...bouton, display: 'inline-block', textDecoration: 'none' }}>
             {mots.creerCompte}
           </a>
           <a href={`${base}/connexion${chemin ? `?retour=${encodeURIComponent(chemin)}` : ''}`} style={{ ...bouton, display: 'inline-block', textDecoration: 'none',
