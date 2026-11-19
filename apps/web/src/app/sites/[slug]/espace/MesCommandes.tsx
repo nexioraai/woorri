@@ -142,7 +142,7 @@ export default function MesCommandes({
             </label>
             <label>
               <span style={{ fontSize: 13, fontWeight: 600 }}>{mots.quantite}</span>
-              <input type="number" inputMode="numeric" min={1} step={1} value={s.quantite} style={champ}
+              <input type="number" min={1} step={1} value={s.quantite} style={champ}
                 required={s.designation.trim() !== ''}
                 onChange={(e) => poser(i, 'quantite', e.target.value)} />
             </label>
