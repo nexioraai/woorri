@@ -6,6 +6,7 @@ import { use } from 'react'
 import { supabase } from '@/lib/supabase'
 import GestionDemandes from './GestionDemandes'
 import GestionCommandes from './GestionCommandes'
+import GestionAgents from './GestionAgents'
 import Journal from './Journal'
 import DocumentsDuCompte from '@/app/sites/[slug]/espace/DocumentsDuCompte'
 import { motsDocuments } from '@/app/sites/[slug]/espace/motsDocuments'
@@ -266,6 +267,7 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
         </>
       )}
       <GestionCommandes slug={slug} />
+      <GestionAgents slug={slug} />
       <GestionDemandes slug={slug} />
       <Journal slug={slug} />
     </main>

@@ -25,7 +25,13 @@ const TEINTE: Record<EtatCommande, string> = {
   recue: '#b45309', en_cours: '#1d4ed8', validee: '#7c3aed', livree: '#16794a', annulee: '#6b7280',
 }
 
-export default function GestionCommandes({ slug }: { slug: string }) {
+/** Deux surfaces : le tableau de bord (sombre) et l'espace client du site,
+ *  où l'agent de la DDM traite les commandes (clair). Mêmes gestes, mêmes routes. */
+const SOMBRE = { erreur: '#f87171', bord: 'rgba(255,255,255,0.10)', fond: 'rgba(255,255,255,0.03)', trait: 'rgba(255,255,255,0.08)', champFond: 'rgba(0,0,0,0.25)', champBord: 'rgba(255,255,255,0.15)', champTexte: '#ededed' }
+const CLAIR = { erreur: '#9b1c1c', bord: '#e4e4e7', fond: '#ffffff', trait: '#ececf0', champFond: '#ffffff', champBord: '#d4d4d8', champTexte: '#111111' }
+
+export default function GestionCommandes({ slug, clair = false, accent = '#FA5D1E', sansTitre = false }: { slug: string; clair?: boolean; accent?: string; sansTitre?: boolean }) {
+  const T = clair ? CLAIR : SOMBRE
   const [liste, setListe] = useState<Commande[] | null>(null)
   const [ouvert, setOuvert] = useState(true)
   const [brouillons, setBrouillons] = useState<Record<string, string>>({})
@@ -44,7 +50,7 @@ export default function GestionCommandes({ slug }: { slug: string }) {
 
   const relire = useCallback(async () => {
     const { ok, d } = await appel('GET')
-    if (!ok) return
+    if (!ok) { setMessage(typeof d.error === 'string' ? d.error : 'Accès refusé.'); return }
     setOuvert(d.ouvert !== false)
     setListe(d.commandes ?? [])
   }, [appel])
@@ -72,19 +78,22 @@ export default function GestionCommandes({ slug }: { slug: string }) {
   if (!ouvert) return null
 
   return (
-    <section style={{ marginTop: 44 }}>
+    <section style={{ marginTop: sansTitre ? 0 : 44 }}>
+      {!sansTitre && (<>
       <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 6px' }}>
         Commandes reçues {aTraiter > 0 && <span style={{ color: '#b45309' }}>({aTraiter} à traiter)</span>}
       </h2>
       <p style={{ fontSize: 14, opacity: 0.65, margin: '0 0 16px' }}>
         Les bons de commande des structures sanitaires, passés depuis leur espace client. L’état et votre réponse s’affichent chez le client.
       </p>
-      {message && <p role="alert" style={{ color: '#f87171' }}>{message}</p>}
+      </>)}
+      {sansTitre && aTraiter > 0 && <p style={{ fontWeight: 700, color: '#b45309', margin: '0 0 14px' }}>{aTraiter} commande{aTraiter > 1 ? 's' : ''} à traiter</p>}
+      {message && <p role="alert" style={{ color: T.erreur }}>{message}</p>}
       {liste && liste.length === 0 && <p style={{ opacity: 0.55 }}>Aucune commande pour l’instant.</p>}
 
       {(liste ?? []).map((c) => (
         <div key={c.id} style={{ padding: '14px 16px', marginBottom: 10, borderRadius: 14,
-          border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.03)' }}>
+          border: `1px solid ${T.bord}`, background: T.fond }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' }}>
             <div>
               <p style={{ margin: 0, fontWeight: 700 }}>
@@ -107,7 +116,7 @@ export default function GestionCommandes({ slug }: { slug: string }) {
             </thead>
             <tbody>
               {c.lignes.map((l, k) => (
-                <tr key={k} style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <tr key={k} style={{ borderTop: `1px solid ${T.trait}` }}>
                   <td style={{ padding: '6px' }}>{l.designation}{l.produit_reference ? <span style={{ opacity: 0.5 }}> · {l.produit_reference}</span> : null}</td>
                   <td style={{ padding: '6px', textAlign: 'end', fontVariantNumeric: 'tabular-nums' }}>{l.quantite.toLocaleString('fr-FR')}{l.unite ? ` ${l.unite}` : ''}</td>
                 </tr>
@@ -126,8 +135,8 @@ export default function GestionCommandes({ slug }: { slug: string }) {
           <textarea rows={2} defaultValue={c.reponse ?? ''} placeholder="Votre réponse au client (disponibilité, date de livraison…)"
             onChange={(e) => setBrouillons({ ...brouillons, [c.id]: e.target.value })}
             style={{ width: '100%', padding: '9px 11px', fontSize: 14, borderRadius: 9,
-              background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.15)', color: '#ededed' }} />
-          <button type="button" style={{ ...bouton('#FA5D1E'), marginTop: 6 }}
+              background: T.champFond, border: `1px solid ${T.champBord}`, color: T.champTexte }} />
+          <button type="button" style={{ ...bouton(accent), marginTop: 6 }}
             onClick={() => void changer(c.id, { reponse: brouillons[c.id] ?? c.reponse ?? '' })}>
             Enregistrer la réponse{c.repondu_le ? ` (dernière : ${c.repondu_le.slice(0, 10)})` : ''}
           </button>

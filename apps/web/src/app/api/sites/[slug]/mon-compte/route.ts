@@ -115,7 +115,19 @@ export async function GET(req: Request, { params }: Params) {
     .maybeSingle()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ compte: data ?? null, courriel: moi.email })
+
+  // CPA, 2026-11-19 — UN AGENT DE LA DDM GÈRE L'ESPACE CLIENT. Le service se
+  // lit À PART et seulement pour un agent : l'ajouter à `VU` ferait échouer
+  // cette lecture pour TOUS les comptes tant que la colonne n'existe pas.
+  // Lecture ratée = pas de gestion, jamais une erreur.
+  let gestionClients = false
+  const c = data as { id?: string; role?: string; etat?: string } | null
+  if (c?.role === 'agent' && c.etat === 'actif' && c.id) {
+    const { data: s } = await supabaseAdmin
+      .from('site_comptes').select('service').eq('id', c.id).eq('site_id', site.id).maybeSingle()
+    gestionClients = (s as { service?: string | null } | null)?.service === 'ddm'
+  }
+  return NextResponse.json({ compte: data ?? null, courriel: moi.email, gestionClients })
 }
 
 /** POST — je DEMANDE un accès. Le compte naît en attente, et ne renaît jamais. */

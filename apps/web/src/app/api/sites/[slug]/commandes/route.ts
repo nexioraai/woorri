@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireSiteOwner } from '@/lib/auth/require-site-owner'
+import { requireGestionClients } from '@/lib/auth/require-gestion-clients'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { journaliser } from '@/lib/audit/journaliser'
 import { ETATS_COMMANDE, MAX_REPONSE, tableAbsente } from '@/lib/commandes/commandes'
@@ -11,6 +11,9 @@ import { ETATS_COMMANDE, MAX_REPONSE, tableAbsente } from '@/lib/commandes/comma
 // propriétaire du site voit chaque bon de commande, le fait avancer (reçue →
 // en cours → validée → livrée, ou annulée) et peut répondre ; la réponse
 // s'affiche dans l'espace du client.
+//
+// ── QUI : le propriétaire, OU un agent de la division DDM (2026-11-19 :
+// « l'espace client est dédié à la DDM ») — voir `requireGestionClients`.
 //
 // ── LE FILTRE PAR SITE RESTE, MÊME AVEC UN `id`.
 //
@@ -24,9 +27,9 @@ const VU = 'id,reference,etat,note,reponse,repondu_le,cree_le,maj_le,compte_id'
 
 export async function GET(req: Request, { params }: Params) {
   const { slug } = await params
-  const garde = await requireSiteOwner(req, slug)
-  if ('response' in garde) return garde.response
-  const siteId = (garde.site as { id: string }).id
+  const garde = await requireGestionClients(req, slug)
+  if (!garde.ok) return garde.response
+  const siteId = garde.g.siteId
 
   const { data, error } = await supabaseAdmin
     .from('commandes').select(VU)
@@ -66,9 +69,9 @@ export async function GET(req: Request, { params }: Params) {
 
 export async function PATCH(req: Request, { params }: Params) {
   const { slug } = await params
-  const garde = await requireSiteOwner(req, slug)
-  if ('response' in garde) return garde.response
-  const siteId = (garde.site as { id: string }).id
+  const garde = await requireGestionClients(req, slug)
+  if (!garde.ok) return garde.response
+  const siteId = garde.g.siteId
 
   let corps: Record<string, unknown>
   try { corps = await req.json() } catch { return NextResponse.json({ error: 'Envoi illisible.' }, { status: 400 }) }
@@ -106,9 +109,9 @@ export async function PATCH(req: Request, { params }: Params) {
   if (!data) return NextResponse.json({ error: 'Commande introuvable.' }, { status: 404 })
 
   await journaliser({
-    siteId, acteur: garde.email, viaAdmin: garde.viaAdmin,
+    siteId, acteur: garde.g.acteur, viaAdmin: garde.g.viaAdmin,
     action: 'reponse' in changements ? 'commande.repondre' : 'commande.etat',
-    cible: (data as { reference: string }).reference, details: { etat: changements.etat },
+    cible: (data as { reference: string }).reference, details: { etat: changements.etat, par: garde.g.qui },
   })
   return NextResponse.json({ commande: data })
 }

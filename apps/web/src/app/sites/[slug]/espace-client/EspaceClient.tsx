@@ -65,6 +65,9 @@ export type MotsEspace = {
   // n'existe pas : c'est le defaut qui avait laisse `/appels-offres` hors du
   // rideau du telephone pendant deux jours.
   mesCommandes: string
+  agentDdm: string
+  gestionCommandes: string
+  comptesClients: string
   mesDemandes: string
   mesReclamations: string
   mesDocuments: string
@@ -79,6 +82,8 @@ export default function EspaceClient({
 }: { slug: string; base: string; primary: string; mots: MotsEspace }) {
   const [etat, setEtat] = useState<'charge' | 'anonyme' | 'connu' | 'panne'>('charge')
   const [compte, setCompte] = useState<Compte | null>(null)
+  // CPA, 2026-11-19 — un agent de la DDM gère l'espace client (dit par la route).
+  const [gestion, setGestion] = useState(false)
   const [role, setRole] = useState<'structure' | 'fournisseur'>('structure')
   const [organisation, setOrganisation] = useState('')
   const [envoi, setEnvoi] = useState(false)
@@ -102,6 +107,7 @@ export default function EspaceClient({
       const d = await r.json()
       if (!encoreLa()) return
       setCompte(d.compte ?? null)
+      setGestion(d.gestionClients === true)
       setEtat('connu')
     } catch { if (encoreLa()) setEtat('panne') }
   }
@@ -148,6 +154,7 @@ export default function EspaceClient({
       // c'est le déclencheur de base qui décide, jamais nous.
       const d = await r.json()
       setCompte(d.compte ?? null)
+      setGestion(d.gestionClients === true)
       setEtat('connu')
     } catch { setEtat('panne') } finally { setEnvoi(false) }
   }
@@ -242,7 +249,7 @@ export default function EspaceClient({
         <p style={{ margin: '0 0 18px', fontSize: 14.5, opacity: 0.8 }}>
           {compte.organisation} · {compte.email}
           <br />
-          {mots.role} : {compte.role === 'fournisseur' ? mots.fournisseur : mots.structure}
+          {mots.role} : {compte.role === 'fournisseur' ? mots.fournisseur : compte.role === 'agent' ? mots.agentDdm : mots.structure}
           {compte.reference ? ` · ${compte.reference}` : ''}
         </p>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -256,6 +263,12 @@ export default function EspaceClient({
             // LES COMMANDES (CPA, 2026-11-19) : réservées au client — la structure
             // sanitaire commande ; le fournisseur, lui, vend à la Centrale.
             ...(compte.role === 'structure' ? [[`${base}/mes-commandes`, mots.mesCommandes]] as const : []),
+            // L'AGENT DE LA DDM gère l'espace client : toutes les commandes et
+            // les comptes clients. La route décide ; l'écran ne fait qu'afficher.
+            ...(gestion ? [
+              [`${base}/gestion-commandes`, mots.gestionCommandes],
+              [`${base}/comptes-clients`, mots.comptesClients],
+            ] as const : []),
             ...(compte.role === 'fournisseur' ? [
               [`${base}/mon-dossier`, mots.monDossier],
               [`${base}/ma-prequalification`, mots.maPrequalification],

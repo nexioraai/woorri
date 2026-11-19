@@ -4,6 +4,8 @@
 -- À exécuter manuellement dans l'éditeur SQL Supabase (projet nexiora-ai),
 -- même convention que les autres fichiers de ce dossier. Rejouable.
 --
+-- Contient aussi la colonne `site_comptes.service` (agents de la DDM, plus bas).
+--
 -- ── CE QUE LE PROPRIÉTAIRE A DÉCIDÉ, 2026-11-19.
 --
 -- « Il faut ajouter un espace client, où les clients peuvent créer un compte
@@ -109,6 +111,28 @@ revoke all on table public.commande_lignes from anon, authenticated;
 grant  all on table public.commandes       to   service_role;
 grant  all on table public.commande_lignes to   service_role;
 
+-- ---------------------------------------------------------------------------
+-- L'ESPACE CLIENT EST CONFIÉ À LA DIVISION DDM (CPA, 2026-11-19).
+--
+-- « Donner à la division DDM la gestion de l'espace client. » Un compte de
+-- rôle `agent` (personnel de la Centrale, jamais auto-déclaré) porte un
+-- SERVICE. `ddm` : il voit et traite les commandes et les comptes clients,
+-- depuis l'espace client du site. Le propriétaire garde tous ses droits.
+--
+-- Le service n'existe que pour un agent : un client ou un fournisseur
+-- n'appartient à aucune division de la Centrale.
+-- ---------------------------------------------------------------------------
+alter table public.site_comptes add column if not exists service text;
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'site_comptes_service_chk') then
+    alter table public.site_comptes
+      add constraint site_comptes_service_chk
+      check (service is null or (role = 'agent' and service in ('ddm')));
+  end if;
+end $$;
+
 notify pgrst, 'reload schema';
 
 -- APRÈS — les deux tables existent, et personne d'autre que le service ne les lit.
@@ -117,4 +141,7 @@ select
      where table_schema = 'public' and table_name in ('commandes', 'commande_lignes')) as tables_presentes,
   (select count(*) from information_schema.role_table_grants
      where table_schema = 'public' and table_name in ('commandes', 'commande_lignes')
-       and grantee in ('anon', 'authenticated'))                                       as privileges_publics;
+       and grantee in ('anon', 'authenticated'))                                       as privileges_publics,
+  (select count(*) from information_schema.columns
+     where table_schema = 'public' and table_name = 'site_comptes'
+       and column_name = 'service')                                                    as colonne_service;
