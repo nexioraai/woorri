@@ -1,3 +1,4 @@
+import 'server-only'
 // ============================================================
 // SUPPRESSION DE FOND — PAR UN WORKER. L'AUTRE CHEMIN EST AILLEURS.
 //

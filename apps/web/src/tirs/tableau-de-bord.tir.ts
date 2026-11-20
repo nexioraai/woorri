@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * TIR — LE TABLEAU DE BORD ENSEIGNÉ (2026-11-12).
  *

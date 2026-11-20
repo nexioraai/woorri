@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * LA SONDE — « TU DOIS SAVOIR AUSSI ».
  *

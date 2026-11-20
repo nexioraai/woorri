@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * TIR — APRÈS PUBLICATION, LE BANDEAU DISPARAÎT-IL ?
  *

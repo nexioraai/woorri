@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextResponse } from 'next/server';
 import { clientIA, MODELE_LEGER, MODELE_LOURD } from '@/lib/ia/client';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';

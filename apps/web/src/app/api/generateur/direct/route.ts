@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * OPTION 1 — L'IA ECRIT LE CODE. UNE ROUTE, UN APPEL, UNE BOUCLE BORNEE.
  *

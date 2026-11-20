@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextResponse } from 'next/server';
 import { processWebhookEvent } from '@/lib/fulfillment/webhook-handler';
 import { decodeIdempotencyKey } from '@/lib/fulfillment/idempotency-key';

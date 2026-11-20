@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { provisionDomain } from '@/lib/domains/provision';

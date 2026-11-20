@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * TIR ④ — UNE ŒUVRE QUI SE SOUVIENT. Première moitié : la génération.
  *

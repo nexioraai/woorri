@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
 import { startCronRun, finishCronRun } from '@/lib/cron-tracker';

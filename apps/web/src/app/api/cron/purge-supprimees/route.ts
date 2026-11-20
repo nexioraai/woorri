@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * LA PURGE — les fichiers partent, la PIERRE TOMBALE reste.
  *

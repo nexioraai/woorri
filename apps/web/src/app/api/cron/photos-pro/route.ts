@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * LE LOT QUI REND PRO LES PHOTOS DE TOUTES LES BOUTIQUES.
  *

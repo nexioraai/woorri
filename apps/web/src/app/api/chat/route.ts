@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextResponse, after } from 'next/server';
 import { indicatifDuPays, corrigerIndicatif } from '@/lib/telephone';
 import { sansQuota } from '@/lib/admin-emails';

@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user';

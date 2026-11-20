@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { usesCatalogSelections } from '@/lib/dropship/catalogAdmission';

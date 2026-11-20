@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * TIR — LE MOT DE PASSE REFAIT OUVRE-T-IL VRAIMENT LA PORTE ?
  *

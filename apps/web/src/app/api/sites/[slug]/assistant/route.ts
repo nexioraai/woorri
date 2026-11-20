@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextResponse } from 'next/server'
 import { createHmac } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'

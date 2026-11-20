@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * LA SURVEILLANCE DE LA GÉNÉRATION — AVANT, PENDANT, APRÈS.
  *

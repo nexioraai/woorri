@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextRequest, NextResponse } from 'next/server'
 import { cjCalculateFreight } from '@/lib/cj/client'
 import { pickThreeTiers, parseAging } from '@/lib/cj/shipping-tiers'

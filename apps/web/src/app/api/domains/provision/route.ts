@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextRequest, NextResponse } from 'next/server';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { supabaseAdmin } from '@/lib/supabase-admin';

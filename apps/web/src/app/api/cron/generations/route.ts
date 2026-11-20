@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * ETAGE 4 — LE CRON PORTEUR. Une tranche par minute : saisir une ligne
  * (CAS + jeton de cloture), travailler dans le budget, consigner, lacher.

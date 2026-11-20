@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * TIR — LA PUBLICATION POSE-T-ELLE VRAIMENT LE SCHÉMA ET LE COMPTE ?
  *

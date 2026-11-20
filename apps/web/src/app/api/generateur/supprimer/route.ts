@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * SUPPRIMER UNE APPLICATION — doucement, et sans recycler son nom.
  *

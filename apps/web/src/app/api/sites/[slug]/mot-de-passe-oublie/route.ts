@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { ouvreDesComptes } from '@/app/sites/[slug]/acces/ouvreDesComptes'

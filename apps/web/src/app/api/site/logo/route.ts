@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextResponse } from 'next/server'
 import sharp from 'sharp'
 import { evaluerLogo } from '@/lib/images/qualiteLogo'

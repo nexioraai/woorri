@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * L'ADRESSE PUBLIQUE D'UN SITE — <nom>.deribfy.app, donnée À LA PUBLICATION (2026-11-19).
  *

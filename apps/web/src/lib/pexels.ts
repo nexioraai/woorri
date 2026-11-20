@@ -1,3 +1,4 @@
+import 'server-only'
 const PEXELS_API_KEY = process.env.PEXELS_API_KEY!;
 
 async function pexelsFetch(url: string) {

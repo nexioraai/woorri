@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * ETAGE 4 — PUBLIER. Donner a l'application une adresse qu'on peut envoyer.
  *

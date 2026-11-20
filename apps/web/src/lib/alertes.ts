@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * ALERTER — la ligne d'abord, la poussée ensuite.
  *

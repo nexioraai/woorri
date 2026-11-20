@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * LE DÉCLENCHEUR DES SAUVEGARDES DE NUIT — Vercel, à la minute (2026-11-19).
  *

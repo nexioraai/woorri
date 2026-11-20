@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * TIR — LA PAGE PUBLIÉE REÇOIT-ELLE SA BASE, EN PRODUCTION ?
  *

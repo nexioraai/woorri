@@ -1,3 +1,4 @@
+import 'server-only'
 /**
  * LA SONDE DE SCHÉMA — ce que la base EN LIGNE porte vraiment, confronté au
  * DDL du dépôt.

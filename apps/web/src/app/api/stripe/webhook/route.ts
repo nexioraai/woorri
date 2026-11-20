@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextResponse } from 'next/server';
 import { sansQuota } from '@/lib/admin-emails';
 import { assurerAdresseSite } from '@/lib/sites/adresse-site';

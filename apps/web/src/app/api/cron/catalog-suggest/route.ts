@@ -1,3 +1,4 @@
+import 'server-only'
 import { NextRequest, NextResponse } from 'next/server';
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client';
 import { supabaseAdmin } from '@/lib/supabase-admin';

@@ -1,3 +1,4 @@
+import 'server-only'
 const PORKBUN_BASE = 'https://api.porkbun.com/api/json/v3';
 
 /** Marge Nexiora, fixe en dollars et non en pourcentage : le travail est
