@@ -16,6 +16,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const etat = vi.hoisted(() => ({
   email: 'issayamiyoussouf@gmail.com' as string | null,
   prix: '' as string,
+  prixLot: '' as string,
   rpc: { data: null as unknown, error: null as null | { message: string } },
   appels: [] as unknown[],
 }))
@@ -25,7 +26,7 @@ vi.mock('@/lib/supabase-admin', async () => {
   const { TABLE_GENERATIONS } = await import('@/lib/apps/journal')
   const from = creerFrom(
     {
-      quota_reglages: { reponse: () => ({ data: [{ cle: 'prix_mensuel_xaf', valeur: etat.prix }, { cle: 'duree_jours', valeur: '30' }, { cle: 'lot_taille', valeur: '50' }], error: null }) },
+      quota_reglages: { reponse: () => ({ data: [{ cle: 'prix_mensuel_xaf', valeur: etat.prix }, { cle: 'lot_prix_xaf', valeur: etat.prixLot }, { cle: 'duree_jours', valeur: '30' }, { cle: 'lot_taille', valeur: '50' }], error: null }) },
       [TABLE_GENERATIONS]: { reponse: (f) => ({
         data: f.some(([op]) => op === 'ilike') ? [{ id: 'app-1', nom: 'Gestion de pharmacie', publication_slug: 'pharma', owner_id: 'u-1' }]
           : { id: f.find(([, c]) => c === 'id')?.[2] ?? 'app-1', owner_id: 'u-1', nom: 'Gestion de pharmacie', publication_slug: 'pharma' },
@@ -57,6 +58,7 @@ const BON = { appId: 'app-1', objet: 'abonnement', fournisseur: 'especes', refer
 beforeEach(() => {
   etat.email = 'issayamiyoussouf@gmail.com'
   etat.prix = '12000'
+  etat.prixLot = '3000'
   etat.rpc = { data: { statut: 'enregistre', app_id: 'app-1', jusqu_au: '2027-01-30T10:00:00Z' }, error: null }
   etat.appels = []
 })
@@ -110,6 +112,21 @@ describe('activation à la main', () => {
     const r = await GET(new Request('https://www.deribfy.com/api/admin/paiements-manuels?q=pharma', { headers: { authorization: 'Bearer j' } }))
     const d = (await r.json()) as { applis: Record<string, unknown>[]; reglages: Record<string, string> }
     expect(d.applis[0]).toMatchObject({ id: 'app-1', adresse: 'pharma', proprietaire: 'pharmacien@exemple.td', formule: 'abonnee' })
-    expect(d.reglages).toEqual({ prixMensuelXaf: '12000', dureeJours: '30', lotTaille: '50' })
+    expect(d.reglages).toEqual({ prixMensuelXaf: '12000', lotPrixXaf: '3000', dureeJours: '30', lotTaille: '50' })
+  })
+})
+
+describe('le prix de chaque objet', () => {
+  it('un lot alors que le prix du LOT est vide : refusé, rien n’est écrit (le mois réglé ne suffit pas)', async () => {
+    etat.prixLot = ''
+    const r = await poster({ ...BON, objet: 'lot', montant: 3000 })
+    expect(r.status).toBe(409)
+    expect(((await r.json()) as { error: string }).error).toMatch(/prix du lot/u)
+    expect(etat.appels).toEqual([])
+  })
+  it('12 000 FCFA pour un mois : accepté et transmis tel quel', async () => {
+    const r = await poster({ ...BON, montant: 12000 })
+    expect(r.status).toBe(200)
+    expect((etat.appels[0] as { args: { p_montant: number } }).args.p_montant).toBe(12000)
   })
 })

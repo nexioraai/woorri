@@ -22,6 +22,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { estAdmin } from '@/lib/admin-emails'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
+import { blocage } from '@/lib/apps/activation-manuelle'
 
 export const runtime = 'nodejs'
 
@@ -85,7 +86,7 @@ export async function GET(req: Request) {
         formule: parApp.get(x.id)?.statut ?? 'gratuite',
         payeJusquAu: parApp.get(x.id)?.paye_jusqu_au ?? null,
       })),
-      reglages: { prixMensuelXaf: r.prix_mensuel_xaf ?? '', dureeJours: r.duree_jours ?? '', lotTaille: r.lot_taille ?? '' },
+      reglages: { prixMensuelXaf: r.prix_mensuel_xaf ?? '', lotPrixXaf: r.lot_prix_xaf ?? '', dureeJours: r.duree_jours ?? '', lotTaille: r.lot_taille ?? '' },
     },
     { headers: { 'Cache-Control': 'no-store' } },
   )
@@ -114,8 +115,10 @@ export async function POST(req: Request) {
   }
 
   // Le prix vide se dit AVANT d'écrire — la base le refuserait aussi.
-  const prix = ((await reglages()).prix_mensuel_xaf ?? '').trim()
-  if (prix === '') return NextResponse.json({ error: PHRASE_PRIX_VIDE }, { status: 409 })
+  // LE PRIX DE CET OBJET (mois ou lot), dit AVANT d'écrire — la base le refuserait aussi.
+  const r0 = await reglages()
+  const bloque = blocage(objet, { prixMensuelXaf: r0.prix_mensuel_xaf ?? '', lotPrixXaf: r0.lot_prix_xaf ?? '' })
+  if (bloque !== null) return NextResponse.json({ error: bloque }, { status: 409 })
 
   const app = await supabaseAdmin.from(TABLE_GENERATIONS).select('id, owner_id, nom').eq('id', appId).maybeSingle()
   if (app.error !== null || app.data === null) return NextResponse.json({ error: 'Application introuvable.' }, { status: 404 })
@@ -128,7 +131,7 @@ export async function POST(req: Request) {
   })
   if (r.error !== null) {
     const m = r.error.message
-    if (m.includes('QUOTA_REGLAGE_ABSENT')) return NextResponse.json({ error: PHRASE_PRIX_VIDE }, { status: 409 })
+    if (m.includes('QUOTA_REGLAGE_ABSENT')) return NextResponse.json({ error: objet === 'lot' ? 'Le prix du lot en FCFA n’est pas encore réglé.' : PHRASE_PRIX_VIDE }, { status: 409 })
     if (m.includes('PAIEMENT_LOT_SANS_ABONNEMENT')) {
       return NextResponse.json({ error: 'Un lot s’ajoute à un abonnement en cours : cette application n’en a pas.' }, { status: 409 })
     }

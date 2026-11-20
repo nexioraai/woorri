@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Banknote } from 'lucide-react';
+import { blocage, ecart } from '@/lib/apps/activation-manuelle';
 
 // L'ACTIVATION À LA MAIN (étape ④ du quota, 2026-11-19) — le SEUL cas où le
 // propriétaire intervient : un client que la carte ne couvre pas (espèces,
@@ -10,7 +11,7 @@ import { Banknote } from 'lucide-react';
 // chercher, préparer et faire CONFIRMER, avec la date qui en résultera.
 
 type Appli = { id: string; nom: string | null; adresse: string | null; proprietaire: string | null; formule: string; payeJusquAu: string | null };
-type Reglages = { prixMensuelXaf: string; dureeJours: string; lotTaille: string };
+type Reglages = { prixMensuelXaf: string; lotPrixXaf: string; dureeJours: string; lotTaille: string };
 
 const jour = (d: Date) => new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
 const fcfa = (n: number) => `${new Intl.NumberFormat('fr-FR').format(n)} FCFA`;
@@ -35,9 +36,10 @@ export default function ActivationManuelle() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
-  const prixVide = reglages !== null && reglages.prixMensuelXaf.trim() === '';
-  const prix = reglages === null || prixVide ? null : Number(reglages.prixMensuelXaf);
+  // Le prix de L'OBJET choisi (mois ou lot) : vide → bloqué ; autre montant → signalé.
+  const bloque = reglages === null ? null : blocage(objet, reglages);
   const recu = Number(montant);
+  const ecartSignale = reglages === null ? null : ecart(objet, recu, reglages);
 
   const chercher = async () => {
     setBusy(true); setMsg(null); setChoisie(null); setAConfirmer(false);
@@ -76,7 +78,7 @@ export default function ActivationManuelle() {
     finally { setBusy(false); }
   };
 
-  const pret = choisie !== null && !prixVide && reference.trim().length >= 3 && Number.isInteger(recu) && recu > 0 && !busy;
+  const pret = choisie !== null && bloque === null && reference.trim().length >= 3 && Number.isInteger(recu) && recu > 0 && !busy;
 
   return (
     <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 mb-10 glass">
@@ -86,10 +88,8 @@ export default function ActivationManuelle() {
       </h2>
       <p className="text-xs text-white/50 mb-4">Espèces, Airtel ou Moov : la référence est obligatoire. Par carte, l’activation est automatique.</p>
 
-      {prixVide && (
-        <p className="mb-4 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-          Le prix mensuel en FCFA n’est pas encore réglé : aucune activation n’est possible tant qu’il est vide.
-        </p>
+      {bloque !== null && (
+        <p className="mb-4 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">{bloque}</p>
       )}
 
       <div className="flex gap-2 mb-3">
@@ -153,9 +153,7 @@ export default function ActivationManuelle() {
           <p className="mt-1 text-xs text-white/70">
             {fcfa(recu)} reçus en {fournisseur === 'especes' ? 'espèces' : fournisseur === 'airtel' ? 'Airtel Money' : 'Moov Money'} · référence {reference.trim()}
           </p>
-          {objet === 'abonnement' && prix !== null && recu !== prix && (
-            <p className="mt-1 text-xs text-amber-200">Attention : le prix réglé est {fcfa(prix)}, le montant reçu est {fcfa(recu)}.</p>
-          )}
+          {ecartSignale !== null && <p className="mt-1 text-xs text-amber-200">{ecartSignale}</p>}
           <div className="mt-3 flex gap-2">
             <button type="button" disabled={busy} onClick={() => { void enregistrer(); }} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold disabled:opacity-40">Confirmer</button>
             <button type="button" disabled={busy} onClick={() => setAConfirmer(false)} className="rounded-lg bg-white/10 px-4 py-2 text-sm">Annuler</button>
