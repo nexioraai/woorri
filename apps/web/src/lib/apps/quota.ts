@@ -13,6 +13,7 @@
  * comptes exemptés (`sansQuota`) ne passent jamais par ici.
  */
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import type { EtatCompteur } from './compteur-phrases'
 
 export type Reservation =
   | { readonly ok: true; readonly restantes: number }
@@ -69,4 +70,38 @@ export async function solderCreation(
 ): Promise<{ ok: boolean; detail?: string }> {
   const r = await supabaseAdmin.rpc('solder_creation', { p_id: id, p_owner: proprietaire, p_issue: issue, p_app: app })
   return r.error === null ? { ok: true } : { ok: false, detail: r.error.message }
+}
+
+// ── CE QUE L'ATELIER AFFICHE (étape ③, 2026-11-19) — une LECTURE, sans effet.
+
+// Le type `EtatCompteur` vit dans compteur-phrases.ts : l'atelier (navigateur)
+// le lit sans jamais toucher à ce module, qui porte la clé de service.
+export type { EtatCompteur }
+
+/**
+ * L'état du compteur d'une appli, tel que la réservation le verrait. Une appli
+ * jamais comptée est « gratuite », avec le réglage du moment. `null` = illisible.
+ */
+export async function lireCompteur(app: string, proprietaire: string): Promise<EtatCompteur | null> {
+  const c = await supabaseAdmin
+    .from('app_compteurs')
+    .select('statut, paye_jusqu_au, limite, supplement, utilisees')
+    .eq('app_id', app)
+    .eq('owner_id', proprietaire)
+    .maybeSingle()
+  if (c.error !== null) return null
+  if (c.data === null) {
+    const r = await supabaseAdmin.from('quota_reglages').select('valeur').eq('cle', 'modifications_gratuites').maybeSingle()
+    const n = Number((r.data as { valeur?: string } | null)?.valeur ?? Number.NaN)
+    if (r.error !== null || !Number.isInteger(n)) return null
+    return { exempte: false, formule: 'gratuite', restantes: n, payeJusquAu: null }
+  }
+  const l = c.data as { statut: string; paye_jusqu_au: string | null; limite: number; supplement: number; utilisees: number }
+  const echu = l.statut === 'abonnee' && (l.paye_jusqu_au === null || Date.parse(l.paye_jusqu_au) <= Date.now())
+  return {
+    exempte: false,
+    formule: l.statut === 'abonnee' ? 'abonnee' : 'gratuite',
+    restantes: echu ? 0 : Math.max(0, l.limite + l.supplement - l.utilisees),
+    payeJusquAu: l.paye_jusqu_au,
+  }
 }

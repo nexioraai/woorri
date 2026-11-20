@@ -65,6 +65,8 @@ import { IdentifiantsOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { adresseProposee, TITRE_SANS_NOM } from '@/lib/apps/nom-produit';
 import { echangesDe, heureCourte, type VersionLue } from '@/lib/apps/fil-atelier';
 import { phraseVersion } from '@/lib/apps/versions-oeuvre';
+import { boutonOuvert, libelleBouton, phraseApresRetouche, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
+import type { EtatCompteur } from '@/lib/apps/compteur-phrases';
 
 /** M2 — l'écran est-il étroit ? Lu par `useSyncExternalStore` : juste au rendu
  *  serveur (faux), juste dans le navigateur, et suivi si l'écran tourne. */
@@ -117,6 +119,8 @@ export default function AtelierPage() {
   const [onglet, setOnglet] = useState<'conversation' | 'application'>('application');
   const [texte, setTexte] = useState('');
   const [plafond, setPlafond] = useState('');
+  // LE COMPTEUR DE MODIFICATIONS (étape ③, 2026-11-19) — rendu par le serveur.
+  const [compteur, setCompteur] = useState<EtatCompteur | null>(null);
   const [perimetre, setPerimetre] = useState('');
   const [enCours, setEnCours] = useState(false);
   const [avis, setAvis] = useState<string | null>(null);
@@ -251,8 +255,9 @@ export default function AtelierPage() {
           headers: { Authorization: `Bearer ${t}` },
         });
         if (res.ok) {
-          const d = (await res.json()) as { plafond?: string; perimetre?: string };
+          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null };
           setPlafond(d.plafond ?? '');
+          setCompteur(d.compteur ?? null);
           setPerimetre(d.perimetre ?? '');
         }
       } catch { /* le bouton dira « Modifier » sans prix plutôt que rien */ }
@@ -390,10 +395,19 @@ export default function AtelierPage() {
         ok?: boolean; error?: string; horsPerimetre?: boolean; raison?: string;
         aConfirmer?: boolean; message?: string; fichiers?: string[]; coutUsd?: number; rang?: number;
         migration?: string | boolean; couvertureNonMesuree?: boolean; declarationRejetee?: string; couleur?: string;
+        modificationsRestantes?: number;
       };
       // CE QUI A ÉTÉ DÉPENSÉ SE DIT, MÊME QUAND ÇA RATE. Un refus gratuit et
       // un refus payé ne sont pas la même nouvelle.
-      const paye = d.coutUsd === undefined || d.coutUsd === 0 ? '' : ` (${d.coutUsd.toFixed(3)} $ dépensés)`;
+      // LES DOLLARS POUR LE PROPRIÉTAIRE SEUL (décision 5A) ; le commerçant lit
+      // le compteur : « Il vous en reste 36. » ou « Non décomptée. »
+      const livree = res.ok && d.ok === true;
+      const paye =
+        (voitLesCouts(compteur) && d.coutUsd !== undefined && d.coutUsd > 0 ? ` (${d.coutUsd.toFixed(3)} $ dépensés)` : '') +
+        (d.aConfirmer === true ? '' : phraseApresRetouche(compteur, livree, d.modificationsRestantes));
+      if (compteur !== null && !compteur.exempte && typeof d.modificationsRestantes === 'number') {
+        setCompteur({ ...compteur, restantes: d.modificationsRestantes });
+      }
       setAvis(null);
 
       if (d.aConfirmer === true) {
@@ -740,7 +754,7 @@ export default function AtelierPage() {
                           {e.rang === versions?.courante ? ' · actuelle' : ''}
                         </span>
                         {heureCourte(e.creeIl) !== null && <span>{heureCourte(e.creeIl)}</span>}
-                        {e.coutUsd > 0 && <span className="tabular-nums">{e.coutUsd.toFixed(3)} $</span>}
+                        {voitLesCouts(compteur) && e.coutUsd > 0 && <span className="tabular-nums">{e.coutUsd.toFixed(3)} $</span>}
                       </p>
                     </div>
                   </li>
@@ -908,15 +922,19 @@ export default function AtelierPage() {
             )}
             <button
               type="button"
-              disabled={enCours || texte.trim() === ''}
+              disabled={enCours || texte.trim() === '' || !boutonOuvert(compteur)}
               onClick={() => { void envoyer(false); }}
               className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#FA5D1E] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#FA5D1E]/90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Send size={13} strokeWidth={2} aria-hidden />
-              {/* LE PRIX S'ANNONCE AVANT, JAMAIS APRÈS. Et c'est un plafond :
-                  « au plus », pas « environ ». */}
-              {enCours ? 'Modification…' : plafond === '' ? 'Modifier' : `Modifier — ${plafond}`}
+              {/* LE COMPTEUR S'ANNONCE AVANT DE CLIQUER (étape ③) : des
+                  modifications pour le commerçant, le plafond en dollars pour
+                  le propriétaire seul. */}
+              {enCours ? 'Modification…' : libelleBouton(compteur, plafond)}
             </button>
+            {raisonFermeture(compteur) !== null && (
+              <p className="mt-1.5 text-[11px] leading-relaxed text-amber-200/80">{raisonFermeture(compteur)}</p>
+            )}
           </div>
         </section>
 

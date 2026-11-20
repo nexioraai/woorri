@@ -264,7 +264,12 @@ describe('EP-317 · l’atelier', () => {
     )
     // Il est AFFICHÉ sur le bouton, pas seulement reçu : une mesure qu'on ne
     // montre pas ne protège personne.
-    expect(a, 'le plafond n’est pas affiché sur le bouton').toMatch(/Modifier — \$\{plafond\}/u)
+    // ── DEPUIS L'ÉTAPE ③ DU QUOTA (2026-11-19) : le libellé vient de
+    //    `compteur-phrases.ts` — le plafond en dollars pour le propriétaire,
+    //    le compteur de modifications pour le commerçant (décision 5A).
+    expect(a, 'le bouton n’emploie plus le libellé du compteur').toMatch(motifTexte('libelleBouton(compteur, plafond)'))
+    const phrases = readFileSync(join(process.cwd(), 'src', 'lib', 'apps', 'compteur-phrases.ts'), 'utf8')
+    expect(phrases, 'le plafond n’est plus affiché au propriétaire').toMatch(motifTexte('`Modifier — ${plafond}`'))
     // ET LE PÉRIMÈTRE EST DIT AVANT D'ÉCRIRE, pas après le refus.
     expect(a, 'le périmètre n’est pas annoncé').toMatch(/\{perimetre\}/u)
   })

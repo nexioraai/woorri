@@ -16,11 +16,13 @@ import { journalVierge, type JournalPostgrest } from '@/lib/testing/postgrest'
 const etat = { stop: 'end_turn' as string, texte: '', email: 'marchand@example.com', appels: 0 }
 const reserver = vi.fn()
 const liberer = vi.fn()
+const lire = vi.fn()
 
 vi.mock('@/lib/apps/quota', async (orig) => ({
   ...(await orig<typeof import('@/lib/apps/quota')>()),
   reserverModification: (...a: unknown[]) => reserver(...a),
   libererModification: (...a: unknown[]) => liberer(...a),
+  lireCompteur: (...a: unknown[]) => lire(...a),
 }))
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
   requireAuthenticatedUser: () => ({ ok: true, userId: 'u-1', email: etat.email }),
@@ -65,7 +67,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
 }))
 
 process.env.GENERATEUR_FOURNISSEUR = 'deepseek'
-const { POST } = await import('../route')
+const { POST, GET } = await import('../route')
 const { PHRASE_EPUISE } = await import('@/lib/apps/quota')
 
 const appel = () =>
@@ -125,5 +127,24 @@ describe('étape ② · la retouche réserve avant de payer', () => {
     await appel()
     expect(reserver).not.toHaveBeenCalled()
     expect(liberer).not.toHaveBeenCalled()
+  })
+})
+
+describe('étape ③ · ce que l’atelier lit avant de cliquer', () => {
+  const lecture = () => GET(new Request('https://x/api/generateur/retoucher?id=g1'))
+  it('un commerçant : le compteur, et PAS le plafond en dollars', async () => {
+    lire.mockResolvedValue({ exempte: false, formule: 'gratuite', restantes: 10, payeJusquAu: null })
+    const d = (await (await lecture()).json()) as Record<string, unknown>
+    expect(d.compteur).toEqual({ exempte: false, formule: 'gratuite', restantes: 10, payeJusquAu: null })
+    expect(d.plafond).toBeUndefined()
+    expect(lire).toHaveBeenCalledWith('g1', 'u-1')
+  })
+  it('le propriétaire : exempté, avec son plafond en dollars', async () => {
+    etat.email = 'issayamiyoussouf@gmail.com'
+    lire.mockClear()
+    const d = (await (await lecture()).json()) as Record<string, unknown>
+    expect(d.compteur).toEqual({ exempte: true })
+    expect(typeof d.plafond).toBe('string')
+    expect(lire).not.toHaveBeenCalled()
   })
 })

@@ -81,7 +81,7 @@ import { blocDeclaration } from '@/lib/apps/retouche'
 import { CONFIGS, coutAppel, fournisseurChoisi, tarifDe, tarifPlafond, tarifsDuModele } from '@/lib/apps/fournisseur'
 import { deploiementQuiSert } from '@/lib/apps/deploiement'
 import { ecrireTentative, type Issue } from '@/lib/apps/tentatives'
-import { ISSUES_DECOMPTEES, libererModification, PHRASE_COMPTEUR_INDISPONIBLE, PHRASE_EPUISE, reserverModification } from '@/lib/apps/quota'
+import { ISSUES_DECOMPTEES, libererModification, lireCompteur, PHRASE_COMPTEUR_INDISPONIBLE, PHRASE_EPUISE, reserverModification } from '@/lib/apps/quota'
 import { sansQuota } from '@/lib/admin-emails'
 import { alerter } from '@/lib/alertes'
 import { apparenceDuDocument, lireApparenceEnRoute, type Apparence } from '@/lib/apps/apparence'
@@ -344,8 +344,14 @@ export async function GET(req: Request) {
   // LE TARIF DE POINTE : un plafond qui suppose l'heure creuse n'est plus un
   // plafond — l'opération peut démarrer à 00:59 et facturer à 01:00.
   const p = plafondRetouche(octets, SORTIE_MAX_RETOUCHE, tarifPlafond(tarifsDuModele(config, MODELE_LEGER)))
+  // ── LE COMPTEUR, PAS LE PRIX (étape ③, 2026-11-19). Le commerçant lit des
+  //    modifications ; le plafond en dollars n'est rendu qu'au propriétaire
+  //    (compte exempté) — décision 5A. `null` : compteur illisible, l'écran
+  //    dit « Modifier » sans chiffre plutôt qu'un chiffre faux.
+  const exempte = sansQuota(garde.email)
+  const compteur = exempte ? { exempte: true as const } : await lireCompteur(id, garde.userId)
   return NextResponse.json(
-    { octets, plafond: p.phrase, perimetre: PERIMETRE_RETOUCHE },
+    { octets, ...(exempte ? { plafond: p.phrase } : {}), perimetre: PERIMETRE_RETOUCHE, compteur },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }
