@@ -24,6 +24,7 @@ const ICI = dirname(fileURLToPath(import.meta.url))
 const SQL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_modifications.sql'), 'utf8')
 const ANNULATION = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_modifications_annulation.sql'), 'utf8')
 const CREATIONS = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_creations.sql'), 'utf8')
+const LOT_XAF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_lot_xaf.sql'), 'utf8')
 const PORT = 54000 + Math.floor(Math.random() * 900)
 const DOSSIER = mkdtempSync(join(tmpdir(), 'preuve-quota-'))
 const URL = `postgresql://postgres@127.0.0.1:${PORT}/postgres`
@@ -62,8 +63,10 @@ try {
   await admin.query(SQL)
   await admin.query(CREATIONS)
   await admin.query(CREATIONS)
+  await admin.query(LOT_XAF)
+  await admin.query(LOT_XAF)
   const reg = await admin.query('select count(*)::int n from public.quota_reglages')
-  verdict(reg.rows[0].n === 9, 'appliqué deux fois : 9 réglages, pas 18 (idempotent)')
+  verdict(reg.rows[0].n === 10, 'appliqué deux fois : 10 réglages (dont lot_prix_xaf), pas 20 (idempotent)')
 
   // ── Les applis publiées : offertes jusqu'au 31 décembre, une ligne chacune.
   const off = await admin.query(`select app_id, jusqu_au from public.app_paiements where fournisseur = 'offert'`)
@@ -141,7 +144,10 @@ try {
   for (let i = 0; i < 40; i++) derniere = (await svc.query('select public.reserver_modification($1, $2) r', [A, PROPRIO])).rows[0].r
   const refus41 = (await svc.query('select public.reserver_modification($1, $2) r', [A, PROPRIO])).rows[0].r
   verdict(derniere === 0 && refus41 === null, '40 modifications passent, la 41e est refusée')
-  await svc.query(`select public.enregistrer_paiement('manuelle','airtel','TX-778',$1,$2,'lot',2500,'XAF',null,'admin')`, [A, PROPRIO])
+  // Le LOT en FCFA vérifie le prix du LOT : vide → refusé, même si le mois est réglé.
+  verdict(await refuse(svc, `select public.enregistrer_paiement('manuelle','airtel','TX-777',$1,$2,'lot',3000,'XAF',null,'admin')`, [A, PROPRIO], 'lot_prix_xaf'), 'lot en FCFA alors que le prix du LOT est vide : refusé (le prix mensuel ne suffit pas)')
+  await svc.query(`select public.regler_quota('lot_prix_xaf', '3000', 'admin')`)
+  await svc.query(`select public.enregistrer_paiement('manuelle','airtel','TX-778',$1,$2,'lot',3000,'XAF',null,'admin')`, [A, PROPRIO])
   const apresLot = (await svc.query('select public.reserver_modification($1, $2) r', [A, PROPRIO])).rows[0].r
   verdict(apresLot === 49, 'un lot payé : 50 de plus (49 restantes après celle-ci)')
 
