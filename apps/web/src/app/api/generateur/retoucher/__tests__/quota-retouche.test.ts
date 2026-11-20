@@ -133,9 +133,9 @@ describe('étape ② · la retouche réserve avant de payer', () => {
 describe('étape ③ · ce que l’atelier lit avant de cliquer', () => {
   const lecture = () => GET(new Request('https://x/api/generateur/retoucher?id=g1'))
   it('un commerçant : le compteur, et PAS le plafond en dollars', async () => {
-    lire.mockResolvedValue({ exempte: false, formule: 'gratuite', restantes: 10, payeJusquAu: null })
+    lire.mockResolvedValue({ exempte: false, formule: 'gratuite', restantes: 10, payeJusquAu: null, actif: false })
     const d = (await (await lecture()).json()) as Record<string, unknown>
-    expect(d.compteur).toEqual({ exempte: false, formule: 'gratuite', restantes: 10, payeJusquAu: null })
+    expect(d.compteur).toEqual({ exempte: false, formule: 'gratuite', restantes: 10, payeJusquAu: null, actif: false })
     expect(d.plafond).toBeUndefined()
     expect(lire).toHaveBeenCalledWith('g1', 'u-1')
   })

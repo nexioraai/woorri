@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { sansQuota } from '@/lib/admin-emails';
 import { assurerAdresseSite } from '@/lib/sites/adresse-site';
 import { logAnomaly } from '@/lib/anomaly';
+import { TYPE_APPLICATION, traiterFactureAppli } from '@/lib/payments/abonnement-appli';
 import { supabaseAdmin as supabase, supabaseAdmin } from '@/lib/supabase-admin';
 import { getStripe } from '@/lib/stripe';
 import { handlePaidCheckout } from '@/lib/shop/handlePaidCheckout';
@@ -34,6 +35,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
+  // ── CHAQUE AVIS LAISSE UNE LIGNE (2026-11-20). Mesuré : une livraison
+  //    réussie ne laissait AUCUNE trace dans les journaux — la preuve de
+  //    l'arrivée d'un avis ne pouvait venir que du compteur de Stripe.
+  console.log(`[stripe] avis reçu ${event.type} ${event.id}`);
+
   try {
     switch (event.type) {
       // Argent encaisse : c'est le seul moment ou Nexiora engage une depense
@@ -41,6 +47,17 @@ export async function POST(req: Request) {
       // reprise via provisionDomain qui saute les etapes deja faites.
       case 'invoice.paid': {
         const inv: any = event.data.object;
+        // ── UNE APPLICATION (décision 9A, 2026-11-20) : enregistrée par la
+        //    fonction unique de tous les paiements ; jamais par le chemin des
+        //    domaines ni des sites. Une erreur de base relance l'avis (500).
+        const appli = await traiterFactureAppli(inv);
+        if (appli.traitee) {
+          if (!appli.ok) {
+            await logAnomaly({ type: 'stripe_facture_application', severity: 'blocked', details: { facture: inv?.id ?? null, erreur: appli.erreur } });
+            if (!/attendu USD|sans identifiant/u.test(appli.erreur)) throw new Error('facture d’application non enregistrée : ' + appli.erreur);
+          }
+          break;
+        }
         const subId = inv.subscription as string | null;
         if (!subId) break;
         const sub = await getStripe().subscriptions.retrieve(subId);
@@ -142,6 +159,10 @@ export async function POST(req: Request) {
         }
         const customerId = obj.customer as string;
 
+        // ── UNE APPLICATION ne publie ni ne dépublie AUCUN site (2026-11-20) :
+        //    son paiement passe par `invoice.paid`, son compteur par la base.
+        if (obj?.metadata?.deribfy_type === TYPE_APPLICATION) break;
+
         // Un abonnement domaine ne dit rien de la publication du site : il ne
         // doit ni publier ni depublier quoi que ce soit. Sans ce filtre,
         // acheter un domaine (abonnement cree en 'incomplete') depublierait
@@ -180,6 +201,9 @@ export async function POST(req: Request) {
       case 'customer.subscription.deleted': {
         const obj: any = event.data.object;
         const customerId = obj.customer as string;
+        // Une APPLICATION résiliée : aucun site n'est concerné. Elle reste payée
+        // jusqu'à la fin de sa période ; la suite suit la règle de l'impayé.
+        if (obj?.metadata?.deribfy_type === TYPE_APPLICATION) break;
 
         // ============================================================
         // F-2 -- CETTE SORTIE ETAIT INERTE, ET ELLE COUTAIT DE L'ARGENT.

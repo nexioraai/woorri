@@ -19,6 +19,8 @@ export type EtatCompteur =
       readonly restantes: number
       /** Abonnée : jusqu'à quand c'est payé (ISO). Gratuite : null. */
       readonly payeJusquAu: string | null
+      /** Abonnée ET payée à l'heure de la lecture (le serveur le dit : l'écran ne lit pas l'horloge). */
+      readonly actif: boolean
     }
 
 const dateCourte = (iso: string): string =>

@@ -94,7 +94,7 @@ export async function lireCompteur(app: string, proprietaire: string): Promise<E
     const r = await supabaseAdmin.from('quota_reglages').select('valeur').eq('cle', 'modifications_gratuites').maybeSingle()
     const n = Number((r.data as { valeur?: string } | null)?.valeur ?? Number.NaN)
     if (r.error !== null || !Number.isInteger(n)) return null
-    return { exempte: false, formule: 'gratuite', restantes: n, payeJusquAu: null }
+    return { exempte: false, formule: 'gratuite', restantes: n, payeJusquAu: null, actif: false }
   }
   const l = c.data as { statut: string; paye_jusqu_au: string | null; limite: number; supplement: number; utilisees: number }
   const echu = l.statut === 'abonnee' && (l.paye_jusqu_au === null || Date.parse(l.paye_jusqu_au) <= Date.now())
@@ -103,5 +103,6 @@ export async function lireCompteur(app: string, proprietaire: string): Promise<E
     formule: l.statut === 'abonnee' ? 'abonnee' : 'gratuite',
     restantes: echu ? 0 : Math.max(0, l.limite + l.supplement - l.utilisees),
     payeJusquAu: l.paye_jusqu_au,
+    actif: l.statut === 'abonnee' && !echu,
   }
 }

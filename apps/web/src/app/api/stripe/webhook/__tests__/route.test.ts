@@ -86,6 +86,10 @@ function makeSupabaseMock(lignes: Record<string, unknown> = {}) {
   return { supabaseAdmin: { from, auth }, updateCalls, selects };
 }
 
+// Les factures d'APPLICATION (2026-11-20) : leur traitement a ses propres tests.
+const traiterFactureAppliMock = vi.fn(async (..._a: unknown[]) => ({ traitee: false as boolean, ok: true, statut: 'enregistre', jusquAu: null }));
+vi.mock('@/lib/payments/abonnement-appli', () => ({ TYPE_APPLICATION: 'application', traiterFactureAppli: (...a: unknown[]) => traiterFactureAppliMock(...a) }));
+
 // L'adresse donnée à la publication (2026-11-19) : observée, pas exécutée ici.
 const assurerAdresseMock = vi.fn(async (..._a: unknown[]) => ({ ok: true as const, nom: 'x', lien: 'https://x.deribfy.app' }));
 vi.mock('@/lib/sites/adresse-site', () => ({ assurerAdresseSite: (...a: unknown[]) => assurerAdresseMock(...a) }));
@@ -369,5 +373,28 @@ describe('l’adresse donnée à la publication', () => {
     currentMock = makeSupabaseMock({ sites: [{ id: 's1', slug: 'goura-doula-1', name: 'Goura Doula' }] });
     await appelerWebhook();
     expect(assurerAdresseMock).not.toHaveBeenCalled();
+  });
+});
+
+// ── 2026-11-20 : une APPLICATION ne touche jamais aux sites ni aux domaines.
+describe('les avis d’une application', () => {
+  it('invoice.paid d’une appli : traitée par le module des applis, et le chemin des domaines n’est pas pris', async () => {
+    traiterFactureAppliMock.mockResolvedValueOnce({ traitee: true, ok: true, statut: 'enregistre', jusquAu: null });
+    subscriptionsRetrieveMock.mockClear();
+    constructEventMock.mockReturnValue({ id: 'evt_1', type: 'invoice.paid', data: { object: { id: 'in_1', parent: { subscription_details: { subscription: 'sub_1', metadata: { deribfy_type: 'application' } } } } } });
+    currentMock = makeSupabaseMock();
+    const res = await appelerWebhook();
+    expect(res.status).toBe(200);
+    expect(traiterFactureAppliMock).toHaveBeenCalled();
+    expect(subscriptionsRetrieveMock).not.toHaveBeenCalled();
+  });
+
+  it('subscription.updated / deleted d’une appli : aucun site n’est publié ni dépublié', async () => {
+    for (const type of ['customer.subscription.updated', 'customer.subscription.deleted']) {
+      constructEventMock.mockReturnValue({ id: 'evt_2', type, data: { object: { customer: 'cus_compte', status: 'active', metadata: { deribfy_type: 'application' } } } });
+      currentMock = makeSupabaseMock({ sites: [{ id: 's1', owner_id: 'u-marchand', slug: 'x', name: 'X' }] });
+      await appelerWebhook();
+      expect(currentMock.updateCalls.filter((u) => u.table === 'sites'), type).toEqual([]);
+    }
   });
 });

@@ -212,6 +212,49 @@ export default function AtelierPage() {
     }
   }, [id, jeton]);
 
+  // ── L'ABONNEMENT PAR CARTE (décision 9A, 2026-11-20). La page Stripe, puis
+  //    le retour : le webhook active, l'écran relit le compteur jusqu'à le voir.
+  const [abonnementAvis, setAbonnementAvis] = useState<string | null>(null);
+  const relireCompteur = useCallback(async (): Promise<EtatCompteur | null> => {
+    const t = await jeton();
+    if (t === null) return null;
+    const res = await fetch(`/api/generateur/retoucher?id=${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${t}` } });
+    if (!res.ok) return null;
+    const c = ((await res.json()) as { compteur?: EtatCompteur | null }).compteur ?? null;
+    setCompteur(c);
+    return c;
+  }, [id, jeton]);
+  const versStripe = async (chemin: 'abonnement' | 'abonnement/portail') => {
+    const t = await jeton();
+    if (t === null) return;
+    setAbonnementAvis(null);
+    const res = await fetch(`/api/generateur/${chemin}?id=${encodeURIComponent(id)}`, { method: 'POST', headers: { Authorization: `Bearer ${t}` } });
+    const d = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+    if (res.ok && typeof d.url === 'string') window.location.assign(d.url);
+    else setAbonnementAvis(d.error ?? 'La page de paiement n’a pas pu s’ouvrir.');
+  };
+  useEffect(() => {
+    const retour = new URLSearchParams(window.location.search).get('paiement');
+    // Le message part au tour suivant : pas d'état posé pendant l'effet lui-même.
+    if (retour === 'annule') { const t0 = window.setTimeout(() => setAbonnementAvis('Paiement annulé : rien n’a été prélevé.'), 0); return () => window.clearTimeout(t0); }
+    if (retour !== 'recu') return;
+    const t1 = window.setTimeout(() => setAbonnementAvis('Paiement reçu par Stripe — l’activation arrive dans quelques secondes.'), 0);
+    let essais = 0;
+    const minuteur = window.setInterval(() => {
+      essais += 1;
+      void relireCompteur().then((c) => {
+        if (c !== null && !c.exempte && c.actif) {
+          setAbonnementAvis('Abonnement actif. Merci !');
+          window.clearInterval(minuteur);
+        } else if (essais >= 12) {
+          setAbonnementAvis('Le paiement est reçu, l’activation tarde : rechargez la page dans une minute. Rien ne sera prélevé deux fois.');
+          window.clearInterval(minuteur);
+        }
+      });
+    }, 5000);
+    return () => { window.clearTimeout(t1); window.clearInterval(minuteur); };
+  }, [relireCompteur]);
+
   const chargerVersions = useCallback(async () => {
     const t = await jeton();
     if (t === null) return;
@@ -934,6 +977,23 @@ export default function AtelierPage() {
             </button>
             {raisonFermeture(compteur) !== null && (
               <p className="mt-1.5 text-[11px] leading-relaxed text-amber-200/80">{raisonFermeture(compteur)}</p>
+            )}
+            {/* L'ABONNEMENT PAR CARTE : s'abonner (gratuite ou échue), ou le gérer. */}
+            {compteur !== null && !compteur.exempte && (
+              compteur.actif ? (
+                <button type="button" onClick={() => { void versStripe('abonnement/portail'); }}
+                  className="mt-2 w-full rounded-xl border border-white/15 px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5">
+                  Gérer mon abonnement
+                </button>
+              ) : (
+                <button type="button" onClick={() => { void versStripe('abonnement'); }}
+                  className="mt-2 w-full rounded-xl border border-[#FA5D1E]/60 px-3 py-2 text-xs font-semibold text-[#FA5D1E] transition hover:bg-[#FA5D1E]/10">
+                  S’abonner — 20 $ US / mois
+                </button>
+              )
+            )}
+            {abonnementAvis !== null && (
+              <p role="status" className="mt-1.5 text-[11px] leading-relaxed text-slate-300">{abonnementAvis}</p>
             )}
           </div>
         </section>

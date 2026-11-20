@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest'
 import { boutonOuvert, libelleBouton, phraseApresRetouche, raisonFermeture, voitLesCouts } from '../compteur-phrases'
 import type { EtatCompteur } from '../compteur-phrases'
 
-const gratuite = (n: number): EtatCompteur => ({ exempte: false, formule: 'gratuite', restantes: n, payeJusquAu: null })
-const abonnee = (n: number): EtatCompteur => ({ exempte: false, formule: 'abonnee', restantes: n, payeJusquAu: '2026-12-19T10:00:00Z' })
+const gratuite = (n: number): EtatCompteur => ({ exempte: false, formule: 'gratuite', restantes: n, payeJusquAu: null, actif: false })
+const abonnee = (n: number): EtatCompteur => ({ exempte: false, formule: 'abonnee', restantes: n, payeJusquAu: '2026-12-19T10:00:00Z', actif: true })
 const PROPRIO: EtatCompteur = { exempte: true }
 
 describe('le bouton « Modifier »', () => {
