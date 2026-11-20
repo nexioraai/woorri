@@ -23,7 +23,18 @@ const LECTEUR = code('fetchCatalogue.ts');
 // les écrans ne réintroduisent pas par une autre porte.
 // ============================================================
 
+// ── 2026-11-19 — DÉCISION DU PROPRIÉTAIRE : la fiche montre une DISPONIBILITÉ.
+// C'est un ÉTAT en mots (« Disponible », « Disponibilité limitée »,
+// « Momentanément indisponible », « Sur commande »), jamais une QUANTITÉ ni
+// un PRIX : ce cliquet continue de refuser les mots « prix » et « stock » à
+// l'écran, et le cas ci-dessous refuse qu'un nombre en stock s'affiche.
 describe('ni prix, ni stock, ni achat', () => {
+  it('🔴 la disponibilité est un mot, jamais une quantité', () => {
+    for (const src of [LISTE, FICHE, LECTEUR]) {
+      expect(src).not.toMatch(/quantite_en_stock|qte_stock|stock_restant|en_stock\s*:\s*\d/)
+    }
+  })
+
   for (const [nom, src] of [['la liste', LISTE], ['la fiche', FICHE], ['le lecteur', LECTEUR]] as const) {
     it(`🔴 ${nom} ne nomme aucun prix ni stock`, () => {
       for (const mot of [/\bprice\b/i, /\bprix\b/i, /\bstock\b/i, /\bpanier\b/i, /\bcart\b/i, /\bcheckout\b/i]) {

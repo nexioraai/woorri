@@ -32,12 +32,12 @@ export function libelleProduit(p: Produit): string {
 }
 
 export default function MesCommandes({
-  slug, mots, primary, produitInitial,
-}: { slug: string; mots: MotsCommandes; primary: string; produitInitial?: string | null }) {
+  slug, mots, primary, produitInitial, quantiteInitiale = '', uniteInitiale = '',
+}: { slug: string; mots: MotsCommandes; primary: string; produitInitial?: string | null; quantiteInitiale?: string; uniteInitiale?: string }) {
   const [etat, setEtat] = useState<'charge' | 'refus' | 'ferme' | 'pret'>('charge')
   const [commandes, setCommandes] = useState<Commande[]>([])
   const [catalogue, setCatalogue] = useState<Produit[]>([])
-  const [saisies, setSaisies] = useState<Saisie[]>([{ ...VIDE, designation: produitInitial ?? '' }, { ...VIDE }])
+  const [saisies, setSaisies] = useState<Saisie[]>([{ designation: produitInitial ?? '', quantite: produitInitial ? quantiteInitiale : '', unite: produitInitial ? uniteInitiale : '' }, { ...VIDE }])
   const [note, setNote] = useState('')
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
@@ -128,7 +128,7 @@ export default function MesCommandes({
         @media (prefers-reduced-motion: reduce) { .mesCommandes button { transition: none } .mesCommandes button:hover { transform: none } }
       `}</style>
 
-      <form onSubmit={envoyer} style={carte}>
+      <form id="nouvelle" onSubmit={envoyer} style={carte}>
         <h2 style={{ fontSize: 19, fontWeight: 700, margin: '0 0 6px' }}>{mots.nouvelle}</h2>
         <p style={{ margin: '0 0 16px', fontSize: 14, opacity: 0.7 }}>{mots.suggestions}</p>
         <datalist id="catalogue-cmd">

@@ -24,10 +24,24 @@ export type ProduitCatalogue = {
   chaine_du_froid: boolean
   note: string | null
   maj_le: string | null
+  /** CPA, 2026-11-19 — la fiche complète (colonnes de `catalogue_fiche.sql`). */
+  description?: string | null
+  photo?: string | null
+  /** Un ÉTAT en mots (voir `disponibilite.ts`), jamais une quantité. */
+  disponibilite?: string | null
 }
 
-const COLS = 'reference,denomination,famille,forme,dosage,conditionnement,chaine_du_froid,maj_le'
-const COLS_FICHE = `${COLS},note`
+const COLS_BASE = 'reference,denomination,famille,forme,dosage,conditionnement,chaine_du_froid,maj_le'
+const COLS = `${COLS_BASE},photo,disponibilite`
+const COLS_FICHE = `${COLS},note,description`
+
+/** Lit avec les colonnes de la fiche complète ; sans elles (SQL pas encore
+ *  appliqué), retombe sur les colonnes d'avant plutôt que de vider la page. */
+async function avecRepli<T>(lire: (cols: string) => PromiseLike<{ data: unknown; error: { message?: string } | null }>, cols: string, repli: string): Promise<T | null> {
+  const r = await lire(cols)
+  if (r.error && /description|photo|disponibilite/.test(r.error.message ?? '')) return ((await lire(repli)).data as T) ?? null
+  return (r.data as T) ?? null
+}
 
 /** Le site public. Meme lecture legere que les autres surfaces. */
 export async function fetchSiteCatalogue(slug: string) {
@@ -53,13 +67,13 @@ export async function fetchSiteCatalogue(slug: string) {
  */
 export async function fetchCatalogue(siteId: string): Promise<ProduitCatalogue[]> {
   const supabase = await lecteurDuSite()
-  const { data } = await supabase
+  const lire = (cols: string) => supabase
     .from('catalogue_produits_public')
-    .select(COLS)
+    .select(cols)
     .eq('site_id', siteId)
     .order('ordre', { ascending: true })
     .order('denomination', { ascending: true })
-  return (data as ProduitCatalogue[]) ?? []
+  return (await avecRepli<ProduitCatalogue[]>(lire, COLS, COLS_BASE)) ?? []
 }
 
 /**
@@ -75,13 +89,13 @@ export async function fetchFicheProduit(
   reference: string,
 ): Promise<ProduitCatalogue | null> {
   const supabase = await lecteurDuSite()
-  const { data } = await supabase
+  const lire = (cols: string) => supabase
     .from('catalogue_produits_public')
-    .select(COLS_FICHE)
+    .select(cols)
     .eq('site_id', siteId)
     .eq('reference', reference)
     .maybeSingle()
-  return (data as ProduitCatalogue) ?? null
+  return avecRepli<ProduitCatalogue>(lire, COLS_FICHE, `${COLS_BASE},note`)
 }
 
 /**
@@ -124,10 +138,50 @@ export function lireFamille(brut: unknown, disponibles: string[]): string | null
  * accents justes n'est pas cherchable dans un pays ou l'on tape vite.
  */
 export function chercher(produits: ProduitCatalogue[], terme: string): ProduitCatalogue[] {
-  const t = terme.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase()
-  if (!t) return produits
-  const plat = (s: string | null) =>
+  // CPA, 2026-11-19 — une recherche qui PARDONNE (Baymard, secteur médical) :
+  // sans accents ni casse, mot par mot, dans la dénomination, la référence,
+  // la forme, le dosage et la famille ; et une faute de frappe par mot de
+  // cinq lettres ou plus (« paracetemol » trouve « Paracétamol »).
+  const plat = (s: string | null | undefined) =>
     (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
-  return produits.filter((p) =>
-    plat(p.denomination).includes(t) || plat(p.reference).includes(t) || plat(p.forme).includes(t))
+  const mots = plat(terme).split(/[^a-z0-9]+/).filter(Boolean)
+  if (mots.length === 0) return produits
+  return produits.filter((p) => {
+    const champs = plat([p.denomination, p.reference, p.forme, p.dosage, p.famille].join(' '))
+    const sesMots = champs.split(/[^a-z0-9]+/).filter(Boolean)
+    return mots.every((m) => champs.includes(m) || (m.length >= 5 && sesMots.some((x) => procheDUneLettre(m, x))))
+  })
+}
+
+/** Les AUTRES présentations de la même molécule (même dénomination, autre
+ *  référence) : « les autres dosages », comme les catalogues de référence. */
+export function variantesDe(tous: ProduitCatalogue[], p: ProduitCatalogue): ProduitCatalogue[] {
+  const cle = (x: ProduitCatalogue) => x.denomination.trim().toLowerCase()
+  return tous.filter((x) => x.reference !== p.reference && cle(x) === cle(p))
+}
+
+/** Les produits de la MÊME famille (pour « dans la même famille »), au plus `n`. */
+export function memeFamille(tous: ProduitCatalogue[], p: ProduitCatalogue, n = 4): ProduitCatalogue[] {
+  if (!p.famille) return []
+  return tous.filter((x) => x.reference !== p.reference && x.famille === p.famille).slice(0, n)
+}
+
+/** Vrai si `a` devient un préfixe de `b` (ou `b` lui-même) en changeant,
+ *  ajoutant ou retirant au plus UNE lettre. */
+export function procheDUneLettre(a: string, b: string): boolean {
+  const cible = b.slice(0, a.length + 1)
+  for (const c of [cible, cible.slice(0, a.length), cible.slice(0, Math.max(0, a.length - 1))]) {
+    if (distance(a, c) <= 1) return true
+  }
+  return false
+}
+
+function distance(a: string, b: string): number {
+  if (Math.abs(a.length - b.length) > 1) return 2
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)] as number[])
+  for (let j = 1; j <= b.length; j++) d[0][j] = j
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1))
+  }
+  return d[a.length][b.length]
 }

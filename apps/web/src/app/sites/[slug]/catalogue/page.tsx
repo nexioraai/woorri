@@ -13,6 +13,9 @@ import BlocsDePage from '../pages/BlocsDePage'
 import SousPages from '../pages/SousPages'
 import { fetchEnfants } from '../pages/fetchPage'
 import { lecteurDuSite } from '@/lib/lecteurDuSite'
+import { lireDisponibilite, commandable } from './disponibilite'
+import PastilleDispo from './PastilleDispo'
+import VisuelProduit from './VisuelProduit'
 import {
   fetchSiteCatalogue, fetchCatalogue, famillesPresentes, parFamille, lireFamille, chercher,
 } from './fetchCatalogue'
@@ -66,7 +69,21 @@ export default async function CataloguePage({ params, searchParams }: Props) {
   const familles = famillesPresentes(tous)
   const familleActive = lireFamille(sp.famille, familles.map((f) => f.nom))
   const terme = typeof sp.q === 'string' ? sp.q : ''
+  // CPA, 2026-11-19 — deux filtres de plus : chaîne du froid, et « commandable
+  // maintenant » (tout sauf « momentanément indisponible »).
+  const froid = sp.froid === '1'
+  const dispoSeul = sp.dispo === '1'
   const produits = chercher(parFamille(tous, familleActive), terme)
+    .filter((p) => !froid || p.chaine_du_froid)
+    .filter((p) => !dispoSeul || commandable(lireDisponibilite(p.disponibilite)))
+  const lienFiltre = (cle: 'froid' | 'dispo', on: boolean) => {
+    const q = new URLSearchParams()
+    if (familleActive) q.set('famille', familleActive)
+    if (terme) q.set('q', terme)
+    if (cle === 'froid' ? !on : froid) q.set('froid', '1')
+    if (cle === 'dispo' ? !on : dispoSeul) q.set('dispo', '1')
+    return q.toString() ? `?${q}` : '?'
+  }
 
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
   const accent = s.primary_color || '#1e4d8c'
@@ -109,6 +126,8 @@ export default async function CataloguePage({ params, searchParams }: Props) {
                 et son résultat a une adresse qui se partage. */}
             <form method="get" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '0 0 18px' }}>
               {familleActive && <input type="hidden" name="famille" value={familleActive} />}
+              {froid && <input type="hidden" name="froid" value="1" />}
+              {dispoSeul && <input type="hidden" name="dispo" value="1" />}
               <input
                 name="q" defaultValue={terme} placeholder="Chercher une dénomination, une référence…"
                 aria-label="Chercher dans le catalogue"
@@ -145,6 +164,15 @@ export default async function CataloguePage({ params, searchParams }: Props) {
               </nav>
             )}
 
+            <nav aria-label="Filtres" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '-8px 0 20px' }}>
+              {([['dispo', dispoSeul, 'Commandables maintenant'], ['froid', froid, '❄ Chaîne du froid']] as const).map(([cle, on, libelle]) => (
+                <a key={cle} href={lienFiltre(cle, on)} aria-current={on ? 'true' : undefined} style={{
+                  padding: '7px 14px', borderRadius: 999, fontSize: 14, textDecoration: 'none', fontWeight: on ? 700 : 500,
+                  border: `1px dashed ${on ? accent : 'rgba(127,127,127,0.45)'}`, background: on ? `color-mix(in srgb, ${accent} 10%, #fff)` : 'transparent', color: on ? accent : 'inherit',
+                }}>{on ? '✓ ' : ''}{libelle}</a>
+              ))}
+            </nav>
+
             <p style={{ fontSize: 14, color: '#5b5b5b', margin: '0 0 14px', fontVariantNumeric: 'tabular-nums' }}>
               {produits.length} référence{produits.length > 1 ? 's' : ''}
               {terme ? ` pour « ${terme} »` : ''}
@@ -159,7 +187,7 @@ export default async function CataloguePage({ params, searchParams }: Props) {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
                   <thead>
                     <tr>
-                      {['Référence', 'Dénomination', 'Forme', 'Conditionnement'].map((c) => (
+                      {['', 'Dénomination', 'Forme', 'Conditionnement', 'Disponibilité'].map((c) => (
                         <th key={c} scope="col" style={{
                           textAlign: 'left', padding: '12px 14px', background: '#f7f7f8',
                           fontWeight: 700, whiteSpace: 'nowrap', borderBottom: '1px solid #e3e3e3',
@@ -170,14 +198,13 @@ export default async function CataloguePage({ params, searchParams }: Props) {
                   <tbody>
                     {produits.map((p) => (
                       <tr key={p.reference}>
-                        <td style={{ padding: '12px 14px', borderBottom: '1px solid #e3e3e3', whiteSpace: 'nowrap' }}>
-                          <Link href={`${base}/catalogue/${encodeURIComponent(p.reference)}`}
-                            style={{ color: accent, fontWeight: 600, fontFamily: 'ui-monospace, monospace', fontSize: 13.5 }}>
-                            {p.reference}
-                          </Link>
+                        <td style={{ padding: '10px 6px 10px 14px', borderBottom: '1px solid #e3e3e3', width: 56 }}>
+                          <VisuelProduit photo={p.photo} forme={p.forme} denomination={p.denomination} accent={accent} />
                         </td>
                         <td style={{ padding: '12px 14px', borderBottom: '1px solid #e3e3e3', lineHeight: 1.5 }}>
-                          {p.denomination}
+                          <Link href={`${base}/catalogue/${encodeURIComponent(p.reference)}`} style={{ color: '#111', fontWeight: 700, textDecoration: 'none' }}>
+                            {p.denomination}
+                          </Link>
                           {p.dosage && <span style={{ color: '#5b5b5b' }}> · {p.dosage}</span>}
                           {/* LA CHAÎNE DU FROID EST UNE DONNÉE DE CONSERVATION.
                               Elle dit comment transporter, pas ce que ça coûte. */}
@@ -189,7 +216,11 @@ export default async function CataloguePage({ params, searchParams }: Props) {
                           )}
                         </td>
                         <td style={{ padding: '12px 14px', borderBottom: '1px solid #e3e3e3', color: '#5b5b5b' }}>{p.forme ?? '—'}</td>
-                        <td style={{ padding: '12px 14px', borderBottom: '1px solid #e3e3e3', color: '#5b5b5b' }}>{p.conditionnement ?? '—'}</td>
+                        <td style={{ padding: '12px 14px', borderBottom: '1px solid #e3e3e3', color: '#5b5b5b' }}>
+                          {p.conditionnement ?? '—'}
+                          <span style={{ display: 'block', fontFamily: 'ui-monospace, monospace', fontSize: 12, color: '#9ca3af', marginTop: 2 }}>{p.reference}</span>
+                        </td>
+                        <td style={{ padding: '12px 14px', borderBottom: '1px solid #e3e3e3' }}><PastilleDispo d={lireDisponibilite(p.disponibilite)} /></td>
                       </tr>
                     ))}
                   </tbody>
