@@ -83,6 +83,7 @@ import { deploiementQuiSert } from '@/lib/apps/deploiement'
 import { ecrireTentative, type Issue } from '@/lib/apps/tentatives'
 import { ISSUES_DECOMPTEES, libererModification, lireCompteur, PHRASE_COMPTEUR_INDISPONIBLE, PHRASE_EPUISE, reserverModification } from '@/lib/apps/quota'
 import { sansQuota } from '@/lib/admin-emails'
+import { abonnementCarteOuvert } from '@/lib/payments/abonnement-appli'
 import { alerter } from '@/lib/alertes'
 import { apparenceDuDocument, lireApparenceEnRoute, type Apparence } from '@/lib/apps/apparence'
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
@@ -350,8 +351,10 @@ export async function GET(req: Request) {
   //    dit « Modifier » sans chiffre plutôt qu'un chiffre faux.
   const exempte = sansQuota(garde.email)
   const compteur = exempte ? { exempte: true as const } : await lireCompteur(id, garde.userId)
+  // Le bouton « S'abonner » ne se montre que si l'interrupteur l'ouvre à CE compte.
+  const abonnementCarte = !exempte && (await abonnementCarteOuvert(garde.userId, garde.email))
   return NextResponse.json(
-    { octets, ...(exempte ? { plafond: p.phrase } : {}), perimetre: PERIMETRE_RETOUCHE, compteur },
+    { octets, ...(exempte ? { plafond: p.phrase } : {}), perimetre: PERIMETRE_RETOUCHE, compteur, abonnementCarte },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }

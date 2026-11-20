@@ -13,7 +13,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { journalVierge, type JournalPostgrest } from '@/lib/testing/postgrest'
 
-const etat = { stop: 'end_turn' as string, texte: '', email: 'marchand@example.com', appels: 0 }
+const etat = { stop: 'end_turn' as string, texte: '', email: 'marchand@example.com', appels: 0, carte: false }
 const reserver = vi.fn()
 const liberer = vi.fn()
 const lire = vi.fn()
@@ -24,6 +24,7 @@ vi.mock('@/lib/apps/quota', async (orig) => ({
   libererModification: (...a: unknown[]) => liberer(...a),
   lireCompteur: (...a: unknown[]) => lire(...a),
 }))
+vi.mock('@/lib/payments/abonnement-appli', () => ({ abonnementCarteOuvert: async () => etat.carte }))
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
   requireAuthenticatedUser: () => ({ ok: true, userId: 'u-1', email: etat.email }),
 }))
@@ -138,6 +139,8 @@ describe('étape ③ · ce que l’atelier lit avant de cliquer', () => {
     expect(d.compteur).toEqual({ exempte: false, formule: 'gratuite', restantes: 10, payeJusquAu: null, actif: false })
     expect(d.plafond).toBeUndefined()
     expect(lire).toHaveBeenCalledWith('g1', 'u-1')
+    // ÉTEINT par défaut : le bouton « S'abonner » ne se montre pas.
+    expect(d.abonnementCarte).toBe(false)
   })
   it('le propriétaire : exempté, avec son plafond en dollars', async () => {
     etat.email = 'issayamiyoussouf@gmail.com'

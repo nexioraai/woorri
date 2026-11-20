@@ -92,3 +92,26 @@ export async function traiterFactureAppli(facture: unknown): Promise<ResultatFac
   const d = r.data as { statut: string; jusqu_au: string | null }
   return { traitee: true, ok: true, statut: d.statut, jusquAu: d.jusqu_au }
 }
+
+// ── L'INTERRUPTEUR DU PAIEMENT PAR CARTE (décision du propriétaire, 2026-11-20).
+//
+// « Je ne veux pas qu'un client paie par un chemin jamais prouvé. » Le réglage
+// `abonnement_carte` (table quota_reglages) décide :
+//   vide ou ABSENT   → éteint pour tous (le défaut, et la clé n'existe pas
+//                      tant que le SQL qui l'ajoute n'est pas appliqué) ;
+//   « tous »         → allumé pour tous ;
+//   une liste        → allumé pour ces comptes seulement (adresses ou
+//                      identifiants, séparés par des virgules) : le compte
+//                      d'essai du paiement de preuve.
+// Une lecture qui échoue ÉTEINT : on ne paie jamais par un chemin incertain.
+export async function abonnementCarteOuvert(proprietaire: string, email: string | null): Promise<boolean> {
+  const r = await supabaseAdmin.from('quota_reglages').select('valeur').eq('cle', 'abonnement_carte').maybeSingle()
+  if (r.error !== null || r.data === null) return false
+  const v = String((r.data as { valeur?: unknown }).valeur ?? '').trim().toLowerCase()
+  if (v === '') return false
+  if (v === 'tous') return true
+  const liste = v.split(',').map((x) => x.trim()).filter((x) => x !== '')
+  return liste.includes(proprietaire.toLowerCase()) || (email !== null && liste.includes(email.toLowerCase()))
+}
+
+export const PHRASE_CARTE_FERMEE = 'Le paiement par carte des applications n’est pas encore ouvert.'

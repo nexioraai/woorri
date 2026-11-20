@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
-import { ouvrirPaiementAppli } from '@/lib/payments/abonnement-appli'
+import { abonnementCarteOuvert, ouvrirPaiementAppli, PHRASE_CARTE_FERMEE } from '@/lib/payments/abonnement-appli'
 
 export const runtime = 'nodejs'
 
@@ -20,6 +20,12 @@ export async function POST(req: Request) {
   if (!garde.ok) return garde.response
   const id = new URL(req.url).searchParams.get('id') ?? ''
   if (id === '') return NextResponse.json({ error: 'id requis' }, { status: 400 })
+
+  // L'INTERRUPTEUR D'ABORD (2026-11-20) : éteint, aucune page de paiement ne
+  // s'ouvre — pas même par un appel direct à cette route.
+  if (!(await abonnementCarteOuvert(garde.userId, garde.email))) {
+    return NextResponse.json({ error: PHRASE_CARTE_FERMEE }, { status: 403 })
+  }
 
   const lu = await supabaseAdmin.from(TABLE_GENERATIONS).select('id, statut').eq('id', id).eq('owner_id', garde.userId).maybeSingle()
   if (lu.error !== null || lu.data === null) return NextResponse.json({ error: 'application inconnue' }, { status: 404 })

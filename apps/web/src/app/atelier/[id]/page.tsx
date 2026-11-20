@@ -121,6 +121,8 @@ export default function AtelierPage() {
   const [plafond, setPlafond] = useState('');
   // LE COMPTEUR DE MODIFICATIONS (étape ③, 2026-11-19) — rendu par le serveur.
   const [compteur, setCompteur] = useState<EtatCompteur | null>(null);
+  // Le paiement par carte est-il ouvert à CE compte ? (interrupteur serveur, éteint par défaut)
+  const [abonnementCarte, setAbonnementCarte] = useState(false);
   const [perimetre, setPerimetre] = useState('');
   const [enCours, setEnCours] = useState(false);
   const [avis, setAvis] = useState<string | null>(null);
@@ -298,9 +300,10 @@ export default function AtelierPage() {
           headers: { Authorization: `Bearer ${t}` },
         });
         if (res.ok) {
-          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null };
+          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null; abonnementCarte?: boolean };
           setPlafond(d.plafond ?? '');
           setCompteur(d.compteur ?? null);
+          setAbonnementCarte(d.abonnementCarte === true);
           setPerimetre(d.perimetre ?? '');
         }
       } catch { /* le bouton dira « Modifier » sans prix plutôt que rien */ }
@@ -979,7 +982,7 @@ export default function AtelierPage() {
               <p className="mt-1.5 text-[11px] leading-relaxed text-amber-200/80">{raisonFermeture(compteur)}</p>
             )}
             {/* L'ABONNEMENT PAR CARTE : s'abonner (gratuite ou échue), ou le gérer. */}
-            {compteur !== null && !compteur.exempte && (
+            {compteur !== null && !compteur.exempte && abonnementCarte && (
               compteur.actif ? (
                 <button type="button" onClick={() => { void versStripe('abonnement/portail'); }}
                   className="mt-2 w-full rounded-xl border border-white/15 px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5">
