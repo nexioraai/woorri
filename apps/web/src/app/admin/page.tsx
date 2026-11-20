@@ -5,6 +5,7 @@ import { Boxes, Users, Globe, ShoppingCart, DollarSign, Monitor, Store, Truck, A
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import PublishOverrideCard from "@/components/admin/PublishOverrideCard";
+import ActivationManuelle from "@/components/admin/ActivationManuelle";
 
 interface CronRun {
   id: string;
@@ -228,6 +229,7 @@ export default function AdminDashboard() {
       )}
       {/* M2-212 — mise en ligne hors Stripe (paiement comptant) */}
       <PublishOverrideCard />
+      <ActivationManuelle />
 
       {/* Overview Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
