@@ -11,6 +11,7 @@ import { fetchSiteCatalogue, fetchFicheProduit, fetchCatalogue, variantesDe, mem
 import { lireDisponibilite, commandable } from '../disponibilite'
 import PastilleDispo from '../PastilleDispo'
 import BoiteCommande from './BoiteCommande'
+import BarreBon from '../BarreBon'
 import VisuelProduit from '../VisuelProduit'
 import { Snowflake, ChevronRight, ShieldCheck } from 'lucide-react'
 import PageDeclaree from '../../[...rest]/page'
@@ -224,7 +225,7 @@ export default async function FicheProduitPage({ params }: Props) {
           </div>
 
           <aside aria-label="Commander">
-            <BoiteCommande base={base} denomination={[p.denomination, p.dosage].filter(Boolean).join(' ')} reference={p.reference}
+            <BoiteCommande slug={s.slug} base={base} denomination={[p.denomination, p.dosage].filter(Boolean).join(' ')} reference={p.reference}
               unite={uniteVue} accent={accent} commandable={commandable(dispo)}
               indisponible="Ce produit est momentanément indisponible. Écrivez à la Centrale depuis votre espace pour connaître la date de retour." />
             <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6, marginTop: 14 }}>
@@ -233,6 +234,7 @@ export default async function FicheProduitPage({ params }: Props) {
           </aside>
         </div>
       </main>
+      <BarreBon slug={s.slug} base={base} accent={accent} />
     </div>
   )
 }

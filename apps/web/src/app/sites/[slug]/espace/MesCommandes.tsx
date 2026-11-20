@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { vider } from '../catalogue/bon'
 import { supabase } from '@/lib/supabase'
 import type { MotsCommandes } from './motsCommandes'
 import SuiviCommande from './SuiviCommande'
@@ -32,12 +33,20 @@ export function libelleProduit(p: Produit): string {
 }
 
 export default function MesCommandes({
-  slug, mots, primary, produitInitial, quantiteInitiale = '', uniteInitiale = '',
-}: { slug: string; mots: MotsCommandes; primary: string; produitInitial?: string | null; quantiteInitiale?: string; uniteInitiale?: string }) {
+  slug, mots, primary, produitInitial, quantiteInitiale = '', uniteInitiale = '', lignesInitiales = [], viderBonApresEnvoi = false,
+}: {
+  slug: string; mots: MotsCommandes; primary: string; produitInitial?: string | null; quantiteInitiale?: string; uniteInitiale?: string
+  /** Les lignes du bon préparé dans le catalogue (`?l=`). */
+  lignesInitiales?: Saisie[]
+  /** Le bon venait du catalogue : une fois la commande ENVOYÉE, il se vide. */
+  viderBonApresEnvoi?: boolean
+}) {
   const [etat, setEtat] = useState<'charge' | 'refus' | 'ferme' | 'pret'>('charge')
   const [commandes, setCommandes] = useState<Commande[]>([])
   const [catalogue, setCatalogue] = useState<Produit[]>([])
-  const [saisies, setSaisies] = useState<Saisie[]>([{ designation: produitInitial ?? '', quantite: produitInitial ? quantiteInitiale : '', unite: produitInitial ? uniteInitiale : '' }, { ...VIDE }])
+  const [saisies, setSaisies] = useState<Saisie[]>(lignesInitiales.length > 0
+    ? [...lignesInitiales, { ...VIDE }]
+    : [{ designation: produitInitial ?? '', quantite: produitInitial ? quantiteInitiale : '', unite: produitInitial ? uniteInitiale : '' }, { ...VIDE }])
   const [note, setNote] = useState('')
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
@@ -96,6 +105,7 @@ export default function MesCommandes({
       if (!r.ok) { setErreur(typeof d.error === 'string' ? d.error : mots.refus); return }
       setSucces(`${mots.envoyee} ${d.commande?.reference ?? ''}`)
       setSaisies([{ ...VIDE }, { ...VIDE }]); setNote('')
+      if (viderBonApresEnvoi) vider(slug)
       await charger()
     } finally { setEnvoi(false) }
   }

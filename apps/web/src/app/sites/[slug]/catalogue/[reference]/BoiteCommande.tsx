@@ -2,22 +2,27 @@
 
 import { useState } from 'react'
 import { Minus, Plus, ShoppingBag, Printer, Copy, Check } from 'lucide-react'
+import { ajouter } from '../bon'
+import { useBon } from '../BarreBon'
 
 // ============================================================================
 // L'ENCADRÉ DE COMMANDE DE LA FICHE (CPA, 2026-11-19).
 //
 // Il reste visible en défilant (sticky). La quantité se compte en
 // CONDITIONNEMENTS (boîtes, flacons…), comme sur un bon de commande ; « Ajouter
-// au bon de commande » ouvre « Mes commandes » avec la ligne déjà remplie
-// (produit, quantité, unité). Sans compte, la page de connexion s'interpose.
+// au bon de commande » met la ligne dans le BON EN PRÉPARATION (le même que
+// celui du catalogue, voir `bon.ts`) ; la barre du bas l'envoie ensuite vers
+// « Mes commandes », toutes lignes remplies. Sans script, le lien d'origine
+// (une seule ligne) reste la cible du bouton.
 // Pas de prix, pas de paiement : un bon de commande.
 // ============================================================================
 
 export default function BoiteCommande({
-  base, denomination, reference, unite, accent, commandable, indisponible,
-}: { base: string; denomination: string; reference: string; unite: string; accent: string; commandable: boolean; indisponible: string }) {
+  slug, base, denomination, reference, unite, accent, commandable, indisponible,
+}: { slug: string; base: string; denomination: string; reference: string; unite: string; accent: string; commandable: boolean; indisponible: string }) {
   const [q, setQ] = useState(1)
   const [copie, setCopie] = useState(false)
+  const deja = useBon(slug).find((l) => l.reference === reference)
   const lien = `${base}/mes-commandes?produit=${encodeURIComponent(denomination)}&quantite=${q}&unite=${encodeURIComponent(unite)}#nouvelle`
   return (
     <div className="boiteCmd">
@@ -49,9 +54,13 @@ export default function BoiteCommande({
         <button type="button" aria-label="Plus" onClick={() => setQ((x) => Math.min(1000000, x + 1))}><Plus size={18} aria-hidden /></button>
       </div>
       <p style={{ margin: '0 0 14px', fontSize: 13.5, color: '#6b7280' }}>en {unite}</p>
-      <a className="ajout" href={lien} aria-disabled={!commandable}>
+      <a className="ajout" href={lien} aria-disabled={!commandable}
+        onClick={(e) => { e.preventDefault(); if (commandable) ajouter(slug, { reference, designation: denomination, quantite: q, unite }) }}>
         <ShoppingBag size={19} aria-hidden /> Ajouter au bon de commande
       </a>
+      {deja && <p role="status" style={{ margin: '10px 0 0', fontSize: 13.5, color: '#166534', fontWeight: 600, display: 'flex', gap: 6, alignItems: 'center' }}>
+        <Check size={16} aria-hidden /> Dans votre bon : {deja.quantite} {deja.quantite > 1 ? unite : unite.replace(/s$/, '')}
+      </p>}
       {!commandable && <p style={{ margin: '10px 0 0', fontSize: 13.5, color: '#991b1b' }}>{indisponible}</p>}
       <p style={{ margin: '12px 0 0', fontSize: 12.5, color: '#6b7280', lineHeight: 1.5 }}>
         Réservé aux structures sanitaires et ONG ayant un compte client. Aucun paiement en ligne.
