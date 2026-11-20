@@ -10,7 +10,7 @@
 ## Ce que le chantier doit rendre vrai
 
 1. Une appli gratuite par compte, visible par son auteur seul ; **10 modifications gratuites** dessus (réglage, passé de 3 à 10 le 2026-11-19).
-2. Publier demande l'abonnement : **20 $ US par mois et par application publiée, 50 modifications par mois**.
+2. Publier demande l'abonnement : **20 $ US par mois et par application publiée, 100 modifications par mois** (50 jusqu'au 2026-11-20 ; passé à 100 par le propriétaire, réglage `modifications_incluses`).
 3. Une modification refusée ne compte pas. Le compteur se voit **avant** de cliquer.
 4. À zéro, l'appli publiée reste en ligne : elle ne se modifie plus, c'est tout.
 5. **Un paiement arrive → l'abonnement devient actif, le compteur repart, sans toi.** Par Stripe, automatiquement. Par Airtel ou Moov, à la main avec la référence, **seulement** tant qu'aucun agrégateur (Monerails, Bizao, CinetPay) n'est signé — le jour où il l'est, ce chemin devient automatique sans refaire le registre.

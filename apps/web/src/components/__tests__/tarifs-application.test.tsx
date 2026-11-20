@@ -35,7 +35,7 @@ describe('la page Tarifs', () => {
     ])
     expect(html).toContain('Tous les prix sont en dollars américains (USD), par mois.')
     expect(html).toContain('Prix par application publiée')
-    expect(html).toContain('50 modifications par mois incluses')
+    expect(html).toContain('100 modifications par mois incluses')
     expect(html).not.toMatch(/CAD|canadiens/u)
   })
 

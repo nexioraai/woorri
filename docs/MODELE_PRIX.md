@@ -10,7 +10,7 @@
 | **Retoucher l'appli gratuite** | **10 modifications gratuites**, puis l'abonnement (passé de 3 à 10 le 2026-11-19 par le propriétaire, **par le réglage** `modifications_gratuites` — historisé). Sa raison : Lovable et Base44 donnent 25 à 30 crédits gratuits par mois ; à 3, quelqu'un qui découvre n'a pas le temps de voir ce que Deribfy sait faire, et c'est la retouche qui vend le produit. Coût : environ **0,40 $** par visiteur qui essaie vraiment (0,136 $ + 10 × 0,026 $), contre 0,21 $ à 3 — le prix d'acquisition le moins cher. Une seule appli gratuite par compte |
 | **Publier** | demande l'abonnement |
 | **Prix** | **20 $ par mois**, par application publiée, **affiché en dollars américains**. Deribfy est universel, pas tchadien. Le dollar US est la devise de base pour que Stripe puisse afficher la monnaie locale du visiteur. Le prix en FCFA d'un paiement à la main est un **réglage** (décision de marché du propriétaire : « 12 000 FCFA à Moundou ne valent pas 20 $ à Montréal ») |
-| **Inclus** | **50 modifications par mois** |
+| **Inclus** | **100 modifications par mois** (décision du propriétaire, passé de 50 à 100 le 2026-11-20 par le réglage `modifications_incluses` — historisé ; les périodes déjà payées gardent leur nombre) |
 | **Lot supplémentaire** | 50 modifications pour 5 $ — taille et prix sont des **réglages** ; par Stripe ou à la main, comme l'abonnement |
 | **Une deuxième application** | un second abonnement |
 
@@ -38,7 +38,7 @@ L'unité s'appelle **« modification »**, jamais « crédit » ni « jeton ». 
 
 ## Pourquoi ces chiffres
 
-50 modifications nous coûtent **1,30 $** (mesuré : 0,026 $ par modification utilisable, échecs compris ; voir `elite-protocol/RAPPORT_RETOUCHE_PHARMA.md`). Nous ne sommes pas perdants, même avec les refus. Un lot de 5 $ nous coûte 1,30 $. 20 $ plutôt que 25 $ : Replit et Base44 sont à 20 $, Lovable et Bolt à 25 $ avec des produits plus mûrs. On montera quand on l'aura mérité.
+100 modifications nous coûtent environ **2,60 $** par mois (mesuré : 0,026 $ par modification utilisable, échecs compris ; voir `elite-protocol/RAPPORT_RETOUCHE_PHARMA.md` ; 50 en coûtaient 1,30 $). Nous ne sommes pas perdants, même avec les refus. Un lot de 5 $ nous coûte 1,30 $. 20 $ plutôt que 25 $ : Replit et Base44 sont à 20 $, Lovable et Bolt à 25 $ avec des produits plus mûrs. On montera quand on l'aura mérité.
 
 ## Comment on encaisse
 

@@ -73,7 +73,7 @@ const CONTENT = {
         featured: false,
         features: [
           'Prix par application publiée',
-          '50 modifications par mois incluses',
+          '100 modifications par mois incluses',
           'Publiée à votre adresse : votre-nom.deribfy.app',
           'Ses propres données et son compte d’administration',
           'Une modification refusée ne compte pas',
@@ -156,7 +156,7 @@ const CONTENT = {
         featured: false,
         features: [
           'Price per published app',
-          '50 modifications per month included',
+          '100 modifications per month included',
           'Published at your address: your-name.deribfy.app',
           'Its own data and its own admin account',
           'A refused modification does not count',
