@@ -4,6 +4,7 @@ import { sansQuota } from '@/lib/admin-emails';
 import { assurerAdresseSite } from '@/lib/sites/adresse-site';
 import { logAnomaly } from '@/lib/anomaly';
 import { TYPE_APPLICATION, traiterFactureAppli } from '@/lib/payments/abonnement-appli';
+import { abonnementDeFacture } from '@/lib/payments/facture-stripe';
 import { supabaseAdmin as supabase, supabaseAdmin } from '@/lib/supabase-admin';
 import { getStripe } from '@/lib/stripe';
 import { handlePaidCheckout } from '@/lib/shop/handlePaidCheckout';
@@ -58,7 +59,9 @@ export async function POST(req: Request) {
           }
           break;
         }
-        const subId = inv.subscription as string | null;
+        // Version dahlia (mesurée) : `inv.subscription` n'existe plus — lu dans
+        // `parent.subscription_details`, avec repli sur l'ancienne forme.
+        const subId = abonnementDeFacture(inv).id;
         if (!subId) break;
         const sub = await getStripe().subscriptions.retrieve(subId);
         const domainId = (sub.metadata as any)?.nexiora_domain_id;
@@ -89,8 +92,11 @@ export async function POST(req: Request) {
         // FACTUREE, jamais une garantie d'enregistrement -- et le journal
         // consigne l'evenement pour que l'ecart soit reconciliable.
         // ============================================================
-        const finPeriode = (sub as any).current_period_end
-          ? new Date((sub as any).current_period_end * 1000).toISOString()
+        // Version dahlia (mesurée) : `current_period_end` a quitté l'abonnement
+        // pour ses lignes (`items.data[0]`) ; l'ancienne forme reste lue en repli.
+        const finSecondes = (sub as any).items?.data?.[0]?.current_period_end ?? (sub as any).current_period_end;
+        const finPeriode = finSecondes
+          ? new Date(finSecondes * 1000).toISOString()
           : null;
 
         await supabaseAdmin
@@ -135,7 +141,9 @@ export async function POST(req: Request) {
       // Paiement echoue : aucun achat, la ligne reste en erreur explicite.
       case 'invoice.payment_failed': {
         const inv: any = event.data.object;
-        const subId = inv.subscription as string | null;
+        // Version dahlia (mesurée) : `inv.subscription` n'existe plus — lu dans
+        // `parent.subscription_details`, avec repli sur l'ancienne forme.
+        const subId = abonnementDeFacture(inv).id;
         if (!subId) break;
         const sub = await getStripe().subscriptions.retrieve(subId);
         const domainId = (sub.metadata as any)?.nexiora_domain_id;

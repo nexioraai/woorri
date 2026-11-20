@@ -141,6 +141,28 @@ describe('POST /api/stripe/webhook — invoice.paid (frontière domaine vs abonn
     expect(paidUpdate!.eqCalls).toContainEqual(['status', 'pending']);
   });
 
+  // ── 2026-11-20 : LA FORME RÉELLE. Le test ci-dessus emploie l'ANCIENNE forme
+  //    (`subscription` sur la facture) — c'est pourquoi il restait vert pendant
+  //    que la production, en version dahlia, s'arrêtait sur chaque facture.
+  it('version dahlia (mesurée sur le compte) : la facture porte l’abonnement dans parent.subscription_details', async () => {
+    constructEventMock.mockReturnValue({
+      type: 'invoice.paid',
+      data: { object: { id: 'in_d', parent: { type: 'subscription_details', subscription_details: { subscription: 'sub_123', metadata: {} } } } },
+    });
+    subscriptionsRetrieveMock.mockResolvedValue({
+      metadata: { nexiora_domain_id: 'dom-abc' },
+      items: { data: [{ current_period_end: 1735689600 }] },
+    });
+    provisionDomainMock.mockClear();
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest());
+    expect(res.status).toBe(200);
+    expect(subscriptionsRetrieveMock).toHaveBeenCalledWith('sub_123');
+    expect(provisionDomainMock).toHaveBeenCalledWith('dom-abc');
+    const renouvellement = currentMock.updateCalls.find((u) => u.payload.renews_at !== undefined);
+    expect(renouvellement?.payload.renews_at).toBe(new Date(1735689600 * 1000).toISOString());
+  });
+
   it('n\'appelle JAMAIS provisionDomain pour une facture d\'abonnement SANS metadata.nexiora_domain_id (abonnement site, pas domaine)', async () => {
     constructEventMock.mockReturnValue({
       type: 'invoice.paid',
