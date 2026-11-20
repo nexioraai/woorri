@@ -68,3 +68,40 @@ export function phraseApresRetouche(etat: EtatCompteur | null, livree: boolean, 
 export function voitLesCouts(etat: EtatCompteur | null): boolean {
   return etat !== null && etat.exempte
 }
+
+// ── PUBLIER DEMANDE L'ABONNEMENT (2026-11-20).
+//
+// Décision du propriétaire : un compte non exempté ne publie qu'une appli
+// abonnée et payée. Le bouton bloqué ne laisse personne sans issue : le prix
+// (lu dans le réglage `prix_mensuel_xaf`, jamais écrit ici) et comment payer.
+
+/** Le contact pour payer à la main — donné par le propriétaire le 2026-11-20. */
+export const WHATSAPP_PAIEMENT = '+235 68 36 41 35'
+/** Le même, en lien (wa.me n'accepte que les chiffres). */
+export const LIEN_WHATSAPP_PAIEMENT = `https://wa.me/${WHATSAPP_PAIEMENT.replace(/[^0-9]/gu, '')}`
+
+/**
+ * L'écran laisse-t-il publier ? Exempté ou abonné et payé : oui. Compteur
+ * illisible (`null`) : l'écran ne bloque pas — le SERVEUR tranche, et dit
+ * pourquoi s'il refuse.
+ */
+export function publicationOuverte(etat: EtatCompteur | null): boolean {
+  return etat === null || etat.exempte || etat.actif
+}
+
+const fcfa = (n: number): string => `${new Intl.NumberFormat('fr-FR').format(n).replace(/[\u202f\u00a0]/gu, ' ')} FCFA`
+
+/** « Publier demande l'abonnement — 12 000 FCFA par mois ». Prix vide : sans montant, jamais « 0 ». */
+export function libellePublicationBloquee(prixMensuelXaf: number | null): string {
+  return prixMensuelXaf === null
+    ? 'Publier demande l’abonnement'
+    : `Publier demande l’abonnement — ${fcfa(prixMensuelXaf)} par mois`
+}
+
+/** Comment payer, en une phrase. */
+export const PHRASE_COMMENT_PAYER = `Pour payer : WhatsApp ${WHATSAPP_PAIEMENT} (espèces, Airtel Money, Moov Money).`
+
+/** Ce que la route rend quand elle refuse : les deux, ensemble. */
+export function phrasePublicationBloquee(prixMensuelXaf: number | null): string {
+  return `${libellePublicationBloquee(prixMensuelXaf)}. ${PHRASE_COMMENT_PAYER}`
+}

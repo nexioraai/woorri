@@ -78,6 +78,14 @@ export async function solderCreation(
 // le lit sans jamais toucher à ce module, qui porte la clé de service.
 export type { EtatCompteur }
 
+/** Le prix mensuel en FCFA (réglage `prix_mensuel_xaf`), ou `null` s'il est vide ou illisible. */
+export async function lirePrixMensuelXaf(): Promise<number | null> {
+  const r = await supabaseAdmin.from('quota_reglages').select('valeur').eq('cle', 'prix_mensuel_xaf').maybeSingle()
+  if (r.error !== null || r.data === null) return null
+  const v = String((r.data as { valeur?: unknown }).valeur ?? '').trim()
+  return /^[0-9]+$/u.test(v) && Number(v) > 0 ? Number(v) : null
+}
+
 /**
  * L'état du compteur d'une appli, tel que la réservation le verrait. Une appli
  * jamais comptée est « gratuite », avec le réglage du moment. `null` = illisible.

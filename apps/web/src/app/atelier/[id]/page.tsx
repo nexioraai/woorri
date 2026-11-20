@@ -65,7 +65,8 @@ import { IdentifiantsOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { adresseProposee, TITRE_SANS_NOM } from '@/lib/apps/nom-produit';
 import { echangesDe, heureCourte, type VersionLue } from '@/lib/apps/fil-atelier';
 import { phraseVersion } from '@/lib/apps/versions-oeuvre';
-import { boutonOuvert, libelleBouton, phraseApresRetouche, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
+import { boutonOuvert, libelleBouton, phraseApresRetouche, publicationOuverte, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
+import { CommentPayerPublication, PublicationBloquee } from '@/components/atelier/PublicationBloquee';
 import type { EtatCompteur } from '@/lib/apps/compteur-phrases';
 
 /** M2 — l'écran est-il étroit ? Lu par `useSyncExternalStore` : juste au rendu
@@ -123,6 +124,8 @@ export default function AtelierPage() {
   const [compteur, setCompteur] = useState<EtatCompteur | null>(null);
   // Le paiement par carte est-il ouvert à CE compte ? (interrupteur serveur, éteint par défaut)
   const [abonnementCarte, setAbonnementCarte] = useState(false);
+  // Le prix mensuel en FCFA, lu dans le réglage par le serveur (null : vide).
+  const [prixMensuelXaf, setPrixMensuelXaf] = useState<number | null>(null);
   const [perimetre, setPerimetre] = useState('');
   const [enCours, setEnCours] = useState(false);
   const [avis, setAvis] = useState<string | null>(null);
@@ -300,10 +303,11 @@ export default function AtelierPage() {
           headers: { Authorization: `Bearer ${t}` },
         });
         if (res.ok) {
-          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null; abonnementCarte?: boolean };
+          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null; abonnementCarte?: boolean; prixMensuelXaf?: number | null };
           setPlafond(d.plafond ?? '');
           setCompteur(d.compteur ?? null);
           setAbonnementCarte(d.abonnementCarte === true);
+          setPrixMensuelXaf(typeof d.prixMensuelXaf === 'number' ? d.prixMensuelXaf : null);
           setPerimetre(d.perimetre ?? '');
         }
       } catch { /* le bouton dira « Modifier » sans prix plutôt que rien */ }
@@ -717,6 +721,10 @@ export default function AtelierPage() {
               )}
             </div>
           )}
+          {/* PUBLIER DEMANDE L'ABONNEMENT (2026-11-20) : sans abonnement en
+              cours, le bouton dit le prix et comment payer. La route refuse
+              de toute façon (402) — ceci n'est que la phrase avant le clic. */}
+          {publicationOuverte(compteur) ? (
           <button
             type="button"
             onClick={() => { void publier(); }}
@@ -725,6 +733,9 @@ export default function AtelierPage() {
             <Globe size={14} strokeWidth={2} aria-hidden />
             Publier
           </button>
+          ) : (
+            <PublicationBloquee prixMensuelXaf={prixMensuelXaf} />
+          )}
           {/* À CÔTÉ DE « PUBLIER » : l'emplacement et l'état, rien de
               branché tant que le quota n'est pas décidé (décision 3). */}
           <BoutonAbonnement />
@@ -739,6 +750,7 @@ export default function AtelierPage() {
         </div>
         </div>
       </header>
+      {!publicationOuverte(compteur) && <CommentPayerPublication prixMensuelXaf={prixMensuelXaf} />}
 
       {/* ── M2 : LES ONGLETS, SOUS 1024 PX SEULEMENT. */}
       <div role="tablist" aria-label="Atelier" className="flex shrink-0 gap-1 border-b border-brand-gold/45 bg-brand-prune/[0.30] px-3 py-1.5 lg:hidden">

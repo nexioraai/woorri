@@ -32,6 +32,9 @@ import { oeuvreExiste } from '@/lib/apps/oeuvre-existe'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { creerSousDomaine, nomValide } from '@/lib/apps/sous-domaine'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { sansQuota } from '@/lib/admin-emails'
+import { lireCompteur, lirePrixMensuelXaf } from '@/lib/apps/quota'
+import { phrasePublicationBloquee } from '@/lib/apps/compteur-phrases'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { jetonPour, lienDePublication } from '@/lib/apps/publication'
 import { exigencesDuMagasin } from '@/lib/apps/exigences-magasin'
@@ -115,6 +118,29 @@ export async function POST(req: Request) {
       },
       { status: 409 },
     )
+  }
+
+  // ── PUBLIER DEMANDE L'ABONNEMENT (décision du propriétaire, 2026-11-20).
+  //
+  // Un compte non exempté ne publie qu'une appli abonnée ET payée à l'heure
+  // de l'appel. Le refus vient AVANT toute écriture (nom, jeton, base de
+  // l'oeuvre). Une appli déjà publiée n'est jamais dépubliée ici : la garde
+  // n'agit qu'au geste de publier. Compteur illisible : on refuse, sans rien
+  // écrire — publier sans savoir si c'est payé, c'est publier gratuitement.
+  if (!sansQuota(garde.email)) {
+    const compteur = await lireCompteur(id, garde.userId)
+    if (compteur === null) {
+      return NextResponse.json(
+        { error: 'La vérification de l’abonnement ne répond pas : rien n’a été publié. Réessayez dans un instant.' },
+        { status: 503 },
+      )
+    }
+    if (!compteur.exempte && !compteur.actif) {
+      return NextResponse.json(
+        { error: phrasePublicationBloquee(await lirePrixMensuelXaf()), abonnementRequis: true },
+        { status: 402 },
+      )
+    }
   }
 
   // ── LE NOM PUBLIC, SI LA PERSONNE EN CHOISIT UN (EP-291, 2026-10-30).

@@ -63,6 +63,13 @@ const compte = (col: string): number => filtresPoses().filter(([, c]) => c === c
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
   requireAuthenticatedUser: () => ({ ok: true, userId: 'u-1' }),
 }))
+// PUBLIER DEMANDE L'ABONNEMENT (2026-11-20) : ce fichier teste ce qui vient
+// APRÈS la garde ; l'appli y est donc abonnée et payée. La garde elle-même
+// est tenue par `publier/__tests__/abonnement-requis.test.ts`.
+vi.mock('@/lib/apps/quota', () => ({
+  lireCompteur: async () => ({ exempte: false, formule: 'abonnee', restantes: 100, payeJusquAu: '2099-01-01T00:00:00Z', actif: true }),
+  lirePrixMensuelXaf: async () => 12000,
+}))
 
 // ── LE DOCUMENT EST MIGRÉ ICI, ET C'EST FIDÈLE À LA RÉALITÉ.
 //

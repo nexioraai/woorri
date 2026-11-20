@@ -23,6 +23,7 @@ vi.mock('@/lib/apps/quota', async (orig) => ({
   reserverModification: (...a: unknown[]) => reserver(...a),
   libererModification: (...a: unknown[]) => liberer(...a),
   lireCompteur: (...a: unknown[]) => lire(...a),
+  lirePrixMensuelXaf: async () => 12000,
 }))
 vi.mock('@/lib/payments/abonnement-appli', () => ({ abonnementCarteOuvert: async () => etat.carte }))
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
@@ -141,6 +142,8 @@ describe('étape ③ · ce que l’atelier lit avant de cliquer', () => {
     expect(lire).toHaveBeenCalledWith('g1', 'u-1')
     // ÉTEINT par défaut : le bouton « S'abonner » ne se montre pas.
     expect(d.abonnementCarte).toBe(false)
+    // Le prix du réglage, pour « Publier demande l'abonnement — … FCFA par mois ».
+    expect(d.prixMensuelXaf).toBe(12000)
   })
   it('le propriétaire : exempté, avec son plafond en dollars', async () => {
     etat.email = 'issayamiyoussouf@gmail.com'
