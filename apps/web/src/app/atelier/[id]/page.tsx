@@ -677,7 +677,11 @@ export default function AtelierPage() {
           <ChoixAppareil largeur={largeur} onChoisir={setLargeur} />
         </div>
 
-        <div className="flex min-w-0 flex-1 basis-full justify-end lg:basis-0">
+        {/* Entre 1024 et 1279 px, les gestes prennent leur largeur réelle :
+            sur une moitié de barre, ils débordaient à gauche (mesuré le
+            2026-11-21 à 1024 px : « Tablette » sous « Historique »). Le
+            choix de l'appareil n'est exactement centré qu'à partir de 1280 px. */}
+        <div className="flex min-w-0 flex-1 basis-full justify-end lg:flex-none lg:basis-auto xl:flex-1 xl:basis-0">
         <div className="relative flex flex-wrap items-center justify-end gap-1.5 lg:flex-nowrap">
           {/* ── L'HISTORIQUE EST UN MENU DÉROULANT, PAS UN PANNEAU.
               Un panneau séparé poussait l'aperçu vers le bas : on perdait de
