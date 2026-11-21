@@ -260,8 +260,11 @@ export async function appelerFournisseur(
   messages: readonly { role: 'user' | 'assistant'; content: string }[],
   /** Interrompt l'appel — l'échéance de la route (PLAN_TOURS_AU_TEMPS.md §3.1). */
   signal?: AbortSignal,
+  /** Sortie maximale de CET appel (premier tour borné par le plafond, 2026-11-21) ; jamais au-dessus du fournisseur. */
+  maxJetons?: number,
 ): Promise<Reponse> {
   const c = CONFIGS[f]
+  const sortieMax = maxJetons === undefined ? c.maxJetons : Math.min(c.maxJetons, maxJetons)
 
   if (f === 'deepseek') {
     // Dialecte compatible OpenAI, sans flux — et c'est une ARITHMÉTIQUE, pas
@@ -273,7 +276,7 @@ export async function appelerFournisseur(
       headers: { Authorization: `Bearer ${cle}`, 'content-type': 'application/json' },
       body: JSON.stringify({
         model: c.modele,
-        max_tokens: c.maxJetons,
+        max_tokens: sortieMax,
         messages: [{ role: 'system', content: system }, ...messages],
       }),
       ...(signal !== undefined ? { signal } : {}),
@@ -300,7 +303,7 @@ export async function appelerFournisseur(
   const client = new Anthropic({ apiKey: cle })
   const flux = client.messages.stream({
     model: c.modele,
-    max_tokens: c.maxJetons,
+    max_tokens: sortieMax,
     system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
   }, signal !== undefined ? { signal } : undefined)

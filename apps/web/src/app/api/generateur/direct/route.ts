@@ -53,7 +53,8 @@ import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { TEMOIN_FICHIERS } from '@/lib/apps/temoin-sonde'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
 import { proportionEprouvee } from '@/lib/apps/portee-epreuve'
-import { appelerFournisseur, CONFIGS, fournisseurChoisi, tarifDe } from '@/lib/apps/fournisseur'
+import { appelerFournisseur, CONFIGS, fournisseurChoisi, tarifDe, tarifPlafond } from '@/lib/apps/fournisseur'
+import { PHRASE_TROP_LONG, sortiePremierTour } from '@/lib/apps/plafond-premier-tour'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { jugerExecution } from '@/lib/apps/juge-execution'
 
@@ -473,13 +474,30 @@ export async function POST(req: Request) {
    * exige le flux, l'autre plafonne sa sortie a 8 192 jetons. Cette route
    * n'a pas a le savoir.
    */
+  let premierTour = true
   const appeler = async (
     messages: readonly { role: 'user' | 'assistant'; content: string }[],
   ) => {
     // LA CONSIGNE EST CELLE DE CETTE OEUVRE : avec entites, le bloc de base
     // REMPLACE la regle des valeurs d'exemple. Les deux ne coexistent jamais.
     const quand = new Date()
-    const r = await appelerFournisseur(fournisseur, cle, consignePour(entitesCourantes), messages, signalAppel)
+    const consigne = consignePour(entitesCourantes)
+    // ── LE PREMIER TOUR TIENT DANS LE PLAFOND (option B, 2026-11-21) : sa
+    // sortie maximale est ce qui reste du plafond une fois l'entrée estimée,
+    // au tarif de pointe. Les tours suivants restent gardés par la boucle.
+    let maxJetons: number | undefined
+    if (premierTour) {
+      premierTour = false
+      const p = sortiePremierTour({
+        signes: consigne.length + messages.reduce((n, m) => n + m.content.length, 0),
+        plafondUsd: PLAFOND_USD_GENERATION,
+        tarif: tarifPlafond(config.prix),
+        sortieMax: config.maxJetons,
+      })
+      if (p.refus) throw new Error(PHRASE_TROP_LONG)
+      maxJetons = p.sortie
+    }
+    const r = await appelerFournisseur(fournisseur, cle, consigne, messages, signalAppel, maxJetons)
     entree += r.usage.entree
     sortie += r.usage.sortie
     const t = tarifDe(config.prix, quand)
