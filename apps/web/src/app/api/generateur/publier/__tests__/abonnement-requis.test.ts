@@ -1,9 +1,9 @@
 /**
  * PUBLIER DEMANDE L'ABONNEMENT — la garde de la route (2026-11-20).
  *
- * ① non exempté, appli non abonnée → 402, la phrase porte le prix RÉGLÉ et
- *    comment payer, et RIEN n'est écrit ;
- * ② prix vide → la phrase sans montant (jamais « 0 FCFA ») ;
+ * ① non exempté, appli non abonnée → 402, une phrase neutre, et RIEN n'est écrit ;
+ * ② la phrase ne promet aucun moyen à la main (WhatsApp retiré le 2026-11-21 :
+ *    « Publier » mène désormais au paiement par carte, côté écran) ;
  * ③ compteur illisible → 503, rien n'est écrit ;
  * ④ abonné et payé → la garde laisse passer (la route va jusqu'au contrôle
  *    du nom, l'étape suivante) ; idem pour republier une appli déjà publiée ;
@@ -18,8 +18,6 @@ const etat = vi.hoisted(() => ({
   email: 'client@exemple.com',
   ligne: null as null | Record<string, unknown>,
   compteur: null as unknown,
-  prix: 12000 as number | null,
-  moyens: ['espèces'] as readonly string[],
   lectures: 0,
   journal: { filtres: {}, projections: {}, ecritures: {} } as import('@/lib/testing/postgrest').JournalPostgrest,
 }))
@@ -31,8 +29,6 @@ vi.mock('@/lib/supabase-admin', async () => {
 })
 vi.mock('@/lib/apps/quota', () => ({
   lireCompteur: async () => { etat.lectures += 1; return etat.compteur },
-  lirePrixMensuelXaf: async () => etat.prix,
-  lireMoyensPaiement: async () => etat.moyens,
 }))
 import { POST } from '../route'
 
@@ -45,19 +41,17 @@ beforeEach(() => {
   etat.email = 'client@exemple.com'
   etat.ligne = { publication_jeton: null, publication_slug: null, document: { schema: {} }, statut: 'livree', demande: 'x', sections_acquises: {} }
   etat.compteur = { exempte: false, formule: 'gratuite', restantes: 10, payeJusquAu: null, actif: false }
-  etat.prix = 12000
-  etat.moyens = ['espèces']
   etat.lectures = 0
   etat.journal.filtres = {}; etat.journal.projections = {}; etat.journal.ecritures = {}
 })
 
 describe('publier demande l’abonnement', () => {
-  it('① non exempté, appli gratuite : 402, prix réglé + comment payer, rien n’est écrit', async () => {
+  it('① non exempté, appli gratuite : 402, la phrase, rien n’est écrit', async () => {
     const r = await appel('nom-valide')
     expect(r.status).toBe(402)
     const d = (await r.json()) as { error: string; abonnementRequis: boolean }
     expect(d.abonnementRequis).toBe(true)
-    expect(d.error).toBe('Publier demande l’abonnement — 12 000 FCFA par mois. Pour payer : WhatsApp +235 68 36 41 35 (espèces).')
+    expect(d.error).toBe('Publier demande un abonnement en cours pour cette application.')
     expect(d.error).not.toMatch(/Airtel|Moov/u)
     expect(ecrit()).toEqual([])
   })
@@ -68,18 +62,9 @@ describe('publier demande l’abonnement', () => {
     expect(ecrit()).toEqual([])
   })
 
-  it('② le prix vient du RÉGLAGE : un autre prix, une autre phrase ; vide, sans montant', async () => {
-    etat.prix = 15000
-    expect(((await (await appel()).json()) as { error: string }).error).toContain('15 000 FCFA par mois')
-    etat.prix = null
+  it('② la réponse 402 ne promet AUCUN moyen à la main : ni WhatsApp, ni FCFA, ni opérateur (2026-11-21)', async () => {
     const e = ((await (await appel()).json()) as { error: string }).error
-    expect(e.startsWith('Publier demande l’abonnement. Pour payer')).toBe(true)
-    expect(e).not.toMatch(/FCFA par mois|0 FCFA/u)
-  })
-
-  it('② bis les moyens viennent du RÉGLAGE : remettre « Airtel Money » sans redéployer', async () => {
-    etat.moyens = ['espèces', 'Airtel Money']
-    expect(((await (await appel()).json()) as { error: string }).error).toMatch(/\(espèces, Airtel Money\)\.$/u)
+    expect(e).not.toMatch(/WhatsApp|\+235|FCFA|espèces|Airtel|Moov/u)
   })
 
   it('③ compteur illisible : 503, rien n’est écrit', async () => {

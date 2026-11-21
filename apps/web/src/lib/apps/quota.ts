@@ -12,7 +12,6 @@
  * non compté est exactement ce que ce chantier existe pour empêcher. Les
  * comptes exemptés (`sansQuota`) ne passent jamais par ici.
  */
-import { moyensDePaiement } from './compteur-phrases'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import type { EtatCompteur } from './compteur-phrases'
 
@@ -78,16 +77,6 @@ export async function solderCreation(
 // Le type `EtatCompteur` vit dans compteur-phrases.ts : l'atelier (navigateur)
 // le lit sans jamais toucher à ce module, qui porte la clé de service.
 export type { EtatCompteur }
-
-/**
- * Les moyens de paiement à la main (réglage `moyens_paiement_manuel`, liste
- * séparée par des virgules). Absent, vide ou illisible → le défaut
- * (`MOYENS_PAIEMENT_DEFAUT`) : remettre « Airtel Money » se fait sans redéployer.
- */
-export async function lireMoyensPaiement(): Promise<readonly string[]> {
-  const r = await supabaseAdmin.from('quota_reglages').select('valeur').eq('cle', 'moyens_paiement_manuel').maybeSingle()
-  return moyensDePaiement(r.error === null && r.data !== null ? String((r.data as { valeur?: unknown }).valeur ?? '') : null)
-}
 
 /** Le prix mensuel en FCFA (réglage `prix_mensuel_xaf`), ou `null` s'il est vide ou illisible. */
 export async function lirePrixMensuelXaf(): Promise<number | null> {

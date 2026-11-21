@@ -48,8 +48,8 @@ const WEB = ['apps', 'web', 'src']
 
 const ATELIER = (): string => lire(...WEB, 'app', 'atelier', '[id]', 'page.tsx')
 const CADRE = (): string => lire(...WEB, 'components', 'atelier', 'CadreApercu.tsx')
+const MOBILE = (): string => lire(...WEB, 'components', 'atelier', 'PayerMobileMoney.tsx')
 const CHOIX = (): string => lire(...WEB, 'components', 'atelier', 'ChoixAppareil.tsx')
-const ABONNEMENT = (): string => lire(...WEB, 'components', 'atelier', 'BoutonAbonnement.tsx')
 
 /** Le corps d'une fonction de l'écran, de sa déclaration à la suivante. */
 const corpsDe = (source: string, nom: string): string => {
@@ -189,7 +189,7 @@ describe('EP-317 · l’atelier', () => {
     // largeur. Aucun import = rien qu'il puisse atteindre : on l'EXIGE, et
     // les deux composants clients de la barre prennent sa place ci-dessous.
     expect(CADRE(), 'le cadre importe de nouveau : le remettre dans la boucle').not.toMatch(/^import\s/mu)
-    for (const [nom, source] of [['atelier', ATELIER()], ['choix', CHOIX()], ['abonnement', ABONNEMENT()]] as const) {
+    for (const [nom, source] of [['atelier', ATELIER()], ['choix', CHOIX()], ['mobile-money', MOBILE()]] as const) {
       const sources = [...source.matchAll(/(?:from|import)\s*['"]([^'"]+)['"]/gu)].map((m) => m[1])
       // Le garde-fou doit prouver que l'extraction marche, pas imposer un
       // nombre d'imports : chacun de ces trois en a au moins deux.

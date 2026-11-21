@@ -69,16 +69,13 @@ export function voitLesCouts(etat: EtatCompteur | null): boolean {
   return etat !== null && etat.exempte
 }
 
-// ── PUBLIER DEMANDE L'ABONNEMENT (2026-11-20).
+// ── « PUBLIER » MÈNE AU PAIEMENT (décision du propriétaire, 2026-11-21).
 //
-// Décision du propriétaire : un compte non exempté ne publie qu'une appli
-// abonnée et payée. Le bouton bloqué ne laisse personne sans issue : le prix
-// (lu dans le réglage `prix_mensuel_xaf`, jamais écrit ici) et comment payer.
-
-/** Le contact pour payer à la main — donné par le propriétaire le 2026-11-20. */
-export const WHATSAPP_PAIEMENT = '+235 68 36 41 35'
-/** Le même, en lien (wa.me n'accepte que les chiffres). */
-export const LIEN_WHATSAPP_PAIEMENT = `https://wa.me/${WHATSAPP_PAIEMENT.replace(/[^0-9]/gu, '')}`
+// Plus de cadenas ni de bandeau WhatsApp : un client qui peut payer par carte
+// ne doit pas être bloqué. Un seul chemin : « Publier ». Non abonné, il
+// l'envoie au paiement Stripe de l'abonnement de l'appli ; au retour, la
+// publication se relance en un clic. Le SERVEUR garde la règle : sans période
+// payée, la route de publication refuse toujours (402).
 
 /**
  * L'écran laisse-t-il publier ? Exempté ou abonné et payé : oui. Compteur
@@ -89,35 +86,37 @@ export function publicationOuverte(etat: EtatCompteur | null): boolean {
   return etat === null || etat.exempte || etat.actif
 }
 
-const fcfa = (n: number): string => `${new Intl.NumberFormat('fr-FR').format(n).replace(/[\u202f\u00a0]/gu, ' ')} FCFA`
+/** Le prix de l'abonnement par carte, LU CHEZ STRIPE (montant, devise ISO). */
+export type PrixCarte = { readonly montant: number; readonly devise: string }
 
-/** « Publier demande l'abonnement — 12 000 FCFA par mois ». Prix vide : sans montant, jamais « 0 ». */
-export function libellePublicationBloquee(prixMensuelXaf: number | null): string {
-  return prixMensuelXaf === null
-    ? 'Publier demande l’abonnement'
-    : `Publier demande l’abonnement — ${fcfa(prixMensuelXaf)} par mois`
+/** « 20 $ US / mois » — le prix tel que Stripe le facturera. */
+export function prixLisible(p: PrixCarte): string {
+  const n = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(p.montant).replace(/[\u202f\u00a0]/gu, ' ')
+  return p.devise === 'USD' ? `${n} $ US / mois` : `${n} ${p.devise} / mois`
 }
+
+/** Ce que fait un clic sur « Publier ». */
+export type ActionPublier = 'publier' | 'payer' | 'fermee'
 
 /**
- * Les moyens de paiement à la main, quand le réglage `moyens_paiement_manuel`
- * est absent ou vide (2026-11-21) : seulement ce que le propriétaire peut
- * ENCAISSER aujourd'hui. Pas de numéro mobile money pour recevoir : pas
- * d'« Airtel Money » promis.
+ * Payé (ou exempté, ou compteur illisible) : publier. Sinon : payer par carte
+ * si le paiement est ouvert pour ce compte ET que son prix est connu (on
+ * n'envoie personne chez Stripe sans lui avoir montré le prix) ; sinon, dire
+ * que le paiement en ligne n'est pas encore ouvert — jamais une erreur brute.
  */
-export const MOYENS_PAIEMENT_DEFAUT: readonly string[] = ['espèces']
-
-/** La liste lue dans le réglage (séparée par des virgules) ; vide → le défaut. */
-export function moyensDePaiement(valeur: string | null | undefined): readonly string[] {
-  const l = (valeur ?? '').split(',').map((x) => x.trim()).filter((x) => x !== '')
-  return l.length > 0 ? l : MOYENS_PAIEMENT_DEFAUT
+export function actionPublier(etat: EtatCompteur | null, carteOuverte: boolean, prix: PrixCarte | null): ActionPublier {
+  if (publicationOuverte(etat)) return 'publier'
+  return carteOuverte && prix !== null ? 'payer' : 'fermee'
 }
 
-/** Comment payer, en une phrase : « Pour payer : WhatsApp … (espèces). » */
-export function phraseCommentPayer(moyens: readonly string[]): string {
-  return `Pour payer : WhatsApp ${WHATSAPP_PAIEMENT} (${moyens.join(', ')}).`
+/** Le libellé du bouton : le prix est visible AVANT le départ chez Stripe. */
+export function libellePublier(action: ActionPublier, prix: PrixCarte | null): string {
+  return action === 'payer' && prix !== null ? `Publier — ${prixLisible(prix)}` : 'Publier'
 }
 
-/** Ce que la route rend quand elle refuse : les deux, ensemble. */
-export function phrasePublicationBloquee(prixMensuelXaf: number | null, moyens: readonly string[]): string {
-  return `${libellePublicationBloquee(prixMensuelXaf)}. ${phraseCommentPayer(moyens)}`
-}
+/** Ce que dit l'écran quand le paiement en ligne n'est pas ouvert pour ce compte. */
+export const PHRASE_PUBLIER_FERMEE =
+  'Publier demande un abonnement pour cette application. Le paiement en ligne n’est pas encore ouvert pour votre compte.'
+
+/** Ce que rend la route `publier` quand la période n'est pas payée (402). */
+export const PHRASE_ABONNEMENT_REQUIS = 'Publier demande un abonnement en cours pour cette application.'

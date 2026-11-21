@@ -60,13 +60,12 @@ import { supabase } from '@/lib/supabase';
 import { CadreApercu } from '@/components/atelier/CadreApercu';
 import { useEchelleApercu } from '@/components/atelier/useEchelleApercu';
 import { ChoixAppareil } from '@/components/atelier/ChoixAppareil';
-import { BoutonAbonnement } from '@/components/atelier/BoutonAbonnement';
 import { IdentifiantsOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { adresseProposee, TITRE_SANS_NOM } from '@/lib/apps/nom-produit';
 import { echangesDe, heureCourte, type VersionLue } from '@/lib/apps/fil-atelier';
 import { phraseVersion } from '@/lib/apps/versions-oeuvre';
-import { boutonOuvert, libelleBouton, MOYENS_PAIEMENT_DEFAUT, phraseApresRetouche, publicationOuverte, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
-import { CommentPayerPublication, PublicationBloquee } from '@/components/atelier/PublicationBloquee';
+import { actionPublier, boutonOuvert, libelleBouton, libellePublier, PHRASE_PUBLIER_FERMEE, phraseApresRetouche, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
+import type { PrixCarte } from '@/lib/apps/compteur-phrases';
 import { PayerMobileMoney } from '@/components/atelier/PayerMobileMoney';
 import type { EtatCompteur } from '@/lib/apps/compteur-phrases';
 
@@ -125,10 +124,13 @@ export default function AtelierPage() {
   const [compteur, setCompteur] = useState<EtatCompteur | null>(null);
   // Le paiement par carte est-il ouvert à CE compte ? (interrupteur serveur, éteint par défaut)
   const [abonnementCarte, setAbonnementCarte] = useState(false);
-  // Le prix mensuel en FCFA, lu dans le réglage par le serveur (null : vide).
-  const [prixMensuelXaf, setPrixMensuelXaf] = useState<number | null>(null);
-  // Les moyens de paiement à la main, lus dans le réglage par le serveur.
-  const [moyensPaiement, setMoyensPaiement] = useState<readonly string[]>(MOYENS_PAIEMENT_DEFAUT);
+  // Le prix de l'abonnement par carte, LU CHEZ STRIPE par le serveur (null :
+  // paiement fermé pour ce compte, ou prix illisible — personne n'est alors
+  // envoyé chez Stripe).
+  const [prixCarte, setPrixCarte] = useState<PrixCarte | null>(null);
+  // Ce que « Publier » a à dire, sous la barre : paiement pas encore ouvert,
+  // paiement annulé, ou abonnement actif avec « Publier maintenant ».
+  const [avisPublication, setAvisPublication] = useState<{ texte: string; publierMaintenant: boolean } | null>(null);
   // Le paiement mobile money (MODE TEST, interrupteur `mobile_money`, éteint par défaut).
   const [mobileMoney, setMobileMoney] = useState(false);
   const [perimetre, setPerimetre] = useState('');
@@ -241,12 +243,23 @@ export default function AtelierPage() {
     const res = await fetch(`/api/generateur/${chemin}?id=${encodeURIComponent(id)}`, { method: 'POST', headers: { Authorization: `Bearer ${t}` } });
     const d = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
     if (res.ok && typeof d.url === 'string') window.location.assign(d.url);
-    else setAbonnementAvis(d.error ?? 'La page de paiement n’a pas pu s’ouvrir.');
+    else {
+      const message = d.error ?? 'La page de paiement n’a pas pu s’ouvrir.';
+      setAbonnementAvis(message);
+      // Parti de « Publier » : la phrase s'affiche sous la barre, là où l'on regarde.
+      if (chemin === 'abonnement') setAvisPublication({ texte: message, publierMaintenant: false });
+    }
   };
   useEffect(() => {
     const retour = new URLSearchParams(window.location.search).get('paiement');
     // Le message part au tour suivant : pas d'état posé pendant l'effet lui-même.
-    if (retour === 'annule') { const t0 = window.setTimeout(() => setAbonnementAvis('Paiement annulé : rien n’a été prélevé.'), 0); return () => window.clearTimeout(t0); }
+    if (retour === 'annule') {
+      const t0 = window.setTimeout(() => {
+        setAbonnementAvis('Paiement annulé : rien n’a été prélevé.');
+        setAvisPublication({ texte: 'Paiement annulé : rien n’a été prélevé, l’application n’est pas publiée.', publierMaintenant: false });
+      }, 0);
+      return () => window.clearTimeout(t0);
+    }
     if (retour !== 'recu') return;
     const t1 = window.setTimeout(() => setAbonnementAvis('Paiement reçu par Stripe — l’activation arrive dans quelques secondes.'), 0);
     let essais = 0;
@@ -255,6 +268,10 @@ export default function AtelierPage() {
       void relireCompteur().then((c) => {
         if (c !== null && !c.exempte && c.actif) {
           setAbonnementAvis('Abonnement actif. Merci !');
+          // LA PUBLICATION SE RELANCE EN UN CLIC (décision du 2026-11-21) : le
+          // nom public et l'accord de lecture se choisissent au moment de
+          // publier, par la personne — on ne publie pas à sa place au retour.
+          setAvisPublication({ texte: 'Abonnement actif : votre application peut être publiée.', publierMaintenant: true });
           window.clearInterval(minuteur);
         } else if (essais >= 12) {
           setAbonnementAvis('Le paiement est reçu, l’activation tarde : rechargez la page dans une minute. Rien ne sera prélevé deux fois.');
@@ -308,13 +325,12 @@ export default function AtelierPage() {
           headers: { Authorization: `Bearer ${t}` },
         });
         if (res.ok) {
-          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null; abonnementCarte?: boolean; prixMensuelXaf?: number | null; moyensPaiement?: string[]; mobileMoney?: boolean };
+          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null; abonnementCarte?: boolean; prixCarte?: PrixCarte | null; mobileMoney?: boolean };
           setPlafond(d.plafond ?? '');
           setCompteur(d.compteur ?? null);
           setAbonnementCarte(d.abonnementCarte === true);
-          setPrixMensuelXaf(typeof d.prixMensuelXaf === 'number' ? d.prixMensuelXaf : null);
+          setPrixCarte(d.prixCarte != null && typeof d.prixCarte.montant === 'number' ? d.prixCarte : null);
           setMobileMoney(d.mobileMoney === true);
-          if (Array.isArray(d.moyensPaiement) && d.moyensPaiement.length > 0) setMoyensPaiement(d.moyensPaiement);
           setPerimetre(d.perimetre ?? '');
         }
       } catch { /* le bouton dira « Modifier » sans prix plutôt que rien */ }
@@ -735,24 +751,24 @@ export default function AtelierPage() {
               )}
             </div>
           )}
-          {/* PUBLIER DEMANDE L'ABONNEMENT (2026-11-20) : sans abonnement en
-              cours, le bouton dit le prix et comment payer. La route refuse
-              de toute façon (402) — ceci n'est que la phrase avant le clic. */}
-          {publicationOuverte(compteur) ? (
+          {/* « PUBLIER » MÈNE AU PAIEMENT (2026-11-21) : un seul chemin. Payé
+              → publier ; non payé et carte ouverte → Stripe, prix affiché sur
+              le bouton ; carte fermée → une phrase, jamais une erreur brute.
+              La route refuse de toute façon sans période payée (402). */}
           <button
             type="button"
-            onClick={() => { void publier(); }}
+            onClick={() => {
+              const action = actionPublier(compteur, abonnementCarte, prixCarte);
+              setAvisPublication(null);
+              if (action === 'publier') void publier();
+              else if (action === 'payer') void versStripe('abonnement');
+              else setAvisPublication({ texte: PHRASE_PUBLIER_FERMEE, publierMaintenant: false });
+            }}
             className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-xs text-slate-300 transition hover:border-white/20 hover:text-white"
           >
             <Globe size={14} strokeWidth={2} aria-hidden />
-            Publier
+            {libellePublier(actionPublier(compteur, abonnementCarte, prixCarte), prixCarte)}
           </button>
-          ) : (
-            <PublicationBloquee prixMensuelXaf={prixMensuelXaf} />
-          )}
-          {/* À CÔTÉ DE « PUBLIER » : l'emplacement et l'état, rien de
-              branché tant que le quota n'est pas décidé (décision 3). */}
-          <BoutonAbonnement />
           <button
             type="button"
             onClick={() => { void telecharger(); }}
@@ -764,7 +780,17 @@ export default function AtelierPage() {
         </div>
         </div>
       </header>
-      {!publicationOuverte(compteur) && <CommentPayerPublication prixMensuelXaf={prixMensuelXaf} moyens={moyensPaiement} />}
+      {avisPublication !== null && (
+        <p role="status" id="avis-publication" className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[#FA5D1E]/30 bg-[#FA5D1E]/[0.08] px-4 py-2 text-xs text-white">
+          {avisPublication.texte}
+          {avisPublication.publierMaintenant && (
+            <button type="button" onClick={() => { setAvisPublication(null); void publier(); }}
+              className="rounded-lg bg-[#FA5D1E] px-2.5 py-1 font-semibold text-white">
+              Publier maintenant
+            </button>
+          )}
+        </p>
+      )}
 
       {/* ── M2 : LES ONGLETS, SOUS 1024 PX SEULEMENT. */}
       <div role="tablist" aria-label="Atelier" className="flex shrink-0 gap-1 border-b border-brand-gold/45 bg-brand-prune/[0.30] px-3 py-1.5 lg:hidden">
@@ -1007,19 +1033,13 @@ export default function AtelierPage() {
             {raisonFermeture(compteur) !== null && (
               <p className="mt-1.5 text-[11px] leading-relaxed text-amber-200/80">{raisonFermeture(compteur)}</p>
             )}
-            {/* L'ABONNEMENT PAR CARTE : s'abonner (gratuite ou échue), ou le gérer. */}
-            {compteur !== null && !compteur.exempte && abonnementCarte && (
-              compteur.actif ? (
-                <button type="button" onClick={() => { void versStripe('abonnement/portail'); }}
-                  className="mt-2 w-full rounded-xl border border-white/15 px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5">
-                  Gérer mon abonnement
-                </button>
-              ) : (
-                <button type="button" onClick={() => { void versStripe('abonnement'); }}
-                  className="mt-2 w-full rounded-xl border border-[#FA5D1E]/60 px-3 py-2 text-xs font-semibold text-[#FA5D1E] transition hover:bg-[#FA5D1E]/10">
-                  S’abonner — 20 $ US / mois
-                </button>
-              )
+            {/* L'ABONNEMENT PAR CARTE : le GÉRER seulement. S'abonner passe par
+                « Publier » (2026-11-21) — un seul chemin vers Stripe. */}
+            {compteur !== null && !compteur.exempte && abonnementCarte && compteur.actif && (
+              <button type="button" onClick={() => { void versStripe('abonnement/portail'); }}
+                className="mt-2 w-full rounded-xl border border-white/15 px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5">
+                Gérer mon abonnement
+              </button>
             )}
             {abonnementAvis !== null && (
               <p role="status" className="mt-1.5 text-[11px] leading-relaxed text-slate-300">{abonnementAvis}</p>

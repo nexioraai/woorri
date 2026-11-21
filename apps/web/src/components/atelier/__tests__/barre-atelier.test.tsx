@@ -38,9 +38,11 @@ describe('la barre de l’atelier', () => {
     expect(ou('{nom}</h1>')).toBeGreaterThan(ou('text-nexiora'))
     expect(ou('<ChoixAppareil'), 'le choix de l’appareil n’est pas entre le titre et les gestes').toBeGreaterThan(ou('{nom}</h1>'))
     expect(ou('Historique')).toBeGreaterThan(ou('<ChoixAppareil'))
-    // L'abonnement suit « Publier » et précède « Télécharger ».
-    expect(ou('<BoutonAbonnement')).toBeGreaterThan(ou('Publier\n'))
-    expect(ou('Télécharger')).toBeGreaterThan(ou('<BoutonAbonnement'))
+    // UN SEUL CHEMIN VERS LE PAIEMENT (2026-11-21) : « Publier ». Le bouton
+    // « S'abonner — Bientôt » a quitté la barre, et « Télécharger » suit « Publier ».
+    expect(ou('<BoutonAbonnement'), '« S’abonner » est revenu dans la barre : deux chemins vers le paiement').toBe(-1)
+    expect(ou('libellePublier(')).toBeGreaterThan(ou('Historique'))
+    expect(ou('Télécharger')).toBeGreaterThan(ou('libellePublier('))
     // Gauche et droite prennent chacune la moitié du reste : le centre est au centre.
     expect(barre.match(/className="flex min-w-0 flex-1/gu)?.length, 'les deux zones latérales ne sont pas symétriques').toBe(2)
     // Une seule source de largeur : la barre la choisit, le cadre l'applique.
@@ -73,28 +75,5 @@ describe('la barre de l’atelier', () => {
     expect(boutons.map((b) => b.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'true'])
     await React.act(async () => { boutons[0]?.click() })
     expect(vus).toEqual([390])
-  })
-
-  it('③ « S’abonner » : Bientôt, le dit au clic, n’appelle aucune route', async () => {
-    const React = await import('react')
-    const { BoutonAbonnement } = await import('../BoutonAbonnement')
-    const reseau = vi.fn()
-    globalThis.fetch = reseau as unknown as typeof fetch
-    const racine = await monter(React.createElement(BoutonAbonnement))
-    expect(racine.textContent).toContain('Bientôt')
-    expect(racine.querySelector('[role="status"]')).toBeNull()
-    await React.act(async () => { racine.querySelector('button')?.click() })
-    expect(racine.querySelector('[role="status"]')?.textContent).toMatch(motifTexte('pas encore ouvert'))
-    expect(reseau).not.toHaveBeenCalled()
-  })
-
-  it('④ ouvert ET branché : le clic part vers `onAbonner`, sans « Bientôt »', async () => {
-    const React = await import('react')
-    const { BoutonAbonnement } = await import('../BoutonAbonnement')
-    const appels: string[] = []
-    const racine = await monter(React.createElement(BoutonAbonnement, { etat: 'ouvert', onAbonner: () => { appels.push('abonner') } }))
-    expect(racine.textContent).not.toContain('Bientôt')
-    await React.act(async () => { racine.querySelector('button')?.click() })
-    expect(appels).toEqual(['abonner'])
   })
 })

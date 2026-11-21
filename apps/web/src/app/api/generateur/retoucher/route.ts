@@ -81,10 +81,10 @@ import { blocDeclaration } from '@/lib/apps/retouche'
 import { CONFIGS, coutAppel, fournisseurChoisi, tarifDe, tarifPlafond, tarifsDuModele } from '@/lib/apps/fournisseur'
 import { deploiementQuiSert } from '@/lib/apps/deploiement'
 import { ecrireTentative, type Issue } from '@/lib/apps/tentatives'
-import { ISSUES_DECOMPTEES, libererModification, lireCompteur, lireMoyensPaiement, lirePrixMensuelXaf, PHRASE_COMPTEUR_INDISPONIBLE, PHRASE_EPUISE, reserverModification } from '@/lib/apps/quota'
+import { ISSUES_DECOMPTEES, libererModification, lireCompteur, PHRASE_COMPTEUR_INDISPONIBLE, PHRASE_EPUISE, reserverModification } from '@/lib/apps/quota'
 import { mobileMoneyOuvert } from '@/lib/payments/mobile-money/encaissement'
 import { sansQuota } from '@/lib/admin-emails'
-import { abonnementCarteOuvert } from '@/lib/payments/abonnement-appli'
+import { abonnementCarteOuvert, lirePrixAppli } from '@/lib/payments/abonnement-appli'
 import { alerter } from '@/lib/alertes'
 import { apparenceDuDocument, lireApparenceEnRoute, type Apparence } from '@/lib/apps/apparence'
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
@@ -354,15 +354,14 @@ export async function GET(req: Request) {
   const compteur = exempte ? { exempte: true as const } : await lireCompteur(id, garde.userId)
   // Le bouton « S'abonner » ne se montre que si l'interrupteur l'ouvre à CE compte.
   const abonnementCarte = !exempte && (await abonnementCarteOuvert(garde.userId, garde.email))
-  // Le prix mensuel, pour la phrase « Publier demande l'abonnement » : lu dans
-  // le réglage, jamais écrit dans l'écran. Exempté : sans objet.
-  const prixMensuelXaf = exempte ? null : await lirePrixMensuelXaf()
-  // Les moyens de paiement à la main (réglage `moyens_paiement_manuel`).
-  const moyensPaiement = exempte ? [] : await lireMoyensPaiement()
+  // Le prix de l'abonnement par carte, LU CHEZ STRIPE, seulement quand le
+  // paiement par carte est ouvert pour ce compte : c'est lui que « Publier »
+  // affiche avant d'envoyer chez Stripe.
+  const prixCarte = abonnementCarte ? await lirePrixAppli() : null
   // Le paiement mobile money (MODE TEST) : interrupteur `mobile_money`, éteint par défaut.
   const mobileMoney = !exempte && (await mobileMoneyOuvert(garde.userId, garde.email))
   return NextResponse.json(
-    { octets, ...(exempte ? { plafond: p.phrase } : {}), perimetre: PERIMETRE_RETOUCHE, compteur, abonnementCarte, prixMensuelXaf, moyensPaiement, mobileMoney },
+    { octets, ...(exempte ? { plafond: p.phrase } : {}), perimetre: PERIMETRE_RETOUCHE, compteur, abonnementCarte, prixCarte, mobileMoney },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }

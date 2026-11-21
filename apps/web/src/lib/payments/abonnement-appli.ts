@@ -59,6 +59,33 @@ export async function ouvrirPaiementAppli(o: { app: string; proprietaire: string
   return { ok: true, url: session.url }
 }
 
+/**
+ * LE PRIX DE L'ABONNEMENT D'UNE APPLI, LU CHEZ STRIPE (2026-11-21).
+ *
+ * Ce que le client voit sur « Publier » AVANT de partir chez Stripe est le
+ * prix que Stripe facturera : il n'est écrit nulle part dans le code. Lu au
+ * plus une fois toutes les dix minutes par instance. Illisible → `null`, et
+ * l'écran n'envoie personne chez Stripe.
+ */
+export type PrixAppli = { readonly montant: number; readonly devise: string }
+let prixEnCache: { readonly lu: number; readonly valeur: PrixAppli | null } | null = null
+export async function lirePrixAppli(): Promise<PrixAppli | null> {
+  const id = (process.env.STRIPE_PRICE_APPLICATION ?? '').trim()
+  if (!/^price_[A-Za-z0-9]+$/u.test(id)) return null
+  if (prixEnCache !== null && Date.now() - prixEnCache.lu < 600_000) return prixEnCache.valeur
+  try {
+    const p = await getStripe().prices.retrieve(id)
+    const valeur = typeof p.unit_amount === 'number' && typeof p.currency === 'string'
+      ? { montant: p.unit_amount / 100, devise: p.currency.toUpperCase() }
+      : null
+    prixEnCache = { lu: Date.now(), valeur }
+    return valeur
+  } catch (e) {
+    console.error('[abonnement] prix Stripe illisible', e instanceof Error ? e.message : e)
+    return null
+  }
+}
+
 /** Le portail Stripe du compte (résilier, changer de carte, factures). */
 export async function ouvrirPortail(o: { proprietaire: string; email: string; retour: string }): Promise<string> {
   const client = await clientDuCompte(o.proprietaire, o.email)

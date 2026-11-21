@@ -13,7 +13,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { journalVierge, type JournalPostgrest } from '@/lib/testing/postgrest'
 
-const etat = { stop: 'end_turn' as string, texte: '', email: 'marchand@example.com', appels: 0, carte: false }
+const etat = { stop: 'end_turn' as string, texte: '', email: 'marchand@example.com', appels: 0, carte: false, prixLus: 0 }
 const reserver = vi.fn()
 const liberer = vi.fn()
 const lire = vi.fn()
@@ -23,10 +23,8 @@ vi.mock('@/lib/apps/quota', async (orig) => ({
   reserverModification: (...a: unknown[]) => reserver(...a),
   libererModification: (...a: unknown[]) => liberer(...a),
   lireCompteur: (...a: unknown[]) => lire(...a),
-  lirePrixMensuelXaf: async () => 12000,
-  lireMoyensPaiement: async () => ['espèces'],
 }))
-vi.mock('@/lib/payments/abonnement-appli', () => ({ abonnementCarteOuvert: async () => etat.carte }))
+vi.mock('@/lib/payments/abonnement-appli', () => ({ abonnementCarteOuvert: async () => etat.carte, lirePrixAppli: async () => { etat.prixLus += 1; return { montant: 20, devise: 'USD' } } }))
 vi.mock('@/lib/payments/mobile-money/encaissement', () => ({ mobileMoneyOuvert: async () => false }))
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
   requireAuthenticatedUser: () => ({ ok: true, userId: 'u-1', email: etat.email }),
@@ -144,11 +142,23 @@ describe('étape ③ · ce que l’atelier lit avant de cliquer', () => {
     expect(lire).toHaveBeenCalledWith('g1', 'u-1')
     // ÉTEINT par défaut : le bouton « S'abonner » ne se montre pas.
     expect(d.abonnementCarte).toBe(false)
-    // Le prix du réglage, pour « Publier demande l'abonnement — … FCFA par mois ».
-    expect(d.prixMensuelXaf).toBe(12000)
-    expect(d.moyensPaiement).toEqual(['espèces'])
+    // Paiement par carte FERMÉ : aucun prix rendu, et Stripe n'est même pas interrogé.
+    expect(d.prixCarte).toBeNull()
+    expect(etat.prixLus).toBe(0)
+    expect(d.prixMensuelXaf).toBeUndefined()
+    expect(d.moyensPaiement).toBeUndefined()
     // ÉTEINT par défaut : le formulaire mobile money ne se montre pas.
     expect(d.mobileMoney).toBe(false)
+  })
+  it('paiement par carte OUVERT pour ce compte : le prix LU CHEZ STRIPE est rendu (celui que « Publier » affiche)', async () => {
+    lire.mockResolvedValue({ exempte: false, formule: 'gratuite', restantes: 10, payeJusquAu: null, actif: false })
+    etat.carte = true
+    etat.prixLus = 0
+    const d = (await (await lecture()).json()) as Record<string, unknown>
+    etat.carte = false
+    expect(d.abonnementCarte).toBe(true)
+    expect(d.prixCarte).toEqual({ montant: 20, devise: 'USD' })
+    expect(etat.prixLus).toBe(1)
   })
   it('le propriétaire : exempté, avec son plafond en dollars', async () => {
     etat.email = 'issayamiyoussouf@gmail.com'
