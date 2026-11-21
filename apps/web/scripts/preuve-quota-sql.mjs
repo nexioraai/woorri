@@ -26,6 +26,7 @@ const ANNULATION = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_modifi
 const CREATIONS = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_creations.sql'), 'utf8')
 const LOT_XAF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_lot_xaf.sql'), 'utf8')
 const CARTE = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_abonnement_carte.sql'), 'utf8')
+const MOBILE = readFileSync(join(ICI, '..', 'supabase', 'sql', 'mobile_money_interrupteur.sql'), 'utf8')
 const PORT = 54000 + Math.floor(Math.random() * 900)
 const DOSSIER = mkdtempSync(join(tmpdir(), 'preuve-quota-'))
 const URL = `postgresql://postgres@127.0.0.1:${PORT}/postgres`
@@ -68,8 +69,6 @@ try {
   await admin.query(LOT_XAF)
   await admin.query(CARTE)
   await admin.query(CARTE)
-  const reg = await admin.query('select count(*)::int n from public.quota_reglages')
-  verdict(reg.rows[0].n === 11, 'appliqué deux fois : 11 réglages (dont lot_prix_xaf et abonnement_carte), pas 22 (idempotent)')
   const carte = await admin.query(`select valeur from public.quota_reglages where cle = 'abonnement_carte'`)
   verdict(carte.rows[0]?.valeur === '', 'abonnement_carte posé VIDE : le paiement par carte reste éteint')
   await admin.query(`select public.regler_quota('abonnement_carte', 'essai@exemple.com', 'proprietaire')`)
@@ -79,6 +78,18 @@ try {
   const garde = await admin.query(`select valeur from public.quota_reglages where cle = 'abonnement_carte'`)
   verdict(garde.rows[0]?.valeur === 'essai@exemple.com', 'réappliquer le fichier n’écrase pas la valeur réglée')
   await admin.query(`select public.regler_quota('abonnement_carte', '', 'proprietaire')`)
+  // mobile_money APRÈS abonnement_carte : sa contrainte inclut toutes les clés précédentes.
+  await admin.query(MOBILE)
+  await admin.query(MOBILE)
+  const reg = await admin.query('select count(*)::int n from public.quota_reglages')
+  verdict(reg.rows[0].n === 12, 'appliqué deux fois : 12 réglages (dont lot_prix_xaf, abonnement_carte, mobile_money), pas 24 (idempotent)')
+  const mm = await admin.query(`select valeur from public.quota_reglages where cle = 'mobile_money'`)
+  verdict(mm.rows[0]?.valeur === '', 'mobile_money posé VIDE : le paiement mobile money reste éteint')
+  await admin.query(`select public.regler_quota('mobile_money', 'essai@exemple.com', 'proprietaire')`)
+  await admin.query(MOBILE)
+  const mm2 = await admin.query(`select valeur from public.quota_reglages where cle = 'mobile_money'`)
+  verdict(mm2.rows[0]?.valeur === 'essai@exemple.com', 'mobile_money : réglable par regler_quota, et réappliquer ne l’écrase pas')
+  await admin.query(`select public.regler_quota('mobile_money', '', 'proprietaire')`)
 
   // ── Les applis publiées : offertes jusqu'au 31 décembre, une ligne chacune.
   const off = await admin.query(`select app_id, jusqu_au from public.app_paiements where fournisseur = 'offert'`)

@@ -67,6 +67,7 @@ import { echangesDe, heureCourte, type VersionLue } from '@/lib/apps/fil-atelier
 import { phraseVersion } from '@/lib/apps/versions-oeuvre';
 import { boutonOuvert, libelleBouton, phraseApresRetouche, publicationOuverte, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
 import { CommentPayerPublication, PublicationBloquee } from '@/components/atelier/PublicationBloquee';
+import { PayerMobileMoney } from '@/components/atelier/PayerMobileMoney';
 import type { EtatCompteur } from '@/lib/apps/compteur-phrases';
 
 /** M2 — l'écran est-il étroit ? Lu par `useSyncExternalStore` : juste au rendu
@@ -126,6 +127,8 @@ export default function AtelierPage() {
   const [abonnementCarte, setAbonnementCarte] = useState(false);
   // Le prix mensuel en FCFA, lu dans le réglage par le serveur (null : vide).
   const [prixMensuelXaf, setPrixMensuelXaf] = useState<number | null>(null);
+  // Le paiement mobile money (MODE TEST, interrupteur `mobile_money`, éteint par défaut).
+  const [mobileMoney, setMobileMoney] = useState(false);
   const [perimetre, setPerimetre] = useState('');
   const [enCours, setEnCours] = useState(false);
   const [avis, setAvis] = useState<string | null>(null);
@@ -303,11 +306,12 @@ export default function AtelierPage() {
           headers: { Authorization: `Bearer ${t}` },
         });
         if (res.ok) {
-          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null; abonnementCarte?: boolean; prixMensuelXaf?: number | null };
+          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null; abonnementCarte?: boolean; prixMensuelXaf?: number | null; mobileMoney?: boolean };
           setPlafond(d.plafond ?? '');
           setCompteur(d.compteur ?? null);
           setAbonnementCarte(d.abonnementCarte === true);
           setPrixMensuelXaf(typeof d.prixMensuelXaf === 'number' ? d.prixMensuelXaf : null);
+          setMobileMoney(d.mobileMoney === true);
           setPerimetre(d.perimetre ?? '');
         }
       } catch { /* le bouton dira « Modifier » sans prix plutôt que rien */ }
@@ -1009,6 +1013,9 @@ export default function AtelierPage() {
             )}
             {abonnementAvis !== null && (
               <p role="status" className="mt-1.5 text-[11px] leading-relaxed text-slate-300">{abonnementAvis}</p>
+            )}
+            {compteur !== null && !compteur.exempte && mobileMoney && (
+              <PayerMobileMoney app={id} jeton={jeton} renouveler={compteur.formule === 'abonnee'} onPaye={relireCompteur} />
             )}
           </div>
         </section>

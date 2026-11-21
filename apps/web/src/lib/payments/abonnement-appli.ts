@@ -16,6 +16,7 @@ import 'server-only'
  * Les avis d'une appli ne touchent JAMAIS aux sites : la marque
  * `deribfy_type = application` les aiguille (webhook).
  */
+import { interrupteurOuvert } from './interrupteur'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getStripe } from '@/lib/stripe'
 import { abonnementDeFacture, finDePeriode } from './facture-stripe'
@@ -105,13 +106,7 @@ export async function traiterFactureAppli(facture: unknown): Promise<ResultatFac
 //                      d'essai du paiement de preuve.
 // Une lecture qui échoue ÉTEINT : on ne paie jamais par un chemin incertain.
 export async function abonnementCarteOuvert(proprietaire: string, email: string | null): Promise<boolean> {
-  const r = await supabaseAdmin.from('quota_reglages').select('valeur').eq('cle', 'abonnement_carte').maybeSingle()
-  if (r.error !== null || r.data === null) return false
-  const v = String((r.data as { valeur?: unknown }).valeur ?? '').trim().toLowerCase()
-  if (v === '') return false
-  if (v === 'tous') return true
-  const liste = v.split(',').map((x) => x.trim()).filter((x) => x !== '')
-  return liste.includes(proprietaire.toLowerCase()) || (email !== null && liste.includes(email.toLowerCase()))
+  return interrupteurOuvert('abonnement_carte', proprietaire, email)
 }
 
 export const PHRASE_CARTE_FERMEE = 'Le paiement par carte des applications n’est pas encore ouvert.'

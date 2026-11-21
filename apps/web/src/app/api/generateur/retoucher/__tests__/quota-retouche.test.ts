@@ -26,6 +26,7 @@ vi.mock('@/lib/apps/quota', async (orig) => ({
   lirePrixMensuelXaf: async () => 12000,
 }))
 vi.mock('@/lib/payments/abonnement-appli', () => ({ abonnementCarteOuvert: async () => etat.carte }))
+vi.mock('@/lib/payments/mobile-money/encaissement', () => ({ mobileMoneyOuvert: async () => false }))
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
   requireAuthenticatedUser: () => ({ ok: true, userId: 'u-1', email: etat.email }),
 }))
@@ -144,6 +145,8 @@ describe('étape ③ · ce que l’atelier lit avant de cliquer', () => {
     expect(d.abonnementCarte).toBe(false)
     // Le prix du réglage, pour « Publier demande l'abonnement — … FCFA par mois ».
     expect(d.prixMensuelXaf).toBe(12000)
+    // ÉTEINT par défaut : le formulaire mobile money ne se montre pas.
+    expect(d.mobileMoney).toBe(false)
   })
   it('le propriétaire : exempté, avec son plafond en dollars', async () => {
     etat.email = 'issayamiyoussouf@gmail.com'
