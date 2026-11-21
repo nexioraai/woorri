@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
-import { phraseAttente, phraseDetail, phraseEtat } from '@/components/atelier/PayerMobileMoney'
+import { PHRASE_UNE_DEMANDE, phraseAttente, phraseDetail, phraseEtat } from '@/components/atelier/PayerMobileMoney'
 
 beforeAll(() => { GlobalRegistrator.register({ url: 'http://localhost/' }) })
 afterAll(() => { GlobalRegistrator.unregister() })
@@ -60,6 +60,9 @@ describe('payer par mobile money — l’écran', () => {
     expect(appels.some((u) => u.includes('encaissement=col_9')), 'le suivi n’a pas repris après rechargement').toBe(true)
     expect(racine.textContent).toMatch(motifTexte('En attente depuis 7 min.'))
     expect(racine.textContent).not.toMatch(/A payment request/u)
+    // DOUBLE PAIEMENT : avant 10 minutes, l'écran dit qu'une autre demande ne partira pas.
+    expect(racine.textContent).toMatch(motifTexte(PHRASE_UNE_DEMANDE))
+    expect(PHRASE_UNE_DEMANDE).toBe('Une seule demande à la fois : tant que celle-ci n’a ni abouti ni échoué, une nouvelle ne peut partir qu’après 10 minutes.')
     const changer = [...racine.querySelectorAll('button')].find((b) => b.textContent === 'Changer de numéro') as HTMLButtonElement
     expect(changer).toBeTruthy()
     await React.act(async () => { changer.click() })
@@ -69,6 +72,26 @@ describe('payer par mobile money — l’écran', () => {
     vi.unstubAllGlobals()
   })
 
+  it('DOUBLE PAIEMENT · après 10 minutes d’attente, la phrase « une seule demande » disparaît (une nouvelle est permise)', async () => {
+    const React = await import('react')
+    const { createRoot } = await import('react-dom/client')
+    const { PayerMobileMoney } = await import('@/components/atelier/PayerMobileMoney')
+    window.localStorage.setItem('deribfy-mobile-money-a3', JSON.stringify({ encaissement: 'col_8', debut: Date.now() - 12 * 60_000 }))
+    vi.stubGlobal('fetch', vi.fn(async (u: string) => {
+      if (String(u).includes('encaissement=col_8')) return new Response(JSON.stringify({ encaissement: 'col_8', etat: 'en_attente', montant: 13400, devise: 'XAF', test: true, action: null, echec: null }), { status: 200 })
+      return new Response(JSON.stringify({ prix: 12000, devise: 'XAF', operateurs: [] }), { status: 200 })
+    }))
+    const racine = document.createElement('div')
+    document.body.appendChild(racine)
+    await React.act(async () => {
+      createRoot(racine).render(React.createElement(PayerMobileMoney, { app: 'a3', jeton: async () => 't', renouveler: false, onPaye: async () => null }))
+    })
+    await React.act(async () => { await new Promise((ok) => setTimeout(ok, 0)) })
+    expect(racine.textContent).toMatch(motifTexte('En attente depuis 12 min.'))
+    expect(racine.textContent).not.toMatch(motifTexte(PHRASE_UNE_DEMANDE))
+    window.localStorage.removeItem('deribfy-mobile-money-a3')
+    vi.unstubAllGlobals()
+  })
   it('FRAIS · la phrase du détail, au format exact demandé', () => {
     expect(phraseDetail({ prix: 12000, frais: 1400, total: 13400 })).toBe('12 000 FCFA + 1 400 FCFA de frais de paiement mobile money = 13 400 FCFA')
     expect(phraseDetail({ prix: 12000, frais: 1100, total: 13100 })).toBe('12 000 FCFA + 1 100 FCFA de frais de paiement mobile money = 13 100 FCFA')

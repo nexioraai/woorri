@@ -13,8 +13,8 @@ const etat = vi.hoisted(() => ({ rpc: [] as unknown[], reponse: { data: { statut
 vi.mock('@/lib/supabase-admin', () => ({ supabaseAdmin: { rpc: async (n: string, p: unknown) => { etat.rpc.push([n, p]); return etat.reponse } } }))
 vi.mock('@/lib/apps/quota', () => ({ lireReglagesTexte: async () => etat.reglages }))
 vi.mock('@/lib/payments/interrupteur', () => ({ interrupteurOuvert: async () => false }))
-import { cleIdempotence, MODE_TEST_SEULEMENT, ouvrirEncaissement, telephoneTchad, traiterAvis } from '../encaissement'
-import type { AvisVerifie, Encaissement, FournisseurMobileMoney } from '../types'
+import { ATTENTE_MAX_MS, cleIdempotence, demandeEnCours, MODE_TEST_SEULEMENT, ouvrirEncaissement, phraseDemandeEnCours, telephoneTchad, traiterAvis } from '../encaissement'
+import type { AvisVerifie, Encaissement, EncaissementOuvert, FournisseurMobileMoney } from '../types'
 
 const ENC: Encaissement = { id: 'c1', etat: 'reussi', montant: 13400, devise: 'XAF', operateur: 'AIRTEL', test: true, action: null, rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 13400 }, echec: null }
 const avis = (e: Partial<Encaissement> = {}, type: AvisVerifie['type'] = 'encaissement_reussi'): AvisVerifie => ({ id: 'evt', type, encaissement: { ...ENC, ...e } })
@@ -37,9 +37,11 @@ describe('numéro tchadien', () => {
 })
 
 describe('ouvrir un encaissement', () => {
-  const faux = (): FournisseurMobileMoney & { demandes: unknown[] } => {
+  const faux = (ouverts: EncaissementOuvert[] | Error = []): FournisseurMobileMoney & { demandes: unknown[]; listees: string[] } => {
     const demandes: unknown[] = []
-    return { nom: 'monerails', demandes, operateurs: async () => [], lire: async () => ENC, autoriser: async () => ENC, verifierAvis: () => null,
+    const listees: string[] = []
+    return { nom: 'monerails', demandes, listees, operateurs: async () => [], lire: async () => ENC, autoriser: async () => ENC, verifierAvis: () => null,
+      encaissementsDe: async (app) => { listees.push(app); if (ouverts instanceof Error) throw ouverts; return ouverts },
       encaisser: async (d) => { demandes.push(d); return { ...ENC, etat: 'en_attente' } } }
   }
   const demande = (operateur: string) => ({ app: 'a1', proprietaire: 'u1', operateur, telephone: '66000000', nomClient: 'Awa' })
@@ -79,10 +81,61 @@ describe('ouvrir un encaissement', () => {
   })
 })
 
+describe('DOUBLE PAIEMENT · une seule demande ouverte par appli', () => {
+  const MAINTENANT = Date.parse('2026-11-21T12:00:00Z')
+  const il_y_a = (ms: number) => MAINTENANT - ms
+  const demande = { app: 'a1', proprietaire: 'u1', operateur: 'AIRTEL', telephone: '66000000', nomClient: 'Awa' }
+  const faux = (ouverts: EncaissementOuvert[] | Error): FournisseurMobileMoney & { demandes: unknown[]; listees: string[] } => {
+    const demandes: unknown[] = []
+    const listees: string[] = []
+    return { nom: 'monerails', demandes, listees, operateurs: async () => [], lire: async () => ENC, autoriser: async () => ENC, verifierAvis: () => null,
+      encaissementsDe: async (app) => { listees.push(app); if (ouverts instanceof Error) throw ouverts; return ouverts },
+      encaisser: async (d) => { demandes.push(d); return { ...ENC, etat: 'en_attente' } } }
+  }
+  it('une demande NON finale de moins de 10 min : 409, rien n’est envoyé, la phrase dit combien attendre', async () => {
+    for (const etatOuvert of ['en_attente', 'code_requis', 'en_cours'] as const) {
+      const f = faux([{ id: 'c0', etat: etatOuvert, creeLeMs: il_y_a(3 * 60_000) }])
+      await expect(ouvrirEncaissement(demande, f, MAINTENANT), etatOuvert).rejects.toMatchObject({ status: 409, code: 'paiement_en_cours', message: phraseDemandeEnCours(7 * 60_000) })
+      expect(f.listees).toEqual(['a1'])
+      expect(f.demandes).toEqual([])
+    }
+    expect(phraseDemandeEnCours(7 * 60_000)).toBe('Un paiement est déjà en cours pour cette application : validez-le sur votre téléphone, ou attendez 7 min avant d’en demander un autre.')
+  })
+  it('la même demande à 9 min 59 s : refusée ; à 10 min pile : permise (la précédente n’est plus attendue)', async () => {
+    await expect(ouvrirEncaissement(demande, faux([{ id: 'c0', etat: 'en_attente', creeLeMs: il_y_a(ATTENTE_MAX_MS - 1000) }]), MAINTENANT)).rejects.toMatchObject({ status: 409 })
+    const f = faux([{ id: 'c0', etat: 'en_attente', creeLeMs: il_y_a(ATTENTE_MAX_MS) }])
+    await ouvrirEncaissement(demande, f, MAINTENANT)
+    expect(f.demandes).toHaveLength(1)
+  })
+  it('une demande récente mais FINALE (réussie, échouée, expirée) ne bloque pas', async () => {
+    const f = faux([{ id: 'c1', etat: 'reussi', creeLeMs: il_y_a(60_000) }, { id: 'c2', etat: 'echoue', creeLeMs: il_y_a(60_000) }, { id: 'c3', etat: 'expire', creeLeMs: il_y_a(60_000) }])
+    await ouvrirEncaissement(demande, f, MAINTENANT)
+    expect(f.demandes).toHaveLength(1)
+  })
+  it('n’importe laquelle de la liste compte, pas seulement la plus récente', async () => {
+    const f = faux([{ id: 'c1', etat: 'echoue', creeLeMs: il_y_a(30_000) }, { id: 'c0', etat: 'en_attente', creeLeMs: il_y_a(120_000) }])
+    await expect(ouvrirEncaissement(demande, f, MAINTENANT)).rejects.toMatchObject({ status: 409 })
+    expect(demandeEnCours([{ id: 'c1', etat: 'echoue', creeLeMs: il_y_a(30_000) }, { id: 'c0', etat: 'en_attente', creeLeMs: il_y_a(120_000) }], MAINTENANT)).toEqual({ id: 'c0', resteMs: ATTENTE_MAX_MS - 120_000 })
+  })
+  it('une demande non finale SANS date : comptée récente (prudence) → refusée', async () => {
+    await expect(ouvrirEncaissement(demande, faux([{ id: 'c0', etat: 'en_attente', creeLeMs: null }]), MAINTENANT)).rejects.toMatchObject({ status: 409 })
+  })
+  it('la liste du prestataire illisible : 503, rien n’est envoyé (on ne risque pas un second débit)', async () => {
+    const f = faux(new Error('réseau'))
+    await expect(ouvrirEncaissement(demande, f, MAINTENANT)).rejects.toMatchObject({ status: 503, code: 'verification_en_cours' })
+    expect(f.demandes).toEqual([])
+  })
+  it('aucune demande avant : la demande part', async () => {
+    const f = faux([])
+    await ouvrirEncaissement(demande, f, MAINTENANT)
+    expect(f.demandes).toHaveLength(1)
+  })
+})
+
 describe('traiter un avis vérifié', () => {
   const ECRITURE = {
     p_source: 'automatique', p_fournisseur: 'monerails', p_reference: 'c1', p_app: 'a1', p_owner: 'u1', p_objet: 'abonnement',
-    p_montant: 13400, p_devise: 'XAF', p_jusqu_au: null, p_saisi_par: 'monerails',
+    p_montant: 13400, p_devise: 'XAF', p_jusqu_au: null, p_saisi_par: 'monerails', p_frais: 1400,
   }
   it('OPTION A · le mode test seul est EN VIGUEUR (garde-fou : l’ouvrir est un commit nommé)', () => {
     expect(MODE_TEST_SEULEMENT).toBe(true)
@@ -140,6 +193,17 @@ describe('traiter un avis vérifié', () => {
     expect((await traiterAvis(avis({ etat: 'en_attente' }), 'monerails')).issue).toBe('ignore')
     expect((await traiterAvis(avis({ rattachement: null }), 'monerails')).issue).toBe('ignore')
     expect(etat.rpc).toEqual([])
+  })
+  it('COLONNE FRAIS · p_frais = ce qui dépasse le prix : 13 400 Airtel → 1 400 ; payé 13 500 → 1 500 ; Moov 13 100 → 1 100', async () => {
+    await traiterAvis(avis({ test: false }), 'monerails', { modeTestSeulement: false })
+    await traiterAvis(avis({ id: 'c2', test: false, montant: 13500 }), 'monerails', { modeTestSeulement: false })
+    await traiterAvis(avis({ id: 'c3', test: false, operateur: 'MOOV', montant: 13100 }), 'monerails', { modeTestSeulement: false })
+    expect(etat.rpc.map((x) => { const p = (x as [string, { p_montant: number; p_frais: number }])[1]; return [p.p_montant, p.p_frais] })).toEqual([[13400, 1400], [13500, 1500], [13100, 1100]])
+  })
+  it('DOUBLE PAIEMENT · un SECOND débit validé pour la même appli est enregistré lui aussi (sa propre référence : un mois de plus)', async () => {
+    expect((await traiterAvis(avis({ id: 'c1', test: false }), 'monerails', { modeTestSeulement: false })).issue).toBe('enregistre')
+    expect((await traiterAvis(avis({ id: 'c2', test: false }), 'monerails', { modeTestSeulement: false })).issue).toBe('enregistre')
+    expect(etat.rpc.map((x) => (x as [string, { p_reference: string; p_app: string }])[1]).map((p) => `${p.p_app}/${p.p_reference}`)).toEqual(['a1/c1', 'a1/c2'])
   })
   it('mode réel ouvert, erreur de la base : l’issue le dit (le webhook rendra 500, le prestataire réessaiera)', async () => {
     etat.reponse = { data: null, error: { message: 'PAIEMENT_APPLI_ETRANGERE' } }

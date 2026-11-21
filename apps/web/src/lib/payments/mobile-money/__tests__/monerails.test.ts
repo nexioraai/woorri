@@ -9,7 +9,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHmac } from 'node:crypto'
 vi.mock('server-only', () => ({}))
-import { monerails, signatureValide, TOLERANCE_AVIS_S, versEncaissement } from '../monerails'
+import { monerails, referenceClient, signatureValide, TOLERANCE_AVIS_S, versEncaissement, versOuverts } from '../monerails'
 import { ErreurFournisseur } from '../types'
 
 const SECRET = 'whsec_essai_123'
@@ -133,5 +133,39 @@ describe('MODE TEST SEULEMENT : la clé', () => {
       `[mobile-money] réponse brute MoneRails POST /v1/collections → 201 ${brut}`,
       `[mobile-money] réponse brute MoneRails POST /v1/collections/c9/authorize → 201 ${brut}`,
     ])
+  })
+})
+
+describe('DOUBLE PAIEMENT · la liste des demandes d’une appli', () => {
+  const APP = '7f3e9c2a-1b4d-4e8f-9a6c-2d5b8e1f0a37'
+  const col = (id: string, ref: string | null, status: string, created_at: string | undefined = '2026-11-21T11:57:00.000Z') => ({ id, object: 'collection', client_reference: ref, status, created_at })
+  afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals() })
+  it('la référence client d’une appli : « app: » + son id (la même que celle posée à la demande)', () => {
+    expect(referenceClient(APP)).toBe(`app:${APP}`)
+  })
+  it('appel : GET /v1/collections filtré par la référence de l’appli, page maximale de 100', async () => {
+    vi.stubEnv('MONERAILS_SECRET_KEY', 'mr_test_abc')
+    const appels: unknown[][] = []
+    vi.stubGlobal('fetch', vi.fn(async (...a: unknown[]) => { appels.push(a); return new Response(JSON.stringify({ object: 'list', data: [col('c1', `app:${APP}`, 'pending')], has_more: false }), { status: 200 }) }))
+    expect(await monerails.encaissementsDe(APP)).toEqual([{ id: 'c1', etat: 'en_attente', creeLeMs: Date.parse('2026-11-21T11:57:00.000Z') }])
+    expect(String(appels[0]?.[0])).toBe(`https://api.monerails.com/v1/collections?client_reference=app%3A${APP}&limit=100`)
+    expect((appels[0]?.[1] as { method: string }).method).toBe('GET')
+  })
+  it('la référence est REVÉRIFIÉE : une collecte d’une autre appli (filtre ignoré) ne compte pas', () => {
+    const r = { data: [col('c1', 'app:autre', 'pending'), col('c2', null, 'pending'), col('c3', `app:${APP}`, 'requires_otp')] }
+    expect(versOuverts(r, APP).map((e) => e.id)).toEqual(['c3'])
+  })
+  it('états traduits ; date absente ou illisible → null (comptée récente par la règle)', () => {
+    const r = { data: [col('a', `app:${APP}`, 'processing', 'pas une date'), col('b', `app:${APP}`, 'succeeded', undefined), col('c', `app:${APP}`, 'expired')] }
+    r.data[1] = { ...r.data[1], created_at: undefined as unknown as string }
+    expect(versOuverts(r, APP)).toEqual([
+      { id: 'a', etat: 'en_cours', creeLeMs: null },
+      { id: 'b', etat: 'reussi', creeLeMs: null },
+      { id: 'c', etat: 'expire', creeLeMs: Date.parse('2026-11-21T11:57:00.000Z') },
+    ])
+  })
+  it('réponse sans liste : erreur (la demande sera refusée, jamais « aucune demande en cours »)', () => {
+    expect(() => versOuverts({ error: 'x' }, APP)).toThrow(ErreurFournisseur)
+    expect(() => versOuverts(null, APP)).toThrow(ErreurFournisseur)
   })
 })

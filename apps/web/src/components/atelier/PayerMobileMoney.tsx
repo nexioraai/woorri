@@ -75,6 +75,9 @@ export function phraseDetail(p: Prix): string {
   return `${fcfa(p.prix)} + ${fcfa(p.frais)} de frais de paiement mobile money = ${fcfa(p.total)}`;
 }
 
+/** Une seule demande ouverte par appli (2026-11-21) : le serveur refuse la suivante avant 10 minutes. */
+export const PHRASE_UNE_DEMANDE = 'Une seule demande à la fois : tant que celle-ci n’a ni abouti ni échoué, une nouvelle ne peut partir qu’après 10 minutes.'
+
 /** « en attente depuis 7 min » — la durée vient de l'heure de la demande, jamais d'un délai inventé. */
 export function phraseAttente(minutes: number): string {
   return minutes < 1 ? 'Demande envoyée à l’instant.' : `En attente depuis ${String(minutes)} min.`
@@ -270,6 +273,7 @@ export function PayerMobileMoney({
               <button type="button" onClick={() => { void changerDeNumero(); }} className="w-full rounded-lg border border-white/15 px-3 py-1.5">
                 Changer de numéro
               </button>
+              {minutes < 10 && <p className="text-slate-400">{PHRASE_UNE_DEMANDE}</p>}
             </>
           )}
           {vue.etat === 'code_requis' && (

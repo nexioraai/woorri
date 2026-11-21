@@ -3,7 +3,7 @@
  * du compte, et jamais de déclaration de paiement.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-const etat = vi.hoisted(() => ({ ouvert: false, ligne: null as null | Record<string, unknown>, appels: [] as string[], reglages: {} as Record<string, string> }))
+const etat = vi.hoisted(() => ({ ouvert: false, ligne: null as null | Record<string, unknown>, appels: [] as string[], reglages: {} as Record<string, string>, ouverts: [] as unknown[] }))
 const REGLAGES = {
   prix_mensuel_xaf: '12000', frais_encaissement_airtel_pct: '7', frais_encaissement_moov_pct: '5',
   frais_reversement_pct: '3.5', arrondi_frais_xaf: '100',
@@ -23,6 +23,7 @@ vi.mock('@/lib/payments/mobile-money/fournisseur', () => ({
       etat.appels.push('operateurs')
       return [{ code: 'AIRTEL', nom: 'Airtel Money', validation: ['pin'] }, { code: 'MOOV', nom: 'Moov Money', validation: ['pin'] }, { code: 'ORANGE', nom: 'Orange Money', validation: ['pin'] }]
     },
+    encaissementsDe: async () => { etat.appels.push('encaissementsDe'); return etat.ouverts },
     encaisser: async () => { etat.appels.push('encaisser'); return ENC },
     lire: async () => { etat.appels.push('lire'); return ENC },
     autoriser: async () => { etat.appels.push('autoriser'); return ENC },
@@ -33,7 +34,7 @@ import { GET, POST } from '../route'
 
 const url = (q = '') => `https://www.deribfy.com/api/generateur/mobile-money?id=a1${q}`
 const poster = (corps: unknown, q = '') => POST(new Request(url(q), { method: 'POST', body: JSON.stringify(corps) }))
-beforeEach(() => { etat.ouvert = false; etat.ligne = { id: 'a1', statut: 'livree' }; etat.appels = []; etat.reglages = { ...REGLAGES } })
+beforeEach(() => { etat.ouvert = false; etat.ligne = { id: 'a1', statut: 'livree' }; etat.appels = []; etat.reglages = { ...REGLAGES }; etat.ouverts = [] })
 
 describe('formulaire mobile money', () => {
   it('ÉTEINT par défaut : 403 sur GET et POST, le prestataire n’est jamais appelé', async () => {
@@ -76,6 +77,16 @@ describe('formulaire mobile money', () => {
     const d = (await r.json()) as Record<string, unknown>
     expect(d).toEqual({ encaissement: 'col_1', etat: 'en_attente', montant: 13400, devise: 'XAF', test: true, action: { type: 'approuver', message: 'Entrez votre PIN', ussd: '*211#' }, echec: null })
     expect(d.rattachement).toBeUndefined()
+  })
+  it('DOUBLE PAIEMENT · une demande en cours pour cette appli : POST → 409 avec la phrase, AUCUN encaissement', async () => {
+    etat.ouvert = true
+    etat.ouverts = [{ id: 'col_0', etat: 'en_attente', creeLeMs: Date.now() - 2 * 60_000 }]
+    const r = await poster({ operateur: 'AIRTEL', telephone: '66000000', nom: 'Awa' })
+    expect(r.status).toBe(409)
+    const d = (await r.json()) as { error: string; code: string }
+    expect(d.code).toBe('paiement_en_cours')
+    expect(d.error).toMatch(/^Un paiement est déjà en cours pour cette application : validez-le sur votre téléphone, ou attendez [0-9]+ min avant d’en demander un autre\.$/u)
+    expect(etat.appels).toEqual(['encaissementsDe'])
   })
   it('suivre l’encaissement d’une AUTRE appli : 404', async () => {
     etat.ouvert = true

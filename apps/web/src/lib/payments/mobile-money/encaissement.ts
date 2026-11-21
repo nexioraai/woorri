@@ -17,7 +17,7 @@ import { lireReglagesTexte } from '@/lib/apps/quota'
 import { interrupteurOuvert } from '@/lib/payments/interrupteur'
 import { fournisseurMobileMoney } from './fournisseur'
 import { CLES_TARIF, PHRASE_FRAIS_NON_REGLES, prixPour, tarifDepuisReglages, type Tarif } from './frais'
-import { ErreurFournisseur, type AvisVerifie, type Encaissement, type FournisseurMobileMoney } from './types'
+import { ErreurFournisseur, type AvisVerifie, type Encaissement, type EncaissementOuvert, type FournisseurMobileMoney } from './types'
 
 /** Le tarif du moment (prix + frais), lu en une requête ; ce qui manque est nommé. */
 export async function lireTarifMobileMoney(): Promise<{ ok: true; tarif: Tarif } | { ok: false; manque: string[] }> {
@@ -51,6 +51,31 @@ export function cleIdempotence(app: string, telephone: string, operateur: string
   return createHash('sha256').update(`${app}|${telephone}|${operateur}|${String(fenetre)}`).digest('hex').slice(0, 48)
 }
 
+/**
+ * UNE SEULE DEMANDE OUVERTE PAR APPLI (décision du propriétaire, 2026-11-21).
+ * MoneRails n'annule rien : deux demandes validées = deux débits. Tant qu'une
+ * demande n'est pas finale ET a moins de 10 minutes, une nouvelle est refusée.
+ * Une demande sans date connue compte comme récente (prudence : refus).
+ */
+export const ATTENTE_MAX_MS = 600_000
+const FINAUX: ReadonlySet<string> = new Set(['reussi', 'echoue', 'expire'])
+
+export function demandeEnCours(liste: readonly EncaissementOuvert[], maintenantMs: number): { id: string; resteMs: number } | null {
+  for (const e of liste) {
+    if (FINAUX.has(e.etat)) continue
+    const age = e.creeLeMs === null ? 0 : maintenantMs - e.creeLeMs
+    if (age < ATTENTE_MAX_MS) return { id: e.id, resteMs: ATTENTE_MAX_MS - Math.max(0, age) }
+  }
+  return null
+}
+
+export function phraseDemandeEnCours(resteMs: number): string {
+  const min = Math.max(1, Math.ceil(resteMs / 60_000))
+  return `Un paiement est déjà en cours pour cette application : validez-le sur votre téléphone, ou attendez ${String(min)} min avant d’en demander un autre.`
+}
+
+export const PHRASE_VERIFICATION_IMPOSSIBLE = 'Impossible de vérifier qu’aucun paiement n’est déjà en cours. Aucun montant n’est demandé : réessayez dans un instant.'
+
 export type DemandePaiement = {
   readonly app: string
   readonly proprietaire: string
@@ -59,7 +84,7 @@ export type DemandePaiement = {
   readonly nomClient: string
 }
 
-export async function ouvrirEncaissement(d: DemandePaiement, f: FournisseurMobileMoney = fournisseurMobileMoney()): Promise<Encaissement> {
+export async function ouvrirEncaissement(d: DemandePaiement, f: FournisseurMobileMoney = fournisseurMobileMoney(), maintenantMs: number = Date.now()): Promise<Encaissement> {
   // Le montant demandé = prix + frais, pour CET opérateur, lus MAINTENANT.
   const t = await lireTarifMobileMoney()
   if (!t.ok) throw new ErreurFournisseur(PHRASE_FRAIS_NON_REGLES, 409, 'frais_non_regles')
@@ -69,6 +94,14 @@ export async function ouvrirEncaissement(d: DemandePaiement, f: FournisseurMobil
   if (tel === null) throw new ErreurFournisseur('Numéro non reconnu : 8 chiffres, ou +235 suivi de 8 chiffres.', 400, 'telephone')
   const nom = d.nomClient.trim()
   if (nom.length < 2 || nom.length > 80) throw new ErreurFournisseur('Indiquez le nom du titulaire du compte (2 à 80 signes).', 400, 'nom')
+  // Une demande déjà ouverte pour cette appli ? La liste illisible = refus
+  // (on ne prend pas le risque d'un second débit).
+  let ouverts: EncaissementOuvert[]
+  try { ouverts = await f.encaissementsDe(d.app) } catch (e) {
+    throw new ErreurFournisseur(PHRASE_VERIFICATION_IMPOSSIBLE, 503, 'verification_en_cours', e instanceof ErreurFournisseur ? { status: e.status, code: e.code, brut: e.brut } : String(e))
+  }
+  const enCours = demandeEnCours(ouverts, maintenantMs)
+  if (enCours !== null) throw new ErreurFournisseur(phraseDemandeEnCours(enCours.resteMs), 409, 'paiement_en_cours', { encaissement: enCours.id })
   return f.encaisser({
     montant: p.total,
     devise: 'XAF',
@@ -79,7 +112,7 @@ export async function ouvrirEncaissement(d: DemandePaiement, f: FournisseurMobil
     description: 'Deribfy — abonnement d’un mois',
     rattachement: { app: d.app, proprietaire: d.proprietaire, objet: 'abonnement', montantInscrit: p.total },
     ventilation: { prix: p.prix, frais: p.frais },
-    cle: cleIdempotence(d.app, tel, d.operateur, Date.now()),
+    cle: cleIdempotence(d.app, tel, d.operateur, maintenantMs),
   })
 }
 
@@ -133,10 +166,12 @@ export async function traiterAvis(
     p_source: 'automatique', p_fournisseur: fournisseur, p_reference: e.id,
     p_app: r.app, p_owner: r.proprietaire, p_objet: 'abonnement',
     p_montant: e.montant, p_devise: 'XAF', p_jusqu_au: null, p_saisi_par: fournisseur,
+    // La part FRAIS (2026-11-21, colonne `app_paiements.frais`) : ce qui dépasse le prix.
+    p_frais: e.montant - attendu.prix,
   } as const
   // OPTION A (2026-11-21) : un avis de TEST, vérifié de bout en bout, n'écrit
   // RIEN — il dit seulement ce qu'il aurait écrit.
-  if (e.test) return { issue: 'test_verifie', app: r.app, serait: ecriture, ventilation: { abonnement: attendu.prix, frais: e.montant - attendu.prix } }
+  if (e.test) return { issue: 'test_verifie', app: r.app, serait: ecriture, ventilation: { abonnement: attendu.prix, frais: ecriture.p_frais } }
   const res = await supabaseAdmin.rpc('enregistrer_paiement', ecriture)
   if (res.error !== null) return { issue: 'erreur', raison: res.error.message }
   const statut = (res.data as { statut?: string } | null)?.statut

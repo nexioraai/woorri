@@ -32,6 +32,9 @@ const FRAIS = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_frais_mobil
 const FRAIS_VALEURS = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_frais_mobile_money_valeurs.sql'), 'utf8')
 const FRAIS_VERIF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_frais_mobile_money_verification.sql'), 'utf8')
 const FRAIS_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_frais_mobile_money_annulation.sql'), 'utf8')
+const PAIEMENTS_FRAIS = readFileSync(join(ICI, '..', 'supabase', 'sql', 'paiements_frais.sql'), 'utf8')
+const PAIEMENTS_FRAIS_VERIF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'paiements_frais_verification.sql'), 'utf8')
+const PAIEMENTS_FRAIS_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'paiements_frais_annulation.sql'), 'utf8')
 const PORT = 54000 + Math.floor(Math.random() * 900)
 const DOSSIER = mkdtempSync(join(tmpdir(), 'preuve-quota-'))
 const URL = `postgresql://postgres@127.0.0.1:${PORT}/postgres`
@@ -142,6 +145,27 @@ try {
   verdict(await refuse(admin, `insert into public.quota_reglages (cle, valeur) values ('frais_reversement_pct', '3.5')`, [], 'quota_reglages_cle_check'), 'frais : après annulation, la clé est de nouveau inconnue')
   await admin.query(FRAIS)
 
+  // ── LA COLONNE FRAIS DU REGISTRE (2026-11-21). Appliquée ICI, avant tous les
+  // paiements ci-dessous : Stripe, espèces, lots passent ensuite par la
+  // NOUVELLE fonction, sans p_frais — c'est la preuve que rien ne change pour eux.
+  const signatures = async () => (await admin.query(`select pg_get_function_identity_arguments(p.oid) a from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'enregistrer_paiement'`)).rows.map((l) => l.a)
+  await admin.query(PAIEMENTS_FRAIS)
+  await admin.query(PAIEMENTS_FRAIS)
+  const sig = await signatures()
+  verdict(sig.length === 1 && sig[0].endsWith('p_saisi_par text, p_frais numeric'), `colonne frais : appliqué deux fois, UNE seule signature d’enregistrer_paiement (${sig.join(' | ')})`)
+  const colFrais = await admin.query(`select data_type, numeric_precision, numeric_scale, is_nullable, column_default from information_schema.columns where table_name = 'app_paiements' and column_name = 'frais'`)
+  verdict(colFrais.rows.length === 1 && colFrais.rows[0].is_nullable === 'NO' && colFrais.rows[0].column_default === '0' && colFrais.rows[0].numeric_scale === 2, 'colonne frais : numeric(12,2), non nulle, 0 par défaut')
+  const anciennes = await admin.query(`select count(*)::int n, count(*) filter (where frais = 0)::int zero from public.app_paiements`)
+  verdict(anciennes.rows[0].n >= 1 && anciennes.rows[0].zero === anciennes.rows[0].n, `colonne frais : les ${anciennes.rows[0].n} ligne(s) déjà là prennent 0, sans être réécrites (le déclencheur d’ajout seul n’a rien dit)`)
+  const droitsFrais = await admin.query(`select has_function_privilege('anon', 'public.enregistrer_paiement(text, text, text, uuid, uuid, text, numeric, text, timestamptz, text, numeric)', 'execute') anon, has_function_privilege('service_role', 'public.enregistrer_paiement(text, text, text, uuid, uuid, text, numeric, text, timestamptz, text, numeric)', 'execute') svc`)
+  verdict(droitsFrais.rows[0].anon === false && droitsFrais.rows[0].svc === true, 'colonne frais : la nouvelle signature n’est appelable que par la clé de service')
+  // L'annulation, tant qu'aucune ligne ne porte de frais : acceptée, la fonction d'avant revient.
+  await admin.query(PAIEMENTS_FRAIS_ANNUL)
+  const sigAvant = await signatures()
+  const colApres = await admin.query(`select count(*)::int n from information_schema.columns where table_name = 'app_paiements' and column_name = 'frais'`)
+  verdict(sigAvant.length === 1 && sigAvant[0].endsWith('p_saisi_par text') && colApres.rows[0].n === 0, 'colonne frais : l’annulation (sans frais en base) rend la fonction à 10 arguments et retire la colonne')
+  await admin.query(PAIEMENTS_FRAIS)
+
   // ── Les applis publiées : offertes jusqu'au 31 décembre, une ligne chacune.
   const off = await admin.query(`select app_id, jusqu_au from public.app_paiements where fournisseur = 'offert'`)
   verdict(off.rows.length === 1 && off.rows[0].app_id === PUBLIEE, 'appli publiée : une ligne « offert », même après deux passages ; la supprimée n’en a pas')
@@ -236,6 +260,37 @@ try {
   await svc.query(`select public.enregistrer_paiement('manuelle','especes','recu-0003',$1,$2,'abonnement',12000,'XAF',null,'admin')`, [A, PROPRIO])
   const jours = (await svc.query(`select extract(epoch from (paye_jusqu_au - now())) / 86400 j from public.app_compteurs where app_id = $1`, [A])).rows[0].j
   verdict(jours > 39.9 && jours < 40.1, `payé 10 jours avant l’échéance : ${Number(jours).toFixed(1)} jours devant (10 + 30)`)
+
+  // ── DOUBLE PAIEMENT (2026-11-21) : deux débits MoneRails validés pour la même
+  // appli (deux références) = deux lignes, DEUX mois : le second prolonge le premier.
+  const avantDouble = (await svc.query('select paye_jusqu_au from public.app_compteurs where app_id = $1', [A])).rows[0].paye_jusqu_au
+  await svc.query(`select public.enregistrer_paiement('automatique','monerails','col_double_1',$1,$2,'abonnement',13400,'XAF',null,'monerails',1400)`, [A, PROPRIO])
+  await svc.query(`select public.enregistrer_paiement('automatique','monerails','col_double_2',$1,$2,'abonnement',13400,'XAF',null,'monerails',1400)`, [A, PROPRIO])
+  const apresDouble = (await svc.query('select paye_jusqu_au from public.app_compteurs where app_id = $1', [A])).rows[0].paye_jusqu_au
+  const nDouble = (await svc.query(`select count(*)::int n from public.app_paiements where reference like 'col_double_%'`)).rows[0].n
+  const joursDouble = Math.round((apresDouble - avantDouble) / 86400000)
+  verdict(nDouble === 2 && joursDouble === 60, `double paiement : deux débits validés → 2 lignes, +${joursDouble} jours (deux mois, aucun jour perdu)`)
+
+  // ── LA PART FRAIS au registre.
+  const lignesFrais = await svc.query(`select reference, montant::int m, frais::int f from public.app_paiements where reference in ('col_double_1', 'recu-0003', 'in_1') order by reference`)
+  verdict(lignesFrais.rows.map((l) => `${l.reference}:${l.m}/${l.f}`).join(' ') === 'col_double_1:13400/1400 in_1:20/0 recu-0003:12000/0', `colonne frais : mobile money 13 400 dont 1 400 ; Stripe et espèces (sans p_frais) à 0 (${lignesFrais.rows.map((l) => `${l.reference}:${l.m}/${l.f}`).join(' ')})`)
+  verdict(await refuse(svc, `select public.enregistrer_paiement('automatique','monerails','col_neg',$1,$2,'abonnement',13400,'XAF',null,'monerails',-1)`, [A, PROPRIO], 'PAIEMENT_FRAIS'), 'colonne frais : des frais négatifs sont refusés')
+  verdict(await refuse(svc, `select public.enregistrer_paiement('automatique','monerails','col_trop',$1,$2,'abonnement',13400,'XAF',null,'monerails',13401)`, [A, PROPRIO], 'PAIEMENT_FRAIS'), 'colonne frais : des frais plus grands que le montant sont refusés')
+  verdict(await refuse(admin, `insert into public.app_paiements (owner_id, app_id, source, fournisseur, reference, objet, montant, devise, saisi_par, frais) values ($1, $2, 'manuelle', 'especes', 'direct-frais', 'abonnement', 100, 'XAF', 'x', 101)`, [PROPRIO, A], 'app_paiements_frais_check'), 'colonne frais : une écriture DIRECTE au-delà du montant est refusée par la contrainte')
+  // La vérification livrée au propriétaire : ③ se termine par VERIFICATION_OK et ne garde rien.
+  const avantVerifFrais = (await admin.query('select count(*)::int n from public.app_paiements')).rows[0].n
+  const compteurAvant = (await admin.query('select paye_jusqu_au from public.app_compteurs where app_id = $1', [A])).rows[0].paye_jusqu_au
+  let messageVerifFrais = ''
+  try { await admin.query(PAIEMENTS_FRAIS_VERIF) } catch (e) { messageVerifFrais = String(e.message) }
+  const apresVerifFrais = (await admin.query('select count(*)::int n from public.app_paiements')).rows[0].n
+  const compteurApres = (await admin.query('select paye_jusqu_au from public.app_compteurs where app_id = $1', [A])).rows[0].paye_jusqu_au
+  verdict(messageVerifFrais === 'VERIFICATION_OK : sans p_frais → 0, avec p_frais → 1400, 2 refus sur 2 — rien n’est gardé'.replace('’', "'"), `colonne frais : la vérification livrée répond « ${messageVerifFrais} »`)
+  verdict(apresVerifFrais === avantVerifFrais && compteurApres.getTime() === compteurAvant.getTime(), 'colonne frais : la vérification n’a gardé AUCUNE ligne et n’a pas bougé le compteur')
+  // Des frais en base : l'annulation refuse, et ne change rien.
+  verdict(await refuse(admin, PAIEMENTS_FRAIS_ANNUL, [], 'ANNULATION_REFUSEE'), 'colonne frais : annulation REFUSÉE dès qu’une ligne porte des frais')
+  await admin.query('rollback') // le fichier ouvre sa transaction (begin) : le refus la laisse avortée
+  const sigGardee = await signatures()
+  verdict(sigGardee.length === 1 && sigGardee[0].endsWith('p_frais numeric'), 'colonne frais : après le refus, la fonction à 11 arguments est toujours là')
 
   // ── Ajout seul : le registre et l'historique refusent update et delete.
   verdict(await refuse(svc, `update public.app_paiements set montant = 0`, [], ''), 'registre : un update est refusé')

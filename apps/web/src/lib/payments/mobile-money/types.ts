@@ -71,6 +71,17 @@ export type DemandeEncaissement = {
   readonly cle: string
 }
 
+/**
+ * Un encaissement déjà demandé pour une appli (2026-11-21, double paiement) :
+ * de quoi savoir s'il empêche une nouvelle demande. `creeLeMs` = l'horloge du
+ * prestataire ; `null` s'il ne la donne pas.
+ */
+export type EncaissementOuvert = {
+  readonly id: string
+  readonly etat: EtatEncaissement
+  readonly creeLeMs: number | null
+}
+
 /** Un avis du prestataire, signature VÉRIFIÉE. */
 export type AvisVerifie = {
   readonly id: string
@@ -93,6 +104,8 @@ export interface FournisseurMobileMoney {
   operateurs(devise: 'XAF', pays: 'TD'): Promise<Operateur[]>
   encaisser(demande: DemandeEncaissement): Promise<Encaissement>
   lire(id: string): Promise<Encaissement>
+  /** Les encaissements demandés pour CETTE appli, les plus récents d'abord. */
+  encaissementsDe(app: string): Promise<EncaissementOuvert[]>
   /** Envoie le code à usage unique saisi par le client. */
   autoriser(id: string, code: string): Promise<Encaissement>
   /** Vérifie un avis (corps BRUT, en-têtes) ; `null` = signature refusée. */

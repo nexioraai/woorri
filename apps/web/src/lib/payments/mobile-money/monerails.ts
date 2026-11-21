@@ -5,6 +5,7 @@ import 'server-only'
  * Sources (lues le 2026-11-20/21) :
  *   https://docs.monerails.com/authentication/ — clé `mr_test_…` / `mr_live_…`, en-tête Bearer
  *   https://docs.monerails.com/openapi.json — POST /v1/collections, GET /v1/collections/{id},
+ *     GET /v1/collections?client_reference=…&limit=… (les plus récentes d'abord ; lu le 2026-11-21, version 2026-10-30),
  *     POST /v1/collections/{id}/authorize, GET /v1/operators ; serveur https://api.monerails.com
  *   https://docs.monerails.com/webhooks/ — `Monerail-Signature: t=…,v1=…`, HMAC-SHA256 de
  *     `t + "." + corps brut`, secret entier `whsec_…`, hexadécimal minuscule, comparaison
@@ -19,7 +20,7 @@ import 'server-only'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import {
   ErreurFournisseur,
-  type ActionClient, type AvisVerifie, type DemandeEncaissement, type Encaissement,
+  type ActionClient, type AvisVerifie, type DemandeEncaissement, type Encaissement, type EncaissementOuvert,
   type EtatEncaissement, type FournisseurMobileMoney, type Operateur, type Rattachement,
 } from './types'
 
@@ -88,6 +89,29 @@ function rattachement(m: unknown): Rattachement | null {
   return { app: r.deribfy_app, proprietaire: r.deribfy_proprietaire, objet: 'abonnement', montantInscrit: Number.isInteger(inscrit) ? inscrit : null }
 }
 
+/** La référence client d'une appli : posée à la demande, filtre de la liste. */
+export function referenceClient(app: string): string {
+  return `app:${app}`.slice(0, 64)
+}
+
+/**
+ * La liste MoneRails → les encaissements de CETTE appli. La référence est
+ * revérifiée ici : si le filtre du prestataire était ignoré, une collecte d'une
+ * autre appli ne compterait pas. Exporté pour les tests.
+ */
+export function versOuverts(r: unknown, app: string): EncaissementOuvert[] {
+  const data = (r as { data?: unknown } | null)?.data
+  if (!Array.isArray(data)) throw new ErreurFournisseur('Liste des paiements illisible.', 502, 'liste_illisible', r)
+  const ref = referenceClient(app)
+  return data
+    .map((o) => (o ?? {}) as Record<string, unknown>)
+    .filter((c) => c.client_reference === ref && typeof c.id === 'string')
+    .map((c) => {
+      const t = typeof c.created_at === 'string' ? Date.parse(c.created_at) : Number.NaN
+      return { id: String(c.id), etat: ETATS[String(c.status)] ?? 'en_attente', creeLeMs: Number.isFinite(t) ? t : null }
+    })
+}
+
 /** Une collecte MoneRails → un `Encaissement`. Exporté pour les tests. */
 export function versEncaissement(o: unknown): Encaissement {
   const c = (o ?? {}) as Record<string, unknown>
@@ -150,7 +174,7 @@ export const monerails: FournisseurMobileMoney = {
       phone: d.telephone,
       customer: { name: d.nomClient },
       description: d.description.slice(0, 500),
-      client_reference: `app:${d.rattachement.app}`.slice(0, 64),
+      client_reference: referenceClient(d.rattachement.app),
       metadata: {
         deribfy_app: d.rattachement.app,
         deribfy_proprietaire: d.rattachement.proprietaire,
@@ -166,6 +190,12 @@ export const monerails: FournisseurMobileMoney = {
 
   async lire(id) {
     return versEncaissement(await appeler(`/v1/collections/${encodeURIComponent(id)}`, { method: 'GET' }))
+  },
+
+  async encaissementsDe(app) {
+    // 100 = le maximum de la page, les plus récentes d'abord : une seule page suffit,
+    // sauf plus de 100 demandes en 10 minutes pour UNE appli (non lu au-delà).
+    return versOuverts(await appeler(`/v1/collections?client_reference=${encodeURIComponent(referenceClient(app))}&limit=100`, { method: 'GET' }), app)
   },
 
   async autoriser(id, code) {

@@ -47,6 +47,27 @@ L'unité s'appelle **« modification »**, jamais « crédit » ni « jeton ». 
 - **Demain, automatique aussi** : un agrégateur mobile money (Monerails, Bizao, CinetPay ; devis demandés le 2026-11-19) se branche sur le même registre, qui accepte les deux sources dès le départ.
 - Voir `docs/elite-protocol/PLAN_QUOTA_ACTIVATION.md`.
 
+## Le mobile money : les frais, et la règle d'exploitation (2026-11-21)
+
+Décisions du propriétaire, en **mode test** (MoneRails ; aucun vrai paiement tant que `MODE_TEST_SEULEMENT` est vrai).
+
+- **Le client paie les frais du prestataire.** Le propriétaire ne reçoit jamais moins que `prix_mensuel_xaf` net. Total = arrondi au `arrondi_frais_xaf` **supérieur** de `prix × (1 + reversement) ÷ (1 − encaissement de l'opérateur)`. Avec 12 000 FCFA, 7 % (Airtel), 5 % (Moov), 3,5 % (reversement), arrondi 100 : **13 400 FCFA Airtel, 13 100 FCFA Moov**. Les taux sont des **réglages** historisés (`frais_encaissement_airtel_pct`, `frais_encaissement_moov_pct`, `frais_reversement_pct`, `arrondi_frais_xaf`), relevés en mode test : à confirmer au premier vrai paiement. Un seul réglage vide : aucun paiement mobile money n'est proposé, jamais un montant sans frais.
+- **À l'avis, le montant attendu est recalculé** avec les réglages du moment et l'opérateur de l'avis. Les métadonnées de la demande ne prouvent rien. Le montant payé doit être **au moins** ce montant.
+- **Une seule demande ouverte par appli.** Une nouvelle demande est refusée tant que la précédente n'est pas finale et a moins de 10 minutes (MoneRails n'annule rien : deux validations font deux débits). Si deux débits sont tout de même validés, le second compte comme **un mois de plus**.
+- **Le registre dit la part frais** : `app_paiements.frais` (0 pour Stripe, les espèces et l'offert), dans `montant`. Ainsi 13 400 = 12 000 d'abonnement + 1 400 de frais.
+- **Pas maintenant** : les lots de 50 modifications par mobile money (seul l'abonnement s'y paie).
+
+### Règle d'exploitation : on ne change un prix ou un taux qu'avec `mobile_money` éteint
+
+Elle vaut pour `prix_mensuel_xaf` et pour les quatre réglages de frais.
+
+1. Éteindre : `select public.regler_quota('mobile_money', '', '<qui>');`
+2. Attendre **10 minutes** : une demande déjà partie aboutit ou expire avec l'ancien prix.
+3. Changer le prix ou le taux par `regler_quota`, à son nom.
+4. Rallumer `mobile_money`.
+
+**Pourquoi.** Le montant attendu est recalculé à l'arrivée de l'avis. Si le prix ou un taux **monte** entre la demande et l'avis, le client a payé l'ancien total : l'avis est refusé, et rien ne s'active alors que le client a payé. Il faut alors traiter ce cas à la main. Si les frais **baissent**, l'avis passe : le client a payé plus que le nouveau total.
+
 ## Tranché
 
 - **Retoucher l'appli gratuite** : trois retouches gratuites, puis l'abonnement (2026-11-18).
