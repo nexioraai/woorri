@@ -4,9 +4,11 @@ import 'server-only'
  *
  * POST /api/webhooks/mobile-money/<prestataire> — corps BRUT lu tel quel
  * (la signature porte sur les octets reçus). Signature refusée → 400, rien
- * n'est lu. Signature bonne → `traiterAvis` : seul un encaissement réussi,
- * en mode test, au montant demandé, écrit dans `app_paiements` ; la même
- * référence deux fois ne fait rien de plus (`deja_enregistre`).
+ * n'est lu. Signature bonne → `traiterAvis`. Tant que `MODE_TEST_SEULEMENT`
+ * (option A, 2026-11-21) : un avis de TEST réussi est vérifié (appli, montant,
+ * devise) puis seulement JOURNALISÉ — RIEN n'est écrit ; un avis réel est
+ * refusé. Le mode réel ouvert, un encaissement réussi au montant demandé
+ * écrit dans `app_paiements`, une seule fois par référence.
  *
  * Réponse 200 aussi pour un avis ignoré : le prestataire n'a pas à le
  * renvoyer. Erreur d'enregistrement → 500 : le prestataire réessaie
@@ -30,6 +32,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ fournisseur: s
   }
   const issue = await traiterAvis(avis, f.nom)
   console.log(`[mobile-money] avis reçu ${fournisseur} ${avis.type} ${avis.id} → ${JSON.stringify(issue)}`)
+  if (issue.issue === 'test_verifie') console.log(`[mobile-money] avis de TEST vérifié, RIEN n'est écrit — serait enregistré : ${JSON.stringify(issue.serait)}`)
   if (issue.issue === 'refuse') console.error(`[mobile-money] AVIS SIGNÉ MAIS INCOHÉRENT ${avis.id} : ${issue.raison}`)
   if (issue.issue === 'erreur') return NextResponse.json({ recu: true, issue: issue.issue }, { status: 500 })
   return NextResponse.json({ recu: true, issue: issue.issue })

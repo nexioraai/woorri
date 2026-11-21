@@ -67,30 +67,50 @@ export async function ouvrirEncaissement(d: DemandePaiement, f: FournisseurMobil
   })
 }
 
+/**
+ * MODE TEST SEULEMENT (2026-11-21). Tant que c'est vrai : un avis RÉEL est
+ * refusé, et un avis de TEST est vérifié puis seulement JOURNALISÉ — option A
+ * du propriétaire : « en mode test, un avis ne doit rien écrire de réel ».
+ * Rien n'atteint `app_paiements` (registre en ajout seul, sans effacement).
+ * Ouvrir le mode réel = passer ceci à `false`, par un commit nommé.
+ */
+export const MODE_TEST_SEULEMENT = true
+
 export type IssueAvis =
   | { readonly issue: 'enregistre' | 'deja_enregistre'; readonly app: string }
+  /** Avis de test, vérifié de bout en bout, JAMAIS écrit : voici ce qui l'aurait été. */
+  | { readonly issue: 'test_verifie'; readonly app: string; readonly serait: Readonly<Record<string, unknown>> }
   | { readonly issue: 'ignore'; readonly raison: string }
   /** Signé mais incohérent (montant, devise) : rien n'est écrit, et on le dit fort. */
   | { readonly issue: 'refuse'; readonly raison: string }
   | { readonly issue: 'erreur'; readonly raison: string }
 
-/** Un avis VÉRIFIÉ → le registre. Ne lève pas : l'issue se dit. */
-export async function traiterAvis(avis: AvisVerifie, fournisseur: string): Promise<IssueAvis> {
+/** Un avis VÉRIFIÉ → le registre (ou, en test, le journal seul). Ne lève pas : l'issue se dit. */
+export async function traiterAvis(
+  avis: AvisVerifie,
+  fournisseur: string,
+  o: { readonly modeTestSeulement?: boolean } = {},
+): Promise<IssueAvis> {
+  const testSeulement = o.modeTestSeulement ?? MODE_TEST_SEULEMENT
   if (avis.type !== 'encaissement_reussi') return { issue: 'ignore', raison: `type ${avis.type}` }
   const e = avis.encaissement
   if (e === null) return { issue: 'ignore', raison: 'avis sans encaissement' }
   if (e.etat !== 'reussi') return { issue: 'ignore', raison: `état ${e.etat}` }
-  // MODE TEST SEULEMENT (2026-11-21) : un avis réel n'active rien.
-  if (!e.test) return { issue: 'ignore', raison: 'avis réel refusé : mode test seulement' }
+  // Un avis réel tant que seul le test est autorisé : refusé, rien n'est lu de plus.
+  if (!e.test && testSeulement) return { issue: 'ignore', raison: 'avis réel refusé : mode test seulement' }
   const r = e.rattachement
   if (r === null) return { issue: 'ignore', raison: 'encaissement sans rattachement Deribfy' }
   if (e.devise !== 'XAF') return { issue: 'refuse', raison: `devise ${e.devise}` }
   if (e.montant !== r.montantAttendu) return { issue: 'refuse', raison: `montant ${String(e.montant)} ≠ demandé ${String(r.montantAttendu)}` }
-  const res = await supabaseAdmin.rpc('enregistrer_paiement', {
+  const ecriture = {
     p_source: 'automatique', p_fournisseur: fournisseur, p_reference: e.id,
     p_app: r.app, p_owner: r.proprietaire, p_objet: 'abonnement',
     p_montant: e.montant, p_devise: 'XAF', p_jusqu_au: null, p_saisi_par: fournisseur,
-  })
+  } as const
+  // OPTION A (2026-11-21) : un avis de TEST, vérifié de bout en bout, n'écrit
+  // RIEN — il dit seulement ce qu'il aurait écrit.
+  if (e.test) return { issue: 'test_verifie', app: r.app, serait: ecriture }
+  const res = await supabaseAdmin.rpc('enregistrer_paiement', ecriture)
   if (res.error !== null) return { issue: 'erreur', raison: res.error.message }
   const statut = (res.data as { statut?: string } | null)?.statut
   return { issue: statut === 'deja_enregistre' ? 'deja_enregistre' : 'enregistre', app: r.app }

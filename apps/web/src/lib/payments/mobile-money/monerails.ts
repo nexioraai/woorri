@@ -37,7 +37,7 @@ function cleTest(): string {
   return k
 }
 
-async function appeler(chemin: string, init: { method: 'GET' | 'POST'; corps?: unknown; idempotence?: string }): Promise<unknown> {
+async function appeler(chemin: string, init: { method: 'GET' | 'POST'; corps?: unknown; idempotence?: string; journaliser?: boolean }): Promise<unknown> {
   const entetes: Record<string, string> = { Authorization: `Bearer ${cleTest()}`, Accept: 'application/json' }
   if (init.corps !== undefined) entetes['Content-Type'] = 'application/json'
   if (init.idempotence !== undefined) entetes['Idempotency-Key'] = init.idempotence
@@ -48,6 +48,11 @@ async function appeler(chemin: string, init: { method: 'GET' | 'POST'; corps?: u
     cache: 'no-store',
   })
   const texte = await r.text()
+  // LA RÉPONSE BRUTE DE MONERAILS, À CHAQUE DEMANDE DE PAIEMENT (2026-11-21,
+  // demande du propriétaire) : création d'encaissement et envoi de code. Les
+  // lectures de suivi (toutes les 4 s) ne sont pas journalisées : du bruit.
+  // Mode test seulement : la clé `mr_test_` est exigée plus haut.
+  if (init.journaliser === true) console.log(`[mobile-money] réponse brute MoneRails ${init.method} ${chemin.split('?')[0]} → ${String(r.status)} ${texte.slice(0, 4000)}`)
   let json: unknown = null
   try { json = texte === '' ? null : JSON.parse(texte) } catch { json = null }
   if (!r.ok) {
@@ -152,7 +157,7 @@ export const monerails: FournisseurMobileMoney = {
         deribfy_montant: String(d.rattachement.montantAttendu),
       },
     }
-    return versEncaissement(await appeler('/v1/collections', { method: 'POST', corps, idempotence: d.cle }))
+    return versEncaissement(await appeler('/v1/collections', { method: 'POST', corps, idempotence: d.cle, journaliser: true }))
   },
 
   async lire(id) {
@@ -160,7 +165,7 @@ export const monerails: FournisseurMobileMoney = {
   },
 
   async autoriser(id, code) {
-    return versEncaissement(await appeler(`/v1/collections/${encodeURIComponent(id)}/authorize`, { method: 'POST', corps: { otp: code } }))
+    return versEncaissement(await appeler(`/v1/collections/${encodeURIComponent(id)}/authorize`, { method: 'POST', corps: { otp: code }, journaliser: true }))
   },
 
   verifierAvis(corpsBrut, entetes, maintenantSecondes = Math.floor(Date.now() / 1000)) {

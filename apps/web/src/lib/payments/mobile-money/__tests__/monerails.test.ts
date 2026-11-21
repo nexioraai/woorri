@@ -111,4 +111,23 @@ describe('MODE TEST SEULEMENT : la clé', () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: { message: 'Invalid phone', code: 'invalid_phone' } }), { status: 400 })))
     await expect(monerails.lire('c1')).rejects.toMatchObject({ message: 'Invalid phone', code: 'invalid_phone', status: 400 })
   })
+
+  it('la réponse BRUTE de MoneRails est journalisée à chaque demande de paiement — pas aux lectures de suivi', async () => {
+    vi.stubEnv('MONERAILS_SECRET_KEY', 'mr_test_abc')
+    const brut = '{"id":"c9","object":"collection","status":"pending","amount":12000,"currency":"XAF","livemode":false}'
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(brut, { status: 201 })))
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    await monerails.encaisser({
+      montant: 12000, devise: 'XAF', pays: 'TD', operateur: 'AIRTEL', telephone: '23500000001', nomClient: 'Essai',
+      description: 'Deribfy', rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantAttendu: 12000 }, cle: 'k1',
+    })
+    await monerails.autoriser('c9', '1234')
+    await monerails.lire('c9')
+    const lignes = log.mock.calls.map((c) => String(c[0]))
+    log.mockRestore()
+    expect(lignes).toEqual([
+      `[mobile-money] réponse brute MoneRails POST /v1/collections → 201 ${brut}`,
+      `[mobile-money] réponse brute MoneRails POST /v1/collections/c9/authorize → 201 ${brut}`,
+    ])
+  })
 })

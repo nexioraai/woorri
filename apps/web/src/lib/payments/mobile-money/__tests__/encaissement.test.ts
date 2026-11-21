@@ -8,7 +8,7 @@ const etat = vi.hoisted(() => ({ rpc: [] as unknown[], reponse: { data: { statut
 vi.mock('@/lib/supabase-admin', () => ({ supabaseAdmin: { rpc: async (n: string, p: unknown) => { etat.rpc.push([n, p]); return etat.reponse } } }))
 vi.mock('@/lib/apps/quota', () => ({ lirePrixMensuelXaf: async () => etat.prix }))
 vi.mock('@/lib/payments/interrupteur', () => ({ interrupteurOuvert: async () => false }))
-import { cleIdempotence, ouvrirEncaissement, telephoneTchad, traiterAvis } from '../encaissement'
+import { cleIdempotence, MODE_TEST_SEULEMENT, ouvrirEncaissement, telephoneTchad, traiterAvis } from '../encaissement'
 import type { AvisVerifie, Encaissement, FournisseurMobileMoney } from '../types'
 
 const ENC: Encaissement = { id: 'c1', etat: 'reussi', montant: 12000, devise: 'XAF', test: true, action: null, rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantAttendu: 12000 }, echec: null }
@@ -58,16 +58,24 @@ describe('ouvrir un encaissement', () => {
 })
 
 describe('traiter un avis vérifié', () => {
-  it('réussi, test, au montant demandé → enregistrer_paiement (monerails, référence = id du prestataire)', async () => {
-    expect(await traiterAvis(avis(), 'monerails')).toEqual({ issue: 'enregistre', app: 'a1' })
-    expect(etat.rpc).toEqual([['enregistrer_paiement', {
-      p_source: 'automatique', p_fournisseur: 'monerails', p_reference: 'c1', p_app: 'a1', p_owner: 'u1', p_objet: 'abonnement',
-      p_montant: 12000, p_devise: 'XAF', p_jusqu_au: null, p_saisi_par: 'monerails',
-    }]])
+  const ECRITURE = {
+    p_source: 'automatique', p_fournisseur: 'monerails', p_reference: 'c1', p_app: 'a1', p_owner: 'u1', p_objet: 'abonnement',
+    p_montant: 12000, p_devise: 'XAF', p_jusqu_au: null, p_saisi_par: 'monerails',
+  }
+  it('OPTION A · le mode test seul est EN VIGUEUR (garde-fou : l’ouvrir est un commit nommé)', () => {
+    expect(MODE_TEST_SEULEMENT).toBe(true)
   })
-  it('le même avis rejoué : « déjà enregistré », rien de plus', async () => {
+  it('OPTION A · avis de TEST réussi, au montant demandé : vérifié, RIEN n’est écrit, et l’issue dit ce qui l’aurait été', async () => {
+    expect(await traiterAvis(avis(), 'monerails')).toEqual({ issue: 'test_verifie', app: 'a1', serait: ECRITURE })
+    expect(etat.rpc, 'un avis de test a écrit dans le registre').toEqual([])
+  })
+  it('mode réel ouvert (plus tard) : avis réel réussi → enregistrer_paiement (monerails, référence = id du prestataire)', async () => {
+    expect(await traiterAvis(avis({ test: false }), 'monerails', { modeTestSeulement: false })).toEqual({ issue: 'enregistre', app: 'a1' })
+    expect(etat.rpc).toEqual([['enregistrer_paiement', ECRITURE]])
+  })
+  it('mode réel ouvert : le même avis rejoué → « déjà enregistré », rien de plus', async () => {
     etat.reponse = { data: { statut: 'deja_enregistre' }, error: null }
-    expect(await traiterAvis(avis(), 'monerails')).toEqual({ issue: 'deja_enregistre', app: 'a1' })
+    expect(await traiterAvis(avis({ test: false }), 'monerails', { modeTestSeulement: false })).toEqual({ issue: 'deja_enregistre', app: 'a1' })
   })
   it('MODE TEST : un avis réel n’écrit rien', async () => {
     expect((await traiterAvis(avis({ test: false }), 'monerails')).issue).toBe('ignore')
@@ -84,8 +92,8 @@ describe('traiter un avis vérifié', () => {
     expect((await traiterAvis(avis({ rattachement: null }), 'monerails')).issue).toBe('ignore')
     expect(etat.rpc).toEqual([])
   })
-  it('erreur de la base : l’issue le dit (le webhook rendra 500, le prestataire réessaiera)', async () => {
+  it('mode réel ouvert, erreur de la base : l’issue le dit (le webhook rendra 500, le prestataire réessaiera)', async () => {
     etat.reponse = { data: null, error: { message: 'PAIEMENT_APPLI_ETRANGERE' } }
-    expect(await traiterAvis(avis(), 'monerails')).toEqual({ issue: 'erreur', raison: 'PAIEMENT_APPLI_ETRANGERE' })
+    expect(await traiterAvis(avis({ test: false }), 'monerails', { modeTestSeulement: false })).toEqual({ issue: 'erreur', raison: 'PAIEMENT_APPLI_ETRANGERE' })
   })
 })

@@ -44,15 +44,17 @@ describe('webhook mobile money', () => {
     expect((await appel(b, signe(b, Math.floor(Date.now() / 1000) - 301))).status).toBe(400)
     expect(etat.rpc).toEqual([])
   })
-  it('bon avis : 200, une ligne ; le même avis rejoué : 200, « déjà enregistré »', async () => {
+  it('OPTION A · bon avis de TEST : 200, vérifié et JOURNALISÉ, RIEN n’est écrit (même rejoué)', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
     const b = corps()
     const r1 = await appel(b, signe(b))
     expect(r1.status).toBe(200)
-    expect(await r1.json()).toEqual({ recu: true, issue: 'enregistre' })
-    const r2 = await appel(b, signe(b))
-    expect(await r2.json()).toEqual({ recu: true, issue: 'deja_enregistre' })
-    expect(etat.rpc).toHaveLength(2)
-    expect((etat.rpc[0] as [string, { p_fournisseur: string; p_reference: string }])[1]).toMatchObject({ p_fournisseur: 'monerails', p_reference: 'col_1' })
+    expect(await r1.json()).toEqual({ recu: true, issue: 'test_verifie' })
+    expect(await (await appel(b, signe(b))).json()).toEqual({ recu: true, issue: 'test_verifie' })
+    expect(etat.rpc, 'un avis de test a écrit dans le registre').toEqual([])
+    const lignes = log.mock.calls.map((c) => String(c[0]))
+    log.mockRestore()
+    expect(lignes.some((l) => l.includes('avis de TEST vérifié, RIEN n\'est écrit') && l.includes('"p_reference":"col_1"') && l.includes('"p_montant":12000'))).toBe(true)
   })
   it('montant trafiqué côté prestataire : 200 (pas de nouvelle tentative), RIEN n’est écrit', async () => {
     const b = corps({ amount: 100 })
