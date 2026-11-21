@@ -15,12 +15,12 @@ const CONTENT = {
     title: 'Politique de confidentialité',
     updated: `Dernière mise à jour : ${dateEn('fr-CA')}`,
     intro:
-      "La présente politique explique quels renseignements personnels Deribfy recueille, pourquoi, comment ils sont utilisés et protégés, et quels sont vos droits. Deribfy est développé par Dougouma IA. Dans cette politique, « Deribfy », « nous » et « notre » désignent Deribfy. Nous nous conformons à la Loi 25 du Québec (Loi modernisant des dispositions législatives en matière de protection des renseignements personnels) ainsi qu'à la loi fédérale canadienne (LPRPDE / PIPEDA).",
+      "La présente politique explique quels renseignements personnels Deribfy recueille, pourquoi, comment ils sont utilisés et protégés, et quels sont vos droits. Deribfy, un produit de Dougouma IA — contact@deribfy.com. Dans cette politique, « Deribfy », « nous » et « notre » désignent Deribfy. Nous nous conformons à la Loi 25 du Québec (Loi modernisant des dispositions législatives en matière de protection des renseignements personnels) ainsi qu'à la loi fédérale canadienne (LPRPDE / PIPEDA).",
     sections: [
       {
         h: '1. Qui est responsable de vos renseignements',
         p: [
-          "Deribfy est développé par Dougouma IA. Toute question relative à la protection des renseignements personnels peut être adressée à notre responsable de la protection des renseignements personnels :",
+          "Deribfy, un produit de Dougouma IA — contact@deribfy.com. Toute question relative à la protection des renseignements personnels peut être adressée à notre responsable de la protection des renseignements personnels :",
           "Responsable de la protection des renseignements personnels\nCourriel : contact@deribfy.com",
         ],
       },
@@ -99,12 +99,12 @@ const CONTENT = {
     title: 'Privacy Policy',
     updated: `Last updated: ${dateEn('en-US')}`,
     intro:
-      "This policy explains what personal information Deribfy collects, why, how it is used and protected, and what your rights are. Deribfy is developed by Dougouma IA. In this policy, “Deribfy,” “we,” and “our” refer to Deribfy. We comply with Quebec's Law 25 (Act to modernize legislative provisions as regards the protection of personal information) and with Canadian federal law (PIPEDA).",
+      "This policy explains what personal information Deribfy collects, why, how it is used and protected, and what your rights are. Deribfy, a product of Dougouma IA — contact@deribfy.com. In this policy, “Deribfy,” “we,” and “our” refer to Deribfy. We comply with Quebec's Law 25 (Act to modernize legislative provisions as regards the protection of personal information) and with Canadian federal law (PIPEDA).",
     sections: [
       {
         h: '1. Who is responsible for your information',
         p: [
-          "Deribfy is developed by Dougouma IA. Any question regarding the protection of personal information may be directed to our privacy officer:",
+          "Deribfy, a product of Dougouma IA — contact@deribfy.com. Any question regarding the protection of personal information may be directed to our privacy officer:",
           "Privacy Officer\nEmail: contact@deribfy.com",
         ],
       },

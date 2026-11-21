@@ -41,7 +41,7 @@ const CONTENT = {
       "L'intelligence artificielle est au cœur de Deribfy, mais elle reste un moyen, pas une fin. Elle accélère la création, éclaire vos décisions et automatise ce qui peut l'être — toujours à partir de vos données réelles, et toujours sous votre contrôle. Deribfy ne remplace pas votre jugement : il vous donne les moyens de mieux décider, plus vite.",
     companyH: "L'entreprise",
     companyP:
-      "Deribfy est développé par Dougouma IA.",
+      "Deribfy, un produit de Dougouma IA — contact@deribfy.com.",
     contactH: 'Nous contacter',
     contactP: 'Une question, un partenariat, une demande presse ?',
     contactCta: 'Écrivez-nous',
@@ -83,7 +83,7 @@ const CONTENT = {
       'Artificial intelligence is at the heart of Deribfy, but it remains a means, not an end. It speeds up creation, informs your decisions and automates what can be automated — always from your real data, and always under your control. Deribfy doesn’t replace your judgment: it helps you make better decisions, faster.',
     companyH: 'The company',
     companyP:
-      'Deribfy is developed by Dougouma IA.',
+      'Deribfy, a product of Dougouma IA — contact@deribfy.com.',
     contactH: 'Get in touch',
     contactP: 'A question, a partnership, a press inquiry?',
     contactCta: 'Contact us',

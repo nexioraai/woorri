@@ -15,7 +15,7 @@ const CONTENT = {
     title: "Conditions d'utilisation",
     updated: `Dernière mise à jour : ${dateEn('fr-CA')}`,
     intro:
-      "Les présentes conditions d'utilisation (les « Conditions ») régissent votre utilisation de Deribfy, ci-après « Deribfy », « nous » ou « notre ». Deribfy est développé par Dougouma IA. En créant un compte ou en utilisant Deribfy, vous acceptez ces Conditions. Si vous ne les acceptez pas, vous ne pouvez pas utiliser le service.",
+      "Les présentes conditions d'utilisation (les « Conditions ») régissent votre utilisation de Deribfy, ci-après « Deribfy », « nous » ou « notre ». Deribfy, un produit de Dougouma IA — contact@deribfy.com. En créant un compte ou en utilisant Deribfy, vous acceptez ces Conditions. Si vous ne les acceptez pas, vous ne pouvez pas utiliser le service.",
     sections: [
       {
         h: '1. Description du service',
@@ -102,7 +102,7 @@ const CONTENT = {
     title: 'Terms of Service',
     updated: `Last updated: ${dateEn('en-US')}`,
     intro:
-      "These Terms of Service (the “Terms”) govern your use of Deribfy, referred to below as “Deribfy,” “we,” or “our.” Deribfy is developed by Dougouma IA. By creating an account or using Deribfy, you agree to these Terms. If you do not agree, you may not use the service.",
+      "These Terms of Service (the “Terms”) govern your use of Deribfy, referred to below as “Deribfy,” “we,” or “our.” Deribfy, a product of Dougouma IA — contact@deribfy.com. By creating an account or using Deribfy, you agree to these Terms. If you do not agree, you may not use the service.",
     sections: [
       {
         h: '1. Description of the service',

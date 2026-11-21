@@ -8,7 +8,7 @@ export const fr = {
 
   // Footer
   'footer.copyright': '© 2026 Deribfy. Tous droits réservés.',
-  'footer.developedBy': 'Deribfy est développé par Dougouma IA.',
+  'footer.developedBy': 'Deribfy, un produit de Dougouma IA — contact@deribfy.com',
   'footer.col.product': 'Produit',
   'footer.col.resources': 'Ressources',
   'footer.col.company': 'Entreprise',

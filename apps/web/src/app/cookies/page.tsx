@@ -15,7 +15,7 @@ const CONTENT = {
     title: 'Politique relative aux témoins',
     updated: `Dernière mise à jour : ${dateEn('fr-CA')}`,
     intro:
-      "La présente politique explique ce que sont les témoins (« cookies »), lesquels Deribfy utilise, à quelles fins et comment vous pouvez les gérer. Deribfy est développé par Dougouma IA. Conformément à la Loi 25 du Québec, nous demandons votre consentement avant de déposer les témoins qui ne sont pas strictement nécessaires au fonctionnement du service.",
+      "La présente politique explique ce que sont les témoins (« cookies »), lesquels Deribfy utilise, à quelles fins et comment vous pouvez les gérer. Deribfy, un produit de Dougouma IA — contact@deribfy.com. Conformément à la Loi 25 du Québec, nous demandons votre consentement avant de déposer les témoins qui ne sont pas strictement nécessaires au fonctionnement du service.",
     sections: [
       {
         h: "1. Qu'est-ce qu'un témoin",
@@ -63,7 +63,7 @@ const CONTENT = {
     title: 'Cookie Policy',
     updated: `Last updated: ${dateEn('en-US')}`,
     intro:
-      "This policy explains what cookies are, which ones Deribfy uses, for what purposes, and how you can manage them. Deribfy is developed by Dougouma IA. In accordance with Quebec's Law 25, we ask for your consent before placing cookies that are not strictly necessary for the service to function.",
+      "This policy explains what cookies are, which ones Deribfy uses, for what purposes, and how you can manage them. Deribfy, a product of Dougouma IA — contact@deribfy.com. In accordance with Quebec's Law 25, we ask for your consent before placing cookies that are not strictly necessary for the service to function.",
     sections: [
       {
         h: '1. What is a cookie',

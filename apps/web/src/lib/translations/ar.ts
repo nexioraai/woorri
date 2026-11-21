@@ -10,7 +10,7 @@ export const ar: Record<TranslationKey, string> = {
 
   // Footer
   'footer.copyright': '© 2026 Deribfy. جميع الحقوق محفوظة.',
-  'footer.developedBy': 'Deribfy من تطوير Dougouma IA.',
+  'footer.developedBy': 'Deribfy، أحد منتجات Dougouma IA — contact@deribfy.com',
   'footer.col.product': 'المنتج',
   'footer.col.resources': 'الموارد',
   'footer.col.company': 'الشركة',
