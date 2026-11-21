@@ -28,6 +28,10 @@ const LOT_XAF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_lot_xaf.s
 const CARTE = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_abonnement_carte.sql'), 'utf8')
 const MOBILE = readFileSync(join(ICI, '..', 'supabase', 'sql', 'mobile_money_interrupteur.sql'), 'utf8')
 const MOYENS = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_moyens_paiement.sql'), 'utf8')
+const FRAIS = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_frais_mobile_money.sql'), 'utf8')
+const FRAIS_VALEURS = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_frais_mobile_money_valeurs.sql'), 'utf8')
+const FRAIS_VERIF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_frais_mobile_money_verification.sql'), 'utf8')
+const FRAIS_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_frais_mobile_money_annulation.sql'), 'utf8')
 const PORT = 54000 + Math.floor(Math.random() * 900)
 const DOSSIER = mkdtempSync(join(tmpdir(), 'preuve-quota-'))
 const URL = `postgresql://postgres@127.0.0.1:${PORT}/postgres`
@@ -102,6 +106,41 @@ try {
   await admin.query(MOYENS)
   const mp2 = await admin.query(`select valeur from public.quota_reglages where cle = 'moyens_paiement_manuel'`)
   verdict(mp2.rows[0]?.valeur === 'espèces, Airtel Money', 'remettre « Airtel Money » passe par regler_quota, et réappliquer ne l’écrase pas')
+
+  // ── LES FRAIS MOBILE MONEY (2026-11-21) : quatre réglages vides, une forme gardée.
+  const CLES_FRAIS = ['arrondi_frais_xaf', 'frais_encaissement_airtel_pct', 'frais_encaissement_moov_pct', 'frais_reversement_pct']
+  await admin.query(FRAIS)
+  await admin.query(FRAIS)
+  const fr = await admin.query(`select cle, valeur from public.quota_reglages where cle = any($1) order by cle`, [CLES_FRAIS])
+  verdict(fr.rows.length === 4 && fr.rows.every((l) => l.valeur === ''), 'frais : quatre réglages posés VIDES (le code ne propose rien tant qu’un seul est vide)')
+  const reg17 = await admin.query('select count(*)::int n from public.quota_reglages')
+  verdict(reg17.rows[0].n === 17, 'frais appliqué deux fois : 17 réglages (idempotent)')
+  for (const [cle, mauvaise] of [['frais_encaissement_airtel_pct', 'abc'], ['frais_encaissement_moov_pct', '100'], ['frais_reversement_pct', '3.555'], ['frais_reversement_pct', '3,5'], ['arrondi_frais_xaf', '0'], ['arrondi_frais_xaf', '10001'], ['arrondi_frais_xaf', '1.5']]) {
+    verdict(await refuse(admin, 'select public.regler_quota($1, $2, $3)', [cle, mauvaise, 'proprietaire'], 'quota_reglages_frais_check'), `frais : ${cle} = « ${mauvaise} » refusé par la contrainte`)
+  }
+  verdict(await refuse(admin, `update public.quota_reglages set valeur = 'x' where cle = 'frais_reversement_pct'`, [], 'quota_reglages_frais_check'), 'frais : une écriture DIRECTE (hors regler_quota) est refusée aussi')
+  await admin.query(FRAIS_VALEURS)
+  const fv = await admin.query(`select cle, valeur, modifie_par from public.quota_reglages where cle = any($1) order by cle`, [CLES_FRAIS])
+  verdict(fv.rows.map((l) => `${l.cle}=${l.valeur}/${l.modifie_par}`).join(' ') === 'arrondi_frais_xaf=100/Youssouf frais_encaissement_airtel_pct=7/Youssouf frais_encaissement_moov_pct=5/Youssouf frais_reversement_pct=3.5/Youssouf', `frais : valeurs posées par _valeurs.sql, signées (${fv.rows.map((l) => `${l.cle}=${l.valeur}`).join(', ')})`)
+  const fh = await admin.query(`select cle, avant, apres, par from public.quota_reglages_historique where cle = any($1) order by cle`, [CLES_FRAIS])
+  verdict(fh.rows.length === 4 && fh.rows.every((l) => l.avant === '' && l.par === 'Youssouf'), 'frais : chaque valeur a SA ligne d’historique (avant vide, par Youssouf)')
+  await admin.query(FRAIS)
+  const fr2 = await admin.query(`select valeur from public.quota_reglages where cle = 'frais_reversement_pct'`)
+  verdict(fr2.rows[0]?.valeur === '3.5', 'frais : réappliquer le fichier n’écrase pas une valeur réglée')
+  // La vérification livrée au propriétaire : ① lit, ② se termine par VERIFICATION_OK et n'écrit rien.
+  const avantVerif = await admin.query('select count(*)::int n from public.quota_reglages_historique')
+  let messageVerif = ''
+  try { await admin.query(FRAIS_VERIF) } catch (e) { messageVerif = String(e.message) }
+  const apresVerif = await admin.query('select count(*)::int n from public.quota_reglages_historique')
+  verdict(messageVerif.startsWith('VERIFICATION_OK : 9 refus sur 9'), `frais : la vérification livrée répond « ${messageVerif} »`)
+  verdict(apresVerif.rows[0].n === avantVerif.rows[0].n, 'frais : la vérification n’a laissé AUCUNE ligne d’historique')
+  // L'annulation : plus de clés de frais, la contrainte des clés d'avant, l'historique gardé.
+  await admin.query(FRAIS_ANNUL)
+  const fa = await admin.query('select count(*)::int n from public.quota_reglages')
+  const fah = await admin.query(`select count(*)::int n from public.quota_reglages_historique where cle = any($1)`, [CLES_FRAIS])
+  verdict(fa.rows[0].n === 13 && fah.rows[0].n === 4, 'frais : l’annulation retire les 4 réglages, garde leur historique')
+  verdict(await refuse(admin, `insert into public.quota_reglages (cle, valeur) values ('frais_reversement_pct', '3.5')`, [], 'quota_reglages_cle_check'), 'frais : après annulation, la clé est de nouveau inconnue')
+  await admin.query(FRAIS)
 
   // ── Les applis publiées : offertes jusqu'au 31 décembre, une ligne chacune.
   const off = await admin.query(`select app_id, jusqu_au from public.app_paiements where fournisseur = 'offert'`)

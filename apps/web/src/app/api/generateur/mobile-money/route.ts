@@ -2,7 +2,8 @@ import 'server-only'
 /**
  * PAYER UNE APPLI PAR MOBILE MONEY — la route du formulaire (2026-11-21, MODE TEST).
  *
- * GET  ?id=<appli>                         → { montant, devise, operateurs[] }
+ * GET  ?id=<appli>                         → { prix, devise, operateurs[] (chacun avec prix, frais, total) }
+ *                                            ou 409 + phrase si un réglage de prix/frais manque
  * GET  ?id=<appli>&encaissement=<id>       → l'état de l'encaissement
  * POST ?id=<appli>  { operateur, telephone, nom }      → ouvre l'encaissement
  * POST ?id=<appli>&encaissement=<id>  { code }         → envoie le code à usage unique
@@ -15,9 +16,9 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
-import { lirePrixMensuelXaf } from '@/lib/apps/quota'
 import { fournisseurMobileMoney } from '@/lib/payments/mobile-money/fournisseur'
-import { mobileMoneyOuvert, ouvrirEncaissement, PHRASE_MOBILE_MONEY_FERME } from '@/lib/payments/mobile-money/encaissement'
+import { lireTarifMobileMoney, mobileMoneyOuvert, ouvrirEncaissement, PHRASE_MOBILE_MONEY_FERME } from '@/lib/payments/mobile-money/encaissement'
+import { PHRASE_FRAIS_NON_REGLES, prixPour, type Prix } from '@/lib/payments/mobile-money/frais'
 import { ErreurFournisseur, type Encaissement } from '@/lib/payments/mobile-money/types'
 
 export const runtime = 'nodejs'
@@ -73,9 +74,19 @@ export async function GET(req: Request) {
       if (e === null) return NextResponse.json({ error: 'paiement inconnu' }, { status: 404 })
       return NextResponse.json(vue(e), { headers: SANS_CACHE })
     }
-    const montant = await lirePrixMensuelXaf()
-    const operateurs = await fournisseurMobileMoney().operateurs('XAF', 'TD')
-    return NextResponse.json({ montant, devise: 'XAF', operateurs }, { headers: SANS_CACHE })
+    // Aucun réglage manquant n'est comblé : sans tarif complet, AUCUN montant
+    // n'est proposé (jamais un prix sans frais).
+    const t = await lireTarifMobileMoney()
+    if (!t.ok) {
+      console.warn(`[mobile-money] frais non réglés : ${t.manque.join(', ')}`)
+      return NextResponse.json({ error: PHRASE_FRAIS_NON_REGLES }, { status: 409, headers: SANS_CACHE })
+    }
+    const operateurs = (await fournisseurMobileMoney().operateurs('XAF', 'TD'))
+      .map((o) => ({ o, p: prixPour(t.tarif, o.code) }))
+      .filter((x): x is { o: typeof x.o; p: Prix } => x.p !== null)
+      .map(({ o, p }) => ({ ...o, ...p }))
+    if (operateurs.length === 0) return NextResponse.json({ error: PHRASE_FRAIS_NON_REGLES }, { status: 409, headers: SANS_CACHE })
+    return NextResponse.json({ prix: t.tarif.prix, devise: 'XAF', operateurs }, { headers: SANS_CACHE })
   } catch (e) {
     return erreur(e, 'lecture')
   }

@@ -49,7 +49,11 @@ describe('verifierAvis lit le secret de l’environnement et traduit l’avis', 
   it('avis réussi → encaissement normalisé, rattaché', () => {
     const a = monerails.verifierAvis(CORPS, new Headers({ 'Monerail-Signature': `t=${String(T)},v1=${signer(T, CORPS)}` }), T)
     expect(a?.type).toBe('encaissement_reussi')
-    expect(a?.encaissement).toMatchObject({ id: 'c1', etat: 'reussi', montant: 12000, devise: 'XAF', test: true, rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantAttendu: 12000 } })
+    expect(a?.encaissement).toMatchObject({ id: 'c1', etat: 'reussi', montant: 12000, devise: 'XAF', test: true, rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 12000 } })
+    expect(a?.encaissement?.operateur, 'pas d’opérateur dans cet avis').toBeNull()
+  })
+  it('l’opérateur de la collecte est lu (le montant attendu se recalcule avec lui)', () => {
+    expect(versEncaissement({ id: 'x', status: 'succeeded', amount: 13400, currency: 'XAF', operator: 'AIRTEL', livemode: false }).operateur).toBe('AIRTEL')
   })
   it('un avis réel (livemode true dans l’enveloppe) n’est pas pris pour un test', () => {
     const reel = CORPS.replace('"livemode":false', '"livemode":true')
@@ -91,8 +95,8 @@ describe('MODE TEST SEULEMENT : la clé', () => {
     vi.stubEnv('MONERAILS_SECRET_KEY', 'mr_test_abc')
     vi.stubGlobal('fetch', vi.fn(async (...a: unknown[]) => { appels.push(a); return new Response(JSON.stringify({ id: 'c9', object: 'collection', status: 'pending', amount: 12000, currency: 'XAF', livemode: false }), { status: 201 }) }))
     const e = await monerails.encaisser({
-      montant: 12000, devise: 'XAF', pays: 'TD', operateur: 'AIRTEL', telephone: '23500000001', nomClient: 'Essai',
-      description: 'Deribfy', rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantAttendu: 12000 }, cle: 'k1',
+      montant: 13400, devise: 'XAF', pays: 'TD', operateur: 'AIRTEL', telephone: '23500000001', nomClient: 'Essai',
+      description: 'Deribfy', rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 13400 }, ventilation: { prix: 12000, frais: 1400 }, cle: 'k1',
     })
     expect(e.id).toBe('c9')
     const [url, init] = appels[0] as [string, RequestInit]
@@ -101,9 +105,9 @@ describe('MODE TEST SEULEMENT : la clé', () => {
     expect(h.Authorization).toBe('Bearer mr_test_abc')
     expect(h['Idempotency-Key']).toBe('k1')
     expect(JSON.parse(String(init.body))).toEqual({
-      amount: 12000, currency: 'XAF', country: 'TD', operator: 'AIRTEL', phone: '23500000001',
+      amount: 13400, currency: 'XAF', country: 'TD', operator: 'AIRTEL', phone: '23500000001',
       customer: { name: 'Essai' }, description: 'Deribfy', client_reference: 'app:a1',
-      metadata: { deribfy_app: 'a1', deribfy_proprietaire: 'u1', deribfy_objet: 'abonnement', deribfy_montant: '12000' },
+      metadata: { deribfy_app: 'a1', deribfy_proprietaire: 'u1', deribfy_objet: 'abonnement', deribfy_montant: '13400', deribfy_prix: '12000', deribfy_frais: '1400' },
     })
   })
   it('une erreur du prestataire remonte avec son message et sa réponse brute', async () => {
@@ -118,8 +122,8 @@ describe('MODE TEST SEULEMENT : la clé', () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(brut, { status: 201 })))
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
     await monerails.encaisser({
-      montant: 12000, devise: 'XAF', pays: 'TD', operateur: 'AIRTEL', telephone: '23500000001', nomClient: 'Essai',
-      description: 'Deribfy', rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantAttendu: 12000 }, cle: 'k1',
+      montant: 13400, devise: 'XAF', pays: 'TD', operateur: 'AIRTEL', telephone: '23500000001', nomClient: 'Essai',
+      description: 'Deribfy', rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 13400 }, ventilation: { prix: 12000, frais: 1400 }, cle: 'k1',
     })
     await monerails.autoriser('c9', '1234')
     await monerails.lire('c9')

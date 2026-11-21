@@ -2,17 +2,29 @@ import 'server-only'
 /**
  * PAYER UNE APPLI PAR MOBILE MONEY — ce qui ne dépend PAS du prestataire (2026-11-21).
  *
- * Ouvrir un encaissement (montant lu dans le réglage, jamais écrit ici) et
- * traiter un avis VÉRIFIÉ : seul un avis « réussi », en mode test, au montant
- * demandé, pour une appli du bon compte, écrit une ligne dans `app_paiements`
- * — par `enregistrer_paiement`, qui refuse les doublons (fournisseur + référence).
+ * Ouvrir un encaissement (prix ET frais lus dans les réglages, jamais écrits
+ * ici) et traiter un avis VÉRIFIÉ : seul un avis « réussi », au moins au
+ * montant RECALCULÉ, pour une appli du bon compte, écrit une ligne dans
+ * `app_paiements` — par `enregistrer_paiement`, qui refuse les doublons
+ * (fournisseur + référence). En mode test, rien n'est écrit (option A).
+ *
+ * LES FRAIS (2026-11-21) : le client les paie, le propriétaire reçoit le prix
+ * net. Le calcul vit dans `frais.ts` ; les taux dans `quota_reglages`.
  */
 import { createHash } from 'node:crypto'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { lirePrixMensuelXaf } from '@/lib/apps/quota'
+import { lireReglagesTexte } from '@/lib/apps/quota'
 import { interrupteurOuvert } from '@/lib/payments/interrupteur'
 import { fournisseurMobileMoney } from './fournisseur'
+import { CLES_TARIF, PHRASE_FRAIS_NON_REGLES, prixPour, tarifDepuisReglages, type Tarif } from './frais'
 import { ErreurFournisseur, type AvisVerifie, type Encaissement, type FournisseurMobileMoney } from './types'
+
+/** Le tarif du moment (prix + frais), lu en une requête ; ce qui manque est nommé. */
+export async function lireTarifMobileMoney(): Promise<{ ok: true; tarif: Tarif } | { ok: false; manque: string[] }> {
+  const v = await lireReglagesTexte(CLES_TARIF)
+  if (v === null) return { ok: false, manque: ['quota_reglages illisible'] }
+  return tarifDepuisReglages(v)
+}
 
 export const PHRASE_MOBILE_MONEY_FERME = 'Le paiement par mobile money n’est pas encore ouvert.'
 
@@ -48,21 +60,25 @@ export type DemandePaiement = {
 }
 
 export async function ouvrirEncaissement(d: DemandePaiement, f: FournisseurMobileMoney = fournisseurMobileMoney()): Promise<Encaissement> {
-  const prix = await lirePrixMensuelXaf()
-  if (prix === null) throw new ErreurFournisseur('Le prix mensuel en FCFA n’est pas réglé : aucun paiement ne peut s’ouvrir.', 409, 'prix_vide')
+  // Le montant demandé = prix + frais, pour CET opérateur, lus MAINTENANT.
+  const t = await lireTarifMobileMoney()
+  if (!t.ok) throw new ErreurFournisseur(PHRASE_FRAIS_NON_REGLES, 409, 'frais_non_regles')
+  const p = prixPour(t.tarif, d.operateur)
+  if (p === null) throw new ErreurFournisseur('Cet opérateur n’a pas de frais réglés : choisissez Airtel Money ou Moov Money.', 400, 'operateur_sans_frais')
   const tel = telephoneTchad(d.telephone)
   if (tel === null) throw new ErreurFournisseur('Numéro non reconnu : 8 chiffres, ou +235 suivi de 8 chiffres.', 400, 'telephone')
   const nom = d.nomClient.trim()
   if (nom.length < 2 || nom.length > 80) throw new ErreurFournisseur('Indiquez le nom du titulaire du compte (2 à 80 signes).', 400, 'nom')
   return f.encaisser({
-    montant: prix,
+    montant: p.total,
     devise: 'XAF',
     pays: 'TD',
     operateur: d.operateur,
     telephone: tel,
     nomClient: nom,
     description: 'Deribfy — abonnement d’un mois',
-    rattachement: { app: d.app, proprietaire: d.proprietaire, objet: 'abonnement', montantAttendu: prix },
+    rattachement: { app: d.app, proprietaire: d.proprietaire, objet: 'abonnement', montantInscrit: p.total },
+    ventilation: { prix: p.prix, frais: p.frais },
     cle: cleIdempotence(d.app, tel, d.operateur, Date.now()),
   })
 }
@@ -79,7 +95,7 @@ export const MODE_TEST_SEULEMENT = true
 export type IssueAvis =
   | { readonly issue: 'enregistre' | 'deja_enregistre'; readonly app: string }
   /** Avis de test, vérifié de bout en bout, JAMAIS écrit : voici ce qui l'aurait été. */
-  | { readonly issue: 'test_verifie'; readonly app: string; readonly serait: Readonly<Record<string, unknown>> }
+  | { readonly issue: 'test_verifie'; readonly app: string; readonly serait: Readonly<Record<string, unknown>>; readonly ventilation: { readonly abonnement: number; readonly frais: number } }
   | { readonly issue: 'ignore'; readonly raison: string }
   /** Signé mais incohérent (montant, devise) : rien n'est écrit, et on le dit fort. */
   | { readonly issue: 'refuse'; readonly raison: string }
@@ -89,7 +105,7 @@ export type IssueAvis =
 export async function traiterAvis(
   avis: AvisVerifie,
   fournisseur: string,
-  o: { readonly modeTestSeulement?: boolean } = {},
+  o: { readonly modeTestSeulement?: boolean; readonly tarif?: () => ReturnType<typeof lireTarifMobileMoney> } = {},
 ): Promise<IssueAvis> {
   const testSeulement = o.modeTestSeulement ?? MODE_TEST_SEULEMENT
   if (avis.type !== 'encaissement_reussi') return { issue: 'ignore', raison: `type ${avis.type}` }
@@ -101,7 +117,18 @@ export async function traiterAvis(
   const r = e.rattachement
   if (r === null) return { issue: 'ignore', raison: 'encaissement sans rattachement Deribfy' }
   if (e.devise !== 'XAF') return { issue: 'refuse', raison: `devise ${e.devise}` }
-  if (e.montant !== r.montantAttendu) return { issue: 'refuse', raison: `montant ${String(e.montant)} ≠ demandé ${String(r.montantAttendu)}` }
+  // LE MONTANT ATTENDU EST RECALCULÉ (2026-11-21) depuis les réglages du
+  // moment et l'opérateur de l'avis — jamais lu dans les métadonnées de la
+  // demande. Règle : l'avis doit porter AU MOINS ce montant (payer plus ne fait
+  // jamais passer le net sous le prix ; payer moins, si). Réglages illisibles :
+  // `erreur` → 500 → le prestataire redonne l'avis plus tard.
+  const t = await (o.tarif ?? lireTarifMobileMoney)()
+  if (!t.ok) return { issue: 'erreur', raison: `frais non réglés : ${t.manque.join(', ')}` }
+  const attendu = e.operateur === null ? null : prixPour(t.tarif, e.operateur)
+  if (attendu === null) return { issue: 'refuse', raison: `opérateur sans frais réglés : ${String(e.operateur)}` }
+  if (!Number.isInteger(e.montant) || e.montant < attendu.total) {
+    return { issue: 'refuse', raison: `montant ${String(e.montant)} < attendu ${String(attendu.total)} (${String(attendu.prix)} + ${String(attendu.frais)} de frais, ${String(e.operateur)})` }
+  }
   const ecriture = {
     p_source: 'automatique', p_fournisseur: fournisseur, p_reference: e.id,
     p_app: r.app, p_owner: r.proprietaire, p_objet: 'abonnement',
@@ -109,7 +136,7 @@ export async function traiterAvis(
   } as const
   // OPTION A (2026-11-21) : un avis de TEST, vérifié de bout en bout, n'écrit
   // RIEN — il dit seulement ce qu'il aurait écrit.
-  if (e.test) return { issue: 'test_verifie', app: r.app, serait: ecriture }
+  if (e.test) return { issue: 'test_verifie', app: r.app, serait: ecriture, ventilation: { abonnement: attendu.prix, frais: e.montant - attendu.prix } }
   const res = await supabaseAdmin.rpc('enregistrer_paiement', ecriture)
   if (res.error !== null) return { issue: 'erreur', raison: res.error.message }
   const statut = (res.data as { statut?: string } | null)?.statut

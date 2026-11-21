@@ -8,12 +8,17 @@
  * (`lib/payments/mobile-money/types.ts`). Changer de prestataire ne touche
  * pas ce fichier.
  *
- * Le montant vient du serveur (réglage `prix_mensuel_xaf`) ; le formulaire
- * l'affiche AVANT le clic. L'écran ne déclare rien de payé : il suit l'état
+ * Le montant vient du serveur (réglage `prix_mensuel_xaf` + les frais de
+ * l'opérateur choisi, 2026-11-21) ; le formulaire affiche le détail AVANT le
+ * clic, et le total change avec l'opérateur. L'écran ne déclare rien de payé : il suit l'état
  * du prestataire, puis relit le compteur — c'est l'avis signé qui active.
  */
 import { useEffect, useRef, useState } from 'react';
+import type { Prix } from '@/lib/payments/mobile-money/frais';
 import type { ActionClient, EtatEncaissement, Operateur } from '@/lib/payments/mobile-money/types';
+
+/** Un opérateur proposé : toujours avec son prix, ses frais et son total. */
+type OperateurTarife = Operateur & Prix;
 
 type Vue = { encaissement: string; etat: EtatEncaissement; montant: number; devise: string; test: boolean; action: ActionClient | null; echec: string | null };
 
@@ -65,6 +70,11 @@ function ecrireAttente(app: string, v: EnAttente | null): void {
   } catch { /* stockage indisponible : le suivi vit seulement dans la page */ }
 }
 
+/** « 12 000 FCFA + 1 400 FCFA de frais de paiement mobile money = 13 400 FCFA » */
+export function phraseDetail(p: Prix): string {
+  return `${fcfa(p.prix)} + ${fcfa(p.frais)} de frais de paiement mobile money = ${fcfa(p.total)}`;
+}
+
 /** « en attente depuis 7 min » — la durée vient de l'heure de la demande, jamais d'un délai inventé. */
 export function phraseAttente(minutes: number): string {
   return minutes < 1 ? 'Demande envoyée à l’instant.' : `En attente depuis ${String(minutes)} min.`
@@ -83,7 +93,7 @@ export function PayerMobileMoney({
   onPaye: () => Promise<unknown>;
 }) {
   const [ouvert, setOuvert] = useState(false);
-  const [offre, setOffre] = useState<{ montant: number | null; operateurs: Operateur[] } | null>(null);
+  const [offre, setOffre] = useState<{ operateurs: OperateurTarife[] } | null>(null);
   const [operateur, setOperateur] = useState('');
   const [telephone, setTelephone] = useState('');
   const [nom, setNom] = useState('');
@@ -116,8 +126,9 @@ export function PayerMobileMoney({
     const r = await appeler('GET', '');
     if (r === null) return;
     if (!r.ok) { setAvis(String(r.d.error ?? 'Le paiement mobile money ne répond pas.')); return; }
-    const ops = (r.d.operateurs as Operateur[] | undefined) ?? [];
-    setOffre({ montant: typeof r.d.montant === 'number' ? r.d.montant : null, operateurs: ops });
+    // Un opérateur sans total chiffré n'est pas proposé : jamais un montant sans frais.
+    const ops = ((r.d.operateurs as OperateurTarife[] | undefined) ?? []).filter((o) => Number.isInteger(o.total) && Number.isInteger(o.frais) && Number.isInteger(o.prix));
+    setOffre({ operateurs: ops });
     if (ops.length > 0) setOperateur(ops[0]!.code);
   };
 
@@ -218,6 +229,7 @@ export function PayerMobileMoney({
     );
   }
 
+  const choisi = offre?.operateurs.find((o) => o.code === operateur) ?? null;
   const champ = 'w-full rounded-lg border border-white/15 bg-white/[0.03] px-2.5 py-1.5 text-xs text-white placeholder:text-slate-500';
   return (
     <div className="mt-2 rounded-xl border border-white/15 p-3 text-xs text-slate-200" aria-live="polite">
@@ -228,7 +240,7 @@ export function PayerMobileMoney({
       {offre === null && avis === null && vue === null && <p className="text-slate-400">Chargement…</p>}
       {offre !== null && vue === null && (
         <form onSubmit={(e) => { e.preventDefault(); void payer(); }} className="space-y-2">
-          <p>Montant à payer : <strong className="text-white">{offre.montant === null ? 'prix non réglé' : fcfa(offre.montant)}</strong> pour un mois.</p>
+          <p>Un mois d’abonnement : <strong className="text-white">{choisi === null ? 'choisissez un opérateur' : phraseDetail(choisi)}</strong>.</p>
           <label className="block">Opérateur
             <select value={operateur} onChange={(e) => setOperateur(e.target.value)} className={`${champ} mt-1`} required>
               {offre.operateurs.map((o) => <option key={o.code} value={o.code}>{o.nom}</option>)}
@@ -240,9 +252,9 @@ export function PayerMobileMoney({
           <label className="block">Nom du titulaire
             <input value={nom} onChange={(e) => setNom(e.target.value)} autoComplete="name" className={`${champ} mt-1`} required minLength={2} maxLength={80} />
           </label>
-          <button type="submit" disabled={envoi || offre.montant === null || offre.operateurs.length === 0}
+          <button type="submit" disabled={envoi || choisi === null}
             className="w-full rounded-lg bg-[#FA5D1E] px-3 py-2 font-semibold text-white disabled:opacity-50">
-            {envoi ? 'Envoi…' : offre.montant === null ? 'Payer' : `Payer ${fcfa(offre.montant)}`}
+            {envoi ? 'Envoi…' : choisi === null ? 'Payer' : `Payer ${fcfa(choisi.total)}`}
           </button>
         </form>
       )}

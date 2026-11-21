@@ -83,9 +83,9 @@ function action(n: unknown): ActionClient | null {
 function rattachement(m: unknown): Rattachement | null {
   if (m === null || typeof m !== 'object') return null
   const r = m as Record<string, unknown>
-  const montant = Number(r.deribfy_montant)
-  if (typeof r.deribfy_app !== 'string' || typeof r.deribfy_proprietaire !== 'string' || r.deribfy_objet !== 'abonnement' || !Number.isInteger(montant)) return null
-  return { app: r.deribfy_app, proprietaire: r.deribfy_proprietaire, objet: 'abonnement', montantAttendu: montant }
+  if (typeof r.deribfy_app !== 'string' || typeof r.deribfy_proprietaire !== 'string' || r.deribfy_objet !== 'abonnement') return null
+  const inscrit = Number(r.deribfy_montant)
+  return { app: r.deribfy_app, proprietaire: r.deribfy_proprietaire, objet: 'abonnement', montantInscrit: Number.isInteger(inscrit) ? inscrit : null }
 }
 
 /** Une collecte MoneRails → un `Encaissement`. Exporté pour les tests. */
@@ -96,6 +96,7 @@ export function versEncaissement(o: unknown): Encaissement {
     etat: ETATS[String(c.status)] ?? 'en_attente',
     montant: Number(c.amount),
     devise: String(c.currency ?? ''),
+    operateur: typeof c.operator === 'string' && c.operator !== '' ? c.operator : null,
     test: enDirect(c) === false,
     action: action(c.next_action),
     rattachement: rattachement(c.metadata),
@@ -154,7 +155,10 @@ export const monerails: FournisseurMobileMoney = {
         deribfy_app: d.rattachement.app,
         deribfy_proprietaire: d.rattachement.proprietaire,
         deribfy_objet: d.rattachement.objet,
-        deribfy_montant: String(d.rattachement.montantAttendu),
+        // Pour TRACE (retrouver 13 400 = 12 000 + 1 400) ; l'avis ne s'y fie pas.
+        deribfy_montant: String(d.montant),
+        deribfy_prix: String(d.ventilation.prix),
+        deribfy_frais: String(d.ventilation.frais),
       },
     }
     return versEncaissement(await appeler('/v1/collections', { method: 'POST', corps, idempotence: d.cle, journaliser: true }))

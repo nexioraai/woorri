@@ -33,8 +33,12 @@ export type Rattachement = {
   readonly app: string
   readonly proprietaire: string
   readonly objet: 'abonnement'
-  /** Le montant DEMANDÉ, en francs : l'avis doit porter exactement celui-là. */
-  readonly montantAttendu: number
+  /**
+   * Le montant inscrit dans la demande, pour TRACE seulement (2026-11-21) :
+   * jamais une preuve. À l'avis, le montant attendu est RECALCULÉ depuis les
+   * réglages et l'opérateur de l'avis. `null` si absent.
+   */
+  readonly montantInscrit: number | null
 }
 
 export type Encaissement = {
@@ -43,6 +47,8 @@ export type Encaissement = {
   readonly etat: EtatEncaissement
   readonly montant: number
   readonly devise: string
+  /** Le code de l'opérateur, tel que le prestataire le rend (ex. « AIRTEL ») ; `null` s'il manque. */
+  readonly operateur: string | null
   readonly test: boolean
   readonly action: ActionClient | null
   readonly rattachement: Rattachement | null
@@ -59,6 +65,8 @@ export type DemandeEncaissement = {
   readonly nomClient: string
   readonly description: string
   readonly rattachement: Rattachement
+  /** La part abonnement et la part frais du montant, inscrites pour trace. */
+  readonly ventilation: { readonly prix: number; readonly frais: number }
   /** Clé d'idempotence : deux clics, un seul encaissement. */
   readonly cle: string
 }

@@ -87,6 +87,17 @@ export async function lirePrixMensuelXaf(): Promise<number | null> {
 }
 
 /**
+ * Plusieurs réglages lus EN UNE REQUÊTE (2026-11-21) : le prix et les frais
+ * mobile money viennent du même instant. `null` = lecture impossible ; une clé
+ * absente de la table est simplement absente du résultat.
+ */
+export async function lireReglagesTexte(cles: readonly string[]): Promise<Record<string, string> | null> {
+  const r = await supabaseAdmin.from('quota_reglages').select('cle, valeur').in('cle', [...cles])
+  if (r.error !== null || r.data === null) return null
+  return Object.fromEntries((r.data as { cle: string; valeur: unknown }[]).map((l) => [l.cle, String(l.valeur ?? '')]))
+}
+
+/**
  * L'état du compteur d'une appli, tel que la réservation le verrait. Une appli
  * jamais comptée est « gratuite », avec le réglage du moment. `null` = illisible.
  */
