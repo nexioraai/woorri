@@ -19,6 +19,7 @@ const etat = vi.hoisted(() => ({
   ligne: null as null | Record<string, unknown>,
   compteur: null as unknown,
   prix: 12000 as number | null,
+  moyens: ['espèces'] as readonly string[],
   lectures: 0,
   journal: { filtres: {}, projections: {}, ecritures: {} } as import('@/lib/testing/postgrest').JournalPostgrest,
 }))
@@ -31,6 +32,7 @@ vi.mock('@/lib/supabase-admin', async () => {
 vi.mock('@/lib/apps/quota', () => ({
   lireCompteur: async () => { etat.lectures += 1; return etat.compteur },
   lirePrixMensuelXaf: async () => etat.prix,
+  lireMoyensPaiement: async () => etat.moyens,
 }))
 import { POST } from '../route'
 
@@ -44,6 +46,7 @@ beforeEach(() => {
   etat.ligne = { publication_jeton: null, publication_slug: null, document: { schema: {} }, statut: 'livree', demande: 'x', sections_acquises: {} }
   etat.compteur = { exempte: false, formule: 'gratuite', restantes: 10, payeJusquAu: null, actif: false }
   etat.prix = 12000
+  etat.moyens = ['espèces']
   etat.lectures = 0
   etat.journal.filtres = {}; etat.journal.projections = {}; etat.journal.ecritures = {}
 })
@@ -54,7 +57,8 @@ describe('publier demande l’abonnement', () => {
     expect(r.status).toBe(402)
     const d = (await r.json()) as { error: string; abonnementRequis: boolean }
     expect(d.abonnementRequis).toBe(true)
-    expect(d.error).toBe('Publier demande l’abonnement — 12 000 FCFA par mois. Pour payer : WhatsApp +235 68 36 41 35 (espèces, Airtel Money, Moov Money).')
+    expect(d.error).toBe('Publier demande l’abonnement — 12 000 FCFA par mois. Pour payer : WhatsApp +235 68 36 41 35 (espèces).')
+    expect(d.error).not.toMatch(/Airtel|Moov/u)
     expect(ecrit()).toEqual([])
   })
 
@@ -71,6 +75,11 @@ describe('publier demande l’abonnement', () => {
     const e = ((await (await appel()).json()) as { error: string }).error
     expect(e.startsWith('Publier demande l’abonnement. Pour payer')).toBe(true)
     expect(e).not.toMatch(/FCFA par mois|0 FCFA/u)
+  })
+
+  it('② bis les moyens viennent du RÉGLAGE : remettre « Airtel Money » sans redéployer', async () => {
+    etat.moyens = ['espèces', 'Airtel Money']
+    expect(((await (await appel()).json()) as { error: string }).error).toMatch(/\(espèces, Airtel Money\)\.$/u)
   })
 
   it('③ compteur illisible : 503, rien n’est écrit', async () => {

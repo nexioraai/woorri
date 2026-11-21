@@ -33,7 +33,7 @@ import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { creerSousDomaine, nomValide } from '@/lib/apps/sous-domaine'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sansQuota } from '@/lib/admin-emails'
-import { lireCompteur, lirePrixMensuelXaf } from '@/lib/apps/quota'
+import { lireCompteur, lireMoyensPaiement, lirePrixMensuelXaf } from '@/lib/apps/quota'
 import { phrasePublicationBloquee } from '@/lib/apps/compteur-phrases'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { jetonPour, lienDePublication } from '@/lib/apps/publication'
@@ -137,7 +137,7 @@ export async function POST(req: Request) {
     }
     if (!compteur.exempte && !compteur.actif) {
       return NextResponse.json(
-        { error: phrasePublicationBloquee(await lirePrixMensuelXaf()), abonnementRequis: true },
+        { error: phrasePublicationBloquee(await lirePrixMensuelXaf(), await lireMoyensPaiement()), abonnementRequis: true },
         { status: 402 },
       )
     }

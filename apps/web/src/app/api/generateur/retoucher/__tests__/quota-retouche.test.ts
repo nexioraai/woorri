@@ -24,6 +24,7 @@ vi.mock('@/lib/apps/quota', async (orig) => ({
   libererModification: (...a: unknown[]) => liberer(...a),
   lireCompteur: (...a: unknown[]) => lire(...a),
   lirePrixMensuelXaf: async () => 12000,
+  lireMoyensPaiement: async () => ['espèces'],
 }))
 vi.mock('@/lib/payments/abonnement-appli', () => ({ abonnementCarteOuvert: async () => etat.carte }))
 vi.mock('@/lib/payments/mobile-money/encaissement', () => ({ mobileMoneyOuvert: async () => false }))
@@ -145,6 +146,7 @@ describe('étape ③ · ce que l’atelier lit avant de cliquer', () => {
     expect(d.abonnementCarte).toBe(false)
     // Le prix du réglage, pour « Publier demande l'abonnement — … FCFA par mois ».
     expect(d.prixMensuelXaf).toBe(12000)
+    expect(d.moyensPaiement).toEqual(['espèces'])
     // ÉTEINT par défaut : le formulaire mobile money ne se montre pas.
     expect(d.mobileMoney).toBe(false)
   })

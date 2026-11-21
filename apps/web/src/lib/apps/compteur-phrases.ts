@@ -98,10 +98,26 @@ export function libellePublicationBloquee(prixMensuelXaf: number | null): string
     : `Publier demande l’abonnement — ${fcfa(prixMensuelXaf)} par mois`
 }
 
-/** Comment payer, en une phrase. */
-export const PHRASE_COMMENT_PAYER = `Pour payer : WhatsApp ${WHATSAPP_PAIEMENT} (espèces, Airtel Money, Moov Money).`
+/**
+ * Les moyens de paiement à la main, quand le réglage `moyens_paiement_manuel`
+ * est absent ou vide (2026-11-21) : seulement ce que le propriétaire peut
+ * ENCAISSER aujourd'hui. Pas de numéro mobile money pour recevoir : pas
+ * d'« Airtel Money » promis.
+ */
+export const MOYENS_PAIEMENT_DEFAUT: readonly string[] = ['espèces']
+
+/** La liste lue dans le réglage (séparée par des virgules) ; vide → le défaut. */
+export function moyensDePaiement(valeur: string | null | undefined): readonly string[] {
+  const l = (valeur ?? '').split(',').map((x) => x.trim()).filter((x) => x !== '')
+  return l.length > 0 ? l : MOYENS_PAIEMENT_DEFAUT
+}
+
+/** Comment payer, en une phrase : « Pour payer : WhatsApp … (espèces). » */
+export function phraseCommentPayer(moyens: readonly string[]): string {
+  return `Pour payer : WhatsApp ${WHATSAPP_PAIEMENT} (${moyens.join(', ')}).`
+}
 
 /** Ce que la route rend quand elle refuse : les deux, ensemble. */
-export function phrasePublicationBloquee(prixMensuelXaf: number | null): string {
-  return `${libellePublicationBloquee(prixMensuelXaf)}. ${PHRASE_COMMENT_PAYER}`
+export function phrasePublicationBloquee(prixMensuelXaf: number | null, moyens: readonly string[]): string {
+  return `${libellePublicationBloquee(prixMensuelXaf)}. ${phraseCommentPayer(moyens)}`
 }

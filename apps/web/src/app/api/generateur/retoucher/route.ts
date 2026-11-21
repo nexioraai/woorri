@@ -81,7 +81,7 @@ import { blocDeclaration } from '@/lib/apps/retouche'
 import { CONFIGS, coutAppel, fournisseurChoisi, tarifDe, tarifPlafond, tarifsDuModele } from '@/lib/apps/fournisseur'
 import { deploiementQuiSert } from '@/lib/apps/deploiement'
 import { ecrireTentative, type Issue } from '@/lib/apps/tentatives'
-import { ISSUES_DECOMPTEES, libererModification, lireCompteur, lirePrixMensuelXaf, PHRASE_COMPTEUR_INDISPONIBLE, PHRASE_EPUISE, reserverModification } from '@/lib/apps/quota'
+import { ISSUES_DECOMPTEES, libererModification, lireCompteur, lireMoyensPaiement, lirePrixMensuelXaf, PHRASE_COMPTEUR_INDISPONIBLE, PHRASE_EPUISE, reserverModification } from '@/lib/apps/quota'
 import { mobileMoneyOuvert } from '@/lib/payments/mobile-money/encaissement'
 import { sansQuota } from '@/lib/admin-emails'
 import { abonnementCarteOuvert } from '@/lib/payments/abonnement-appli'
@@ -357,10 +357,12 @@ export async function GET(req: Request) {
   // Le prix mensuel, pour la phrase « Publier demande l'abonnement » : lu dans
   // le réglage, jamais écrit dans l'écran. Exempté : sans objet.
   const prixMensuelXaf = exempte ? null : await lirePrixMensuelXaf()
+  // Les moyens de paiement à la main (réglage `moyens_paiement_manuel`).
+  const moyensPaiement = exempte ? [] : await lireMoyensPaiement()
   // Le paiement mobile money (MODE TEST) : interrupteur `mobile_money`, éteint par défaut.
   const mobileMoney = !exempte && (await mobileMoneyOuvert(garde.userId, garde.email))
   return NextResponse.json(
-    { octets, ...(exempte ? { plafond: p.phrase } : {}), perimetre: PERIMETRE_RETOUCHE, compteur, abonnementCarte, prixMensuelXaf, mobileMoney },
+    { octets, ...(exempte ? { plafond: p.phrase } : {}), perimetre: PERIMETRE_RETOUCHE, compteur, abonnementCarte, prixMensuelXaf, moyensPaiement, mobileMoney },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }

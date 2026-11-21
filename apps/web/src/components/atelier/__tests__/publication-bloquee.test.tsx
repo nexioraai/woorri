@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
-import { libellePublicationBloquee, LIEN_WHATSAPP_PAIEMENT, publicationOuverte } from '@/lib/apps/compteur-phrases'
+import { libellePublicationBloquee, LIEN_WHATSAPP_PAIEMENT, moyensDePaiement, phraseCommentPayer, publicationOuverte } from '@/lib/apps/compteur-phrases'
 
 beforeAll(() => { GlobalRegistrator.register({ url: 'http://localhost/' }) })
 afterAll(() => { GlobalRegistrator.unregister() })
@@ -21,6 +21,15 @@ describe('publier demande l’abonnement — l’écran', () => {
     expect(publicationOuverte(null)).toBe(true)
     expect(publicationOuverte(gratuite)).toBe(false)
     expect(publicationOuverte({ ...gratuite, formule: 'abonnee', actif: false })).toBe(false)
+  })
+
+  it('les moyens de paiement viennent du RÉGLAGE ; absent ou vide → espèces seulement, jamais un opérateur promis', () => {
+    expect(moyensDePaiement(null)).toEqual(['espèces'])
+    expect(moyensDePaiement('  ')).toEqual(['espèces'])
+    expect(moyensDePaiement('espèces, Airtel Money')).toEqual(['espèces', 'Airtel Money'])
+    expect(phraseCommentPayer(moyensDePaiement(null))).toBe('Pour payer : WhatsApp +235 68 36 41 35 (espèces).')
+    expect(phraseCommentPayer(moyensDePaiement('espèces, Airtel Money'))).toBe('Pour payer : WhatsApp +235 68 36 41 35 (espèces, Airtel Money).')
+    expect(phraseCommentPayer(moyensDePaiement(null))).not.toMatch(/Airtel|Moov/u)
   })
 
   it('le libellé porte le prix donné, jamais un prix écrit', () => {
@@ -39,23 +48,23 @@ describe('publier demande l’abonnement — l’écran', () => {
     await React.act(async () => {
       createRoot(racine).render(React.createElement(React.Fragment, null,
         React.createElement(PublicationBloquee, { prixMensuelXaf: 12000 }),
-        React.createElement(CommentPayerPublication, { prixMensuelXaf: 12000 })))
+        React.createElement(CommentPayerPublication, { prixMensuelXaf: 12000, moyens: ['espèces'] })))
     })
     const bouton = racine.querySelector('button') as HTMLButtonElement
     expect(bouton.disabled).toBe(true)
     expect(bouton.textContent).toBe('Publier')
     expect(bouton.getAttribute('title')).toBe('Publier demande l’abonnement — 12 000 FCFA par mois')
     const bandeau = racine.querySelector('#payer-publication') as HTMLElement
-    expect(bandeau.textContent).toBe('Publier demande l’abonnement — 12 000 FCFA par mois. Pour payer : WhatsApp +235 68 36 41 35 (espèces, Airtel Money, Moov Money).')
+    expect(bandeau.textContent).toBe('Publier demande l’abonnement — 12 000 FCFA par mois. Pour payer : WhatsApp +235 68 36 41 35 (espèces).')
     const lien = racine.querySelector('a') as HTMLAnchorElement
     expect(lien.getAttribute('href')).toBe('https://wa.me/23568364135')
-    expect(lien.textContent).toBe('Pour payer : WhatsApp +235 68 36 41 35 (espèces, Airtel Money, Moov Money).')
+    expect(lien.textContent).toBe('Pour payer : WhatsApp +235 68 36 41 35 (espèces).')
   })
 
   it('l’atelier montre le bandeau « comment payer » exactement quand « Publier » est bloqué', () => {
     const atelier = readFileSync(join(__dirname, '../../../app/atelier/[id]/page.tsx'), 'utf8')
     expect(atelier).toMatch(motifTexte('{publicationOuverte(compteur) ? ('))
     expect(atelier).toMatch(motifTexte('<PublicationBloquee prixMensuelXaf={prixMensuelXaf} />'))
-    expect(atelier).toMatch(motifTexte('{!publicationOuverte(compteur) && <CommentPayerPublication prixMensuelXaf={prixMensuelXaf} />}'))
+    expect(atelier).toMatch(motifTexte('{!publicationOuverte(compteur) && <CommentPayerPublication prixMensuelXaf={prixMensuelXaf} moyens={moyensPaiement} />}'))
   })
 })

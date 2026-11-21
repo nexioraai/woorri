@@ -27,6 +27,7 @@ const CREATIONS = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_creatio
 const LOT_XAF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_lot_xaf.sql'), 'utf8')
 const CARTE = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_abonnement_carte.sql'), 'utf8')
 const MOBILE = readFileSync(join(ICI, '..', 'supabase', 'sql', 'mobile_money_interrupteur.sql'), 'utf8')
+const MOYENS = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_moyens_paiement.sql'), 'utf8')
 const PORT = 54000 + Math.floor(Math.random() * 900)
 const DOSSIER = mkdtempSync(join(tmpdir(), 'preuve-quota-'))
 const URL = `postgresql://postgres@127.0.0.1:${PORT}/postgres`
@@ -90,6 +91,17 @@ try {
   const mm2 = await admin.query(`select valeur from public.quota_reglages where cle = 'mobile_money'`)
   verdict(mm2.rows[0]?.valeur === 'essai@exemple.com', 'mobile_money : réglable par regler_quota, et réappliquer ne l’écrase pas')
   await admin.query(`select public.regler_quota('mobile_money', '', 'proprietaire')`)
+  // moyens_paiement_manuel APRÈS mobile_money : sa contrainte reprend toutes les clés.
+  await admin.query(MOYENS)
+  await admin.query(MOYENS)
+  const mp = await admin.query(`select valeur from public.quota_reglages where cle = 'moyens_paiement_manuel'`)
+  verdict(mp.rows[0]?.valeur === 'espèces', 'moyens_paiement_manuel posé à « espèces » seulement')
+  const reg13 = await admin.query('select count(*)::int n from public.quota_reglages')
+  verdict(reg13.rows[0].n === 13, 'appliqué deux fois : 13 réglages, pas 26 (idempotent)')
+  await admin.query(`select public.regler_quota('moyens_paiement_manuel', 'espèces, Airtel Money', 'proprietaire')`)
+  await admin.query(MOYENS)
+  const mp2 = await admin.query(`select valeur from public.quota_reglages where cle = 'moyens_paiement_manuel'`)
+  verdict(mp2.rows[0]?.valeur === 'espèces, Airtel Money', 'remettre « Airtel Money » passe par regler_quota, et réappliquer ne l’écrase pas')
 
   // ── Les applis publiées : offertes jusqu'au 31 décembre, une ligne chacune.
   const off = await admin.query(`select app_id, jusqu_au from public.app_paiements where fournisseur = 'offert'`)

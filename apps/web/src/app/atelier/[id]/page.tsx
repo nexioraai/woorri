@@ -65,7 +65,7 @@ import { IdentifiantsOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { adresseProposee, TITRE_SANS_NOM } from '@/lib/apps/nom-produit';
 import { echangesDe, heureCourte, type VersionLue } from '@/lib/apps/fil-atelier';
 import { phraseVersion } from '@/lib/apps/versions-oeuvre';
-import { boutonOuvert, libelleBouton, phraseApresRetouche, publicationOuverte, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
+import { boutonOuvert, libelleBouton, MOYENS_PAIEMENT_DEFAUT, phraseApresRetouche, publicationOuverte, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
 import { CommentPayerPublication, PublicationBloquee } from '@/components/atelier/PublicationBloquee';
 import { PayerMobileMoney } from '@/components/atelier/PayerMobileMoney';
 import type { EtatCompteur } from '@/lib/apps/compteur-phrases';
@@ -127,6 +127,8 @@ export default function AtelierPage() {
   const [abonnementCarte, setAbonnementCarte] = useState(false);
   // Le prix mensuel en FCFA, lu dans le réglage par le serveur (null : vide).
   const [prixMensuelXaf, setPrixMensuelXaf] = useState<number | null>(null);
+  // Les moyens de paiement à la main, lus dans le réglage par le serveur.
+  const [moyensPaiement, setMoyensPaiement] = useState<readonly string[]>(MOYENS_PAIEMENT_DEFAUT);
   // Le paiement mobile money (MODE TEST, interrupteur `mobile_money`, éteint par défaut).
   const [mobileMoney, setMobileMoney] = useState(false);
   const [perimetre, setPerimetre] = useState('');
@@ -306,12 +308,13 @@ export default function AtelierPage() {
           headers: { Authorization: `Bearer ${t}` },
         });
         if (res.ok) {
-          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null; abonnementCarte?: boolean; prixMensuelXaf?: number | null; mobileMoney?: boolean };
+          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null; abonnementCarte?: boolean; prixMensuelXaf?: number | null; moyensPaiement?: string[]; mobileMoney?: boolean };
           setPlafond(d.plafond ?? '');
           setCompteur(d.compteur ?? null);
           setAbonnementCarte(d.abonnementCarte === true);
           setPrixMensuelXaf(typeof d.prixMensuelXaf === 'number' ? d.prixMensuelXaf : null);
           setMobileMoney(d.mobileMoney === true);
+          if (Array.isArray(d.moyensPaiement) && d.moyensPaiement.length > 0) setMoyensPaiement(d.moyensPaiement);
           setPerimetre(d.perimetre ?? '');
         }
       } catch { /* le bouton dira « Modifier » sans prix plutôt que rien */ }
@@ -758,7 +761,7 @@ export default function AtelierPage() {
         </div>
         </div>
       </header>
-      {!publicationOuverte(compteur) && <CommentPayerPublication prixMensuelXaf={prixMensuelXaf} />}
+      {!publicationOuverte(compteur) && <CommentPayerPublication prixMensuelXaf={prixMensuelXaf} moyens={moyensPaiement} />}
 
       {/* ── M2 : LES ONGLETS, SOUS 1024 PX SEULEMENT. */}
       <div role="tablist" aria-label="Atelier" className="flex shrink-0 gap-1 border-b border-brand-gold/45 bg-brand-prune/[0.30] px-3 py-1.5 lg:hidden">

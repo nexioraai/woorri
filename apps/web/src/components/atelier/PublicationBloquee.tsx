@@ -12,7 +12,7 @@
  * phrase visible AVANT le clic, pas la garde.
  */
 import { Lock, MessageCircle } from 'lucide-react';
-import { libellePublicationBloquee, LIEN_WHATSAPP_PAIEMENT, PHRASE_COMMENT_PAYER } from '@/lib/apps/compteur-phrases';
+import { libellePublicationBloquee, LIEN_WHATSAPP_PAIEMENT, phraseCommentPayer } from '@/lib/apps/compteur-phrases';
 
 /**
  * Dans la barre, à la place de « Publier » : « Publier » DÉSACTIVÉ, avec un
@@ -39,7 +39,7 @@ export function PublicationBloquee({ prixMensuelXaf }: { prixMensuelXaf: number 
  * Sous la barre, sur toute la largeur : pourquoi « Publier » est fermé, le
  * prix réglé, et comment payer (lien WhatsApp).
  */
-export function CommentPayerPublication({ prixMensuelXaf }: { prixMensuelXaf: number | null }) {
+export function CommentPayerPublication({ prixMensuelXaf, moyens }: { prixMensuelXaf: number | null; moyens: readonly string[] }) {
   return (
     <p id="payer-publication" className="shrink-0 border-b border-[#FA5D1E]/30 bg-[#FA5D1E]/[0.08] px-4 py-2 text-xs text-white">
       <span className="font-semibold">{libellePublicationBloquee(prixMensuelXaf)}.</span>{' '}
@@ -50,7 +50,7 @@ export function CommentPayerPublication({ prixMensuelXaf }: { prixMensuelXaf: nu
         className="inline-flex items-center gap-1.5 text-white/90 underline underline-offset-2 hover:text-white"
       >
         <MessageCircle size={14} strokeWidth={2} aria-hidden className="shrink-0" />
-        {PHRASE_COMMENT_PAYER}
+        {phraseCommentPayer(moyens)}
       </a>
     </p>
   );
