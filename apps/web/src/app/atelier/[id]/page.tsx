@@ -664,7 +664,10 @@ export default function AtelierPage() {
           >
             D
           </span>
-          <span className="hidden text-base font-black tracking-tight text-nexiora sm:inline">deribfy</span>
+          {/* Le mot « deribfy » à partir de 1280 px seulement : mesuré à 1024 px
+              (2026-11-21), il réduisait le nom de l'appli à « A… ». Le logo D
+              reste, partout. */}
+          <span className="hidden text-base font-black tracking-tight text-nexiora xl:inline">deribfy</span>
         </span>
         <Link
           href="/dashboard"
