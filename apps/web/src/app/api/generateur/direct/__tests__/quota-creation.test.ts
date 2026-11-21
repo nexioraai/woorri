@@ -8,7 +8,9 @@
  * ② compteur injoignable → 503, rien n'est payé ;
  * ③ une création livrée → la réservation est soldée « livree » avec l'appli ;
  * ④ une création qui échoue → la réservation est LIBÉRÉE ;
- * ⑤ un compte exempté → le compteur n'est jamais touché.
+ * ⑤ un compte exempté → le compteur n'est jamais touché ;
+ * ⑥ une création refusée AVANT le premier tour (cahier trop long pour le
+ *   plafond, option B, 2026-11-21) → l'appli gratuite est RENDUE (libérée).
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
@@ -65,11 +67,11 @@ const BON = [
   'export const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402',
 ].join('\n')
 
-const appel = () =>
+const appel = (demande = 'calcule ma facture SNE') =>
   new Request('https://deribfy.test/api/generateur/direct', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer j' },
-    body: JSON.stringify({ demande: 'calcule ma facture SNE', nom: 'Facture SNE' }),
+    body: JSON.stringify({ demande, nom: 'Facture SNE' }),
   })
 /** La route répond en flux : la dernière ligne non vide est le résultat. */
 const fin = async (r: Response) => JSON.parse((await r.text()).trim().split('\n').filter((l) => l.trim() !== '').at(-1) ?? '{}') as Record<string, unknown>
@@ -119,5 +121,16 @@ describe('étape ② · une appli gratuite par compte', () => {
     await fin(await POST(appel()))
     expect(reserver).not.toHaveBeenCalled()
     expect(solder).not.toHaveBeenCalled()
+  })
+
+  it('⑥ refus avant le premier tour (cahier trop long pour le plafond) : le modèle n’est pas appelé, l’appli gratuite est RENDUE', async () => {
+    delete process.env.GENERATEUR_FOURNISSEUR
+    const d = await fin(await POST(appel('x'.repeat(300_000))))
+    expect(etat.appels, 'le modèle a été appelé').toBe(0)
+    expect(d.ok).toBe(false)
+    expect(String(d.error)).toMatch(/Rien n’a été décompté/u)
+    expect(reserver).toHaveBeenCalledWith('u-1')
+    expect(solder, 'la réservation de l’appli gratuite n’a pas été libérée').toHaveBeenCalledWith('resa-1', 'u-1', 'liberee', null)
+    expect(solder).not.toHaveBeenCalledWith('resa-1', 'u-1', 'livree', expect.anything())
   })
 })
