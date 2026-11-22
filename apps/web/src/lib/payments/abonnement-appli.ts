@@ -115,6 +115,18 @@ export type ResultatFacture =
   | { readonly traitee: true; readonly ok: false; readonly erreur: string }
 
 /**
+ * LA MARQUE D'UNE FACTURE (F1, 2026-11-21 ; partagée le 2026-11-22 avec le
+ * cycle de vie) : l'instantané de la facture d'abord, l'ABONNEMENT s'il manque.
+ * Lève seulement si Stripe ne répond pas.
+ */
+export async function marqueAppli(facture: unknown): Promise<{ readonly marque: Readonly<Record<string, string>>; readonly abonnement: string | null }> {
+  const ab = abonnementDeFacture(facture)
+  if (ab.metadata.deribfy_type === TYPE_APPLICATION || ab.id === null) return { marque: ab.metadata, abonnement: ab.id }
+  const sub = await getStripe().subscriptions.retrieve(ab.id)
+  return { marque: (sub.metadata ?? {}) as Record<string, string>, abonnement: ab.id }
+}
+
+/**
  * Une facture payée : est-ce une appli ? Si oui, l'enregistrer.
  *
  * LE FILET DE LA MARQUE (2026-11-21). La marque se lit d'abord sur l'instantané
@@ -127,12 +139,8 @@ export type ResultatFacture =
  * Lève seulement si Stripe ne répond pas (le webhook rend 500, Stripe renvoie).
  */
 export async function traiterFactureAppli(facture: unknown): Promise<ResultatFacture> {
-  const ab = abonnementDeFacture(facture)
-  let marque = ab.metadata
-  if (marque.deribfy_type !== TYPE_APPLICATION && ab.id !== null) {
-    const sub = await getStripe().subscriptions.retrieve(ab.id)
-    marque = (sub.metadata ?? {}) as Record<string, string>
-  }
+  const { marque, abonnement } = await marqueAppli(facture)
+  const ab = { id: abonnement }
   if (marque.deribfy_type !== TYPE_APPLICATION) {
     const prixApp = (process.env.STRIPE_PRICE_APPLICATION ?? '').trim()
     if (prixApp !== '' && prixDeFacture(facture) === prixApp) {

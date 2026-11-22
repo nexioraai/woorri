@@ -35,6 +35,9 @@ const FRAIS_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'quota_frais
 const PAIEMENTS_FRAIS = readFileSync(join(ICI, '..', 'supabase', 'sql', 'paiements_frais.sql'), 'utf8')
 const PAIEMENTS_FRAIS_VERIF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'paiements_frais_verification.sql'), 'utf8')
 const PAIEMENTS_FRAIS_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'paiements_frais_annulation.sql'), 'utf8')
+const CYCLE = readFileSync(join(ICI, '..', 'supabase', 'sql', 'stripe_cycle_de_vie.sql'), 'utf8')
+const CYCLE_VERIF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'stripe_cycle_de_vie_verification.sql'), 'utf8')
+const CYCLE_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'stripe_cycle_de_vie_annulation.sql'), 'utf8')
 const PORT = 54000 + Math.floor(Math.random() * 900)
 const DOSSIER = mkdtempSync(join(tmpdir(), 'preuve-quota-'))
 const URL = `postgresql://postgres@127.0.0.1:${PORT}/postgres`
@@ -60,6 +63,8 @@ try {
     grant usage on schema public to anon, authenticated, service_role;
     create table public.app_generations (id uuid primary key, owner_id uuid, statut text not null, publication_jeton text);
     grant select on public.app_generations to service_role;
+    -- Supabase donne tous les droits de table à service_role ; la dépublication en a besoin (2026-11-22).
+    grant update (publication_jeton) on public.app_generations to service_role;
   `)
   const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-222222222222'
   const PROPRIO = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', AUTRE = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
@@ -309,6 +314,54 @@ try {
   const sigGardee = await signatures()
   verdict(sigGardee.length === 1 && sigGardee[0].endsWith('p_frais numeric'), 'colonne frais : après le refus, la fonction à 11 arguments est toujours là')
 
+  // ════ LE CYCLE DE VIE STRIPE (2026-11-22) : remboursement total, litige, doublons ════
+  await admin.query(CYCLE)
+  await admin.query(CYCLE)
+  const CV = '55555555-5555-4555-8555-555555555555', CV2 = '66666666-6666-4666-8666-666666666666'
+  // Un compte À PART : ses applis remboursées ne doivent pas changer les règles de création de PROPRIO.
+  const PROPRIO_CV = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
+  await admin.query(`insert into public.app_generations values ($1, $3, 'livree', 'jeton-cv'), ($2, $3, 'livree', 'jeton-cv2')`, [CV, CV2, PROPRIO_CV])
+  await svc.query(`select public.enregistrer_paiement('automatique','stripe','in_cv1',$1,$2,'abonnement',20,'USD',now() + interval '30 days','stripe')`, [CV, PROPRIO_CV])
+  const a1 = (await svc.query(`select public.annuler_paiement_stripe('in_cv1', 'remboursement', 20) r`)).rows[0].r
+  const g1 = (await svc.query('select publication_jeton from public.app_generations where id = $1', [CV])).rows[0]
+  const c1cv = (await svc.query('select paye_jusqu_au <= now() echu from public.app_compteurs where app_id = $1', [CV])).rows[0]
+  const l1 = (await svc.query(`select p.objet, p.montant::int m, p.devise, p.saisi_par, p.annule = (select id from public.app_paiements where reference = 'in_cv1') lie from public.app_paiements p where reference = 'annulation:in_cv1'`)).rows
+  verdict(a1.statut === 'annule' && a1.derniere === true, `cycle : remboursement total de la dernière facture → « annule », dernière (${JSON.stringify(a1)})`)
+  verdict(g1.publication_jeton === null, 'cycle : l’appli est DÉPUBLIÉE (jeton vidé : son adresse répond 404)')
+  verdict(c1cv.echu === true, 'cycle : la période payée est ramenée à maintenant (modifications arrêtées, « Publier » refusé)')
+  verdict(l1.length === 1 && l1[0].objet === 'annulation' && l1[0].m === 20 && l1[0].devise === 'USD' && l1[0].saisi_par === 'stripe:remboursement:derniere' && l1[0].lie === true, 'cycle : UNE ligne d’annulation, 20 USD, qui renvoie à la ligne payée')
+  verdict((await svc.query('select public.reserver_modification($1, $2) r', [CV, PROPRIO_CV])).rows[0].r === null, 'cycle : après le remboursement, une modification est refusée')
+  const a2 = (await svc.query(`select public.annuler_paiement_stripe('in_cv1', 'litige', 20) r`)).rows[0].r
+  const n2 = (await svc.query(`select count(*)::int n from public.app_paiements where reference = 'annulation:in_cv1'`)).rows[0].n
+  verdict(a2.statut === 'deja_annule' && a2.derniere === true && n2 === 1, 'cycle : remboursement PUIS litige de la même facture (ou avis reçu deux fois) → « deja_annule », toujours une seule ligne')
+  verdict((await svc.query(`select public.annuler_paiement_stripe('in_jamais_vu', 'remboursement', 20) r`)).rows[0].r.statut === 'paiement_inconnu', 'cycle : facture pas encore enregistrée (avis dans le désordre) → « paiement_inconnu », rien n’est écrit')
+  // Une facture PLUS ANCIENNE : la ligne seulement, rien ne se coupe.
+  await svc.query(`select public.enregistrer_paiement('automatique','stripe','in_cv2a',$1,$2,'abonnement',20,'USD',now() + interval '30 days','stripe')`, [CV2, PROPRIO_CV])
+  await svc.query(`select public.enregistrer_paiement('automatique','stripe','in_cv2b',$1,$2,'abonnement',20,'USD',now() + interval '60 days','stripe')`, [CV2, PROPRIO_CV])
+  const a3 = (await svc.query(`select public.annuler_paiement_stripe('in_cv2a', 'remboursement', 20) r`)).rows[0].r
+  const g3 = (await svc.query('select publication_jeton from public.app_generations where id = $1', [CV2])).rows[0]
+  const c3cv = (await svc.query(`select round(extract(epoch from (paye_jusqu_au - now())) / 86400) j from public.app_compteurs where app_id = $1`, [CV2])).rows[0]
+  verdict(a3.statut === 'annule' && a3.derniere === false && g3.publication_jeton === 'jeton-cv2' && Number(c3cv.j) === 60, 'cycle : une facture PLUS ANCIENNE remboursée → la ligne seulement ; l’appli reste publiée, payée encore 60 jours')
+  verdict(await refuse(svc, `select public.annuler_paiement_stripe('in_cv2b', 'cadeau', 20)`, [], 'ANNULATION_MOTIF'), 'cycle : un motif inconnu est refusé')
+  verdict(await refuse(svc, `select public.annuler_paiement_stripe('in_cv2b', 'remboursement', -1)`, [], 'ANNULATION_MONTANT'), 'cycle : un montant négatif est refusé')
+  // Le journal des avis : un identifiant une seule fois.
+  await svc.query(`insert into public.stripe_avis_traites (evenement, type) values ('evt_essai1', 'charge.refunded')`)
+  verdict(await refuse(svc, `insert into public.stripe_avis_traites (evenement, type) values ('evt_essai1', 'charge.refunded')`, [], 'duplicate key'), 'cycle : le même avis ne se note qu’une fois au journal')
+  verdict(await refuse(svc, `insert into public.stripe_avis_traites (evenement, type) values ('pas_un_evt', 'x')`, [], 'stripe_avis_traites_evenement_check'), 'cycle : le journal n’accepte que des identifiants d’avis Stripe (evt_…)')
+  // La vérification livrée au propriétaire : VERIFICATION_OK, et rien n'est gardé.
+  const avantCv = (await admin.query('select count(*)::int n from public.app_paiements')).rows[0].n
+  let msgCv = ''
+  try { await admin.query(CYCLE_VERIF) } catch (e) { msgCv = String(e.message) }
+  const apresCv = (await admin.query('select count(*)::int n from public.app_paiements')).rows[0].n
+  const publiees = (await admin.query(`select count(*)::int n from public.app_generations where publication_jeton is not null`)).rows[0].n
+  verdict(msgCv.startsWith('VERIFICATION_OK : annulée, dépubliée'), `cycle : la vérification livrée répond « ${msgCv} »`)
+  verdict(apresCv === avantCv && publiees >= 2, 'cycle : la vérification n’a gardé AUCUNE ligne et n’a dépublié personne')
+  // L'annulation du fichier, puis réapplication.
+  await admin.query(CYCLE_ANNUL)
+  verdict(await refuse(svc, `select public.annuler_paiement_stripe('in_cv2b', 'remboursement', 20)`, [], 'does not exist'), 'cycle : après l’annulation du fichier, la fonction n’existe plus (les lignes écrites restent)')
+  verdict((await admin.query(`select count(*)::int n from public.app_paiements where objet = 'annulation'`)).rows[0].n === 2, 'cycle : l’annulation du fichier garde les 2 lignes d’annulation du registre')
+  await admin.query(CYCLE)
+
   // ── Ajout seul : le registre et l'historique refusent update et delete.
   verdict(await refuse(svc, `update public.app_paiements set montant = 0`, [], ''), 'registre : un update est refusé')
   verdict(await refuse(admin, `delete from public.app_paiements`, [], 'AJOUT_SEUL'), 'registre : un delete est refusé, même au propriétaire de la base')
@@ -344,6 +397,8 @@ try {
   verdict(await refuse(anon, `select public.regler_quota('modifications_incluses', '999', 'pirate')`, [], 'permission denied'), 'anon ne change pas un réglage')
   verdict(await refuse(anon, 'select public.reserver_creation($1)', [PROPRIO], 'permission denied'), 'anon ne réserve pas une création')
   verdict(await refuse(anon, 'select * from public.app_creations_reservees', [], 'permission denied'), 'anon ne lit pas les créations réservées')
+  verdict(await refuse(anon, `select public.annuler_paiement_stripe('in_cv2b', 'remboursement', 20)`, [], 'permission denied'), 'anon n’appelle pas l’annulation d’un paiement')
+  verdict(await refuse(anon, 'select * from public.stripe_avis_traites', [], 'permission denied'), 'anon ne lit pas le journal des avis Stripe')
   await anon.end()
   await svc.end()
 

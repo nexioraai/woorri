@@ -5,12 +5,30 @@ import { assurerAdresseSite } from '@/lib/sites/adresse-site';
 import { logAnomaly } from '@/lib/anomaly';
 import { TYPE_APPLICATION, traiterFactureAppli } from '@/lib/payments/abonnement-appli';
 import { abonnementDeFacture } from '@/lib/payments/facture-stripe';
+import { traiterEchecAppli, traiterLitigeAppli, traiterRemboursementAppli, type ResultatCycle } from '@/lib/payments/cycle-de-vie-appli';
+
 import { supabaseAdmin as supabase, supabaseAdmin } from '@/lib/supabase-admin';
 import { getStripe } from '@/lib/stripe';
 import { handlePaidCheckout } from '@/lib/shop/handlePaidCheckout';
 import { provisionDomain } from '@/lib/domains/provision';
 import { resilierRenouvellement } from '@/lib/domains/renewal';
 import { consignerEvenementDomaine } from '@/lib/domains/history';
+
+// ── LE MÊME AVIS DEUX FOIS (2026-11-22). Pour les avis du CYCLE DE VIE d'une
+//    appli (échec, remboursement, litige), dont les alertes ne sont pas
+//    idempotentes : l'identifiant de l'avis est noté APRÈS succès, et un avis
+//    déjà noté n'est pas rejoué. Une lecture ou une écriture ratée du journal
+//    ne bloque rien : les effets en base restent idempotents par eux-mêmes.
+//    L'achat (`invoice.paid`) n'y passe pas : la facture fait déjà référence.
+async function avisDejaTraite(id: string): Promise<boolean> {
+  const r = await supabaseAdmin.from('stripe_avis_traites').select('evenement').eq('evenement', id).maybeSingle();
+  return r.error === null && r.data !== null;
+}
+async function noterAvisTraite(id: string, type: string): Promise<void> {
+  const r = await supabaseAdmin.from('stripe_avis_traites').insert({ evenement: id, type });
+  if (r.error) console.error('[stripe] journal des avis non écrit', id, r.error.message);
+}
+const AVIS_DU_CYCLE = new Set(['invoice.payment_failed', 'charge.refunded', 'charge.dispute.created']);
 
 // provisionDomain() enchaine Porkbun + Vercel + plusieurs ecritures DNS +
 // Google, en serie : sans ce delai plus long (meme valeur que la route de
@@ -41,7 +59,13 @@ export async function POST(req: Request) {
   //    l'arrivée d'un avis ne pouvait venir que du compteur de Stripe.
   console.log(`[stripe] avis reçu ${event.type} ${event.id}`);
 
+  if (AVIS_DU_CYCLE.has(event.type) && (await avisDejaTraite(event.id))) {
+    console.log(`[stripe] avis déjà traité ${event.id} : rien de plus`);
+    return NextResponse.json({ received: true, deja: true });
+  }
+
   try {
+    let cycle: ResultatCycle = { traitee: false };
     switch (event.type) {
       // Argent encaisse : c'est le seul moment ou Nexiora engage une depense
       // chez Porkbun. Vaut aussi pour les renouvellements annuels, d'ou la
@@ -141,6 +165,10 @@ export async function POST(req: Request) {
       // Paiement echoue : aucun achat, la ligne reste en erreur explicite.
       case 'invoice.payment_failed': {
         const inv: any = event.data.object;
+        // ── UNE APPLICATION (2026-11-22) : rien ne se prolonge, on alerte ;
+        //    jamais le chemin des domaines.
+        cycle = await traiterEchecAppli(inv);
+        if (cycle.traitee) break;
         // Version dahlia (mesurée) : `inv.subscription` n'existe plus — lu dans
         // `parent.subscription_details`, avec repli sur l'ancienne forme.
         const subId = abonnementDeFacture(inv).id;
@@ -152,6 +180,17 @@ export async function POST(req: Request) {
           .from('site_domains')
           .update({ status: 'failed', last_error: 'Paiement refuse' })
           .eq('id', domainId);
+        break;
+      }
+
+      // ── REMBOURSEMENT et CONTESTATION d'une application (2026-11-22).
+      //    Un paiement qui n'est pas celui d'une facture d'appli : ignoré ici.
+      case 'charge.refunded': {
+        cycle = await traiterRemboursementAppli(event.data.object);
+        break;
+      }
+      case 'charge.dispute.created': {
+        cycle = await traiterLitigeAppli(event.data.object);
         break;
       }
 
@@ -276,6 +315,10 @@ export async function POST(req: Request) {
         }
         break;
       }
+    }
+    if (cycle.traitee) {
+      console.log(`[stripe] cycle d’une appli ${event.type} ${event.id} → ${cycle.effet}`);
+      await noterAvisTraite(event.id, event.type);
     }
     return NextResponse.json({ received: true });
   } catch (err: unknown) {

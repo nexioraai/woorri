@@ -88,7 +88,9 @@ function makeSupabaseMock(lignes: Record<string, unknown> = {}) {
 
 // Les factures d'APPLICATION (2026-11-20) : leur traitement a ses propres tests.
 const traiterFactureAppliMock = vi.fn(async (..._a: unknown[]) => ({ traitee: false as boolean, ok: true, statut: 'enregistre', jusquAu: null }));
-vi.mock('@/lib/payments/abonnement-appli', () => ({ TYPE_APPLICATION: 'application', traiterFactureAppli: (...a: unknown[]) => traiterFactureAppliMock(...a) }));
+vi.mock('@/lib/payments/abonnement-appli', () => ({ TYPE_APPLICATION: 'application', traiterFactureAppli: (...a: unknown[]) => traiterFactureAppliMock(...a),
+  // Le cycle de vie (2026-11-22) lit la marque : ici, aucune facture n'est d'une appli.
+  marqueAppli: async () => ({ marque: {}, abonnement: null }) }));
 
 // L'adresse donnée à la publication (2026-11-19) : observée, pas exécutée ici.
 const assurerAdresseMock = vi.fn(async (..._a: unknown[]) => ({ ok: true as const, nom: 'x', lien: 'https://x.deribfy.app' }));

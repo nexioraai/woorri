@@ -44,6 +44,11 @@ const ALWAYS_EMAIL_TYPES = new Set([
   // est un client qui a payé sans être activé : une action précise, jamais
   // regroupée sous l'anti-spam d'une heure.
   'stripe_facture_application',
+  // 2026-11-22 : le cycle de vie d'une appli — chaque occurrence est UN client.
+  'stripe_paiement_echoue_application',
+  'stripe_remboursement_application',
+  'stripe_remboursement_partiel_application',
+  'stripe_litige_application',
 ]);
 
 export type AnomalySeverity = 'blocked' | 'warning' | 'info';
