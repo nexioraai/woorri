@@ -287,6 +287,23 @@ try {
   verdict(messageVerifFrais === 'VERIFICATION_OK : sans p_frais → 0, avec p_frais → 1400, 2 refus sur 2 — rien n’est gardé'.replace('’', "'"), `colonne frais : la vérification livrée répond « ${messageVerifFrais} »`)
   verdict(apresVerifFrais === avantVerifFrais && compteurApres.getTime() === compteurAvant.getTime(), 'colonne frais : la vérification n’a gardé AUCUNE ligne et n’a pas bougé le compteur')
   // Des frais en base : l'annulation refuse, et ne change rien.
+  // L'APPEL PAR NOMS, comme PostgREST le fait pour supabase.rpc (Stripe, activation
+  // manuelle) : 10 arguments nommés, SANS p_frais → la fonction à 11 arguments, frais = 0.
+  const parNoms = `select public.enregistrer_paiement(p_source => 'automatique', p_fournisseur => 'stripe', p_reference => $3, p_app => $1, p_owner => $2, p_objet => 'abonnement', p_montant => 20, p_devise => 'USD', p_jusqu_au => now() + interval '30 days', p_saisi_par => 'stripe') r`
+  const rNoms = (await svc.query(parNoms, [A, PROPRIO, 'in_par_noms'])).rows[0].r
+  const lNoms = (await svc.query(`select frais::int f from public.app_paiements where reference = 'in_par_noms'`)).rows
+  verdict(rNoms.statut === 'enregistre' && lNoms.length === 1 && lNoms[0].f === 0, 'colonne frais : l’appel PAR NOMS de Stripe (10 arguments, sans p_frais) passe, frais = 0')
+  // LE PIÈGE : rejouer un ancien fichier recréerait la version à 10 arguments → ambiguïté.
+  for (const [nom, texte] of [['quota_lot_xaf.sql', LOT_XAF], ['quota_modifications.sql', SQL]]) {
+    verdict(await refuse(admin, texte, [], 'FICHIER_DEPASSE'), `colonne frais : rejouer ${nom} après paiements_frais.sql est REFUSÉ`)
+    await admin.query('rollback')
+  }
+  verdict((await signatures()).length === 1, 'colonne frais : après ces refus, toujours UNE seule signature')
+  // Ce que la garde empêche, mesuré : deux versions → l'appel par noms échoue.
+  const a = LOT_XAF.indexOf('create or replace function public.enregistrer_paiement(')
+  await admin.query(LOT_XAF.slice(a, LOT_XAF.indexOf('end $$;', a) + 7))
+  verdict(await refuse(svc, parNoms, [A, PROPRIO, 'in_ambigu'], 'is not unique'), 'colonne frais : SANS la garde, deux versions rendent l’appel de Stripe ambigu (« is not unique ») — c’est ce que la garde empêche')
+  await admin.query('drop function public.enregistrer_paiement(text, text, text, uuid, uuid, text, numeric, text, timestamptz, text)')
   verdict(await refuse(admin, PAIEMENTS_FRAIS_ANNUL, [], 'ANNULATION_REFUSEE'), 'colonne frais : annulation REFUSÉE dès qu’une ligne porte des frais')
   await admin.query('rollback') // le fichier ouvre sa transaction (begin) : le refus la laisse avortée
   const sigGardee = await signatures()

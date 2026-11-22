@@ -13,6 +13,19 @@
 
 begin;
 
+-- GARDE (2026-11-21). Ce fichier recrée enregistrer_paiement à 10 arguments.
+-- Rejoué APRÈS paiements_frais.sql (11 arguments, p_frais par défaut), il en
+-- ferait DEUX versions : l'appel par noms de Stripe et de l'activation
+-- manuelle deviendrait ambigu (« function … is not unique ») et plus aucun
+-- paiement ne s'enregistrerait. Il refuse donc de s'exécuter — rien n'est changé.
+do $$
+begin
+  if exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+              where n.nspname = 'public' and p.proname = 'enregistrer_paiement' and p.pronargs = 11) then
+    raise exception 'FICHIER_DEPASSE: paiements_frais.sql est appliqué — ne pas rejouer ce fichier, il recréerait l''ancienne signature d''enregistrer_paiement';
+  end if;
+end $$;
+
 alter table public.quota_reglages drop constraint if exists quota_reglages_cle_check;
 alter table public.quota_reglages add constraint quota_reglages_cle_check check (cle in (
   'modifications_incluses', 'modifications_gratuites', 'duree_jours',
