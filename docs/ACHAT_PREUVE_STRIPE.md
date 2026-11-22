@@ -1,61 +1,81 @@
-# L'achat de preuve Stripe d'une application (à faire au plus tard le 2026-12-01)
+# L'achat de preuve Stripe : « Gestion de stock » (au plus tard le 2026-12-01)
 
-> Écrit le 2026-11-21. Stripe est en **mode réel** et le compte n'a **pas de clés de test** : cet achat est un vrai paiement de 20 $ US, remboursé ensuite. C'est le propriétaire qui le fait, depuis son téléphone ou son ordinateur. Claude Code ne paie rien et n'allume rien. Il lit seulement : les journaux Vercel, la base en lecture seule, et Stripe par des lectures (GET).
+> Réécrit le 2026-11-22. Stripe est en **mode réel**. C'est un vrai paiement de 20 $ US, remboursé en entier ensuite.
+>
+> **Youssouf fait tous les gestes** : paiement, remboursement, réglages. Claude Code ne paie rien, ne rembourse rien, n'écrit rien chez Stripe ni dans la base. Il lit seulement : le journal Vercel, la base en lecture seule, et Stripe par des lectures (GET).
 >
 > L'échéance est inscrite dans `docs/ECHEANCES.md`.
 
-## Pourquoi cet achat
+**L'essai :**
+- compte **`contact@deribfy.com`** (non exempté : sans paiement, « Publier » est refusé) ;
+- appli **« Gestion de stock »** (`d925850b-9fe2-4a74-9d3e-5c11f6ffe21d`).
 
-Avant lui, le chemin « paiement par carte d'une appli » est prouvé **par les tests seulement**. Aucune session de paiement d'application n'a jamais été ouverte sur le compte Stripe (lu le 2026-11-21 : zéro session marquée `application`, et un seul abonnement actif, celui du site à 15 CAD). Cet achat prouve la chaîne entière, sur le vrai compte, avec le vrai webhook.
+**État lu le 2026-11-22, avant l'essai :** l'appli est livrée et jamais publiée. Elle n'a ni compteur ni paiement, et le compte n'a pas encore de fiche Stripe.
 
-## Avant de commencer
+## A. Les préalables, dans l'ordre (chacun se vérifie)
 
-- **Le compte qui paie n'est pas exempté.** `issayamiyoussouf@gmail.com` et `abbasissay@gmail.com` sont hors quota : pour eux, « Publier » publie sans paiement, donc l'essai ne prouverait rien. On utilise **`contact@deribfy.com`**.
-- **Il faut une application LIVRÉE** de ce compte, non payée (son compteur n'est pas « abonnée »).
-- **L'interrupteur `abonnement_carte`** vaut `tous`, ou contient l'adresse de ce compte.
-- Noter l'heure de début.
+| # | Geste (Youssouf) | Ce qu'il doit voir si c'est bon |
+|---|---|---|
+| A1 | Rien : Claude Code annonce que le commit du cycle de vie est en production | le message donne le commit et « READY » |
+| A2 | Éditeur SQL de nexiora-ai : appliquer `apps/web/supabase/sql/stripe_cycle_de_vie.sql` | « Success. No rows returned » |
+| A3 | Même éditeur : lancer `apps/web/supabase/sql/stripe_cycle_de_vie_verification.sql` | une **erreur** qui commence par « VERIFICATION_OK : annulée, dépubliée… ». C'est voulu : l'erreur annule tout. Toute autre erreur : arrêter et me la montrer |
+| A4 | Stripe → Développeurs → Webhooks → point `https://www.deribfy.com/api/stripe/webhook` → *Modifier les événements* : **ajouter `charge.refunded` et `charge.dispute.created`** | le point écoute **8** événements : les 6 d'aujourd'hui, plus ces deux-là |
+| A5 | Ouvrir la carte pour le compte d'essai : `abonnement_carte` doit contenir `contact@deribfy.com`, ou valoir `tous` | dans l'atelier de « Gestion de stock », le bouton dit **« Publier — 20 $ US / mois »** |
 
-## Pas à pas : ce qui doit s'afficher
+Sans A2, un remboursement d'appli rend 500 : Stripe renvoie l'avis pendant 3 jours, et rien ne se coupe en attendant.
 
-1. **Atelier de l'appli** (`www.deribfy.com/atelier/<id>`), connecté avec `contact@deribfy.com`. Le bouton « Publier » porte le prix lu chez Stripe : **20 $ US / mois**.
-   *Si le bouton dit autre chose (pas de prix, phrase « fermé ») : arrêter, et me l'écrire.*
-2. **Clic sur « Publier ».** La page Stripe s'ouvre, avec ces trois éléments :
-   - l'abonnement « Deribfy — Application » ;
-   - 20 $ US par mois, ou leur conversion en monnaie locale si Stripe la propose (dans ce cas, noter le montant affiché et la devise) ;
-   - l'adresse `contact@deribfy.com`.
-3. **Payer** avec une vraie carte.
-4. **Retour automatique dans l'atelier**, avec `?paiement=recu` dans l'adresse. La phrase « Paiement reçu par Stripe — l'activation arrive dans quelques secondes. » s'affiche, puis en moins d'une minute :
-   - **« Abonnement actif. Merci ! »**
-   - **« Abonnement actif : votre application peut être publiée. »**, avec « Publier maintenant ».
-   *Si, au bout d'une minute, la page dit « l'activation tarde » : NE PAS payer une seconde fois. M'écrire l'heure.*
-5. **Publier maintenant.** L'appli reçoit son adresse publique.
-6. **« Gérer mon abonnement »** ouvre le portail Stripe. On y voit l'abonnement actif et la facture.
+Sans A4, Stripe n'envoie même pas l'avis du remboursement. C'est l'état mesuré le 2026-11-22 : le point de terminaison n'écoute ni `charge.refunded` ni `charge.dispute.created`.
 
-## Ce que Claude Code lit ensuite (lecture seule)
+## B. L'achat
 
-| Où | Ce qui prouve |
-|---|---|
-| Journal Vercel (`/api/stripe/webhook`) | `[stripe] avis reçu invoice.paid evt_…`, sans « Webhook signature verification failed » ni « Handler error » |
-| `app_paiements` | une ligne : `source = automatique`, `fournisseur = stripe`, `reference = in_…` (la facture), `montant = 20`, `devise = USD`, `jusqu_au` = fin de la période Stripe |
-| `app_compteurs` | l'appli est `abonnee`, avec `paye_jusqu_au` = la même date, `limite = 100` et `utilisees = 0` |
-| Stripe (GET) | l'abonnement porte `deribfy_type = application` et le bon `deribfy_app_id` ; sa facture est en USD, `amount_paid = 2000` ; s'il y a eu conversion, `presentment_details` dit la devise payée |
-| `checkout_anomalies` | aucune ligne `stripe_facture_application` |
+| # | Geste | Ce qu'il doit voir si c'est bon |
+|---|---|---|
+| B1 | Se connecter avec `contact@deribfy.com` et ouvrir l'atelier de « Gestion de stock » | le bouton **« Publier — 20 $ US / mois »** |
+| B2 | Clic sur ce bouton | la page Stripe montre « Deribfy — Application » et **20 $ US par mois**. Si Stripe propose la monnaie locale (CAD), noter le montant et la devise affichés |
+| B3 | Payer avec une vraie carte | Stripe confirme, puis revient seul à l'atelier, avec `?paiement=recu` dans l'adresse |
+| B4 | Attendre, sans recliquer | d'abord « Paiement reçu par Stripe — l'activation arrive dans quelques secondes. », puis, en moins d'une minute, **« Abonnement actif. Merci ! »** et **« Abonnement actif : votre application peut être publiée. »** |
+| B5 | « Publier maintenant », choisir le nom public | l'appli s'ouvre à **`https://<nom>.deribfy.app`**. Noter ce nom |
+| B6 | « Gérer mon abonnement » | le portail Stripe montre l'abonnement **actif** et une facture **payée** de 20 $ US |
 
-## Le remboursement (par le propriétaire, dans le tableau de bord Stripe)
+**Si B4 dit « l'activation tarde » au bout d'une minute : NE PAS repayer** (la page de paiement le refuserait de toute façon : un abonnement est déjà en cours). M'écrire l'heure.
 
-1. **Annuler l'abonnement** : Clients → `contact@deribfy.com` → abonnement → *Annuler* → **immédiatement**.
-2. **Rembourser** la facture : Paiements → le paiement de 20 $ → *Rembourser* → montant total.
+**Ce que je lis après B6 (lecture seule) :**
+- journal Vercel : `[stripe] avis reçu invoice.paid evt_…`, sans « Handler error » ;
+- `app_paiements` : une ligne `stripe`, `reference = in_…`, `objet = abonnement`, **20 USD** ;
+- `app_compteurs` : l'appli est `abonnee`, et `paye_jusqu_au` vaut la fin de la période Stripe ;
+- Stripe (GET) : l'abonnement porte `deribfy_type = application` et `deribfy_app_id = d925850b…` ; la facture est en USD, `amount_paid = 2000`.
 
-**Ce que le remboursement fait aujourd'hui, et ce qu'il ne fait pas** (mesuré dans le code le 2026-11-21) :
-- l'événement `customer.subscription.deleted` d'une appli est **ignoré**. L'appli reste **payée jusqu'à `paye_jusqu_au`**, et elle reste publiée ;
-- aucun événement de remboursement (`charge.refunded`) n'est écouté. La ligne de `app_paiements` reste telle quelle : le registre est en ajout seul, et une annulation serait une ligne de plus, que rien n'écrit aujourd'hui ;
-- après l'essai, l'appli d'essai reste donc active jusqu'à la fin de la période. C'est sans conséquence pour un compte d'essai. Pour un vrai client remboursé, c'est le défaut décrit dans `docs/ECHEANCES.md`.
+## C. Le remboursement total
 
-Claude Code relit ensuite, en lecture seule :
-- chez Stripe, le remboursement (`refunded = true`) et l'abonnement `canceled` ;
-- dans le journal, l'avis `customer.subscription.deleted` reçu, sans erreur.
+| # | Geste | Ce qu'il doit voir si c'est bon |
+|---|---|---|
+| C1 | Stripe → Paiements → le paiement de 20 $ → **Rembourser** → **montant total** | Stripe : « Remboursé ». **Ne pas annuler l'abonnement à la main** : c'est Deribfy qui doit le faire, et c'est ce qu'on vérifie |
+| C2 | Une minute plus tard, recharger `https://<nom>.deribfy.app` | **« introuvable »** : l'appli est dépubliée |
+| C3 | Stripe → Clients → `contact@deribfy.com` → abonnement | **Annulé**, sans geste de Youssouf |
+| C4 | Atelier de « Gestion de stock » | le bouton redevient **« Publier — 20 $ US / mois »** : l'abonnement n'est plus actif |
+| C5 | `/admin`, rubrique anomalies, et la boîte de `issayamiyoussouf@gmail.com` | une ligne et un courriel **« Anomalie checkout : stripe_remboursement_application »**, avec la facture, l'appli et `appli_depubliee = true` |
 
-## Si quelque chose ne va pas
+**Ce que je lis après C5 (lecture seule) :**
+- journal Vercel : `[stripe] avis reçu charge.refunded evt_…`, puis `cycle d'une appli charge.refunded … → annulee_depubliee` ;
+- `app_paiements` : une **seconde** ligne, `objet = annulation`, `reference = annulation:in_…`, 20 USD, qui renvoie à la ligne payée (`annule`). La première ligne est intacte : le registre est en ajout seul ;
+- `app_compteurs` : `paye_jusqu_au` est passé (vers l'heure du remboursement) ;
+- `app_generations` : `publication_jeton` est vide ; le nom public reste réservé à l'appli ;
+- `stripe_avis_traites` : l'avis du remboursement y est noté ;
+- Stripe (GET) : l'abonnement est `canceled` et le paiement `refunded = true`.
 
-- **Payé, rien d'activé.** Une alerte « Anomalie checkout : stripe_facture_application » arrive par courriel : à chaque occurrence une fois le correctif F2 en ligne, une par heure au plus avant lui. Une ligne s'inscrit aussi dans `/admin`, rubrique anomalies. Avant le correctif F1, une facture sans marque ne laissait **aucune trace** : le seul signe était l'atelier qui dit « l'activation tarde ». Le remède : une fois la cause corrigée, **renvoyer l'événement** depuis Stripe (Développeurs → Webhooks → le point `…/api/stripe/webhook` → l'événement `invoice.paid` → *Renvoyer*). L'enregistrement est idempotent, puisque la référence est la facture : renvoyer deux fois ne compte qu'une fois.
-- **Deux paiements.** Une fois le correctif F3 en ligne, la page de paiement refuse de s'ouvrir quand l'appli a déjà un abonnement en cours. Avant lui, un second clic sur « Publier » pendant que l'activation tarde ouvre un **second abonnement** : ne pas recliquer. Si c'est arrivé : annuler et rembourser le second abonnement.
+**Contre-épreuve (facultative, sans rien payer) :** renvoyer l'avis `charge.refunded` depuis Stripe (Webhooks → l'événement → *Renvoyer*). Le journal doit dire `avis déjà traité … : rien de plus`. Aucune seconde ligne, aucun second courriel.
+
+## D. Si quelque chose ne va pas
+
+- **Payé, rien d'activé (B4).** Un courriel « stripe_facture_application » arrive, et une ligne s'inscrit dans `/admin`. Le remède : une fois la cause corrigée, **renvoyer** l'avis `invoice.paid` depuis Stripe. C'est sans risque : la référence est la facture, et un renvoi ne compte qu'une fois.
+- **Remboursé, toujours en ligne (C2).** Vérifier A2 (fonction appliquée) et A4 (événement écouté). Le journal Vercel dit lequel manque :
+  - aucune ligne `charge.refunded` : c'est A4 ;
+  - « Handler error … annuler_paiement_stripe » : c'est A2.
+
+  Une fois corrigé, renvoyer l'avis.
+- **Abonnement pas annulé (C3).** Le journal le dit. Renvoyer l'avis refait l'annulation, sans seconde ligne.
+
+## Ce que l'essai ne prouve pas
+
+- **Le renouvellement du mois suivant** (le second `invoice.paid`) : il viendrait trente jours plus tard, et l'abonnement est annulé au remboursement. Il est prouvé par les tests et par la preuve SQL seulement.
+- **Un paiement mensuel échoué, un remboursement partiel, une contestation** : ils ne se provoquent pas sans risque en mode réel. Ils sont prouvés par les tests (avis signés localement) seulement.
