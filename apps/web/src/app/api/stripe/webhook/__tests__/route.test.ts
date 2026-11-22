@@ -411,6 +411,20 @@ describe('les avis d’une application', () => {
     expect(subscriptionsRetrieveMock).not.toHaveBeenCalled();
   });
 
+  it('facture d’appli non enregistrée : erreur DÉFINITIVE (sans marque, devise, identifiant) → 200, pas de boucle ; erreur de base → 500, Stripe renvoie', async () => {
+    const definitives = ['facture au prix des applications sans marque Deribfy (abonnement sub_1)', 'facture d’application en cad — attendu USD', 'facture d’application sans identifiant, appli ou compte']
+    for (const erreur of definitives) {
+      traiterFactureAppliMock.mockResolvedValueOnce({ traitee: true, ok: false, erreur } as never)
+      constructEventMock.mockReturnValue({ id: 'evt_3', type: 'invoice.paid', data: { object: { id: 'in_3' } } })
+      currentMock = makeSupabaseMock()
+      expect((await appelerWebhook()).status, erreur).toBe(200)
+    }
+    traiterFactureAppliMock.mockResolvedValueOnce({ traitee: true, ok: false, erreur: 'PAIEMENT_CONCURRENT: la même référence vient d’être enregistrée' } as never)
+    constructEventMock.mockReturnValue({ id: 'evt_4', type: 'invoice.paid', data: { object: { id: 'in_4' } } })
+    currentMock = makeSupabaseMock()
+    expect((await appelerWebhook()).status).toBe(500)
+  });
+
   it('subscription.updated / deleted d’une appli : aucun site n’est publié ni dépublié', async () => {
     for (const type of ['customer.subscription.updated', 'customer.subscription.deleted']) {
       constructEventMock.mockReturnValue({ id: 'evt_2', type, data: { object: { customer: 'cus_compte', status: 'active', metadata: { deribfy_type: 'application' } } } });

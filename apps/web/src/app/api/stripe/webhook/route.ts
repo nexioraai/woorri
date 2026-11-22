@@ -55,7 +55,7 @@ export async function POST(req: Request) {
         if (appli.traitee) {
           if (!appli.ok) {
             await logAnomaly({ type: 'stripe_facture_application', severity: 'blocked', details: { facture: inv?.id ?? null, erreur: appli.erreur } });
-            if (!/attendu USD|sans identifiant/u.test(appli.erreur)) throw new Error('facture d’application non enregistrée : ' + appli.erreur);
+            if (!/attendu USD|sans identifiant|sans marque/u.test(appli.erreur)) throw new Error('facture d’application non enregistrée : ' + appli.erreur);
           }
           break;
         }

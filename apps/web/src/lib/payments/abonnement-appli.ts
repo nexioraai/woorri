@@ -19,7 +19,7 @@ import 'server-only'
 import { interrupteurOuvert } from './interrupteur'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getStripe } from '@/lib/stripe'
-import { abonnementDeFacture, finDePeriode } from './facture-stripe'
+import { abonnementDeFacture, finDePeriode, prixDeFacture } from './facture-stripe'
 
 export const TYPE_APPLICATION = 'application'
 
@@ -40,10 +40,26 @@ export async function clientDuCompte(proprietaire: string, email: string): Promi
 
 export type OuverturePaiement = { readonly ok: true; readonly url: string } | { readonly ok: false; readonly status: number; readonly erreur: string }
 
+/**
+ * UN SEUL ABONNEMENT EN COURS PAR APPLI (2026-11-21). Si l'activation tarde, ou
+ * échoue, l'atelier propose encore « Publier » → Stripe : sans ce garde, un
+ * second clic ouvrait un SECOND abonnement, prélevé chaque mois. Ces états
+ * comptent comme « en cours » ; `canceled` et `incomplete_expired`, non.
+ */
+export const ETATS_ABONNEMENT_EN_COURS: ReadonlySet<string> = new Set(['active', 'trialing', 'past_due', 'unpaid', 'incomplete', 'paused'])
+export const PHRASE_ABONNEMENT_EN_COURS = 'Cette application a déjà un abonnement en cours chez Stripe : rien n’est prélevé une seconde fois. Si l’activation tarde, rechargez la page dans une minute.'
+
 export async function ouvrirPaiementAppli(o: { app: string; proprietaire: string; email: string; origine: string }): Promise<OuverturePaiement> {
   const prix = (process.env.STRIPE_PRICE_APPLICATION ?? '').trim()
   if (!/^price_[A-Za-z0-9]+$/u.test(prix)) return { ok: false, status: 503, erreur: 'Le paiement par carte des applications n’est pas configuré.' }
   const client = await clientDuCompte(o.proprietaire, o.email)
+  // Une liste illisible lève : la route répond 502, aucune page ne s'ouvre.
+  const abonnements = await getStripe().subscriptions.list({ customer: client, status: 'all', limit: 100 })
+  const enCours = abonnements.data.find((s) => s.metadata?.deribfy_app_id === o.app && ETATS_ABONNEMENT_EN_COURS.has(s.status))
+  if (enCours !== undefined) {
+    console.warn(`[abonnement] appli ${o.app} : abonnement déjà en cours ${enCours.id} (${enCours.status}), aucune page ouverte`)
+    return { ok: false, status: 409, erreur: PHRASE_ABONNEMENT_EN_COURS }
+  }
   const marque = { deribfy_type: TYPE_APPLICATION, deribfy_app_id: o.app, deribfy_owner_id: o.proprietaire }
   const session = await getStripe().checkout.sessions.create({
     mode: 'subscription',
@@ -98,13 +114,35 @@ export type ResultatFacture =
   | { readonly traitee: true; readonly ok: true; readonly statut: string; readonly jusquAu: string | null }
   | { readonly traitee: true; readonly ok: false; readonly erreur: string }
 
-/** Une facture payée : est-ce une appli ? Si oui, l'enregistrer. Ne lève jamais. */
+/**
+ * Une facture payée : est-ce une appli ? Si oui, l'enregistrer.
+ *
+ * LE FILET DE LA MARQUE (2026-11-21). La marque se lit d'abord sur l'instantané
+ * de la facture (`parent.subscription_details.metadata`). Jamais vu en
+ * production pour une appli : si cet instantané manquait, la facture partait
+ * dans le chemin des domaines, qui s'arrêtait sans rien écrire — un client
+ * payé, rien d'activé, AUCUNE alerte. Désormais, sans marque sur la facture,
+ * l'ABONNEMENT fait foi ; et une facture au prix des applis qui n'en porte
+ * nulle part est une erreur dite (anomalie + courriel), jamais un silence.
+ * Lève seulement si Stripe ne répond pas (le webhook rend 500, Stripe renvoie).
+ */
 export async function traiterFactureAppli(facture: unknown): Promise<ResultatFacture> {
   const ab = abonnementDeFacture(facture)
-  if (ab.metadata.deribfy_type !== TYPE_APPLICATION) return { traitee: false }
+  let marque = ab.metadata
+  if (marque.deribfy_type !== TYPE_APPLICATION && ab.id !== null) {
+    const sub = await getStripe().subscriptions.retrieve(ab.id)
+    marque = (sub.metadata ?? {}) as Record<string, string>
+  }
+  if (marque.deribfy_type !== TYPE_APPLICATION) {
+    const prixApp = (process.env.STRIPE_PRICE_APPLICATION ?? '').trim()
+    if (prixApp !== '' && prixDeFacture(facture) === prixApp) {
+      return { traitee: true, ok: false, erreur: `facture au prix des applications sans marque Deribfy (abonnement ${String(ab.id)})` }
+    }
+    return { traitee: false }
+  }
   const f = facture as { id?: string; amount_paid?: number; currency?: string }
-  const app = ab.metadata.deribfy_app_id ?? ''
-  const proprietaire = ab.metadata.deribfy_owner_id ?? ''
+  const app = marque.deribfy_app_id ?? ''
+  const proprietaire = marque.deribfy_owner_id ?? ''
   if (typeof f.id !== 'string' || app === '' || proprietaire === '') {
     return { traitee: true, ok: false, erreur: 'facture d’application sans identifiant, appli ou compte' }
   }

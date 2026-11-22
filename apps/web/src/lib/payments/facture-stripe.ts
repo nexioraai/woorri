@@ -12,7 +12,7 @@ export type AbonnementDeFacture = { readonly id: string | null; readonly metadat
 type FactureBrute = {
   subscription?: unknown
   parent?: { subscription_details?: { subscription?: unknown; metadata?: Record<string, string> | null } | null } | null
-  lines?: { data?: { period?: { end?: number } }[] }
+  lines?: { data?: { period?: { end?: number }; pricing?: { price_details?: { price?: unknown } | null } | null; price?: unknown }[] }
 }
 
 const idDe = (v: unknown): string | null =>
@@ -25,6 +25,16 @@ export function abonnementDeFacture(facture: unknown): AbonnementDeFacture {
     id: idDe(details?.subscription) ?? idDe(f.subscription),
     metadata: details?.metadata ?? {},
   }
+}
+
+/**
+ * Le prix de la première ligne. MESURÉ le 2026-11-21 sur une facture réelle en
+ * version dahlia : `lines.data[0].pricing.price_details.price` ; l'ancienne
+ * forme (`lines.data[0].price`) reste lue en repli.
+ */
+export function prixDeFacture(facture: unknown): string | null {
+  const l = (facture as FactureBrute | null)?.lines?.data?.[0]
+  return idDe(l?.pricing?.price_details?.price) ?? idDe(l?.price)
 }
 
 /** La fin de la période payée par cette facture (ISO), lue sur sa première ligne. */

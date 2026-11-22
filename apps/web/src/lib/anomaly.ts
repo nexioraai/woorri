@@ -40,6 +40,10 @@ const ALWAYS_EMAIL_TYPES = new Set([
   'cj_product_resolution_failed',
   'checkout_order_items_insert_failed',
   'checkout_order_designs_insert_failed',
+  // 2026-11-21 : une facture d'APPLICATION payée et non enregistrée. Chacune
+  // est un client qui a payé sans être activé : une action précise, jamais
+  // regroupée sous l'anti-spam d'une heure.
+  'stripe_facture_application',
 ]);
 
 export type AnomalySeverity = 'blocked' | 'warning' | 'info';
