@@ -28,13 +28,11 @@
 import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { lireSource } from './lire-source'
+import { sourcePublication } from './source-publication'
 
-const ROUTE = join(
-  __dirname, '..', '..', '..', 'app', 'api', 'generateur', 'publier', 'route.ts',
-)
 
 describe('EP-356 · P5 · publier nomme ce qui sera public', () => {
-  const src = (): string => lireSource(ROUTE)
+  const src = (): string => sourcePublication()
 
   it('① LA LISTE EST CALCULÉE DEPUIS LA DÉCLARATION STOCKÉE', () => {
     // ── PAS DEPUIS LE SQL, ET PAS DEPUIS LA DEMANDE.

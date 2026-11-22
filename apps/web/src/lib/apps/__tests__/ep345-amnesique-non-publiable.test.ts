@@ -37,6 +37,7 @@ import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { reprochePersistance } from '../juge-persistance'
 import { lireSource } from './lire-source'
+import { sourcePublication } from './source-publication'
 
 const SRC = join(__dirname, '..', '..', '..')
 const SENTINELLE = [{ table: '', lue: false, ecrite: false }]
@@ -74,7 +75,7 @@ describe('EP-345 · l’œuvre amnésique', () => {
   })
 
   it('④ LA PUBLICATION REFUSE UNE ŒUVRE AMNÉSIQUE', () => {
-    const src = lireSource(join(SRC, 'app', 'api', 'generateur', 'publier', 'route.ts'))
+    const src = sourcePublication()
     // Elle lit le verdict du juge, pas une heuristique sur les fichiers.
     expect(src, 'la publication ne lit pas le verdict de persistance').toContain(
       'sections_acquises',
@@ -90,7 +91,7 @@ describe('EP-345 · l’œuvre amnésique', () => {
   it('⑤ ET IL DONNE LA SORTIE — un mur serait pire que A', () => {
     // « Sans cette sortie, la personne a payé, a une application qu'elle
     //   ne peut pas publier, et aucune idée de quoi faire. »
-    const src = lireSource(join(SRC, 'app', 'api', 'generateur', 'publier', 'route.ts'))
+    const src = sourcePublication()
     // ── L'ANCRE EST DANS LE BLOC, PAS DANS LE FICHIER.
     //
     // `toMatch(/quoiFaire:/)` sur tout le fichier était satisfait par le
@@ -111,8 +112,14 @@ describe('EP-345 · l’œuvre amnésique', () => {
     // L'USAGE, PAS LA DÉFINITION : un refus structuré que personne
     // n'affiche est un mur avec une sortie dessinée au dos.
     const atelier = lireSource(join(SRC, 'app', 'atelier', '[id]', 'page.tsx'))
+    // DEPUIS LE 2026-11-22, le module partagé lit le refus et le rend tel
+    // quel (demande déjà augmentée) ; l'atelier le porte au bouton.
+    const modulePartage = lireSource(join(SRC, 'components', 'apps', 'publierAppli.ts'))
+    expect(modulePartage, 'le refus d’amnésie n’est plus lu').toMatch(
+      /d\?\.amnesique === true[\s\S]{0,120}type: 'amnesique'[\s\S]{0,200}regenerer: String\(d\.regenerer/u,
+    )
     expect(atelier, 'le refus d’amnésie n’atteint pas l’écran').toMatch(
-      /d\?\.amnesique === true[\s\S]{0,120}setARegenerer\(/u,
+      /issue\.type === 'amnesique'[\s\S]{0,120}setARegenerer\(issue\.regenerer\)/u,
     )
     // ── ET LA DEMANDE N'EST PAS RECOLLÉE DEUX FOIS.
     //

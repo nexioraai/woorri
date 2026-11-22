@@ -20,6 +20,7 @@ import { interrupteurOuvert } from './interrupteur'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getStripe } from '@/lib/stripe'
 import { abonnementDeFacture, finDePeriode, prixDeFacture } from './facture-stripe'
+import { CLE_ACCORD_LECTURE } from '@/lib/apps/accord-stripe'
 
 export const TYPE_APPLICATION = 'application'
 
@@ -49,7 +50,10 @@ export type OuverturePaiement = { readonly ok: true; readonly url: string } | { 
 export const ETATS_ABONNEMENT_EN_COURS: ReadonlySet<string> = new Set(['active', 'trialing', 'past_due', 'unpaid', 'incomplete', 'paused'])
 export const PHRASE_ABONNEMENT_EN_COURS = 'Cette application a déjà un abonnement en cours chez Stripe : rien n’est prélevé une seconde fois. Si l’activation tarde, rechargez la page dans une minute.'
 
-export async function ouvrirPaiementAppli(o: { app: string; proprietaire: string; email: string; origine: string }): Promise<OuverturePaiement> {
+// L'ACCORD DE LECTURE PUBLIQUE (2026-11-22) voyage avec l'abonnement : le
+// webhook, qui publie sans personne devant l'écran, ne publie que si la liste
+// acceptée est encore celle de l'appli (accord-stripe.ts).
+export async function ouvrirPaiementAppli(o: { app: string; proprietaire: string; email: string; origine: string; accordLecture?: string | null }): Promise<OuverturePaiement> {
   const prix = (process.env.STRIPE_PRICE_APPLICATION ?? '').trim()
   if (!/^price_[A-Za-z0-9]+$/u.test(prix)) return { ok: false, status: 503, erreur: 'Le paiement par carte des applications n’est pas configuré.' }
   const client = await clientDuCompte(o.proprietaire, o.email)
@@ -60,7 +64,8 @@ export async function ouvrirPaiementAppli(o: { app: string; proprietaire: string
     console.warn(`[abonnement] appli ${o.app} : abonnement déjà en cours ${enCours.id} (${enCours.status}), aucune page ouverte`)
     return { ok: false, status: 409, erreur: PHRASE_ABONNEMENT_EN_COURS }
   }
-  const marque = { deribfy_type: TYPE_APPLICATION, deribfy_app_id: o.app, deribfy_owner_id: o.proprietaire }
+  const marque: Record<string, string> = { deribfy_type: TYPE_APPLICATION, deribfy_app_id: o.app, deribfy_owner_id: o.proprietaire }
+  if (typeof o.accordLecture === 'string' && o.accordLecture !== '') marque[CLE_ACCORD_LECTURE] = o.accordLecture
   const session = await getStripe().checkout.sessions.create({
     mode: 'subscription',
     customer: client,
@@ -111,7 +116,7 @@ export async function ouvrirPortail(o: { proprietaire: string; email: string; re
 
 export type ResultatFacture =
   | { readonly traitee: false }
-  | { readonly traitee: true; readonly ok: true; readonly statut: string; readonly jusquAu: string | null }
+  | { readonly traitee: true; readonly ok: true; readonly statut: string; readonly jusquAu: string | null; readonly app: string; readonly proprietaire: string; readonly accordLecture: string | null }
   | { readonly traitee: true; readonly ok: false; readonly erreur: string }
 
 /**
@@ -164,7 +169,7 @@ export async function traiterFactureAppli(facture: unknown): Promise<ResultatFac
   })
   if (r.error !== null) return { traitee: true, ok: false, erreur: r.error.message }
   const d = r.data as { statut: string; jusqu_au: string | null }
-  return { traitee: true, ok: true, statut: d.statut, jusquAu: d.jusqu_au }
+  return { traitee: true, ok: true, statut: d.statut, jusquAu: d.jusqu_au, app, proprietaire, accordLecture: marque[CLE_ACCORD_LECTURE] ?? null }
 }
 
 // ── L'INTERRUPTEUR DU PAIEMENT PAR CARTE (décision du propriétaire, 2026-11-20).

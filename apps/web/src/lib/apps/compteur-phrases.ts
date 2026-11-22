@@ -100,8 +100,8 @@ export type ActionPublier = 'publier' | 'payer' | 'fermee'
 
 /**
  * Payé (ou exempté, ou compteur illisible) : publier. Sinon : payer par carte
- * si le paiement est ouvert pour ce compte ET que son prix est connu (on
- * n'envoie personne chez Stripe sans lui avoir montré le prix) ; sinon, dire
+ * si le paiement est ouvert pour ce compte ET que son prix se lit chez Stripe
+ * (un prix illisible = un paiement mal réglé : personne n'y est envoyé) ; sinon, dire
  * que le paiement en ligne n'est pas encore ouvert — jamais une erreur brute.
  */
 export function actionPublier(etat: EtatCompteur | null, carteOuverte: boolean, prix: PrixCarte | null): ActionPublier {
@@ -109,10 +109,9 @@ export function actionPublier(etat: EtatCompteur | null, carteOuverte: boolean, 
   return carteOuverte && prix !== null ? 'payer' : 'fermee'
 }
 
-/** Le libellé du bouton : le prix est visible AVANT le départ chez Stripe. */
-export function libellePublier(action: ActionPublier, prix: PrixCarte | null): string {
-  return action === 'payer' && prix !== null ? `Publier — ${prixLisible(prix)}` : 'Publier'
-}
+// LE LIBELLÉ EST « PUBLIER », PARTOUT (décision du propriétaire, 2026-11-22) :
+// le prix n'apparaît que sur la page Stripe. `libellePublier` (« Publier —
+// 20 $ US / mois ») a été retiré.
 
 /** Ce que dit l'écran quand le paiement en ligne n'est pas ouvert pour ce compte. */
 export const PHRASE_PUBLIER_FERMEE =

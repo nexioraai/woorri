@@ -43,7 +43,7 @@
  * et « Télécharger » agiraient sur autre chose que ce que l'œil voit — et la
  * personne publierait ce qu'elle ne regarde pas. Un seul courant, partout.
  */
-import { publierAvecAccord } from '@/components/apps/accordLecturePublique';
+import { adresseEnLigne, lancerPublication } from '@/components/apps/publierAppli';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -61,11 +61,10 @@ import { CadreApercu } from '@/components/atelier/CadreApercu';
 import { useEchelleApercu } from '@/components/atelier/useEchelleApercu';
 import { ChoixAppareil } from '@/components/atelier/ChoixAppareil';
 import { IdentifiantsOeuvre } from '@/components/apps/IdentifiantsOeuvre';
-import { adresseProposee, TITRE_SANS_NOM } from '@/lib/apps/nom-produit';
+import { TITRE_SANS_NOM } from '@/lib/apps/nom-produit';
 import { echangesDe, heureCourte, type VersionLue } from '@/lib/apps/fil-atelier';
 import { phraseVersion } from '@/lib/apps/versions-oeuvre';
-import { actionPublier, boutonOuvert, libelleBouton, libellePublier, PHRASE_PUBLIER_FERMEE, phraseApresRetouche, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
-import type { PrixCarte } from '@/lib/apps/compteur-phrases';
+import { boutonOuvert, libelleBouton, phraseApresRetouche, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
 import { PayerMobileMoney } from '@/components/atelier/PayerMobileMoney';
 import type { EtatCompteur } from '@/lib/apps/compteur-phrases';
 
@@ -124,10 +123,6 @@ export default function AtelierPage() {
   const [compteur, setCompteur] = useState<EtatCompteur | null>(null);
   // Le paiement par carte est-il ouvert à CE compte ? (interrupteur serveur, éteint par défaut)
   const [abonnementCarte, setAbonnementCarte] = useState(false);
-  // Le prix de l'abonnement par carte, LU CHEZ STRIPE par le serveur (null :
-  // paiement fermé pour ce compte, ou prix illisible — personne n'est alors
-  // envoyé chez Stripe).
-  const [prixCarte, setPrixCarte] = useState<PrixCarte | null>(null);
   // Ce que « Publier » a à dire, sous la barre : paiement pas encore ouvert,
   // paiement annulé, ou abonnement actif avec « Publier maintenant ».
   const [avisPublication, setAvisPublication] = useState<{ texte: string; publierMaintenant: boolean } | null>(null);
@@ -236,6 +231,11 @@ export default function AtelierPage() {
     setCompteur(c);
     return c;
   }, [id, jeton]);
+  /** L'adresse EN LIGNE de l'appli, ou null (un nom enregistré n'en a pas). */
+  const lireAdresse = useCallback(async (): Promise<string | null> => {
+    const t = await jeton();
+    return t === null ? null : adresseEnLigne(id, `Bearer ${t}`);
+  }, [id, jeton]);
   const versStripe = async (chemin: 'abonnement' | 'abonnement/portail') => {
     const t = await jeton();
     if (t === null) return;
@@ -267,12 +267,22 @@ export default function AtelierPage() {
       essais += 1;
       void relireCompteur().then((c) => {
         if (c !== null && !c.exempte && c.actif) {
-          setAbonnementAvis('Abonnement actif. Merci !');
-          // LA PUBLICATION SE RELANCE EN UN CLIC (décision du 2026-11-21) : le
-          // nom public et l'accord de lecture se choisissent au moment de
-          // publier, par la personne — on ne publie pas à sa place au retour.
-          setAvisPublication({ texte: 'Abonnement actif : votre application peut être publiée.', publierMaintenant: true });
-          window.clearInterval(minuteur);
+          // LE PAIEMENT REÇU PUBLIE (décision du 2026-11-22) : le webhook met
+          // l'appli en ligne au nom choisi avant Stripe. L'écran attend son
+          // adresse ; sans elle au bout d'une minute, « Publier maintenant »
+          // republie sans repasser par Stripe.
+          void lireAdresse().then((adresse) => {
+            if (adresse !== null) {
+              setAbonnementAvis('Abonnement actif. Merci !');
+              setLienPublic(adresse);
+              setAvisPublication({ texte: 'Abonnement actif : votre application est en ligne.', publierMaintenant: false });
+              window.clearInterval(minuteur);
+            } else if (essais >= 12) {
+              setAbonnementAvis('Abonnement actif. Merci !');
+              setAvisPublication({ texte: 'Abonnement actif : votre application peut être publiée.', publierMaintenant: true });
+              window.clearInterval(minuteur);
+            }
+          });
         } else if (essais >= 12) {
           setAbonnementAvis('Le paiement est reçu, l’activation tarde : rechargez la page dans une minute. Rien ne sera prélevé deux fois.');
           window.clearInterval(minuteur);
@@ -280,7 +290,7 @@ export default function AtelierPage() {
       });
     }, 5000);
     return () => { window.clearTimeout(t1); window.clearInterval(minuteur); };
-  }, [relireCompteur]);
+  }, [relireCompteur, lireAdresse]);
 
   const chargerVersions = useCallback(async () => {
     const t = await jeton();
@@ -325,11 +335,10 @@ export default function AtelierPage() {
           headers: { Authorization: `Bearer ${t}` },
         });
         if (res.ok) {
-          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null; abonnementCarte?: boolean; prixCarte?: PrixCarte | null; mobileMoney?: boolean };
+          const d = (await res.json()) as { plafond?: string; perimetre?: string; compteur?: EtatCompteur | null; abonnementCarte?: boolean; mobileMoney?: boolean };
           setPlafond(d.plafond ?? '');
           setCompteur(d.compteur ?? null);
           setAbonnementCarte(d.abonnementCarte === true);
-          setPrixCarte(d.prixCarte != null && typeof d.prixCarte.montant === 'number' ? d.prixCarte : null);
           setMobileMoney(d.mobileMoney === true);
           setPerimetre(d.perimetre ?? '');
         }
@@ -581,49 +590,26 @@ export default function AtelierPage() {
     } catch { setErreur('Le retour à cette version a échoué. Réessayez.'); }
   };
 
+  // ── « PUBLIER » EST « PUBLIER » (2026-11-22) : le même module que « Mes
+  //    projets ». Nom demandé une fois, puis Stripe si ce n'est pas payé ;
+  //    publié (ou republié) si c'est payé ; la phrase si la carte est fermée.
   const publier = async () => {
     const t = await jeton();
     if (t === null || app === null) return;
     setErreur(null);
-    const sous = window.prompt(
-      `Adresse publique de « ${app.nom ?? 'votre application'} » :\n` +
-        '<adresse>.deribfy.app\n\nMinuscules, chiffres et tirets. ' +
-        'Un seul niveau : les points sont refusés. Laisser vide pour un lien simple.',
-      adresseProposee(app.nom ?? app.demande),
-    );
-    if (sous === null) return;
-    try {
-      const res = await publierAvecAccord(
-        `/api/generateur/publier?id=${encodeURIComponent(id)}${sous.trim() !== '' ? `&sous=${encodeURIComponent(sous.trim().toLowerCase())}` : ''}`,
-        `Bearer ${t}`,
-      );
-      // Le champ s'appelle `lien`, pas `url` — bug attrapé en production le
-      // 2026-10-30. On lit les deux : si la route renomme, le bouton survit.
-      const d = (await res.json().catch(() => null)) as {
-        lien?: string; url?: string; error?: string; erreurSousDomaine?: string;
-        compte?: { adresse?: string; motDePasse?: string | null };
-        amnesique?: boolean; regenerer?: string; quoiFaire?: string;
-      } | null;
-      const lien = d?.lien ?? d?.url;
-      // ── UNE PUBLICATION REFUSÉE POUR AMNÉSIE DONNE SA SORTIE.
-      //
-      // Le serveur rend la demande DÉJÀ AUGMENTÉE : la personne n'a rien
-      // à recopier, et le bouton qui existe déjà pour le refus de
-      // retouche la porte telle quelle.
-      if (!res.ok && d?.amnesique === true) {
-        setARegenerer(String(d.regenerer ?? ''));
-        setErreur(`${String(d.error ?? '')} ${String(d.quoiFaire ?? '')}`.trim());
-        return;
-      }
-      if (!res.ok || lien === undefined) { setErreur(d?.error ?? 'La publication a échoué.'); return; }
-      if (d?.erreurSousDomaine !== undefined) setErreur(`Adresse nommée refusée : ${d.erreurSousDomaine}`);
-      setLienPublic(lien);
-      // ── LE MOT DE PASSE NE REVIENT JAMAIS, mesuré le 2026-11-04 : la
-      //    route le rend À LA CRÉATION, et republier rend `null`. Le jeter
-      //    ici obligeait à cliquer « Refaire » pour obtenir une clé qu'on
-      //    venait d'avoir.
-      if (d?.compte != null) setCompte({ etat: 'actif', ...d.compte });
-    } catch { setErreur('La publication a échoué. Réessayez.'); }
+    setAvisPublication(null);
+    const issue = await lancerPublication({ id, titre: app.nom ?? null, demande: app.demande, autorisation: `Bearer ${t}` });
+    if (issue.type === 'fermee') { setAvisPublication({ texte: issue.message, publierMaintenant: false }); return; }
+    if (issue.type === 'erreur') { setErreur(issue.message); return; }
+    // ── UNE PUBLICATION REFUSÉE POUR AMNÉSIE DONNE SA SORTIE : la demande
+    //    revient déjà augmentée, le bouton du refus de retouche la porte.
+    if (issue.type === 'amnesique') { setARegenerer(issue.regenerer); setErreur(issue.message); return; }
+    if (issue.type !== 'publiee') return;
+    if (issue.erreurSousDomaine !== null) setErreur(`Adresse nommée refusée : ${issue.erreurSousDomaine}`);
+    setLienPublic(issue.lien);
+    // ── LE MOT DE PASSE NE REVIENT JAMAIS, mesuré le 2026-11-04 : la
+    //    route le rend À LA CRÉATION, et republier rend `null`.
+    if (issue.compte != null) setCompte({ etat: 'actif', ...issue.compte });
   };
 
   const telecharger = async () => {
@@ -751,23 +737,16 @@ export default function AtelierPage() {
               )}
             </div>
           )}
-          {/* « PUBLIER » MÈNE AU PAIEMENT (2026-11-21) : un seul chemin. Payé
-              → publier ; non payé et carte ouverte → Stripe, prix affiché sur
-              le bouton ; carte fermée → une phrase, jamais une erreur brute.
-              La route refuse de toute façon sans période payée (402). */}
+          {/* « PUBLIER » EST « PUBLIER » (2026-11-22) : le même geste que dans
+              « Mes projets » (lancerPublication). Le prix n'est que sur la
+              page Stripe ; la route décide, l'écran ne devine rien. */}
           <button
             type="button"
-            onClick={() => {
-              const action = actionPublier(compteur, abonnementCarte, prixCarte);
-              setAvisPublication(null);
-              if (action === 'publier') void publier();
-              else if (action === 'payer') void versStripe('abonnement');
-              else setAvisPublication({ texte: PHRASE_PUBLIER_FERMEE, publierMaintenant: false });
-            }}
+            onClick={() => { void publier(); }}
             className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-xs text-slate-300 transition hover:border-white/20 hover:text-white"
           >
             <Globe size={14} strokeWidth={2} aria-hidden />
-            {libellePublier(actionPublier(compteur, abonnementCarte, prixCarte), prixCarte)}
+            Publier
           </button>
           <button
             type="button"

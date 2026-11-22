@@ -1,6 +1,6 @@
 # L'achat de preuve Stripe : « Gestion de stock » (au plus tard le 2026-12-01)
 
-> Réécrit le 2026-11-22. Stripe est en **mode réel**. C'est un vrai paiement de 20 $ US, remboursé en entier ensuite.
+> Réécrit le 2026-11-22, puis revu le même jour pour « Publier est Publier » : un seul bouton « Publier », le même dans l'atelier et dans « Mes projets ». Stripe est en **mode réel**. C'est un vrai paiement de 20 $ US, remboursé en entier ensuite.
 >
 > **Youssouf fait tous les gestes** : paiement, remboursement, réglages. Claude Code ne paie rien, ne rembourse rien, n'écrit rien chez Stripe ni dans la base. Il lit seulement : le journal Vercel, la base en lecture seule, et Stripe par des lectures (GET).
 >
@@ -16,34 +16,40 @@
 
 | # | Geste (Youssouf) | Ce qu'il doit voir si c'est bon |
 |---|---|---|
-| A1 | Rien : Claude Code annonce que le commit du cycle de vie est en production | le message donne le commit et « READY » |
-| A2 | Éditeur SQL de nexiora-ai : appliquer `apps/web/supabase/sql/stripe_cycle_de_vie.sql` | « Success. No rows returned » |
-| A3 | Même éditeur : lancer `apps/web/supabase/sql/stripe_cycle_de_vie_verification.sql` | une **erreur** qui commence par « VERIFICATION_OK : annulée, dépubliée… ». C'est voulu : l'erreur annule tout. Toute autre erreur : arrêter et me la montrer |
-| A4 | Stripe → Développeurs → Webhooks → point `https://www.deribfy.com/api/stripe/webhook` → *Modifier les événements* : **ajouter `charge.refunded` et `charge.dispute.created`** | le point écoute **8** événements : les 6 d'aujourd'hui, plus ces deux-là |
-| A5 | Ouvrir la carte pour le compte d'essai : `abonnement_carte` doit contenir `contact@deribfy.com`, ou valoir `tous` | dans l'atelier de « Gestion de stock », le bouton dit **« Publier — 20 $ US / mois »** |
+| A1 | Rien : Claude Code annonce que le commit « Publier est Publier » est en production | le message donne le commit et « READY » |
+| A2 | **Fait le 2026-11-22.** `stripe_cycle_de_vie.sql` appliqué (« Success ») | — |
+| A3 | **Fait le 2026-11-22.** Vérification : « ERROR: P0001: VERIFICATION_OK : annulée, dépubliée, période ramenée, 1 ligne, doublon refusé, facture inconnue dite — rien n'est gardé » | — |
+| A4 | **Fait le 2026-11-22.** La destination `webhook-live-nexiora` écoute 8 événements, dont `charge.refunded` et `charge.dispute.created` | — |
+| A5 | **Fait le 2026-11-22.** `abonnement_carte` contient `contact@deribfy.com` | dans l'atelier ET dans « Mes projets », le bouton dit **« Publier »**, sans prix |
 
-Sans A2, un remboursement d'appli rend 500 : Stripe renvoie l'avis pendant 3 jours, et rien ne se coupe en attendant.
+Aucun nouveau SQL pour « Publier est Publier » : le nom choisi va dans la colonne qui existe déjà (`publication_slug`).
 
-Sans A4, Stripe n'envoie même pas l'avis du remboursement. C'est l'état mesuré le 2026-11-22 : le point de terminaison n'écoute ni `charge.refunded` ni `charge.dispute.created`.
-
-## B. L'achat
+## B. L'achat (le nom d'abord, puis Stripe, puis l'appli se publie seule)
 
 | # | Geste | Ce qu'il doit voir si c'est bon |
 |---|---|---|
-| B1 | Se connecter avec `contact@deribfy.com` et ouvrir l'atelier de « Gestion de stock » | le bouton **« Publier — 20 $ US / mois »** |
-| B2 | Clic sur ce bouton | la page Stripe montre « Deribfy — Application » et **20 $ US par mois**. Si Stripe propose la monnaie locale (CAD), noter le montant et la devise affichés |
-| B3 | Payer avec une vraie carte | Stripe confirme, puis revient seul à l'atelier, avec `?paiement=recu` dans l'adresse |
-| B4 | Attendre, sans recliquer | d'abord « Paiement reçu par Stripe — l'activation arrive dans quelques secondes. », puis, en moins d'une minute, **« Abonnement actif. Merci ! »** et **« Abonnement actif : votre application peut être publiée. »** |
-| B5 | « Publier maintenant », choisir le nom public | l'appli s'ouvre à **`https://<nom>.deribfy.app`**. Noter ce nom |
-| B6 | « Gérer mon abonnement » | le portail Stripe montre l'abonnement **actif** et une facture **payée** de 20 $ US |
+| B1 | Se connecter avec `contact@deribfy.com`, ouvrir **« Mes projets »** | la carte « Gestion de stock » porte un bouton **« Publier »**, sans prix |
+| B2 | Clic sur « Publier » | la question **« Adresse publique de « Gestion de stock » : <adresse>.deribfy.app »**, avec un nom proposé. Saisir le nom voulu (minuscules, chiffres, tirets), valider |
+| B3 | — | la page Stripe s'ouvre **aussitôt** : « Deribfy — Application », **20 $ US par mois**, le bon courriel. Si Stripe propose la monnaie locale (CAD), noter le montant et la devise |
+| B4 | **Ne pas payer** : revenir en arrière (bouton retour de Stripe) | l'atelier dit « Paiement annulé : rien n'a été prélevé, l'application n'est pas publiée. » |
+| B5 | Ouvrir l'atelier de « Gestion de stock », clic sur **« Publier »** | **aucune question** : le nom est gardé, la page Stripe s'ouvre directement. C'est la preuve que les deux boutons font la même chose |
+| B6 | Payer avec une vraie carte | Stripe confirme, puis revient seul à l'atelier, avec `?paiement=recu` dans l'adresse |
+| B7 | Attendre, **sans cliquer** | d'abord « Paiement reçu par Stripe — l'activation arrive dans quelques secondes. », puis, en moins d'une minute, **« Abonnement actif. Merci ! »** et **« Abonnement actif : votre application est en ligne. »**, avec le lien `https://<nom>.deribfy.app` |
+| B8 | Ouvrir ce lien | l'appli s'affiche. **Aucun clic sur « Publier » n'a été nécessaire** |
+| B9 | « Gérer mon abonnement » | le portail Stripe montre l'abonnement **actif** et une facture **payée** de 20 $ US |
 
-**Si B4 dit « l'activation tarde » au bout d'une minute : NE PAS repayer** (la page de paiement le refuserait de toute façon : un abonnement est déjà en cours). M'écrire l'heure.
+**Entre B2 et B6, l'adresse `https://<nom>.deribfy.app` doit répondre « introuvable »** : un nom choisi mais pas payé ne publie rien.
 
-**Ce que je lis après B6 (lecture seule) :**
-- journal Vercel : `[stripe] avis reçu invoice.paid evt_…`, sans « Handler error » ;
+**Si B7 dit « votre application peut être publiée » au lieu de « est en ligne » :** le paiement est enregistré, mais la publication automatique n'a pas abouti. Un courriel « Anomalie checkout : stripe_publication_application » en dit la raison. Cliquer « Publier maintenant » publie, sans repasser par Stripe. M'écrire l'heure.
+
+**Si B7 dit « l'activation tarde » au bout d'une minute : NE PAS repayer** (la page de paiement le refuserait de toute façon : un abonnement est déjà en cours). M'écrire l'heure.
+
+**Ce que je lis après B9 (lecture seule) :**
+- journal Vercel : `[stripe] avis reçu invoice.paid evt_…`, puis `[stripe] appli d925850b… après paiement → publiee`, sans « Handler error » ;
+- `app_generations` : `publication_slug` = le nom choisi en B2 (écrit AVANT le paiement), `publication_jeton` rempli (écrit APRÈS) ;
 - `app_paiements` : une ligne `stripe`, `reference = in_…`, `objet = abonnement`, **20 USD** ;
 - `app_compteurs` : l'appli est `abonnee`, et `paye_jusqu_au` vaut la fin de la période Stripe ;
-- Stripe (GET) : l'abonnement porte `deribfy_type = application` et `deribfy_app_id = d925850b…` ; la facture est en USD, `amount_paid = 2000`.
+- Stripe (GET) : **une seule** session payée pour cette appli, malgré les deux ouvertures (B3, B5) ; l'abonnement porte `deribfy_type = application` et `deribfy_app_id = d925850b…` ; la facture est en USD, `amount_paid = 2000`.
 
 ## C. Le remboursement total
 
@@ -52,14 +58,14 @@ Sans A4, Stripe n'envoie même pas l'avis du remboursement. C'est l'état mesur�
 | C1 | Stripe → Paiements → le paiement de 20 $ → **Rembourser** → **montant total** | Stripe : « Remboursé ». **Ne pas annuler l'abonnement à la main** : c'est Deribfy qui doit le faire, et c'est ce qu'on vérifie |
 | C2 | Une minute plus tard, recharger `https://<nom>.deribfy.app` | **« introuvable »** : l'appli est dépubliée |
 | C3 | Stripe → Clients → `contact@deribfy.com` → abonnement | **Annulé**, sans geste de Youssouf |
-| C4 | Atelier de « Gestion de stock » | le bouton redevient **« Publier — 20 $ US / mois »** : l'abonnement n'est plus actif |
+| C4 | Atelier de « Gestion de stock », clic sur « Publier » | **aucune question de nom**, la page Stripe s'ouvre : l'abonnement n'est plus actif, le nom est gardé. **Ne pas payer** : revenir en arrière |
 | C5 | `/admin`, rubrique anomalies, et la boîte de `issayamiyoussouf@gmail.com` | une ligne et un courriel **« Anomalie checkout : stripe_remboursement_application »**, avec la facture, l'appli et `appli_depubliee = true` |
 
 **Ce que je lis après C5 (lecture seule) :**
 - journal Vercel : `[stripe] avis reçu charge.refunded evt_…`, puis `cycle d'une appli charge.refunded … → annulee_depubliee` ;
 - `app_paiements` : une **seconde** ligne, `objet = annulation`, `reference = annulation:in_…`, 20 USD, qui renvoie à la ligne payée (`annule`). La première ligne est intacte : le registre est en ajout seul ;
 - `app_compteurs` : `paye_jusqu_au` est passé (vers l'heure du remboursement) ;
-- `app_generations` : `publication_jeton` est vide ; le nom public reste réservé à l'appli ;
+- `app_generations` : `publication_jeton` est vide ; `publication_slug` garde le nom (il reste réservé à l'appli) ;
 - `stripe_avis_traites` : l'avis du remboursement y est noté ;
 - Stripe (GET) : l'abonnement est `canceled` et le paiement `refunded = true`.
 
@@ -67,7 +73,8 @@ Sans A4, Stripe n'envoie même pas l'avis du remboursement. C'est l'état mesur�
 
 ## D. Si quelque chose ne va pas
 
-- **Payé, rien d'activé (B4).** Un courriel « stripe_facture_application » arrive, et une ligne s'inscrit dans `/admin`. Le remède : une fois la cause corrigée, **renvoyer** l'avis `invoice.paid` depuis Stripe. C'est sans risque : la référence est la facture, et un renvoi ne compte qu'une fois.
+- **Payé, rien d'activé (B7).** Un courriel « stripe_facture_application » arrive, et une ligne s'inscrit dans `/admin`. Le remède : une fois la cause corrigée, **renvoyer** l'avis `invoice.paid` depuis Stripe. C'est sans risque : la référence est la facture, et un renvoi ne compte qu'une fois.
+- **Payé, activé, pas publié (B7 dit « peut être publiée »).** Le courriel « stripe_publication_application » donne la raison (par exemple une liste lisible par tout le monde ajoutée après le clic). « Publier » publie sans repasser par Stripe.
 - **Remboursé, toujours en ligne (C2).** Vérifier A2 (fonction appliquée) et A4 (événement écouté). Le journal Vercel dit lequel manque :
   - aucune ligne `charge.refunded` : c'est A4 ;
   - « Handler error … annuler_paiement_stripe » : c'est A2.

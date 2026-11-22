@@ -53,6 +53,7 @@ import {
   CORPS_ACCORD,
 } from '../../../components/apps/accordLecturePublique'
 import { lireSource } from './lire-source'
+import { sourcePublication } from './source-publication'
 import { motifTexte } from './motif-texte'
 
 const SRC = join(__dirname, '..', '..', '..')
@@ -102,12 +103,17 @@ describe('EP-369 · la lecture publique passe devant quelqu’un', () => {
   })
 
   it('④ LES TROIS ÉCRANS PASSENT PAR LA PORTE', () => {
+    // L'atelier et « Mes projets » publient par UN module partagé depuis le
+    // 2026-11-22 (« Publier est Publier ») : c'est lui qui porte la question,
+    // et les deux écrans doivent passer par lui.
     for (const f of [
       'components/onboarding/ConversationApplication.tsx',
-      'app/atelier/[id]/page.tsx',
-      'app/dashboard/page.tsx',
+      'components/apps/publierAppli.ts',
     ]) {
       expect(lire(f), `${f} ne demande pas l’accord`).toMatch(motifTexte('publierAvecAccord('))
+    }
+    for (const f of ['app/atelier/[id]/page.tsx', 'app/dashboard/page.tsx']) {
+      expect(lire(f), `${f} ne publie plus par le module partagé`).toMatch(motifTexte('lancerPublication('))
     }
   })
 
@@ -170,7 +176,7 @@ describe('EP-369 · la lecture publique passe devant quelqu’un', () => {
   it('⑥ et la route exige toujours l’accord — sinon la porte garde le vide', () => {
     // La leçon du relevé inerte : si la route cessait d'exiger le drapeau,
     // les cas ① à ⑤ resteraient verts en gardant plus rien.
-    const route = lire('app/api/generateur/publier/route.ts')
+    const route = sourcePublication()
     expect(route).toMatch(motifTexte('lecturePubliqueAcceptee === true'))
     expect(route).toMatch(motifTexte('publiques.length > 0 && !accord'))
   })

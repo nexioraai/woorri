@@ -5,6 +5,7 @@ import { assurerAdresseSite } from '@/lib/sites/adresse-site';
 import { logAnomaly } from '@/lib/anomaly';
 import { TYPE_APPLICATION, traiterFactureAppli } from '@/lib/payments/abonnement-appli';
 import { abonnementDeFacture } from '@/lib/payments/facture-stripe';
+import { publierApresPaiement } from '@/lib/payments/publier-apres-paiement';
 import { traiterEchecAppli, traiterLitigeAppli, traiterRemboursementAppli, type ResultatCycle } from '@/lib/payments/cycle-de-vie-appli';
 
 import { supabaseAdmin as supabase, supabaseAdmin } from '@/lib/supabase-admin';
@@ -80,6 +81,11 @@ export async function POST(req: Request) {
           if (!appli.ok) {
             await logAnomaly({ type: 'stripe_facture_application', severity: 'blocked', details: { facture: inv?.id ?? null, erreur: appli.erreur } });
             if (!/attendu USD|sans identifiant|sans marque/u.test(appli.erreur)) throw new Error('facture d’application non enregistrée : ' + appli.erreur);
+          } else {
+            // ── LE PAIEMENT REÇU PUBLIE (2026-11-22), au nom enregistré au
+            //    clic. Après l'enregistrement, jamais avant ; ne lève jamais.
+            const effet = await publierApresPaiement({ app: appli.app, proprietaire: appli.proprietaire, accordLecture: appli.accordLecture });
+            console.log(`[stripe] appli ${appli.app} après paiement → ${effet}`);
           }
           break;
         }

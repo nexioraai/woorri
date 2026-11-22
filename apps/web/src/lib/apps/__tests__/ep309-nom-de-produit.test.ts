@@ -143,7 +143,12 @@ describe('EP-309 — le nom du produit', () => {
     // Le tableau de bord portait sa propre copie, qui ignorait les noms
     // réservés : il proposait une adresse que la route refusait ensuite.
     const bord = lire('app', 'dashboard', 'page.tsx')
-    expect(bord.includes('adresseProposee')).toBe(true)
+    // DEPUIS LE 2026-11-22, la proposition vient du module que l'atelier et
+    // « Mes projets » partagent : une seule copie de la question du nom.
+    const modulePartage = lire('components', 'apps', 'publierAppli.ts')
+    expect(modulePartage.includes('adresseProposee(')).toBe(true)
+    expect(/normalize\('NFD'\)/u.test(modulePartage), 'le module refabrique un slug').toBe(false)
+    expect(bord.includes('lancerPublication(')).toBe(true)
     // ON NE JUGE QUE LA PUBLICATION DES APPLICATIONS. Les SITES ont leur
     // propre proposition d'adresse, qui porte le même défaut (un slug maison
     // qui ignore les noms réservés) — c'est un autre chantier, et faire

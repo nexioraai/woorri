@@ -27,6 +27,8 @@ const etat = vi.hoisted(() => ({
   depubliees: [] as string[],
   rpc: [] as string[],
   alertes: [] as { type: string; details: Record<string, unknown> }[],
+  // La publication après paiement a ses propres tests (publier-apres-paiement) : ici, on note l'appel.
+  publications: [] as string[],
   // Le journal du double FIDÈLE (projection honorée, filtres et écritures capturés).
   pg: { filtres: {}, projections: {}, ecritures: {} } as { filtres: Record<string, [string, string, unknown][]>; projections: Record<string, string>; ecritures: Record<string, { op: string; charge?: unknown }[]> },
   maintenant: 1_800_000_000_000,
@@ -82,6 +84,7 @@ vi.mock('@/lib/supabase-admin', async () => {
   return { supabaseAdmin: { rpc, from, auth: { admin: { getUserById: async () => ({ data: { user: null }, error: null }) } } } }
 })
 vi.mock('@/lib/anomaly', () => ({ logAnomaly: async (a: { type: string; details?: Record<string, unknown> }) => { etat.alertes.push({ type: a.type, details: a.details ?? {} }) } }))
+vi.mock('@/lib/payments/publier-apres-paiement', () => ({ publierApresPaiement: async (p: { app: string }) => { etat.publications.push(p.app); return 'publiee' } }))
 vi.mock('@/lib/domains/provision', () => ({ provisionDomain: async () => { throw new Error('le chemin des domaines ne doit pas être pris') } }))
 vi.mock('@/lib/domains/renewal', () => ({ resilierRenouvellement: async () => { throw new Error('le chemin des domaines ne doit pas être pris') } }))
 vi.mock('@/lib/domains/history', () => ({ consignerEvenementDomaine: async () => undefined }))
@@ -114,6 +117,7 @@ const payer = async (inv: string, fin: number, pi: string, raison?: string) => {
 
 beforeEach(() => {
   process.env.STRIPE_WEBHOOK_SECRET = SECRET
+  etat.publications = []
   process.env.STRIPE_SECRET_KEY = 'cle_factice_jamais_appelee'
   process.env.STRIPE_PRICE_APPLICATION = 'price_app'
   Object.assign(etat, { paiementsDeFacture: {}, factures: {}, annulesChezStripe: [], registre: [], finDePeriode: {}, depubliees: [], rpc: [], alertes: [] })
@@ -134,6 +138,8 @@ describe('cycle de vie Stripe d’une application (avis signés localement)', ()
     expect((await payer('in_1', FIN_1, 'pi_1')).status).toBe(200)
     expect(etat.registre.map((l) => l.reference)).toEqual(['in_1'])
     expect(etat.finDePeriode['app-stock']).toBe(FIN_1 * 1000)
+    // RÈGLE 6 (2026-11-22) : le paiement enregistré, l'appli est publiée.
+    expect(etat.publications).toEqual(['app-stock'])
     // F1 : instantané vide, l'abonnement fait foi.
     etat.factures.in_f1 = facture('in_f1', FIN_2, { marque: {} })
     expect((await avis('invoice.paid', etat.factures.in_f1)).status).toBe(200)

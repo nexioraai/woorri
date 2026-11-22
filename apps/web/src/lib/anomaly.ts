@@ -49,6 +49,8 @@ const ALWAYS_EMAIL_TYPES = new Set([
   'stripe_remboursement_application',
   'stripe_remboursement_partiel_application',
   'stripe_litige_application',
+  // 2026-11-22 : un client a PAYÉ et son appli ne s'est pas publiée seule.
+  'stripe_publication_application',
 ]);
 
 export type AnomalySeverity = 'blocked' | 'warning' | 'info';

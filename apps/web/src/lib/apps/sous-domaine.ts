@@ -64,9 +64,13 @@ export function adressePubliee(
   // ailleurs (`handlePaidCheckout`), avec ce même repli.
   origine = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.deribfy.com',
 ): string | null {
+  // ── SANS JETON, AUCUNE ADRESSE (2026-11-22). Un nom peut être ENREGISTRÉ
+  //    sans être publié : choisi avant le paiement, ou gardé après un
+  //    remboursement. `/a/[sous]` y répond « introuvable » ; l'écran ne doit
+  //    pas montrer une adresse qui ne répond pas.
+  if (typeof jeton !== 'string' || jeton === '') return null
   if (typeof slug === 'string' && slug !== '') return `https://${slug}.${DOMAINE_PUBLIC}`
-  if (typeof jeton === 'string' && jeton !== '') return `${origine}/p/${jeton}`
-  return null
+  return `${origine}/p/${jeton}`
 }
 
 /**

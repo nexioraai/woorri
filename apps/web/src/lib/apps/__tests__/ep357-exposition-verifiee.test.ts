@@ -38,10 +38,10 @@
 import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { lireSource } from './lire-source'
+import { sourcePublication } from './source-publication'
 
 const APPS = join(__dirname, '..')
 const POSE = join(APPS, 'poser-oeuvre.ts')
-const PUBLIER = join(APPS, '..', '..', 'app', 'api', 'generateur', 'publier', 'route.ts')
 
 describe('EP-357 · l’exposition se relit', () => {
   it('① LA LISTE EST RELUE APRÈS AVOIR ÉTÉ ÉCRITE', () => {
@@ -93,7 +93,7 @@ describe('EP-357 · l’exposition se relit', () => {
   it('④ ET LA PUBLICATION S’ARRÊTE DESSUS', () => {
     // Une garde dans `poserOeuvre` que l'appelant ignorerait ne garderait
     // rien : c'est la famille « un contrôle qui ne fait que signaler ».
-    const src = lireSource(PUBLIER)
+    const src = sourcePublication()
     expect(src, 'la publication ignore l’échec de pose').toMatch(
       /if \(!pose\.ok\) \{[\s\S]{0,200}status: 500/u,
     )

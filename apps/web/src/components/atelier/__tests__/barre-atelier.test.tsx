@@ -41,8 +41,9 @@ describe('la barre de l’atelier', () => {
     // UN SEUL CHEMIN VERS LE PAIEMENT (2026-11-21) : « Publier ». Le bouton
     // « S'abonner — Bientôt » a quitté la barre, et « Télécharger » suit « Publier ».
     expect(ou('<BoutonAbonnement'), '« S’abonner » est revenu dans la barre : deux chemins vers le paiement').toBe(-1)
-    expect(ou('libellePublier(')).toBeGreaterThan(ou('Historique'))
-    expect(ou('Télécharger')).toBeGreaterThan(ou('libellePublier('))
+    // « Publier » tout court depuis le 2026-11-22 : le geste partagé avec « Mes projets ».
+    expect(ou('onClick={() => { void publier(); }}')).toBeGreaterThan(ou('Historique'))
+    expect(ou('Télécharger')).toBeGreaterThan(ou('onClick={() => { void publier(); }}'))
     // Gauche et droite prennent chacune la moitié du reste : le centre est au centre.
     expect(barre.match(/className="flex min-w-0 flex-1/gu)?.length, 'les deux zones latérales ne sont pas symétriques').toBe(2)
     // Une seule source de largeur : la barre la choisit, le cadre l'applique.

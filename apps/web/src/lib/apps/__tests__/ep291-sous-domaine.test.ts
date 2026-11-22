@@ -22,6 +22,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { sourcePublicationBrute } from './source-publication'
 import {
   creerSousDomaine,
   nomSuggere,
@@ -37,7 +38,8 @@ const nu = (s: string) => s.replace(/\/\*[\s\S]*?\*\//gu, ' ').replace(/^\s*\/\/
 // proxy file are detected »). Ce contrôle lit donc le vrai fichier.
 const MIDDLEWARE = nu(readFileSync(join(SRC, 'proxy.ts'), 'utf8'))
 const ROUTE_A = nu(readFileSync(join(SRC, 'app', 'a', '[sous]', 'route.ts'), 'utf8'))
-const PUBLIER = nu(readFileSync(join(SRC, 'app', 'api', 'generateur', 'publier', 'route.ts'), 'utf8'))
+// La route ET le cœur partagé avec le webhook (2026-11-22) : voir source-publication.ts.
+const PUBLIER = nu(sourcePublicationBrute())
 const ADRESSE = nu(readFileSync(join(SRC, 'app', 'api', 'sites', 'adresse', 'route.ts'), 'utf8'))
 
 afterEach(() => { vi.unstubAllGlobals() })

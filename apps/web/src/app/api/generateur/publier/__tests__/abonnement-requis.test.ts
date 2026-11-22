@@ -25,7 +25,12 @@ vi.mock('@/lib/auth/require-authenticated-user', () => ({ requireAuthenticatedUs
 vi.mock('@/lib/supabase-admin', async () => {
   const { creerFrom } = await import('@/lib/testing/postgrest')
   const { TABLE_GENERATIONS } = await import('@/lib/apps/journal')
-  return { supabaseAdmin: { from: creerFrom({ [TABLE_GENERATIONS]: { reponse: () => ({ data: etat.ligne, error: null }) } }, etat.journal) } }
+  // LA CARTE FERMÉE (2026-11-22) : une appli non payée ne passe plus droit au
+  // 402 — la décision lit d'abord l'interrupteur. Vide = fermé = 402, comme avant.
+  return { supabaseAdmin: { from: creerFrom({
+    [TABLE_GENERATIONS]: { reponse: () => ({ data: etat.ligne, error: null }) },
+    quota_reglages: { reponse: () => ({ data: { valeur: '' }, error: null }) },
+  }, etat.journal) } }
 })
 vi.mock('@/lib/apps/quota', () => ({
   lireCompteur: async () => { etat.lectures += 1; return etat.compteur },

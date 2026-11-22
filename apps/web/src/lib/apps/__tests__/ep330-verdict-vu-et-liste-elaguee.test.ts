@@ -33,6 +33,7 @@ import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { listeAvecSchema, schemasMorts } from '../poser-oeuvre'
 import { lireSource } from './lire-source'
+import { sourcePublication } from './source-publication'
 
 const WEB = join(__dirname, '..', '..', '..')
 
@@ -116,9 +117,7 @@ describe('EP-330 · B · l’élagage se dit', () => {
       [...pose.matchAll(/return \{ ok: true[^}]*elagues[^}]*\}/gu)].length,
       'un chemin de succès ne porte pas l’élagage',
     ).toBe(2)
-    const publier = lireSource(
-      join(WEB, 'app', 'api', 'generateur', 'publier', 'route.ts'),
-    )
+    const publier = sourcePublication()
     expect(publier, 'la publication n’écrit rien quand elle élague').toMatch(
       /console\.warn[\s\S]{0,200}elagu/u,
     )

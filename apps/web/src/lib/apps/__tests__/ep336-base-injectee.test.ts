@@ -28,6 +28,7 @@ import { join } from 'node:path'
 import { baseDeLOeuvre } from '../base-de-l-oeuvre'
 import { pageAutonome } from '../boucle-directe'
 import { lireSource } from './lire-source'
+import { sourcePublication } from './source-publication'
 
 const CODE = 'export const x = 1'
 const SRC = join(__dirname, '..', '..', '..')
@@ -69,7 +70,7 @@ describe('EP-336 · la base injectée', () => {
     // base sans l'injecter, ou l'inverse — et les deux se découvrent en
     // production.
     const injection = lireSource(join(SRC, 'lib', 'apps', 'base-de-l-oeuvre.ts'))
-    const publication = lireSource(join(SRC, 'app', 'api', 'generateur', 'publier', 'route.ts'))
+    const publication = sourcePublication()
     expect(injection, 'l’injection n’emploie plus le test de la publication').toMatch(
       /includes\('create table'\)/u,
     )

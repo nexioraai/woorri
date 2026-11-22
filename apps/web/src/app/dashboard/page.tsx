@@ -1,6 +1,6 @@
 'use client';
 import { ADRESSE_GESTION } from '@/lib/apps/entites-declarees';
-import { publierAvecAccord } from '@/components/apps/accordLecturePublique';
+import { lancerPublication } from '@/components/apps/publierAppli';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -22,7 +22,6 @@ import { regenerationOuverte } from '@/lib/apps/regeneration';
 // absent il reste fermé. La route revérifie la même variable et refuse (409).
 const REGENERATION_OUVERTE = regenerationOuverte(process.env.NEXT_PUBLIC_REGENERATION_OUVERTE);
 import {
-  adresseProposee,
   AVERTISSEMENT_MARQUE,
   CE_QUE_RENOMMER_CHANGE,
   nomProduitValide,
@@ -283,57 +282,24 @@ export default function DashboardPage() {
     setVersions({ id: a.id, liste: dv.versions ?? [], courante: dv.courante ?? rang });
   };
 
+  // ── « PUBLIER » EST « PUBLIER » (décision du propriétaire, 2026-11-22).
+  //
+  // MESURÉ par le propriétaire : ce bouton redemandait le nom à chaque clic,
+  // puis répondait « Publier demande un abonnement en cours », sans jamais
+  // ouvrir Stripe — pendant que celui de l'atelier l'ouvrait. Les deux
+  // appellent désormais le MÊME module : nom demandé une fois et enregistré,
+  // puis Stripe si ce n'est pas payé ; publié si c'est payé.
   const publier = async (a: Application) => {
     setApercuErreur(null);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
-    // ── L'ADRESSE EST PROPOSEE DEPUIS LE NOM, ET RESTE MODIFIABLE.
-    //
-    // Cette ligne portait une TROISIEME copie de la regle de nommage — un
-    // slug maison qui ignorait les noms reserves : proposer `admin` ou
-    // `support` faisait refuser la publication apres le clic, sans que
-    // l'ecran l'ait jamais annonce. `adresseProposee` est la meme fonction
-    // que la route emploie, et elle rend vide quand elle n'a rien d'honnete
-    // a proposer.
-    //
-    // DEUX CHAMPS, PAS UN : le nom est ce que le produit s'appelle,
-    // l'adresse est ou on le trouve. Qui veut distinguer deux tontines
-    // ecrira `tontine-moundou` plutot que de subir `tontine-2`.
-    const suggestion = adresseProposee(a.nom ?? a.demande);
-    const sous = window.prompt(
-      `Adresse publique de « ${a.nom ?? 'votre application'} » :\n` +
-        '<adresse>.deribfy.app\n\nMinuscules, chiffres et tirets. ' +
-        'Un seul niveau : les points sont refuses. ' +
-        'Laisser vide pour un lien simple.',
-      suggestion,
-    );
-    if (sous === null) return; // la personne a annulé
-    try {
-      const res = await publierAvecAccord(
-        `/api/generateur/publier?id=${encodeURIComponent(a.id)}${sous.trim() !== '' ? `&sous=${encodeURIComponent(sous.trim().toLowerCase())}` : ''}`,
-        `Bearer ${session.access_token}`,
-      );
-      // ── LE CHAMP S'APPELLE `lien`, PAS `url` — BUG ATTRAPÉ EN PROD.
-      //
-      // Mesuré le 2026-10-30 : la route a répondu 200 avec
-      // {"lien":"https://…/p/…"} pendant que ce code lisait `d.url` — le
-      // bouton aurait dit « échec » sur une publication RÉUSSIE. On lit les
-      // deux : si la route renomme un jour, le bouton survit.
-      const d = (await res.json().catch(() => null)) as {
-        lien?: string; url?: string; error?: string; erreurSousDomaine?: string;
-        compte?: { adresse?: string; motDePasse?: string | null };
-      } | null;
-      const lien = d?.lien ?? d?.url;
-      if (!res.ok || !lien) { setApercuErreur(d?.error ?? 'La publication a échoué.'); return; }
-      // L'adresse nommee a pu echouer SANS casser la publication par jeton :
-      // on montre le lien qui marche ET la raison de l'echec, jamais l'un
-      // sans l'autre.
-      if (d?.erreurSousDomaine) setApercuErreur(`Adresse nommée refusée : ${d.erreurSousDomaine}`);
-      // ── MESURÉ LE 2026-11-04 : la route rend le mot de passe À LA
-      //    CRÉATION et `null` ensuite. Ne lire que `lien` le jetait, et il
-      //    n'existe aucun chemin de relecture.
-      setLienPublic({ id: a.id, url: lien, compte: d?.compte ?? null });
-    } catch { setApercuErreur('La publication a échoué. Réessayez.'); }
+    const issue = await lancerPublication({ id: a.id, titre: a.nom ?? null, demande: a.demande, autorisation: `Bearer ${session.access_token}` });
+    if (issue.type === 'fermee' || issue.type === 'erreur' || issue.type === 'amnesique') { setApercuErreur(issue.message); return; }
+    if (issue.type !== 'publiee') return;
+    // L'adresse nommée a pu échouer SANS casser la publication par jeton : on
+    // montre le lien qui marche ET la raison de l'échec, jamais l'un sans l'autre.
+    if (issue.erreurSousDomaine !== null) setApercuErreur(`Adresse nommée refusée : ${issue.erreurSousDomaine}`);
+    setLienPublic({ id: a.id, url: issue.lien, compte: issue.compte });
   };
 
   // L'ADRESSE PUBLIQUE D'UN SITE : meme geste que pour une application.

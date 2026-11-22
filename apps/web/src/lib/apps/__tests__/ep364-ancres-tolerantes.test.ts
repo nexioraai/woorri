@@ -101,11 +101,12 @@ function ancresTracables(src: string): {
   const sans = src.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/^[ \t]*\/\/.*$/gmu, '')
   const lecteurs = new Set<string>()
   for (const m of sans.matchAll(
-    /(?:const|let)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::[^=]+)?=\s*(?:\(\)\s*(?::[^=]+)?=>\s*)?(?:lireSource|lireSourceBrut|readFileSync)/gu,
+    /(?:const|let)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::[^=]+)?=\s*(?:\(\)\s*(?::[^=]+)?=>\s*)?(?:lireSource|lireSourceBrut|readFileSync|sourcePublication)/gu,
   )) {
     lecteurs.add(m[1] ?? '')
   }
-  const litSource = new RegExp('lireSource|lireSourceBrut|readFileSync', 'u').test(sans)
+  // `sourcePublication` (2026-11-22) : la route de publication ET son cœur partagé — un lecteur de source.
+  const litSource = new RegExp('lireSource|lireSourceBrut|readFileSync|sourcePublication', 'u').test(sans)
   let tolerantes = 0
   const fragiles: string[] = []
   const opaquesFragiles: string[] = []
@@ -115,7 +116,7 @@ function ancresTracables(src: string): {
     const sujet = m[1] ?? ''
     const lit = m[2] ?? ''
     const racine = sujet.split(/[.(]/u)[0] ?? ''
-    const tracable = /^(?:lireSource|lireSourceBrut|readFileSync)/u.test(sujet) || lecteurs.has(racine)
+    const tracable = /^(?:lireSource|lireSourceBrut|readFileSync|sourcePublication)/u.test(sujet) || lecteurs.has(racine)
     if (!tracable && !litSource) continue
     const corps = lit.startsWith('/')
       ? lit.slice(1, lit.lastIndexOf('/'))

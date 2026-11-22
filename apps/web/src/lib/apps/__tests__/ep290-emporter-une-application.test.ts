@@ -30,6 +30,7 @@ const nu = (s: string) => s.replace(/\/\*[\s\S]*?\*\//gu, ' ').replace(/^\s*\/\/
 const LIVRAISON = nu(readFileSync(join(SRC, 'app', 'api', 'generateur', 'livraison', 'route.ts'), 'utf8'))
 const PUBLIC = nu(readFileSync(join(SRC, 'app', 'p', '[jeton]', 'route.ts'), 'utf8'))
 const ECRAN = nu(readFileSync(join(SRC, 'app', 'dashboard', 'page.tsx'), 'utf8'))
+const MODULE_PUBLIER = nu(readFileSync(join(SRC, 'components', 'apps', 'publierAppli.ts'), 'utf8'))
 
 describe('EP-290 · emporter une application', () => {
   const zip = projetLivrable(
@@ -95,10 +96,13 @@ describe('EP-290 · emporter une application', () => {
     // ── BUG ATTRAPÉ EN PRODUCTION : la route rend `lien`, l'écran lisait
     // `url`. Le bouton aurait dit « échec » sur une publication réussie —
     // et la personne aurait cru son application impubliable.
-    const i = ECRAN.indexOf('generateur/publier')
-    expect(i, 'l’écran ne publie plus').toBeGreaterThan(-1)
+    // DEPUIS LE 2026-11-22, l'écran publie par le module partagé avec
+    // l'atelier (« Publier est Publier ») : c'est lui qui lit la réponse.
+    expect(ECRAN, 'l’écran ne publie plus par le module partagé').toContain('lancerPublication(')
+    const i = MODULE_PUBLIER.indexOf('generateur/publier?id=')
+    expect(i, 'le module ne publie plus').toBeGreaterThan(-1)
     expect(
-      ECRAN.slice(i, i + 900),
+      MODULE_PUBLIER.slice(i, i + 900),
       'l’écran ne lit plus `lien` : la route rend ce champ-là, mesuré en production',
     ).toMatch(/d\?\.lien/u)
   })
