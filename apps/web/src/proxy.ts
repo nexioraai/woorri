@@ -237,10 +237,21 @@ export async function proxy(req: NextRequest) {
  */
 /**
  * LE CHEMIN INTERNE D'UNE APPLI PUBLIÉE. Tout chemin sert l'appli (document
- * autonome), SAUF `/compte` : la page Compte, servie par Deribfy (2026-11-18).
+ * autonome), SAUF `/compte` : la page Compte, servie par Deribfy (2026-11-18),
+ * et les fichiers d'installation (2026-11-22, pwa.ts) : manifeste, service
+ * worker, icônes — servis par l'origine de l'appli, jamais en `data:`.
  */
+const FICHIERS_INSTALLATION: Readonly<Record<string, string>> = {
+  '/manifest.webmanifest': 'manifeste',
+  '/sw.js': 'sw',
+  '/icone-192.png': 'icone/192',
+  '/icone-512.png': 'icone/512',
+  '/icone-maskable-512.png': 'icone/maskable',
+}
 export function cheminApplication(nom: string, pathname: string): string {
-  return pathname === '/compte' ? `/a/${nom}/compte` : `/a/${nom}`
+  if (pathname === '/compte') return `/a/${nom}/compte`
+  const fichier = FICHIERS_INSTALLATION[pathname]
+  return fichier !== undefined ? `/a/${nom}/${fichier}` : `/a/${nom}`
 }
 
 function adresseInterneDuSite(req: NextRequest, slug: string, pathname: string) {

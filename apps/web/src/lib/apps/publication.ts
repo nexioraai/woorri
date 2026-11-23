@@ -237,8 +237,23 @@ export const SANDBOX_SOUS_DOMAINE = 'sandbox allow-scripts allow-same-origin all
  * dissymétrie ci-dessus. Il ne doit JAMAIS apparaître sur une route servie
  * depuis `deribfy.com`.
  */
+//
+// ── INSTALLABLE (2026-11-22) : sous son origine, l'appli lit SON manifeste et
+//    SES icônes, et inscrit SON service worker — `'self'`, c'est-à-dire
+//    `<nom>.deribfy.app`, jamais une autre origine. `data:` reste permis
+//    (icônes et manifeste cuits des pages d'avant).
+const INSTALLATION_SOUS_DOMAINE: readonly string[] = [
+  "img-src 'self' data: blob:",
+  "manifest-src 'self' data:",
+  "worker-src 'self'",
+]
 export const cspSousDomaine = (urlProjet: string): string =>
-  [...CSP_TRONC, connectSrcPour(urlProjet), SANDBOX_SOUS_DOMAINE].join('; ')
+  [
+    ...CSP_TRONC.filter((d) => !d.startsWith('img-src') && !d.startsWith('manifest-src')),
+    ...INSTALLATION_SOUS_DOMAINE,
+    connectSrcPour(urlProjet),
+    SANDBOX_SOUS_DOMAINE,
+  ].join('; ')
 
 /** Les en-têtes d'une page servie sous son propre sous-domaine. */
 export const entetesSousDomaine = (urlProjet: string): Readonly<Record<string, string>> => ({

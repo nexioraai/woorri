@@ -69,7 +69,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ sous: string }
     //    « ce sera créé » — on y EST. Mesuré sur sneapp, publiée et sans
     //    aucun `create table`.
     // LE LIEN « COMPTE » seulement si l'appli a une base : sans elle, pas de compte.
-    pageAutonome(v.code, titre, base, 'servie', null, apparenceDuDocument(lu.data.document), base !== undefined && base.url !== ''),
+    // INSTALLABLE (2026-11-22) : sous SA propre origine, la page porte le manifeste,
+    // les icônes et le service worker de l'appli (pwa.ts).
+    pageAutonome(v.code, titre, base, 'servie', null, apparenceDuDocument(lu.data.document), base !== undefined && base.url !== '', true),
     { status: 200, headers: entetesSousDomaine(base?.url ?? '') },
   )
 }
