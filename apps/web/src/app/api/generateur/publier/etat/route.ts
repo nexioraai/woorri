@@ -2,12 +2,17 @@ import 'server-only'
 /**
  * CE QUE « PUBLIER » VA FAIRE, LU AVANT LE CLIC (2026-11-22).
  *
- * GET ?id=<appli> → { action, nom, adresse }
+ * GET ?id=<appli> → { action, nom, adresse, nomModifiable, publicationAuto }
  *   action  — 'publier' | 'payer' | 'fermee' (decisionDePublication) ;
  *   nom     — le nom d'adresse déjà ENREGISTRÉ pour cette appli, ou null :
  *             l'écran ne le redemande pas ;
  *   adresse — l'adresse EN LIGNE, ou null : un nom enregistré sans
- *             publication n'en a pas.
+ *             publication n'en a pas ;
+ *   nomModifiable   — « Changer l'adresse » est permis (nom enregistré,
+ *             appli jamais en ligne) ;
+ *   publicationAuto — 'echec' si la publication après paiement a échoué dans
+ *             l'heure (alerte `stripe_publication_application` notée pour
+ *             cette appli) et que l'appli n'est toujours pas en ligne ; sinon null.
  * Lecture seule. Restreinte au propriétaire par la requête.
  */
 import { NextResponse } from 'next/server'
@@ -16,6 +21,11 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { adressePubliee } from '@/lib/apps/sous-domaine'
 import { decisionDePublication, PHRASE_DECISION_ILLISIBLE } from '@/lib/apps/decision-publication'
+import { nomModifiable } from '@/lib/apps/nom-enregistre'
+import { TYPE_ALERTE_PUBLICATION } from '@/lib/payments/publier-apres-paiement'
+
+/** Une alerte plus ancienne ne dit plus rien du retour de paiement en cours. */
+const FENETRE_ECHEC_MS = 60 * 60 * 1000
 
 export const runtime = 'nodejs'
 
@@ -27,7 +37,7 @@ export async function GET(req: Request) {
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('publication_slug, publication_jeton')
+    .select('publication_slug, publication_jeton, publie_le')
     .eq('id', id)
     .eq('owner_id', garde.userId)
     .maybeSingle()
@@ -35,12 +45,28 @@ export async function GET(req: Request) {
 
   const action = await decisionDePublication(id, garde.userId, garde.email)
   if (action === null) return NextResponse.json({ error: PHRASE_DECISION_ILLISIBLE }, { status: 503 })
-  const l = lu.data as { publication_slug: string | null; publication_jeton: string | null }
+  const l = lu.data as { publication_slug: string | null; publication_jeton: string | null; publie_le: string | null }
+  // L'ÉCHEC DE LA PUBLICATION AUTOMATIQUE se lit dans les alertes, là où le
+  // webhook l'a dit : le client n'attend pas une publication qui ne viendra pas.
+  let publicationAuto: 'echec' | null = null
+  if (l.publication_jeton === null) {
+    const a = await supabaseAdmin
+      .from('checkout_anomalies')
+      .select('id')
+      .eq('type', TYPE_ALERTE_PUBLICATION)
+      .eq('details->>app', id)
+      .gte('created_at', new Date(Date.now() - FENETRE_ECHEC_MS).toISOString())
+      .limit(1)
+      .maybeSingle()
+    if (a.error === null && a.data !== null) publicationAuto = 'echec'
+  }
   return NextResponse.json(
     {
       action,
       nom: typeof l.publication_slug === 'string' && l.publication_slug !== '' ? l.publication_slug : null,
       adresse: adressePubliee(l.publication_slug, l.publication_jeton),
+      nomModifiable: nomModifiable(l),
+      publicationAuto,
     },
     { headers: { 'Cache-Control': 'no-store' } },
   )

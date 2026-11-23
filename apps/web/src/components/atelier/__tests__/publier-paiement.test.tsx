@@ -65,10 +65,10 @@ describe('l’atelier : un seul chemin, sans cadenas ni bandeau', () => {
     expect(ATELIER).not.toMatch(/PublicationBloquee|CommentPayerPublication|BoutonAbonnement|S’abonner — 20/u)
     expect(ATELIER).not.toMatch(/WhatsApp/u)
   })
-  it('RÈGLE 6 à l’écran : au retour de Stripe, l’appli publiée par le webhook est montrée ; sinon « Publier maintenant »', () => {
-    expect(ATELIER).toMatch(motifTexte("setAvisPublication({ texte: 'Abonnement actif : votre application est en ligne.', publierMaintenant: false });"))
-    expect(ATELIER).toMatch(motifTexte('setLienPublic(adresse);'))
-    expect(ATELIER).toMatch(motifTexte("setAvisPublication({ texte: 'Abonnement actif : votre application peut être publiée.', publierMaintenant: true });"))
-    expect(ATELIER).toMatch(motifTexte('Publier maintenant'))
+  it('RÈGLE 6 à l’écran : au retour de Stripe, l’écran suit la publication faite par le webhook, sans clic', () => {
+    expect(ATELIER).toMatch(motifTexte('const etape = etapeDuRetour(e);'))
+    expect(ATELIER).toMatch(motifTexte('setLienPublic(e?.adresse ?? null);'))
+    expect(ATELIER).toMatch(motifTexte('{PHRASES_RETOUR.en_ligne}'))
+    expect(ATELIER, 'le retour demande encore un clic sur « Publier maintenant »').not.toMatch(motifTexte('votre application peut être publiée'))
   })
 })

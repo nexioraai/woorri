@@ -10,7 +10,7 @@
 - compte **`contact@deribfy.com`** (non exempté : sans paiement, « Publier » est refusé) ;
 - appli **« Gestion de stock »** (`d925850b-9fe2-4a74-9d3e-5c11f6ffe21d`).
 
-**État lu le 2026-11-22, avant l'essai :** l'appli est livrée et jamais publiée. Elle n'a ni compteur ni paiement, et le compte n'a pas encore de fiche Stripe.
+**État lu le 2026-11-22, avant l'essai :** l'appli est livrée et jamais publiée, sans nom choisi. Elle a une **base de données** (2 tables) : elle aura donc un compte administrateur et un mot de passe. Elle n'a ni compteur ni paiement, et le compte n'a pas encore de fiche Stripe.
 
 ## A. Les préalables, dans l'ordre (chacun se vérifie)
 
@@ -32,19 +32,22 @@ Aucun nouveau SQL pour « Publier est Publier » : le nom choisi va dans la colo
 | B2 | Clic sur « Publier » | la question **« Adresse publique de « Gestion de stock » : <adresse>.deribfy.app »**, avec un nom proposé. Saisir le nom voulu (minuscules, chiffres, tirets), valider |
 | B3 | — | la page Stripe s'ouvre **aussitôt** : « Deribfy — Application », **20 $ US par mois**, le bon courriel. Si Stripe propose la monnaie locale (CAD), noter le montant et la devise |
 | B4 | **Ne pas payer** : revenir en arrière (bouton retour de Stripe) | l'atelier dit « Paiement annulé : rien n'a été prélevé, l'application n'est pas publiée. » |
+| B4 bis | *(facultatif)* À côté de « Publier », clic sur **« Changer l'adresse »**, saisir un autre nom, valider | l'atelier dit « Adresse choisie : <nouveau nom>.deribfy.app ». Le lien n'existe que tant que l'appli n'a jamais été en ligne |
 | B5 | Ouvrir l'atelier de « Gestion de stock », clic sur **« Publier »** | **aucune question** : le nom est gardé, la page Stripe s'ouvre directement. C'est la preuve que les deux boutons font la même chose |
 | B6 | Payer avec une vraie carte | Stripe confirme, puis revient seul à l'atelier, avec `?paiement=recu` dans l'adresse |
-| B7 | Attendre, **sans cliquer** | d'abord « Paiement reçu par Stripe — l'activation arrive dans quelques secondes. », puis, en moins d'une minute, **« Abonnement actif. Merci ! »** et **« Abonnement actif : votre application est en ligne. »**, avec le lien `https://<nom>.deribfy.app` |
-| B8 | Ouvrir ce lien | l'appli s'affiche. **Aucun clic sur « Publier » n'a été nécessaire** |
-| B9 | « Gérer mon abonnement » | le portail Stripe montre l'abonnement **actif** et une facture **payée** de 20 $ US |
+| B7 | Attendre, **sans cliquer** | sous la barre, l'écran avance **seul** : « Paiement reçu par Stripe — l'activation arrive dans quelques secondes. », puis « Paiement reçu. Publication en cours… », puis **« Votre application est en ligne »**, l'adresse `https://<nom>.deribfy.app` cliquable, et un bouton **« Créer mon mot de passe »** |
+| B8 | Clic sur **« Créer mon mot de passe »** | le mot de passe s'affiche **une fois**, avec l'adresse de connexion `admin@<nom>.deribfy.app` et « Notez-le maintenant : il ne se relira pas. » Le noter |
+| B9 | Ouvrir l'adresse de l'appli | l'appli s'affiche. **Aucun clic sur « Publier » n'a été nécessaire.** La connexion avec l'adresse et le mot de passe de B8 ouvre ses données |
+| B10 | Revenir dans « Mes projets » | la carte montre l'adresse, et un bouton **« Créer / refaire mon mot de passe »** (une appli sans base n'aurait que l'adresse). Ne pas cliquer : il couperait le mot de passe de B8 |
+| B11 | « Gérer mon abonnement » (atelier) | le portail Stripe montre l'abonnement **actif** et une facture **payée** de 20 $ US |
 
 **Entre B2 et B6, l'adresse `https://<nom>.deribfy.app` doit répondre « introuvable »** : un nom choisi mais pas payé ne publie rien.
 
-**Si B7 dit « votre application peut être publiée » au lieu de « est en ligne » :** le paiement est enregistré, mais la publication automatique n'a pas abouti. Un courriel « Anomalie checkout : stripe_publication_application » en dit la raison. Cliquer « Publier maintenant » publie, sans repasser par Stripe. M'écrire l'heure.
+**Si B7 dit « Le paiement est bien reçu, mais la publication automatique n'a pas abouti » :** le paiement est enregistré, la publication non. Un courriel « Anomalie checkout : stripe_publication_application » en dit la raison. Le bouton « Publier » du bandeau publie, sans repasser par Stripe. M'écrire l'heure.
 
-**Si B7 dit « l'activation tarde » au bout d'une minute : NE PAS repayer** (la page de paiement le refuserait de toute façon : un abonnement est déjà en cours). M'écrire l'heure.
+**Si B7 reste sur « Publication en cours… » plus de deux minutes : NE PAS repayer, ne rien cliquer** (la page de paiement le refuserait de toute façon : un abonnement est déjà en cours). L'écran continue de se relire seul pendant trente minutes. M'écrire l'heure.
 
-**Ce que je lis après B9 (lecture seule) :**
+**Ce que je lis après B11 (lecture seule) :**
 - journal Vercel : `[stripe] avis reçu invoice.paid evt_…`, puis `[stripe] appli d925850b… après paiement → publiee`, sans « Handler error » ;
 - `app_generations` : `publication_slug` = le nom choisi en B2 (écrit AVANT le paiement), `publication_jeton` rempli (écrit APRÈS) ;
 - `app_paiements` : une ligne `stripe`, `reference = in_…`, `objet = abonnement`, **20 USD** ;
@@ -73,8 +76,8 @@ Aucun nouveau SQL pour « Publier est Publier » : le nom choisi va dans la colo
 
 ## D. Si quelque chose ne va pas
 
-- **Payé, rien d'activé (B7).** Un courriel « stripe_facture_application » arrive, et une ligne s'inscrit dans `/admin`. Le remède : une fois la cause corrigée, **renvoyer** l'avis `invoice.paid` depuis Stripe. C'est sans risque : la référence est la facture, et un renvoi ne compte qu'une fois.
-- **Payé, activé, pas publié (B7 dit « peut être publiée »).** Le courriel « stripe_publication_application » donne la raison (par exemple une liste lisible par tout le monde ajoutée après le clic). « Publier » publie sans repasser par Stripe.
+- **Payé, rien d'activé (B7 reste sur l'activation).** Un courriel « stripe_facture_application » arrive, et une ligne s'inscrit dans `/admin`. Le remède : une fois la cause corrigée, **renvoyer** l'avis `invoice.paid` depuis Stripe. C'est sans risque : la référence est la facture, et un renvoi ne compte qu'une fois.
+- **Payé, activé, pas publié (B7 dit « n'a pas abouti »).** Le courriel « stripe_publication_application » donne la raison (par exemple une liste lisible par tout le monde ajoutée après le clic). « Publier » publie sans repasser par Stripe.
 - **Remboursé, toujours en ligne (C2).** Vérifier A2 (fonction appliquée) et A4 (événement écouté). Le journal Vercel dit lequel manque :
   - aucune ligne `charge.refunded` : c'est A4 ;
   - « Handler error … annuler_paiement_stripe » : c'est A2.

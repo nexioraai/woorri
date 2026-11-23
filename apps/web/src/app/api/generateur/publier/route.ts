@@ -24,11 +24,10 @@ import 'server-only'
  */
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
-import { nomValide } from '@/lib/apps/sous-domaine'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { PHRASE_ABONNEMENT_REQUIS } from '@/lib/apps/compteur-phrases'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
-import { COLONNES_PUBLICATION, publierOeuvre, refusAvantPublication, tablesPubliques, type LignePubliee } from '@/lib/apps/publier-oeuvre'
+import { COLONNES_PUBLICATION, publierOeuvre, refusAvantPublication, refusDuNom, tablesPubliques, type LignePubliee } from '@/lib/apps/publier-oeuvre'
 import { decisionDePublication, PHRASE_DECISION_ILLISIBLE } from '@/lib/apps/decision-publication'
 import { accordPourStripe } from '@/lib/apps/accord-stripe'
 import { ouvrirPaiementAppli } from '@/lib/payments/abonnement-appli'
@@ -144,49 +143,8 @@ export async function POST(req: Request) {
   // domaine chez Vercel, adresse en base. Optionnel — sans lui, le lien par
   // jeton continue de servir, comme avant.
   const sous = new URL(req.url).searchParams.get('sous')?.toLowerCase().trim() ?? ''
-  if (sous !== '' && !nomValide(sous)) {
-    return NextResponse.json(
-      { error: 'Ce nom n est pas utilisable : minuscules, chiffres et tirets, 3 a 40 signes, sans nom reserve.' },
-      { status: 400 },
-    )
-  }
-  if (sous !== '') {
-    // LE NOM EST UNIQUE, et l unicite se verifie contre les AUTRES oeuvres :
-    // republier la sienne sous le meme nom doit rester possible.
-    //
-    // ── NE FILTREZ JAMAIS PAR STATUT ICI. C'EST VOLONTAIRE.
-    //
-    // Une oeuvre SUPPRIMEE garde son `publication_slug` : la ligne survit en
-    // PIERRE TOMBALE, et c'est ELLE qui tient la quarantaine du nom
-    // (EP-308). Ajouter `.eq('statut', 'livree')` — « pour ne regarder que
-    // les vraies applications » — rendrait la pierre tombale INVISIBLE et
-    // libererait le nom EN SILENCE.
-    //
-    // Ce que ca couterait : quelqu'un d'autre reprend `nom.deribfy.app`, et
-    // les anciens liens — partages par courriel, en signature, sur une carte
-    // de visite — resolvent vers l'application d'un INCONNU. Pas un 404 :
-    // une SUBSTITUTION SILENCIEUSE. Un nom publie ne se recycle pas.
-    const pris = await supabaseAdmin
-      .from(TABLE_GENERATIONS)
-      .select('id')
-      .eq('publication_slug', sous)
-      .neq('id', id)
-      .maybeSingle()
-    if (pris.data !== null) {
-      return NextResponse.json({ error: `« ${sous} » est deja pris par une autre application.` }, { status: 409 })
-    }
-    // ET PAR UN SITE : le proxy sert les sites D'ABORD sur deribfy.app —
-    // un nom d'application qui heurte un slug de site serait une adresse
-    // qui montre autre chose que ce qu'on vient de publier.
-    const prisSite = await supabaseAdmin
-      .from('sites')
-      .select('id')
-      .eq('slug', sous)
-      .maybeSingle()
-    if (prisSite.data !== null) {
-      return NextResponse.json({ error: `« ${sous} » est deja pris par un site.` }, { status: 409 })
-    }
-  }
+  const refusNom = await refusDuNom(id, sous)
+  if (refusNom !== null) return refusNom
 
   let accord = false
   try {

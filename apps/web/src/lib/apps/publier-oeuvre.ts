@@ -20,7 +20,7 @@ import { configBaseOeuvres } from '@/lib/apps/base-oeuvres'
 import { poserOeuvre } from '@/lib/apps/poser-oeuvre'
 import { assurerCompteOeuvre } from '@/lib/apps/compte-oeuvre'
 import { oeuvreExiste } from '@/lib/apps/oeuvre-existe'
-import { creerSousDomaine } from '@/lib/apps/sous-domaine'
+import { creerSousDomaine, nomValide } from '@/lib/apps/sous-domaine'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { jetonPour, lienDePublication } from '@/lib/apps/publication'
@@ -34,6 +34,61 @@ export type LignePubliee = {
   readonly statut: string
   readonly demande: unknown
   readonly sections_acquises: unknown
+}
+
+/**
+ * LE NOM D'ADRESSE EST-IL UTILISABLE PAR CETTE APPLI ? `null` si oui.
+ *
+ * Déplacé TEL QUEL de la route (2026-11-22) : « Publier » et « Changer
+ * l'adresse » contrôlent un nom de la même façon — format, nom réservé, pris
+ * par une AUTRE œuvre (pierres tombales comprises), pris par un site.
+ * `sous` vide : rien à contrôler (lien simple).
+ */
+export async function refusDuNom(id: string, sous: string): Promise<NextResponse | null> {
+  if (sous !== '' && !nomValide(sous)) {
+    return NextResponse.json(
+      { error: 'Ce nom n est pas utilisable : minuscules, chiffres et tirets, 3 a 40 signes, sans nom reserve.' },
+      { status: 400 },
+    )
+  }
+  if (sous !== '') {
+    // LE NOM EST UNIQUE, et l unicite se verifie contre les AUTRES oeuvres :
+    // republier la sienne sous le meme nom doit rester possible.
+    //
+    // ── NE FILTREZ JAMAIS PAR STATUT ICI. C'EST VOLONTAIRE.
+    //
+    // Une oeuvre SUPPRIMEE garde son `publication_slug` : la ligne survit en
+    // PIERRE TOMBALE, et c'est ELLE qui tient la quarantaine du nom
+    // (EP-308). Ajouter `.eq('statut', 'livree')` — « pour ne regarder que
+    // les vraies applications » — rendrait la pierre tombale INVISIBLE et
+    // libererait le nom EN SILENCE.
+    //
+    // Ce que ca couterait : quelqu'un d'autre reprend `nom.deribfy.app`, et
+    // les anciens liens — partages par courriel, en signature, sur une carte
+    // de visite — resolvent vers l'application d'un INCONNU. Pas un 404 :
+    // une SUBSTITUTION SILENCIEUSE. Un nom publie ne se recycle pas.
+    const pris = await supabaseAdmin
+      .from(TABLE_GENERATIONS)
+      .select('id')
+      .eq('publication_slug', sous)
+      .neq('id', id)
+      .maybeSingle()
+    if (pris.data !== null) {
+      return NextResponse.json({ error: `« ${sous} » est deja pris par une autre application.` }, { status: 409 })
+    }
+    // ET PAR UN SITE : le proxy sert les sites D'ABORD sur deribfy.app —
+    // un nom d'application qui heurte un slug de site serait une adresse
+    // qui montre autre chose que ce qu'on vient de publier.
+    const prisSite = await supabaseAdmin
+      .from('sites')
+      .select('id')
+      .eq('slug', sous)
+      .maybeSingle()
+    if (prisSite.data !== null) {
+      return NextResponse.json({ error: `« ${sous} » est deja pris par un site.` }, { status: 409 })
+    }
+  }
+  return null
 }
 
 /** Les tables que tout le monde pourra lire, telles que la garde les nomme. */

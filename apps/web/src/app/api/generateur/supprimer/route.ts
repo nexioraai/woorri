@@ -35,6 +35,13 @@ import 'server-only'
  *   à `annulee` suffit donc à le neutraliser, et c'est ce que fait
  *   `confirmerArret`. Sans ce drapeau, la route REFUSE et le dit.
  *
+ * ①bis UN NOM JAMAIS PUBLIÉ SE LIBÈRE (décision du propriétaire, 2026-11-22).
+ *   Depuis « Publier est Publier », le nom se choisit AVANT le paiement. Un
+ *   nom qui n'a jamais été une adresse (pas de jeton, pas de `publie_le`)
+ *   n'a été envoyé à personne : aucune substitution n'est possible, et le
+ *   garder bloquerait le nom pour toujours. Il est remis à zéro — par une
+ *   écriture qui REDIT la condition (`is null`) : la règle ① reste entière
+ *   pour tout nom qui a été en ligne, ne serait-ce qu'une fois.
  * ④ ÉCHOUER SANS EFFACER. Si le DNS refuse de retirer l'adresse, on
  *   n'efface RIEN : un nom resté pointé sur du vide, sans propriétaire
  *   connu, serait pire que l'échec.
@@ -44,6 +51,7 @@ import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { retirerSousDomaine } from '@/lib/apps/sous-domaine'
+import { jamaisPubliee } from '@/lib/apps/nom-enregistre'
 
 export const runtime = 'nodejs'
 
@@ -68,7 +76,7 @@ export async function POST(req: Request) {
   // où l'on détient déjà la donnée d'autrui).
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('id, statut, publication_slug, sections_acquises')
+    .select('id, statut, publication_slug, publication_jeton, publie_le, sections_acquises')
     .eq('id', id)
     .eq('owner_id', garde.userId)
     .maybeSingle()
@@ -108,7 +116,9 @@ export async function POST(req: Request) {
 
   // ── ④ L'ADRESSE D'ABORD, ET SON ÉCHEC ARRÊTE TOUT.
   const slug = lu.data.publication_slug
-  if (typeof slug === 'string' && slug !== '') {
+  // Un nom jamais publié n'a jamais été attaché chez Vercel : rien à retirer.
+  const nomJamaisPublie = typeof slug === 'string' && slug !== '' && jamaisPubliee(lu.data)
+  if (typeof slug === 'string' && slug !== '' && !nomJamaisPublie) {
     const clefs = {
       cloudflareToken: process.env.CLOUDFLARE_API_TOKEN ?? '',
       vercelToken: process.env.VERCEL_API_TOKEN ?? '',
@@ -172,8 +182,21 @@ export async function POST(req: Request) {
     )
   }
 
+  // ── ①bis : LE NOM JAMAIS PUBLIÉ EST LIBÉRÉ, et seulement lui.
+  if (nomJamaisPublie) {
+    const libere = await supabaseAdmin
+      .from(TABLE_GENERATIONS)
+      .update({ publication_slug: null })
+      .eq('id', id)
+      .eq('owner_id', garde.userId)
+      .is('publication_jeton', null)
+      .is('publie_le', null)
+    // L'appli est supprimée : un nom resté réservé est un moindre mal, dit.
+    if (libere.error !== null) console.error('[supprimer] nom jamais publié non libéré', id, libere.error.message)
+  }
+
   return NextResponse.json(
-    { ok: true, nomEnQuarantaine: slug ?? null, joursAvantPurge: JOURS_AVANT_PURGE },
+    { ok: true, nomEnQuarantaine: nomJamaisPublie ? null : slug ?? null, nomLibere: nomJamaisPublie ? slug : null, joursAvantPurge: JOURS_AVANT_PURGE },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }

@@ -24,9 +24,20 @@ describe('EP-308 · le nom publié ne se recycle jamais', () => {
     // d'autre le prend, et les anciens liens — courriel, signature, carte
     // de visite — résolvent vers l'application d'un INCONNU. Ce n'est pas
     // un 404, c'est une SUBSTITUTION SILENCIEUSE.
-    expect(SUPPRIMER, 'le slug est remis à zéro : le nom redevient libre').not.toMatch(
-      /publication_slug:\s*null/u,
-    )
+    //
+    // ── DEPUIS LE 2026-11-22, UNE SEULE EXCEPTION, ÉCRITE ICI À LA VUE DE TOUS.
+    // Le nom se choisit AVANT le paiement : un nom JAMAIS publié (ni jeton, ni
+    // `publie_le`) n'a été envoyé à personne, et le propriétaire veut qu'il se
+    // libère. La remise à zéro n'existe donc qu'UNE fois, et l'écriture même
+    // redit la condition — une ligne qui a été en ligne ne peut pas passer.
+    const remises = [...SUPPRIMER.matchAll(/publication_slug:\s*null/gu)]
+    expect(remises.length, 'le slug est remis à zéro ailleurs que pour un nom jamais publié').toBe(1)
+    const i = remises[0]?.index ?? 0
+    expect(
+      SUPPRIMER.slice(i, i + 300),
+      'la remise à zéro ne redit pas « jamais publiée » dans l’écriture : un nom publié redeviendrait libre',
+    ).toMatch(/\.is\('publication_jeton',\s*null\)[\s\S]{0,80}\.is\('publie_le',\s*null\)/u)
+    expect(SUPPRIMER, 'la remise à zéro n’est pas réservée au nom jamais publié').toMatch(/if\s*\(nomJamaisPublie\)\s*\{/u)
     expect(SUPPRIMER, 'le jeton doit être retiré : le lien cesse de répondre').toMatch(
       /publication_jeton:\s*null/u,
     )

@@ -43,7 +43,7 @@
  * et « Télécharger » agiraient sur autre chose que ce que l'œil voit — et la
  * personne publierait ce qu'elle ne regarde pas. Un seul courant, partout.
  */
-import { adresseEnLigne, lancerPublication } from '@/components/apps/publierAppli';
+import { changerAdresse, CONFIRMER_MOT_DE_PASSE, etapeDuRetour, lancerPublication, LIBELLE_CREER_MOT_DE_PASSE, LIBELLE_MOT_DE_PASSE, lireEtatPublication, PHRASES_RETOUR, refaireMotDePasse, RELECTURE_RETOUR_MAX, RELECTURE_RETOUR_MS, type EtapeRetour, type EtatPublication } from '@/components/apps/publierAppli';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -182,6 +182,12 @@ export default function AtelierPage() {
    */
   const [aRegenerer, setARegenerer] = useState<string | null>(null);
   const [renouvelle, setRenouvelle] = useState(false);
+  // ── OÙ EN EST LA PUBLICATION (2026-11-22) : le nom enregistré, l'adresse en
+  //    ligne, « Changer l'adresse » permis ou non. Lu à l'entrée, relu après
+  //    chaque geste.
+  const [etatPub, setEtatPub] = useState<EtatPublication | null>(null);
+  // Le retour de Stripe : où en est la publication faite par le webhook.
+  const [retour, setRetour] = useState<EtapeRetour | null>(null);
   const basDuFil = useRef<HTMLDivElement | null>(null);
 
   /** Le jeton de session, ou `null` — et dans ce cas on le DIT. */
@@ -231,10 +237,21 @@ export default function AtelierPage() {
     setCompteur(c);
     return c;
   }, [id, jeton]);
-  /** L'adresse EN LIGNE de l'appli, ou null (un nom enregistré n'en a pas). */
-  const lireAdresse = useCallback(async (): Promise<string | null> => {
+  /** Où en est la publication de cette appli (nom, adresse en ligne, échec automatique). */
+  const lireEtat = useCallback(async (): Promise<EtatPublication | null> => {
     const t = await jeton();
-    return t === null ? null : adresseEnLigne(id, `Bearer ${t}`);
+    const e = t === null ? null : await lireEtatPublication(id, `Bearer ${t}`);
+    if (e !== null) setEtatPub(e);
+    return e;
+  }, [id, jeton]);
+  /** L'état du compte de l'appli (actif dès qu'elle est en ligne avec une base). */
+  const relireCompte = useCallback(async () => {
+    const t = await jeton();
+    if (t === null) return;
+    try {
+      const res = await fetch(`/api/generateur/compte?id=${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${t}` } });
+      if (res.ok) setCompte((await res.json()) as { etat?: string; adresse?: string });
+    } catch { /* le panneau du compte reste tel quel */ }
   }, [id, jeton]);
   const versStripe = async (chemin: 'abonnement' | 'abonnement/portail') => {
     const t = await jeton();
@@ -261,36 +278,34 @@ export default function AtelierPage() {
       return () => window.clearTimeout(t0);
     }
     if (retour !== 'recu') return;
-    const t1 = window.setTimeout(() => setAbonnementAvis('Paiement reçu par Stripe — l’activation arrive dans quelques secondes.'), 0);
+    // ── LE RETOUR DE STRIPE (décision du propriétaire, 2026-11-22). Le webhook
+    //    publie ; l'écran dit où on en est et se met à jour SEUL : activation,
+    //    « Publication en cours… », puis « Votre application est en ligne » avec
+    //    son adresse et, si elle a une base, « Créer mon mot de passe ». Un échec
+    //    de la publication automatique se dit (l'alerte est déjà partie).
     let essais = 0;
-    const minuteur = window.setInterval(() => {
+    let fini = false;
+    const t1 = window.setTimeout(() => setRetour('activation'), 0);
+    const suivre = async () => {
       essais += 1;
-      void relireCompteur().then((c) => {
-        if (c !== null && !c.exempte && c.actif) {
-          // LE PAIEMENT REÇU PUBLIE (décision du 2026-11-22) : le webhook met
-          // l'appli en ligne au nom choisi avant Stripe. L'écran attend son
-          // adresse ; sans elle au bout d'une minute, « Publier maintenant »
-          // republie sans repasser par Stripe.
-          void lireAdresse().then((adresse) => {
-            if (adresse !== null) {
-              setAbonnementAvis('Abonnement actif. Merci !');
-              setLienPublic(adresse);
-              setAvisPublication({ texte: 'Abonnement actif : votre application est en ligne.', publierMaintenant: false });
-              window.clearInterval(minuteur);
-            } else if (essais >= 12) {
-              setAbonnementAvis('Abonnement actif. Merci !');
-              setAvisPublication({ texte: 'Abonnement actif : votre application peut être publiée.', publierMaintenant: true });
-              window.clearInterval(minuteur);
-            }
-          });
-        } else if (essais >= 12) {
-          setAbonnementAvis('Le paiement est reçu, l’activation tarde : rechargez la page dans une minute. Rien ne sera prélevé deux fois.');
-          window.clearInterval(minuteur);
-        }
-      });
-    }, 5000);
+      const e = await lireEtat();
+      const etape = etapeDuRetour(e);
+      setRetour(etape);
+      if (etape === 'en_ligne') {
+        fini = true;
+        setAbonnementAvis('Abonnement actif. Merci !');
+        setLienPublic(e?.adresse ?? null);
+        void relireCompte();
+        void relireCompteur();
+      } else if (etape === 'echec') {
+        fini = true;
+        void relireCompteur();
+      }
+      if (fini || essais >= RELECTURE_RETOUR_MAX) window.clearInterval(minuteur);
+    };
+    const minuteur = window.setInterval(() => { if (!fini) void suivre(); }, RELECTURE_RETOUR_MS);
     return () => { window.clearTimeout(t1); window.clearInterval(minuteur); };
-  }, [relireCompteur, lireAdresse]);
+  }, [relireCompteur, lireEtat, relireCompte]);
 
   const chargerVersions = useCallback(async () => {
     const t = await jeton();
@@ -352,10 +367,12 @@ export default function AtelierPage() {
         });
         if (res.ok) setCompte((await res.json()) as { etat?: string; adresse?: string });
       } catch { /* la carte reste sans panneau de compte, le reste vit */ }
+      // L'adresse en ligne et le nom enregistré : « Changer l'adresse » en dépend.
+      void lireEtat().then((e) => { if (e?.adresse != null) setLienPublic((l) => l ?? e.adresse); });
 
       await Promise.all([chargerVersions(), chargerApercu()]);
     })();
-  }, [id, router, chargerApercu, chargerVersions]);
+  }, [id, router, chargerApercu, chargerVersions, lireEtat]);
 
   /**
    * APPLIQUE UNE MODIFICATION MISE DE CÔTÉ — aucun appel au modèle.
@@ -394,37 +411,37 @@ export default function AtelierPage() {
     }
   };
 
-  /** Refait le mot de passe. Le nouveau s'affiche, et il ne se relira pas. */
-  const renouvelerCle = async () => {
+  /**
+   * CRÉE OU REFAIT LE MOT DE PASSE — la fonction existante « Refaire le mot de
+   * passe » (POST /api/generateur/compte). Le nouveau s'affiche, et il ne se
+   * relira pas. `sansConfirmation` : au retour du paiement, personne n'a vu
+   * le premier — il n'y a rien à couper.
+   */
+  const renouvelerCle = async (sansConfirmation = false) => {
     const t = await jeton();
     if (t === null) return;
-    if (!window.confirm(
-      'Refaire le mot de passe de cette application ?\n\n' +
-      'L’ancien cessera de fonctionner immédiatement : les personnes qui ' +
-      's’en servent devront recevoir le nouveau.\n\nFaites-le si la clé a ' +
-      'circulé plus qu’elle ne devait, ou si vous ne savez plus qui l’a.',
-    )) return;
+    if (!sansConfirmation && !window.confirm(CONFIRMER_MOT_DE_PASSE)) return;
     setErreur(null);
     setRenouvelle(true);
     try {
-      const res = await fetch(`/api/generateur/compte?id=${encodeURIComponent(id)}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${t}` },
-      });
-      const d = (await res.json()) as {
-        adresse?: string; motDePasse?: string; error?: string; motif?: string;
-      };
-      if (!res.ok) {
-        setErreur(`${String(d.error ?? 'Le renouvellement a échoué.')} ${String(d.motif ?? '')}`.trim());
-        return;
-      }
-      setCompte({ etat: 'actif', adresse: d.adresse, motDePasse: d.motDePasse ?? null });
+      const r = await refaireMotDePasse(id, `Bearer ${t}`);
+      if (!r.ok) { setErreur(r.message); return; }
+      setCompte({ etat: 'actif', adresse: r.adresse, motDePasse: r.motDePasse });
       setAvis('Nouveau mot de passe — notez-le maintenant, il ne se relira pas.');
-    } catch {
-      setErreur('Le renouvellement a échoué. Réessayez.');
     } finally {
       setRenouvelle(false);
     }
+  };
+
+  /** « Changer l'adresse » : tant que l'appli n'a jamais été en ligne. */
+  const changerNom = async () => {
+    const t = await jeton();
+    if (t === null || app === null || etatPub?.nom == null) return;
+    setErreur(null);
+    const r = await changerAdresse({ id, titre: app.nom ?? null, nomActuel: etatPub.nom, autorisation: `Bearer ${t}` });
+    if (r.type === 'erreur') { setErreur(r.message); return; }
+    if (r.type === 'changee') setAvisPublication({ texte: `Adresse choisie : ${r.nom}.deribfy.app`, publierMaintenant: false });
+    await lireEtat();
   };
 
   // Le fil se lit vers le bas : après chaque échange, on descend.
@@ -605,6 +622,7 @@ export default function AtelierPage() {
     //    revient déjà augmentée, le bouton du refus de retouche la porte.
     if (issue.type === 'amnesique') { setARegenerer(issue.regenerer); setErreur(issue.message); return; }
     if (issue.type !== 'publiee') return;
+    void lireEtat();
     if (issue.erreurSousDomaine !== null) setErreur(`Adresse nommée refusée : ${issue.erreurSousDomaine}`);
     setLienPublic(issue.lien);
     // ── LE MOT DE PASSE NE REVIENT JAMAIS, mesuré le 2026-11-04 : la
@@ -748,6 +766,17 @@ export default function AtelierPage() {
             <Globe size={14} strokeWidth={2} aria-hidden />
             Publier
           </button>
+          {/* « CHANGER L'ADRESSE » (2026-11-22) : seulement un nom enregistré,
+              sur une appli jamais en ligne. Après, le nom ne change plus. */}
+          {etatPub?.nomModifiable === true && (
+            <button
+              type="button"
+              onClick={() => { void changerNom(); }}
+              className="rounded-lg px-1.5 py-1.5 text-[11px] text-slate-400 underline-offset-2 transition hover:text-white hover:underline"
+            >
+              Changer l’adresse
+            </button>
+          )}
           <button
             type="button"
             onClick={() => { void telecharger(); }}
@@ -759,6 +788,37 @@ export default function AtelierPage() {
         </div>
         </div>
       </header>
+      {retour !== null && (
+        <div role="status" id="retour-paiement" className="flex shrink-0 flex-col gap-2 border-b border-[#FA5D1E]/30 bg-[#FA5D1E]/[0.08] px-4 py-2 text-xs text-white">
+          {retour === 'en_ligne' && lienPublic !== null ? (
+            <p className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold">{PHRASES_RETOUR.en_ligne}</span>
+              <a href={lienPublic} target="_blank" rel="noreferrer noopener" className="text-[#FFB08F] underline">{lienPublic}</a>
+              {/* UNE APPLI AVEC BASE A UN COMPTE : son premier mot de passe se
+                  crée ici, personne ne l'a vu. Sans base, l'adresse seule. */}
+              {compte?.etat === 'actif' && (compte.motDePasse ?? null) === null && (
+                <button type="button" disabled={renouvelle} onClick={() => { void renouvelerCle(true); }}
+                  className="rounded-lg bg-[#FA5D1E] px-2.5 py-1 font-semibold text-white disabled:opacity-40">
+                  {renouvelle ? 'Création…' : LIBELLE_CREER_MOT_DE_PASSE}
+                </button>
+              )}
+            </p>
+          ) : (
+            <p className="flex flex-wrap items-center gap-2">
+              {PHRASES_RETOUR[retour]}
+              {retour === 'echec' && (
+                <button type="button" onClick={() => { setRetour(null); void publier(); }}
+                  className="rounded-lg bg-[#FA5D1E] px-2.5 py-1 font-semibold text-white">
+                  Publier
+                </button>
+              )}
+            </p>
+          )}
+          {retour === 'en_ligne' && compte?.etat === 'actif' && (compte.motDePasse ?? null) !== null && (
+            <IdentifiantsOeuvre compte={compte} lien={lienPublic ?? undefined} />
+          )}
+        </div>
+      )}
       {avisPublication !== null && (
         <p role="status" id="avis-publication" className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[#FA5D1E]/30 bg-[#FA5D1E]/[0.08] px-4 py-2 text-xs text-white">
           {avisPublication.texte}
@@ -891,6 +951,7 @@ export default function AtelierPage() {
                   compte={compte}
                   onRenouveler={() => { void renouvelerCle(); }}
                   renouvelle={renouvelle}
+                  libelleRenouveler={LIBELLE_MOT_DE_PASSE}
                   /* ── L'ADRESSE DE GESTION N'APPARAÎT QUE SI ON LA CONNAÎT.
                        `lienPublic` n'est posé qu'après une publication faite
                        ICI : sur une œuvre publiée AVANT, cet écran ne la

@@ -41,11 +41,14 @@ export function IdentifiantsOeuvre({
   onRenouveler,
   renouvelle = false,
   lien,
+  libelleRenouveler = 'Refaire le mot de passe',
 }: {
   readonly compte: EtatCompteOeuvre;
   /** Omis quand l'écran ne propose pas le renouvellement. */
   readonly onRenouveler?: () => void;
   readonly renouvelle?: boolean;
+  /** Le libellé du bouton (2026-11-22 : « Créer / refaire mon mot de passe » sur l'atelier et « Mes projets »). */
+  readonly libelleRenouveler?: string;
   /**
    * L'ADRESSE PUBLIÉE — pour montrer le SECOND chemin vers la gestion.
    *
@@ -117,7 +120,7 @@ export function IdentifiantsOeuvre({
           onClick={onRenouveler}
           className="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[11px] text-slate-300 transition hover:border-white/20 hover:text-white disabled:opacity-40"
         >
-          {renouvelle ? 'Renouvellement…' : 'Refaire le mot de passe'}
+          {renouvelle ? 'Renouvellement…' : libelleRenouveler}
         </button>
       )}
     </div>

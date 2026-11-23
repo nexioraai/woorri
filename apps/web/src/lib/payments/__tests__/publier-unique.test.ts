@@ -22,6 +22,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
 import { join } from 'node:path'
 
 vi.mock('server-only', () => ({}))
@@ -29,7 +30,7 @@ vi.mock('server-only', () => ({}))
 type Appli = {
   id: string; owner_id: string; nom: string | null; demande: string; statut: string
   document: unknown; publication_jeton: string | null; publication_slug: string | null
-  sections_acquises: unknown; publie_le?: string | null
+  sections_acquises: unknown; publie_le?: string | null; created_at?: string
 }
 const etat = vi.hoisted(() => ({
   email: 'contact@deribfy.com',
@@ -44,6 +45,16 @@ const etat = vi.hoisted(() => ({
   sequence: [] as string[],
   journal: { filtres: {}, projections: {}, ecritures: {} } as import('@/lib/testing/postgrest').JournalPostgrest,
   appliquees: 0,
+  // Le compte de l'œuvre (base des œuvres en double) : qui a reçu quel mot de passe.
+  motsDePasseCrees: [] as { quand: 'publication' | 'renouvellement'; nom: string | null }[],
+}))
+vi.mock('@/lib/apps/base-oeuvres', () => ({ configBaseOeuvres: () => ({ ok: true, config: { url: 'https://oeuvres.supabase.co', cleSecrete: 'cle-factice' } }) }))
+vi.mock('@/lib/apps/poser-oeuvre', () => ({ poserOeuvre: async () => ({ ok: true, elagues: [] }) }))
+vi.mock('@/lib/apps/compte-oeuvre', async (orig) => ({
+  ...(await orig<typeof import('@/lib/apps/compte-oeuvre')>()),
+  assurerCompteOeuvre: async (o: { nom: string | null }) => { etat.motsDePasseCrees.push({ quand: 'publication', nom: o.nom }); return { adresse: `admin@${String(o.nom)}.deribfy.app`, motDePasse: 'mdp-de-la-publication' } },
+  renouvelerMotDePasse: async (o: { nom: string | null }) => { etat.motsDePasseCrees.push({ quand: 'renouvellement', nom: o.nom }); return { adresse: `admin@${String(o.nom)}.deribfy.app`, motDePasse: 'mdp-cree-par-le-client' } },
+  adresseActuelle: async () => 'admin@gestion-stock.deribfy.app',
 }))
 
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
@@ -94,6 +105,8 @@ vi.mock('@/lib/supabase-admin', async () => {
             if (slug !== undefined && f[f.length - 1]?.[0] === 'neq') {
               return { data: etat.autre !== null && etat.autre.publication_slug === slug ? { id: etat.autre.id } : null, error: null }
             }
+            // La liste de « Mes projets » (`.limit(50)`) rend un tableau.
+            if (f[f.length - 1]?.[0] === 'limit') return { data: [{ ...etat.appli }], error: null }
             return { data: { ...etat.appli }, error: null }
           },
         },
@@ -102,6 +115,15 @@ vi.mock('@/lib/supabase-admin', async () => {
         },
         quota_reglages: {
           reponse: (f) => ({ data: { valeur: dernier(f, 'cle') === 'abonnement_carte' ? etat.carte : '10' }, error: null }),
+        },
+        // LES ALERTES QUE `logAnomaly` A NOTÉES : la route d'état y lit l'échec
+        // de la publication automatique, comme en production.
+        checkout_anomalies: {
+          reponse: (f) => {
+            const type = dernier(f, 'type'); const app = dernier(f, 'details->>app')
+            const a = etat.alertes.find((x) => x.type === type && x.details.app === app)
+            return { data: a === undefined ? null : { id: 'anomalie-1' }, error: null }
+          },
         },
         comptes_stripe: { reponse: { data: { customer_id: 'cus_contact' }, error: null } },
         sites: { reponse: { data: null, error: null } },
@@ -116,6 +138,13 @@ import { POST as PUBLIER } from '@/app/api/generateur/publier/route'
 import { publierApresPaiement } from '@/lib/payments/publier-apres-paiement'
 import { PHRASE_PUBLIER_FERMEE } from '@/lib/apps/compteur-phrases'
 import { PHRASE_ABONNEMENT_EN_COURS } from '@/lib/payments/abonnement-appli'
+import { changerAdresse, etapeDuRetour, lireEtatPublication, refaireMotDePasse } from '@/components/apps/publierAppli'
+import { GET as COMPTE } from '@/app/api/generateur/compte/route'
+import { POST as SUPPRIMER } from '@/app/api/generateur/supprimer/route'
+import { GET as MES_APPLICATIONS } from '@/app/api/generateur/mes-applications/route'
+import { PHRASE_NOM_FIGE } from '@/lib/apps/nom-enregistre'
+import { POST as CHANGER_NOM } from '@/app/api/generateur/publier/nom/route'
+import { POST as COMPTE_POST } from '@/app/api/generateur/compte/route'
 
 const SRC = join(__dirname, '..', '..', '..')
 const PAGES = {
@@ -135,6 +164,8 @@ const reseau = async (url: string | URL | Request, init?: RequestInit): Promise<
   const req = new Request(`https://www.deribfy.com${u}`, init)
   if (u.startsWith('/api/generateur/publier/etat')) return ETAT(req)
   if (u.startsWith('/api/generateur/publier?')) return PUBLIER(req)
+  if (u.startsWith('/api/generateur/publier/nom')) return CHANGER_NOM(req)
+  if (u.startsWith('/api/generateur/compte') && req.method === 'POST') return COMPTE_POST(req)
   throw new Error(`appel inattendu : ${u}`)
 }
 
@@ -162,8 +193,10 @@ beforeEach(() => {
   etat.carte = 'contact@deribfy.com'
   etat.appli = {
     id: 'app-stock', owner_id: 'u-contact', nom: 'Gestion de stock', demande: 'Gérer le stock', statut: 'livree',
-    document: { fichiers: { 'index.html': '<p>stock</p>' } }, publication_jeton: null, publication_slug: null, sections_acquises: {},
+    document: { fichiers: { 'index.html': '<p>stock</p>' } }, publication_jeton: null, publication_slug: null, sections_acquises: {}, publie_le: null,
   }
+  etat.motsDePasseCrees = []
+  process.env.OEUVRES_DATABASE_URL_POOLER_TRANSACTION = 'postgres://factice'
   etat.autre = null
   etat.paye = false
   etat.abonnements = []; etat.sessions = []; etat.domaines = []; etat.alertes = []; etat.sequence = []
@@ -345,5 +378,158 @@ describe('la publication après paiement (webhook) : jamais de silence, jamais d
     const effet = await publierApresPaiement({ app: 'app-stock', proprietaire: 'u-contact', accordLecture: null })
     expect(['echec', 'publiee_sans_nom']).toContain(effet)
     expect(etat.alertes.map((a) => a.type)).toEqual(['stripe_publication_application'])
+  })
+})
+
+// ════════════════════════════════════════════════════════════════════════
+// LES TROIS AJOUTS DU PROPRIÉTAIRE (2026-11-22).
+// ════════════════════════════════════════════════════════════════════════
+
+const AVEC_BASE = { schema: 'create table public.article (id uuid primary key)', fichiers: { 'index.html': '<p>stock</p>' } }
+const appelDe = (route: (r: Request) => Promise<Response>, chemin: string, init?: RequestInit) =>
+  route(new Request(`https://www.deribfy.com${chemin}`, init))
+const etatDuCompte = async (): Promise<string> =>
+  ((await (await appelDe(COMPTE, '/api/generateur/compte?id=app-stock')).json()) as { etat: string }).etat
+const etapeMaintenant = async () => etapeDuRetour(await lireEtatPublication('app-stock', 'Bearer jeton'))
+
+describe('AJOUT 1 · le retour de Stripe et le mot de passe', () => {
+  it('appli AVEC base : en ligne, puis « Créer mon mot de passe » rend un mot de passe que le client voit', async () => {
+    etat.appli.document = AVEC_BASE
+    await clic('atelier')
+    expect(await etapeMaintenant(), 'avant l’activation').toBe('activation')
+    expect(await payer()).toBe('publiee')
+    expect(await etapeMaintenant()).toBe('en_ligne')
+    // Le webhook a créé le compte — son mot de passe n'a été rendu à PERSONNE.
+    expect(etat.motsDePasseCrees).toEqual([{ quand: 'publication', nom: 'gestion-stock' }])
+    expect(await etatDuCompte(), 'le compte n’est pas actif : pas de bouton').toBe('actif')
+    // Le bouton : la fonction EXISTANTE « Refaire le mot de passe ».
+    const r = await refaireMotDePasse('app-stock', 'Bearer jeton')
+    expect(r).toEqual({ ok: true, adresse: 'admin@gestion-stock.deribfy.app', motDePasse: 'mdp-cree-par-le-client' })
+    expect(etat.motsDePasseCrees.at(-1)).toEqual({ quand: 'renouvellement', nom: 'gestion-stock' })
+  })
+
+  it('appli SANS base : en ligne, l’adresse seule — pas de compte, pas de mot de passe', async () => {
+    await clic('Mes projets')
+    expect(await payer()).toBe('publiee')
+    expect(await etapeMaintenant()).toBe('en_ligne')
+    expect(await etatDuCompte()).toBe('sans-donnees')
+    expect((await refaireMotDePasse('app-stock', 'Bearer jeton')).ok).toBe(false)
+    expect(etat.motsDePasseCrees).toEqual([])
+  })
+
+  it('webhook EN RETARD : payé, pas encore publié → « Publication en cours… », puis en ligne sans aucun clic', async () => {
+    await clic('atelier')
+    etat.paye = true
+    expect(await etapeMaintenant()).toBe('publication')
+    const clics = questions.length
+    expect(await publierApresPaiement({ app: 'app-stock', proprietaire: 'u-contact', accordLecture: null })).toBe('publiee')
+    expect(await etapeMaintenant()).toBe('en_ligne')
+    expect(questions.length, 'un clic a été demandé').toBe(clics)
+  })
+
+  it('publication automatique ÉCHOUÉE : l’écran le dit (« echec »), et l’alerte est partie', async () => {
+    etat.appli.document = { fichiers: { 'index.html': 'x' }, entites: [{ id: 'annonce', name: 'Annonce', fields: [], lecturePublique: true }] }
+    etat.appli.publication_slug = 'gestion-stock'
+    expect(await payer()).toBe('refusee')
+    expect(etat.alertes.map((a) => a.type)).toEqual(['stripe_publication_application'])
+    expect(await etapeMaintenant()).toBe('echec')
+  })
+
+  it('plus tard, dans « Mes projets » : l’adresse, et l’accès au mot de passe seulement pour une appli avec base', async () => {
+    etat.appli.document = AVEC_BASE
+    await clic('Mes projets'); await payer()
+    const avec = ((await (await appelDe(MES_APPLICATIONS, '/api/generateur/mes-applications')).json()) as { applications: { adresse: string | null; aDesDonnees: boolean }[] }).applications[0]
+    expect(avec).toMatchObject({ adresse: 'https://gestion-stock.deribfy.app', aDesDonnees: true })
+    etat.appli.document = { fichiers: { 'index.html': 'x' } }
+    const sans = ((await (await appelDe(MES_APPLICATIONS, '/api/generateur/mes-applications')).json()) as { applications: { aDesDonnees: boolean }[] }).applications[0]
+    expect(sans?.aDesDonnees).toBe(false)
+  })
+
+  it('les deux écrans : le bouton du mot de passe passe par la fonction existante, et n’apparaît qu’avec une base', () => {
+    for (const b of BOUTONS) expect(PAGES[b], `${b} n’emploie pas refaireMotDePasse`).toMatch(/refaireMotDePasse\(/u)
+    expect(PAGES['Mes projets']).toMatch(motifTexte('a.adresse != null && a.aDesDonnees === true && ('))
+    expect(PAGES.atelier).toMatch(motifTexte("compte?.etat === 'actif' && (compte.motDePasse ?? null) === null && ("))
+    expect(PAGES.atelier).toMatch(/libelleRenouveler=\{LIBELLE_MOT_DE_PASSE\}/u)
+    // Aucun « recliquez sur Publier » au retour : l'écran relit l'état seul.
+    expect(PAGES.atelier).toMatch(motifTexte('window.setInterval(() => { if (!fini) void suivre(); }, RELECTURE_RETOUR_MS)'))
+  })
+})
+
+describe('AJOUT 2 · libérer le nom d’une appli supprimée qui n’a jamais été en ligne', () => {
+  const supprimer = () => appelDe(SUPPRIMER, '/api/generateur/supprimer', { method: 'POST', body: JSON.stringify({ id: 'app-stock' }) })
+
+  it('nom enregistré, jamais publié : supprimée → le nom est LIBÉRÉ, aucun domaine à détacher', async () => {
+    await clic('atelier')
+    expect(etat.appli.publication_slug).toBe('gestion-stock')
+    const d = (await (await supprimer()).json()) as { ok: boolean; nomLibere: string | null; nomEnQuarantaine: string | null }
+    expect(d).toMatchObject({ ok: true, nomLibere: 'gestion-stock', nomEnQuarantaine: null })
+    expect(etat.appli.publication_slug).toBeNull()
+    expect(etat.domaines, 'un domaine jamais attaché a été « détaché »').toEqual([])
+    // La condition est REDITE dans l'écriture : une publication entre-temps l'emporterait.
+    expect(etat.journal.filtres.app_generations).toEqual(expect.arrayContaining([['is', 'publication_jeton', null], ['is', 'publie_le', null]]))
+  })
+
+  it('appli publiée puis remboursée (jeton retiré, date gardée) : supprimée → le nom RESTE en quarantaine', async () => {
+    etat.appli.publication_slug = 'gestion-stock'
+    etat.appli.publie_le = '2026-11-22T10:00:00Z'
+    const d = (await (await supprimer()).json()) as { nomEnQuarantaine: string | null; nomLibere: string | null }
+    expect(d).toMatchObject({ nomEnQuarantaine: 'gestion-stock', nomLibere: null })
+    expect(etat.appli.publication_slug).toBe('gestion-stock')
+    expect(etat.domaines.some((u) => u.includes('gestion-stock.deribfy.app')), 'le domaine n’est pas détaché').toBe(true)
+  })
+
+  it('appli EN LIGNE : supprimée → le nom reste en quarantaine (EP-308 inchangé)', async () => {
+    await clic('atelier'); await payer()
+    await supprimer()
+    expect(etat.appli.publication_slug).toBe('gestion-stock')
+    expect(etat.appli.publication_jeton).toBeNull()
+  })
+})
+
+describe('AJOUT 3 · « Changer l’adresse », tant que l’appli n’a jamais été en ligne', () => {
+  const changer = (nouveau: string | null) => changerAdresse({ id: 'app-stock', titre: 'Gestion de stock', nomActuel: 'gestion-stock', autorisation: 'Bearer jeton', demanderNom: () => nouveau })
+
+  it('visible seulement avec un nom enregistré et une appli jamais en ligne', async () => {
+    expect((await lireEtatPublication('app-stock', 'Bearer jeton'))?.nomModifiable, 'sans nom').toBe(false)
+    await clic('atelier')
+    expect((await lireEtatPublication('app-stock', 'Bearer jeton'))?.nomModifiable).toBe(true)
+    await payer()
+    expect((await lireEtatPublication('app-stock', 'Bearer jeton'))?.nomModifiable, 'en ligne').toBe(false)
+    etat.appli.publication_jeton = null // remboursée : le jeton part, la date reste
+    expect((await lireEtatPublication('app-stock', 'Bearer jeton'))?.nomModifiable, 'a été en ligne').toBe(false)
+  })
+
+  it('un nouveau nom valide remplace l’ancien (libéré) ; le prochain « Publier » part avec lui, sans question', async () => {
+    await clic('Mes projets')
+    expect(await changer('stock-moundou')).toEqual({ type: 'changee', nom: 'stock-moundou' })
+    expect(etat.appli.publication_slug).toBe('stock-moundou')
+    expect(etat.journal.filtres.app_generations).toEqual(expect.arrayContaining([['is', 'publication_jeton', null], ['is', 'publie_le', null]]))
+    questions.length = 0
+    expect(await clic('atelier')).toEqual({ type: 'paiement' })
+    expect(questions).toEqual([])
+    expect(await payer()).toBe('publiee')
+    expect(await adresseEnLigne('app-stock', 'Bearer jeton')).toBe('https://stock-moundou.deribfy.app')
+  })
+
+  it('mêmes contrôles que « Publier » : format refusé, nom déjà pris — rien ne change', async () => {
+    await clic('atelier')
+    expect(await changer('A')).toEqual({ type: 'erreur', message: expect.stringContaining('nom n est pas utilisable') })
+    etat.autre = { id: 'autre-app', publication_slug: 'pris-ailleurs' }
+    expect(await changer('pris-ailleurs')).toEqual({ type: 'erreur', message: expect.stringContaining('deja pris') })
+    expect(etat.appli.publication_slug).toBe('gestion-stock')
+  })
+
+  it('après une mise en ligne, le nom ne change plus (409), même dépubliée', async () => {
+    await clic('atelier'); await payer()
+    expect(await changer('autre-nom')).toEqual({ type: 'erreur', message: PHRASE_NOM_FIGE })
+    etat.appli.publication_jeton = null
+    expect(await changer('autre-nom')).toEqual({ type: 'erreur', message: PHRASE_NOM_FIGE })
+    expect(etat.appli.publication_slug).toBe('gestion-stock')
+  })
+
+  it('les deux écrans : « Changer l’adresse » à côté de « Publier », par le module partagé, seulement si permis', () => {
+    expect(PAGES.atelier).toMatch(motifTexte('etatPub?.nomModifiable === true && ('))
+    expect(PAGES['Mes projets']).toMatch(motifTexte('a.nomModifiable === true && ('))
+    for (const b of BOUTONS) expect(PAGES[b]).toMatch(/changerAdresse\(\{/u)
   })
 })

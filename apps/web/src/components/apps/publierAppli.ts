@@ -97,14 +97,117 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
   }
 }
 
-/** L'adresse EN LIGNE de l'appli, ou null : un nom enregistré sans paiement n'en a pas. */
-export async function adresseEnLigne(id: string, autorisation: string): Promise<string | null> {
+/** Ce que « Publier » va faire, et où en est l'appli (GET /api/generateur/publier/etat). */
+export type EtatPublication = {
+  readonly action: ActionPublier
+  readonly nom: string | null
+  readonly adresse: string | null
+  readonly nomModifiable: boolean
+  readonly publicationAuto: 'echec' | null
+}
+
+export async function lireEtatPublication(id: string, autorisation: string): Promise<EtatPublication | null> {
   try {
     const res = await fetch(`/api/generateur/publier/etat?id=${encodeURIComponent(id)}`, { headers: { Authorization: autorisation } })
     if (!res.ok) return null
-    const a = ((await res.json()) as { adresse?: string | null }).adresse
-    return typeof a === 'string' && a !== '' ? a : null
+    const d = (await res.json()) as Partial<EtatPublication>
+    if (d.action === undefined) return null
+    return {
+      action: d.action,
+      nom: typeof d.nom === 'string' && d.nom !== '' ? d.nom : null,
+      adresse: typeof d.adresse === 'string' && d.adresse !== '' ? d.adresse : null,
+      nomModifiable: d.nomModifiable === true,
+      publicationAuto: d.publicationAuto === 'echec' ? 'echec' : null,
+    }
   } catch {
     return null
+  }
+}
+
+/** L'adresse EN LIGNE de l'appli, ou null : un nom enregistré sans paiement n'en a pas. */
+export async function adresseEnLigne(id: string, autorisation: string): Promise<string | null> {
+  return (await lireEtatPublication(id, autorisation))?.adresse ?? null
+}
+
+// ── LE RETOUR DE STRIPE (décision du propriétaire, 2026-11-22).
+//
+// Le client vient de payer ; c'est le webhook qui publie. L'écran dit où on
+// en est, et se met à jour SEUL (il relit l'état toutes les quelques
+// secondes) : jamais « recliquez sur Publier ».
+export type EtapeRetour = 'activation' | 'publication' | 'en_ligne' | 'echec'
+
+export function etapeDuRetour(e: EtatPublication | null): EtapeRetour {
+  if (e?.adresse != null) return 'en_ligne'
+  if (e?.publicationAuto === 'echec') return 'echec'
+  // Payé (la décision dit « publier ») mais pas encore en ligne : le webhook travaille.
+  if (e?.action === 'publier') return 'publication'
+  return 'activation'
+}
+
+export const PHRASES_RETOUR: Readonly<Record<EtapeRetour, string>> = {
+  activation: 'Paiement reçu par Stripe — l’activation arrive dans quelques secondes.',
+  publication: 'Paiement reçu. Publication en cours…',
+  en_ligne: 'Votre application est en ligne',
+  echec: 'Le paiement est bien reçu, mais la publication automatique n’a pas abouti. Nous sommes prévenus. « Publier » la relance, sans payer une seconde fois.',
+}
+
+/** Toutes les combien de millisecondes l'écran relit l'état, et jusqu'à quand. */
+export const RELECTURE_RETOUR_MS = 5000
+export const RELECTURE_RETOUR_MAX = 360 // trente minutes
+
+// ── « CHANGER L'ADRESSE » (décision du propriétaire, 2026-11-22) : tant que
+//    l'appli n'a jamais été en ligne. Mêmes contrôles que « Publier ».
+export type IssueNom =
+  | { readonly type: 'annulee' }
+  | { readonly type: 'changee'; readonly nom: string }
+  | { readonly type: 'erreur'; readonly message: string }
+
+export async function changerAdresse(o: {
+  readonly id: string
+  readonly titre: string | null
+  readonly nomActuel: string
+  readonly autorisation: string
+  readonly demanderNom?: (question: string, suggestion: string) => string | null
+}): Promise<IssueNom> {
+  const demanderNom = o.demanderNom ?? ((q: string, s: string) => window.prompt(q, s))
+  const saisi = demanderNom(questionDuNom(o.titre), o.nomActuel)
+  if (saisi === null) return { type: 'annulee' }
+  const sous = saisi.trim().toLowerCase()
+  if (sous === '') return { type: 'erreur', message: 'Choisissez une adresse.' }
+  try {
+    const res = await fetch(`/api/generateur/publier/nom?id=${encodeURIComponent(o.id)}&sous=${encodeURIComponent(sous)}`, {
+      method: 'POST', headers: { Authorization: o.autorisation },
+    })
+    const d = (await res.json().catch(() => ({}))) as { nom?: string; error?: string }
+    if (!res.ok || typeof d.nom !== 'string') return { type: 'erreur', message: d.error ?? 'L’adresse n’a pas pu être changée.' }
+    return { type: 'changee', nom: d.nom }
+  } catch {
+    return { type: 'erreur', message: 'L’adresse n’a pas pu être changée. Réessayez.' }
+  }
+}
+
+// ── LE MOT DE PASSE DE L'APPLI : la fonction EXISTANTE « Refaire le mot de
+//    passe » (POST /api/generateur/compte), pas un nouveau mécanisme. Après
+//    une publication faite par le webhook, personne n'a vu le premier : le
+//    « créer », c'est le refaire.
+export const LIBELLE_CREER_MOT_DE_PASSE = 'Créer mon mot de passe'
+export const LIBELLE_MOT_DE_PASSE = 'Créer / refaire mon mot de passe'
+export const CONFIRMER_MOT_DE_PASSE =
+  'Créer un nouveau mot de passe pour cette application ?\n\n' +
+  'S’il en existait déjà un, il cessera de fonctionner immédiatement : les ' +
+  'personnes qui s’en servent devront recevoir le nouveau.'
+
+export type IssueMotDePasse =
+  | { readonly ok: true; readonly adresse: string | undefined; readonly motDePasse: string | null }
+  | { readonly ok: false; readonly message: string }
+
+export async function refaireMotDePasse(id: string, autorisation: string): Promise<IssueMotDePasse> {
+  try {
+    const res = await fetch(`/api/generateur/compte?id=${encodeURIComponent(id)}`, { method: 'POST', headers: { Authorization: autorisation } })
+    const d = (await res.json().catch(() => ({}))) as { adresse?: string; motDePasse?: string; error?: string; motif?: string }
+    if (!res.ok) return { ok: false, message: `${String(d.error ?? 'Le renouvellement a échoué.')} ${String(d.motif ?? '')}`.trim() }
+    return { ok: true, adresse: d.adresse, motDePasse: d.motDePasse ?? null }
+  } catch {
+    return { ok: false, message: 'Le renouvellement a échoué. Réessayez.' }
   }
 }

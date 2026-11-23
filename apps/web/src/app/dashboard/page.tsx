@@ -1,6 +1,6 @@
 'use client';
 import { ADRESSE_GESTION } from '@/lib/apps/entites-declarees';
-import { lancerPublication } from '@/components/apps/publierAppli';
+import { changerAdresse, CONFIRMER_MOT_DE_PASSE, lancerPublication, LIBELLE_MOT_DE_PASSE, refaireMotDePasse } from '@/components/apps/publierAppli';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -52,6 +52,12 @@ type Application = {
   revoyable: boolean;
   /** Ce que les juges ont relevé et qui n'a pas empêché la livraison. */
   diagnostics?: string[];
+  /** Le nom choisi avant le paiement, tant que l'appli n'a jamais été en ligne (2026-11-22). */
+  nomEnregistre?: string | null;
+  /** « Changer l'adresse » est permis. */
+  nomModifiable?: boolean;
+  /** Une base, donc un compte : « Créer / refaire mon mot de passe ». */
+  aDesDonnees?: boolean;
 };
 
 export default function DashboardPage() {
@@ -300,6 +306,32 @@ export default function DashboardPage() {
     // montre le lien qui marche ET la raison de l'échec, jamais l'un sans l'autre.
     if (issue.erreurSousDomaine !== null) setApercuErreur(`Adresse nommée refusée : ${issue.erreurSousDomaine}`);
     setLienPublic({ id: a.id, url: issue.lien, compte: issue.compte });
+    setApplications((liste) => liste.map((x) => (x.id === a.id ? { ...x, adresse: issue.lien, nomModifiable: false, nomEnregistre: null } : x)));
+  };
+
+  // ── « CHANGER L'ADRESSE » (2026-11-22) : le même module que l'atelier.
+  const changerNom = async (a: Application) => {
+    if (a.nomEnregistre == null) return;
+    setApercuErreur(null);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
+    const r = await changerAdresse({ id: a.id, titre: a.nom ?? null, nomActuel: a.nomEnregistre, autorisation: `Bearer ${session.access_token}` });
+    if (r.type === 'erreur') { setApercuErreur(r.message); return; }
+    if (r.type === 'changee') setApplications((liste) => liste.map((x) => (x.id === a.id ? { ...x, nomEnregistre: r.nom } : x)));
+  };
+
+  // ── LE MOT DE PASSE D'UNE APPLI EN LIGNE (2026-11-22) : la fonction
+  //    existante « Refaire le mot de passe », par le module partagé. Après
+  //    une publication faite au paiement, c'est ainsi qu'on CRÉE le premier.
+  const motDePasse = async (a: Application) => {
+    if (a.adresse == null) return;
+    if (!window.confirm(CONFIRMER_MOT_DE_PASSE)) return;
+    setApercuErreur(null);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
+    const r = await refaireMotDePasse(a.id, `Bearer ${session.access_token}`);
+    if (!r.ok) { setApercuErreur(r.message); return; }
+    setLienPublic({ id: a.id, url: a.adresse, compte: { adresse: r.adresse, motDePasse: r.motDePasse } });
   };
 
   // L'ADRESSE PUBLIQUE D'UN SITE : meme geste que pour une application.
@@ -333,13 +365,16 @@ export default function DashboardPage() {
    * se débarrasser d'une ligne morte : la suppression nettoie donc AUSSI
    * la mémoire locale, sinon l'écran rouvrirait sur une œuvre effacée.
    */
-  const supprimer = async (a: { id: string; nom: string | null }) => {
+  const supprimer = async (a: { id: string; nom: string | null; nomEnregistre?: string | null }) => {
     const quoi = a.nom !== null && a.nom !== '' ? `« ${a.nom} »` : 'cette application';
     if (
       !window.confirm(
         `Supprimer ${quoi} ?\n\n` +
           '· Son lien public cessera de répondre immédiatement.\n' +
-          '· Son adresse ne sera jamais réattribuée à quelqu’un d’autre.\n' +
+          // UN NOM JAMAIS PUBLIÉ SE LIBÈRE (2026-11-22) ; un nom publié, jamais.
+          (a.nomEnregistre != null
+            ? `· L’adresse choisie (${a.nomEnregistre}.deribfy.app) n’a jamais été en ligne : elle sera libérée.\n`
+            : '· Son adresse ne sera jamais réattribuée à quelqu’un d’autre.\n') +
           '· Le projet que vous avez téléchargé reste à vous, sur votre ordinateur,\n' +
           '  et continue de fonctionner.',
       )
@@ -819,6 +854,21 @@ export default function DashboardPage() {
                           className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
                           Publier
                         </button>
+                        {/* « CHANGER L'ADRESSE » à côté de « Publier » (2026-11-22) :
+                            un nom enregistré, sur une appli jamais en ligne. */}
+                        {a.nomModifiable === true && (
+                          <button type="button" onClick={() => { void changerNom(a); }}
+                            className="px-2 py-2 rounded-xl text-xs border border-white/10 text-white/60 hover:text-white hover:border-white/30 transition-all">
+                            Changer l’adresse
+                          </button>
+                        )}
+                        {/* LE MOT DE PASSE d'une appli en ligne avec base. */}
+                        {a.adresse != null && a.aDesDonnees === true && (
+                          <button type="button" onClick={() => { void motDePasse(a); }}
+                            className="px-2 py-2 rounded-xl text-xs border border-white/10 text-white/60 hover:text-white hover:border-white/30 transition-all">
+                            {LIBELLE_MOT_DE_PASSE}
+                          </button>
+                        )}
                         <button type="button" onClick={() => { void telecharger(a); }}
                           className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
                           Télécharger

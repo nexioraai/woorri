@@ -28,6 +28,7 @@
  */
 import { NextResponse } from 'next/server'
 import { adressePubliee } from '@/lib/apps/sous-domaine'
+import { nomModifiable } from '@/lib/apps/nom-enregistre'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
@@ -43,7 +44,7 @@ export async function GET(req: Request) {
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('id, created_at, statut, moteur, fournisseur, cout_usd, duree_ms, nom, demande, document, publication_slug, publication_jeton, diagnostics')
+    .select('id, created_at, statut, moteur, fournisseur, cout_usd, duree_ms, nom, demande, document, publication_slug, publication_jeton, publie_le, diagnostics')
     // Une œuvre supprimée n'apparaît plus : l'écran est le seul endroit où
     // la suppression doit être totale et immédiate. La ligne, elle, survit
     // trente jours (rattrapage) puis reste en pierre tombale (le nom).
@@ -60,7 +61,7 @@ export async function GET(req: Request) {
   }
 
   const applications = (lu.data ?? []).map((g) => {
-    const doc = g.document as { fichiers?: Record<string, string> } | null
+    const doc = g.document as { fichiers?: Record<string, string>; schema?: string } | null
     const fichiers = doc?.fichiers
     return {
       id: g.id as string,
@@ -95,6 +96,13 @@ export async function GET(req: Request) {
       // besoin à son tour, et un deuxième exemplaire aurait divergé au
       // premier changement de domaine.
       adresse: adressePubliee(g.publication_slug, g.publication_jeton),
+      // ── LE NOM CHOISI AVANT LE PAIEMENT (2026-11-22) : « Changer l'adresse »
+      //    n'apparaît que tant que l'appli n'a jamais été en ligne.
+      nomEnregistre: nomModifiable(g) ? (g.publication_slug as string) : null,
+      nomModifiable: nomModifiable(g),
+      // ── UNE APPLI AVEC BASE A UN COMPTE (2026-11-22) : la carte propose
+      //    « Créer / refaire mon mot de passe » ; sans base, l'adresse seule.
+      aDesDonnees: (doc?.schema ?? '').includes('create table'),
       // ── CE QUE LES JUGES ONT DIT, MONTRÉ À CELUI QUI S'EN SERT (2026-11-16).
       //
       // Les diagnostics existaient en base et personne ne les voyait : une
