@@ -969,6 +969,11 @@ async function postSansReserve(req: Request) {
                   resultat.couverture.absentes.map((e) => e.exigence).join(', '),
               ]
             : []),
+          // ── CE QUI A ÉTÉ FERMÉ AU VISITEUR À LA LIVRAISON (2026-11-23) : sa
+          // page publique peut en être vide, et le commerçant peut agir.
+          ...((resultat.lecturePublique?.fermes ?? []).length > 0
+            ? ['Ce que voit un visiteur sans compte a été restreint : ' + (resultat.lecturePublique?.fermes ?? []).join(' ; ')]
+            : []),
           // ── ET LE CAS OÙ LE JUGE N'A RIEN PU MESURER SE CONSIGNE AUSSI.
           //
           // Il rendait `taux: 1` — couverture parfaite sans avoir rien

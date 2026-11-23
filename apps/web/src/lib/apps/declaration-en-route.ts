@@ -217,5 +217,16 @@ function fusionnerUne(
       pertes,
     ),
     appendOnly: drapeau(table, 'appendOnly', duCahier.appendOnly, duConstructeur.appendOnly, pertes),
+    // ── CE QUE LE VISITEUR REÇOIT : C'EST LE CONSTRUCTEUR QUI LE SAIT (2026-11-23).
+    //
+    // C'est lui qui écrit la page publique, donc lui qui sait ce qu'elle
+    // affiche. Sa déclaration l'emporte ; à défaut, celle d'avant reste.
+    // Sans ces deux lignes, `...duCahier` jetait la sienne en silence.
+    ...(duConstructeur.champsPublics !== undefined
+      ? { champsPublics: duConstructeur.champsPublics }
+      : duCahier.champsPublics !== undefined ? { champsPublics: duCahier.champsPublics } : {}),
+    ...(duConstructeur.lignesPubliques !== undefined
+      ? { lignesPubliques: duConstructeur.lignesPubliques }
+      : duCahier.lignesPubliques !== undefined ? { lignesPubliques: duCahier.lignesPubliques } : {}),
   }
 }

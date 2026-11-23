@@ -470,7 +470,8 @@ describe('EP-319 · les données déclarées', () => {
     // ── 14 000 → 14 800 le 2026-11-16 : D7/D8/D9 (voir ⑥). Mesuré : 14 679.
     // ── 14 800 → 15 100 le 2026-11-16 : D13/D14/D15 (voir ⑥). Mesuré : 14 912.
     // ── 15 100 → 15 400 le 2026-11-18 : ⑬, 2026-11-18 : REGLE_ECRITURES dans le bloc COMMUN — lire `error`, l'écran ne change qu'après succès, retirer se confirme, chaque geste se dit (atita supprimait sans confirmer et sans lire l'erreur, mesuré en production). Mesuré : 15 317.
-    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(15400)
+    // ── 15 400 → 16 000 le 2026-11-23 : CE QUE VOIT LE VISITEUR (REGLE_CE_QUE_VOIT_LE_VISITEUR) — `champsPublics`, `lignesPubliques`, jamais « * », pas de `.filter` pour cacher ; la base ne donnait au visiteur que la table ENTIÈRE (atitta : plaque et client ; place de marché : produits masqués). Contenu énuméré par lecture-publique-bornee ⑨. Mesuré : 15 936.
+    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(16000)
 
     // ── ET LE BANDEAU N'EST PLUS DEMANDÉ À L'ŒUVRE (2026-11-05).
     //
@@ -545,7 +546,8 @@ describe('EP-319 · les données déclarées', () => {
       // ── 20 100 → 20 900 le 2026-11-16 : D7/D8/D9 (⑥). Mesurée PAR CE CLIQUET : 20 751.
       // ── 20 900 → 21 200 le 2026-11-16 : D13/D14/D15 (⑥). Mesurée PAR CE CLIQUET : 20 984.
       // ── 21 200 → 21 500 le 2026-11-18 : ⑬, REGLE_ECRITURES dans le bloc commun. Mesurée PAR CE CLIQUET : 21 389.
-    ).toBeLessThan(21500)
+      // ── 21 500 → 22 100 le 2026-11-23 : ce que voit le visiteur (⑥bis). Mesurée PAR CE CLIQUET : 22 008.
+    ).toBeLessThan(22100)
 
     // ── ③ ET LA PORTE DES DONNÉES RESTE UNE PORTE ÉTROITE.
     //

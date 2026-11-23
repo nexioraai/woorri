@@ -70,9 +70,13 @@ describe('la boîte noire d’une création', () => {
     // Aucune clé : celle du fournisseur n'apparaît nulle part.
     expect(JSON.stringify(b)).not.toContain('cle-de-test')
   })
-  it('une écriture REFUSÉE, puis une écriture qui JETTE : la création réussit quand même', async () => {
+  // DEUX CAS, DEUX TESTS (2026-11-23) : ensemble, deux créations complètes
+  // dépassaient la marge des tests (1 814 ms sous la gate, plafond 1 667).
+  it('une écriture REFUSÉE : la création réussit quand même', async () => {
     etat.boite = 'refus'
     expect((await fin(await appel())).ok).toBe(true)
+  })
+  it('une écriture qui JETTE : la création réussit quand même', async () => {
     etat.boite = 'jette'
     expect((await fin(await appel())).ok).toBe(true)
   })

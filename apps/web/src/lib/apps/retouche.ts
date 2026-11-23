@@ -58,7 +58,7 @@
  * sera posé dans `fournisseur.ts`, ce calcul deviendra une estimation serrée
  * et l'affichage passera de « au plus » à « environ ».
  */
-import { REGLE_ECRITURES } from './entites-declarees'
+import { REGLE_CE_QUE_VOIT_LE_VISITEUR, REGLE_ECRITURES } from './entites-declarees'
 
 export const JETONS_PAR_OCTET = 0.3
 
@@ -218,6 +218,12 @@ export const CONSIGNE_RETOUCHE = [
   '   [{"id":"ent_rendez_vous","name":"rendez_vous","fields":[{"id":"fld_date_prevue","name":"date_prevue","type":"date","required":true}]}]',
   '',
   'Types : string, text, number, decimal, boolean, date, datetime.',
+  '',
+  'UNE TABLE LISIBLE SANS COMPTE ("lecturePublique": true) : si tu écris ou',
+  'touches sa page publique, redéclare-la avec SON id, un de ses champs, et',
+  'ce que le visiteur reçoit — sinon la modification est refusée :',
+  '   [{"id":"ent_produit","name":"produit","lecturePublique":true,"champsPublics":["nom","prix"],"lignesPubliques":[{"champ":"masque","vaut":false}],"fields":[{"id":"fld_nom","name":"nom","type":"text","required":true}]}]',
+  ...REGLE_CE_QUE_VOIT_LE_VISITEUR,
   'Un nom de table vague (« chose », « element ») est refusé : nomme ce',
   'qu’elle conserve.',
   '',

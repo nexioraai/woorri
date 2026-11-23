@@ -28,6 +28,7 @@ export {
   // le cote web PROUVE que sa copie lui est egale -- une duplication
   // qu'on ne peut pas supprimer doit etre prouvee egale (EP-352 ⑥).
   litPublique,
+  lecturePubliqueEmise,
   ROLE_PORTE,
   ROLE_PUBLIC,
   ROLES_REFUSES,

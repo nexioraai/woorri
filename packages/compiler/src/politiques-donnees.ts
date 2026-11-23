@@ -88,6 +88,104 @@ export const litPublique = (e: { readonly lecturePublique?: unknown }): boolean 
   e.lecturePublique === true
 
 /**
+ * CE QU'UN VISITEUR SANS COMPTE REÇOIT — colonnes ET lignes (2026-11-23).
+ *
+ * ── LE DÉFAUT MESURÉ.
+ *
+ * `using (true)` + `grant select on t to anon` ouvrait la table ENTIÈRE : sur
+ * atitta la plaque et l'identifiant du client de chaque véhicule partaient
+ * vers le navigateur ; sur la place de marché un produit « masqué » restait
+ * lisible avec son numéro. La page cachait, la base donnait tout.
+ *
+ * ── LE MÉCANISME : DEUX BARRIÈRES DE POSTGRES, AUCUN OBJET NOUVEAU.
+ *
+ * · les COLONNES par un privilège de colonne, `grant select (a, b) on t to
+ *   anon` : une colonne non nommée est refusée, et `select *` aussi ;
+ * · les LIGNES par la condition de la politique, `using (masque = false)` :
+ *   une ligne qui ne la remplit pas n'existe pas pour le visiteur (et une
+ *   valeur NULLE non plus — `null = false` n'est pas vrai).
+ *
+ * Mesuré sur base jetable le 2026-11-23 : `revoke all on t` retire AUSSI les
+ * privilèges de colonne, donc le script reste rejouable et une colonne qui
+ * sort de la liste est bien retirée.
+ *
+ * ── FAIL-CLOSED.
+ *
+ * Une table publique sans `champsPublics`, ou qui nomme une colonne qui
+ * n'existe pas, ne s'ouvre PAS : aucune colonne, aucune ligne. La page reste
+ * vide et le juge le dit avant la livraison — jamais l'inverse.
+ */
+export type LecturePubliqueEmise =
+  | { readonly ok: true; readonly colonnes: readonly string[]; readonly condition: string }
+  | { readonly ok: false; readonly motif: string }
+
+interface ChampLu { readonly id: string; readonly derived?: unknown; readonly sensitive?: boolean }
+interface EntiteLue {
+  readonly fields: readonly ChampLu[]
+  readonly champsPublics?: unknown
+  readonly lignesPubliques?: unknown
+}
+
+const sansFld = (x: string): string => x.replace(/^fld_/u, '')
+const IDENT_COLONNE = /^[a-z][a-z0-9_]*$/u
+const VALEUR_TEXTE = /^[A-Za-z0-9 _-]{1,60}$/u
+
+/** La valeur d'une condition, en SQL — seulement les trois formes sûres. */
+function litteral(v: unknown): string | null {
+  if (typeof v === 'boolean') return v ? 'true' : 'false'
+  if (typeof v === 'number' && Number.isFinite(v)) return String(v)
+  if (typeof v === 'string' && VALEUR_TEXTE.test(v)) return `'${v}'`
+  return null
+}
+
+export function lecturePubliqueEmise(e: EntiteLue): LecturePubliqueEmise {
+  // Les colonnes CONSERVÉES : un champ dérivé ou sensible n'est pas en base.
+  const existantes = new Set(
+    e.fields.filter((f) => f.derived === undefined && f.sensitive !== true).map((f) => sansFld(f.id)),
+  )
+  if (!Array.isArray(e.champsPublics) || e.champsPublics.length === 0) {
+    return { ok: false, motif: 'aucune colonne publique déclarée (champsPublics)' }
+  }
+  const colonnes: string[] = []
+  for (const brut of e.champsPublics as unknown[]) {
+    const c = typeof brut === 'string' ? sansFld(brut) : ''
+    if (!IDENT_COLONNE.test(c) || !existantes.has(c)) {
+      return { ok: false, motif: `colonne publique inconnue : « ${String(brut)} »` }
+    }
+    if (!colonnes.includes(c)) colonnes.push(c)
+  }
+  const conditions: string[] = []
+  if (e.lignesPubliques !== undefined) {
+    if (!Array.isArray(e.lignesPubliques)) return { ok: false, motif: 'lignesPubliques illisible' }
+    for (const l of e.lignesPubliques as unknown[]) {
+      const champ = l !== null && typeof l === 'object' ? (l as { champ?: unknown }).champ : undefined
+      const c = typeof champ === 'string' ? sansFld(champ) : ''
+      const v = litteral(l !== null && typeof l === 'object' ? (l as { vaut?: unknown }).vaut : undefined)
+      if (!IDENT_COLONNE.test(c) || !existantes.has(c) || v === null) {
+        return { ok: false, motif: `condition de ligne illisible : ${JSON.stringify(l)}` }
+      }
+      conditions.push(`${c} = ${v}`)
+      // La colonne de condition est lisible : sa valeur est la même sur
+      // TOUTES les lignes rendues, elle n'apprend rien — et la page peut
+      // alors filtrer dessus sans être refusée.
+      if (!colonnes.includes(c)) colonnes.push(c)
+    }
+  }
+  return { ok: true, colonnes: ['id', ...colonnes.filter((c) => c !== 'id')], condition: conditions.length > 0 ? conditions.join(' and ') : 'true' }
+}
+
+/** Les instructions du second régime — ou le refus, écrit dans le fichier. */
+function lignesLecturePublique(t: string, lp: LecturePubliqueEmise): string[] {
+  if (!lp.ok) return [`-- LECTURE PUBLIQUE NON OUVERTE : ${lp.motif.replace(/[\r\n]/gu, ' ')}.`]
+  return [
+    `create policy ${t}_lecture_publique on ${t} for select to ${ROLE_PUBLIC}`,
+    `  using (${lp.condition});`,
+    // LE PRIVILÈGE PAR COLONNE : jamais `grant select on t` (toute la table).
+    `grant select (${lp.colonnes.join(', ')}) on ${t} to ${ROLE_PUBLIC};`,
+  ]
+}
+
+/**
  * LA REVENDICATION QUI DIT À QUELLE ŒUVRE ON APPARTIENT.
  *
  * ── LE DÉFAUT QUE CECI FERME, ET IL ÉTAIT GRAVE.
@@ -269,13 +367,7 @@ export function emettrePolitiquesSql(
       // LE PRIVILÈGE SUIT LA POLITIQUE, et seulement `select` : sans le
       // `grant`, la politique ne sert à rien ; avec `grant all`, le refus
       // d'écriture ne tiendrait plus qu'à l'absence de politique.
-      ...(litPublique(e)
-        ? [
-            `create policy ${t}_lecture_publique on ${t} for select to ${ROLE_PUBLIC}`,
-            '  using (true);',
-            `grant select on ${t} to ${ROLE_PUBLIC};`,
-          ]
-        : []),
+      ...(litPublique(e) ? lignesLecturePublique(t, lecturePubliqueEmise(e)) : []),
       '',
     )
   }

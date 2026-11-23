@@ -25,14 +25,14 @@
  * un champ dérivé ou `sensitive` n'est pas stocké, il ne peut donc pas
  * être lu. Les dire publics serait faux dans l'autre sens.
  */
-import { lecturePubliqueDe, nomTable, type EntiteDeclaree } from './entites-declarees'
+import { lecturePubliqueDe, lecturePubliqueLue, nomTable, type EntiteDeclaree } from './entites-declarees'
 
-export type ContenuPublic = { readonly table: string; readonly champs: readonly string[] }
+export type ContenuPublic = { readonly table: string; readonly champs: readonly string[]; readonly seulement?: string }
 
 /** La phrase mesurée : ce n'est pas « quelqu'un pourrait tomber dessus ». */
 export const PHRASE_LISTE_ENTIERE =
-  'La liste ENTIÈRE est téléchargeable : la clé de lecture est dans la page publiée, ' +
-  'et n’importe qui peut récupérer toutes les lignes d’un coup — pas seulement tomber sur l’une d’elles.'
+  'Ces informations sont téléchargeables d’un coup : la clé de lecture est dans la page publiée, ' +
+  'et n’importe qui peut récupérer toutes les lignes visibles — pas seulement tomber sur l’une d’elles.'
 
 type ChampLu = { readonly name?: unknown; readonly label?: unknown; readonly derived?: unknown; readonly sensitive?: unknown }
 
@@ -50,21 +50,38 @@ export function libelleChamp(f: ChampLu): string {
   return String(f.name ?? '').replace(/_+/gu, ' ').trim()
 }
 
-/** Chaque table publique, avec ce qu'on y lira. */
+/**
+ * CHAQUE TABLE PUBLIQUE, AVEC CE QU'UN VISITEUR Y LIRA — ET RIEN D'AUTRE
+ * (2026-11-23). Ce sont les colonnes que la BASE lui accorde
+ * (`lecturePubliqueLue`, copie de l'émetteur), pas toutes celles de la table :
+ * la fenêtre dit exactement ce qui sera visible par tous. Une table publique
+ * qui ne dit pas ses colonnes n'accorde RIEN, et la liste est vide.
+ */
 export function contenusPublics(entites: readonly EntiteDeclaree[]): ContenuPublic[] {
-  return entites.filter(lecturePubliqueDe).map((e) => ({
-    table: nomTable(e),
-    champs: (e.fields as readonly ChampLu[])
-      .filter((f) => f.derived === undefined && f.sensitive !== true)
-      .map(libelleChamp)
-      .filter((l) => l !== ''),
-  }))
+  return entites.filter(lecturePubliqueDe).map((e) => {
+    const lue = lecturePubliqueLue(e)
+    if (!lue.ok) return { table: nomTable(e), champs: [] }
+    const parColonne = new Map((e.fields as readonly (ChampLu & { id: string })[]).map((f) => [f.id.replace(/^fld_/u, ''), f]))
+    const conditions = new Set(lue.conditions.map((c) => c.champ))
+    const champs = lue.colonnes
+      .filter((c) => c !== 'id' && !conditions.has(c))
+      .map((c) => { const f = parColonne.get(c); return f === undefined ? c : libelleChamp(f) })
+      .filter((l) => l !== '')
+    const seulement = lue.conditions
+      .map((c) => {
+        const f = parColonne.get(c.champ)
+        const valeur = typeof c.vaut === 'boolean' ? (c.vaut ? 'oui' : 'non') : String(c.vaut)
+        return `« ${f === undefined ? c.champ : libelleChamp(f)} » vaut ${valeur}`
+      })
+      .join(' et ')
+    return { table: nomTable(e), champs, ...(seulement === '' ? {} : { seulement }) }
+  })
 }
 
 /** « vehicule : marque, modele, immatriculation ; reparation : … » */
 export function phraseContenus(contenus: readonly ContenuPublic[]): string {
   return contenus
-    .map((c) => `« ${c.table} » (${c.champs.length > 0 ? c.champs.join(', ') : 'aucune colonne déclarée'})`)
+    .map((c) => `« ${c.table} » (${c.champs.length > 0 ? c.champs.join(', ') : 'aucune colonne déclarée'}${c.seulement === undefined ? '' : ` — seulement les lignes où ${c.seulement}`})`)
     .join(' ; ')
 }
 
@@ -73,19 +90,27 @@ export function phraseContenus(contenus: readonly ContenuPublic[]): string {
  * le texte technique incompréhensible (« clé de lecture », « page servie ») :
  * la fenêtre « Publier » nomme chaque liste par son LIBELLÉ et ses colonnes.
  */
-export type ListePublique = { readonly nom: string; readonly champs: readonly string[] }
+export type ListePublique = { readonly nom: string; readonly champs: readonly string[]; readonly seulement?: string }
 
 export function listesPubliques(entites: readonly EntiteDeclaree[]): ListePublique[] {
-  return entites.filter(lecturePubliqueDe).map((e) => ({
-    nom: libelleChamp(e as unknown as ChampLu) || nomTable(e),
-    champs: contenusPublics([e])[0]?.champs ?? [],
-  }))
+  return entites.filter(lecturePubliqueDe).map((e) => {
+    const c = contenusPublics([e])[0]
+    return {
+      nom: libelleChamp(e as unknown as ChampLu) || nomTable(e),
+      champs: c?.champs ?? [],
+      ...(c?.seulement === undefined ? {} : { seulement: c.seulement }),
+    }
+  })
 }
 
 /** Une phrase par liste, sans un mot technique. */
 export function phraseListePublique(l: ListePublique): string {
-  const colonnes = l.champs.length > 0 ? ` (${l.champs.join(', ')})` : ''
-  return `À savoir : votre liste « ${l.nom} »${colonnes} sera visible par tout le monde. Personne ne pourra la modifier.`
+  // ── RIEN D'ACCORDÉ : on ne promet pas une liste visible qui sera vide.
+  if (l.champs.length === 0) {
+    return `À savoir : votre liste « ${l.nom} » ne sera visible par personne — l’application ne dit pas quelles informations montrer. Pour la montrer, demandez-le dans l’atelier.`
+  }
+  const lignes = l.seulement === undefined ? '' : ` Seules les lignes où ${l.seulement} le seront.`
+  return `À savoir : de votre liste « ${l.nom} », ces informations seront visibles par tout le monde : ${l.champs.join(', ')}.${lignes} Le reste ne l’est pas. Personne ne pourra la modifier.`
 }
 export const PHRASE_SI_VOUS_NE_VOULEZ_PAS =
   'Si vous ne le voulez pas, annulez et demandez la modification dans l’atelier.'

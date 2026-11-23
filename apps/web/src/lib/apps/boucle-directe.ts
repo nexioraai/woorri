@@ -30,6 +30,7 @@ import {
   PAQUETS_PROPOSES,
 } from './ecriture-directe'
 import { jugerGestion, reprocheGestion } from './juge-gestion'
+import { fermerCeQuiFuit, jugerLecturePublique, reprocheLecturePublique, type DefautLecturePublique } from './juge-lecture-publique'
 import { jugerFaces, reprocheFaces, type VerdictFaces } from './juge-faces'
 import { jugerVivacite, type DefautVivacite } from './juge-vivacite'
 import { FICHIER_PERIMETRE, jugerCouverture, type RapportCouverture } from './juge-couverture'
@@ -222,6 +223,12 @@ export type Resultat =
       readonly entites: readonly EntiteDeclaree[]
       /** Ce que la déclaration en route a refusé — jamais tu. */
       readonly refusEntites: readonly RefusEntite[]
+      /**
+       * CE QU'UN VISITEUR AURAIT REÇU SANS LE VOIR, au dernier tour
+       * (2026-11-23), et ce qui a été FERMÉ à la livraison pour que ça ne
+       * parte pas : `entites` ci-dessus est déjà la version fermée.
+       */
+      readonly lecturePublique?: { readonly defauts: readonly DefautLecturePublique[]; readonly fermes: readonly string[] }
     }
   | {
       readonly ok: false
@@ -767,6 +774,12 @@ export async function boucleEcriture(o: {
         // la rend incomplète.
         const quoiFaces = faces === null ? null : reprocheFaces(faces)
         if (quoiFaces !== null) reproches.push(quoiFaces)
+        // ── CE QU'UN VISITEUR REÇOIT = CE QUE LA PAGE LUI MONTRE (2026-11-23).
+        // La fuite d'atitta (plaque, client) et de la place de marché (produit
+        // masqué) passait tous les juges ci-dessus. Lecture pure, aucun coût.
+        const lecturePublique = jugerLecturePublique(entitesConnues, carte)
+        const quoiLecture = reprocheLecturePublique(lecturePublique)
+        if (quoiLecture !== null) reproches.push(quoiLecture)
         // Un juge qui n'a pas pu tourner le DIT : son silence se lirait comme
         // un vert, et c'est la faute qu'il existe pour fermer.
         if (faces !== null && !faces.aTourne) {
@@ -845,6 +858,9 @@ export async function boucleEcriture(o: {
           // l'ACCOMPAGNENT, dits : refuser re-brûlerait l'argent du
           // propriétaire, taire referait le défaut fondateur.
           tours.push({ rang, fichiers: lus.length, ok: true, ms: Date.now() - debut })
+          // ── LA FUITE NE PART PAS AVEC LE DERNIER TOUR : ce qui reste en
+          // défaut se FERME (jamais ne s'ouvre) — voir `fermerCeQuiFuit`.
+          const ferme = fermerCeQuiFuit(entitesConnues, lecturePublique)
           return {
             ok: true,
             code: v.code,
@@ -857,8 +873,9 @@ export async function boucleEcriture(o: {
             couverture,
             persistance,
             faces,
-            entites: entitesConnues,
+            entites: ferme.entites,
             refusEntites: refusEnRoute,
+            lecturePublique: { defauts: lecturePublique, fermes: ferme.fermes },
           }
         }
       } else {

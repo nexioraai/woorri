@@ -7,6 +7,7 @@
  * dire dans les mots du commerçant, et dire que la liste ENTIÈRE se
  * télécharge.
  *
+ * ⓪ (2026-11-23) seules les colonnes de `champsPublics` sont lisibles, donc annoncées ;
  * ① le libellé : déclaré (français d'abord), sinon le nom sans tirets bas ;
  *    un champ non conservé (dérivé, sensible) n'est pas annoncé ;
  * ② la VRAIE route POST le dit, avec la liste téléchargeable, et voyage
@@ -32,8 +33,10 @@ const f = (name: string, extra: Record<string, unknown> = {}) => ({ id: `fld_${n
 /** L'atelier de l'avertissement : véhicule et réparation publics. */
 const ENTITES = [
   { id: 'ent_client', name: 'client', fields: [f('nom'), f('telephone')] },
-  { id: 'ent_vehicule', name: 'vehicule', lecturePublique: true, fields: [f('client_id'), f('marque'), f('immatriculation', { label: [{ locale: 'fr', text: 'Immatriculation' }] })] },
-  { id: 'ent_reparation', name: 'reparation', lecturePublique: true, fields: [f('description'), f('statut'), f('montant_main_oeuvre'), f('code_secret', { sensitive: true }), f('total', { derived: { op: 'sum' } })] },
+  // 2026-11-23 : la table publique DIT ce que le visiteur reçoit ; `client_id`
+  // n'en est pas, et la fenêtre ne doit donc plus l'annoncer (il n'est plus lu).
+  { id: 'ent_vehicule', name: 'vehicule', lecturePublique: true, champsPublics: ['marque', 'immatriculation'], fields: [f('client_id'), f('marque'), f('immatriculation', { label: [{ locale: 'fr', text: 'Immatriculation' }] })] },
+  { id: 'ent_reparation', name: 'reparation', lecturePublique: true, champsPublics: ['description', 'statut', 'montant_main_oeuvre'], fields: [f('description'), f('statut'), f('montant_main_oeuvre'), f('code_secret', { sensitive: true }), f('total', { derived: { op: 'sum' } })] },
 ]
 vi.mock('@/lib/supabase-admin', () => {
   const b = {
@@ -60,7 +63,7 @@ describe('Décision 2 — publier nomme ce qui sera lu', () => {
     expect(libelleChamp({ name: 'x', label: [{ locale: 'en', text: 'Plate' }, { locale: 'fr', text: 'Plaque' }] })).toBe('Plaque')
     expect(libelleChamp({ name: 'x_y', label: 'pas une liste' })).toBe('x y')
     expect(contenusPublics(ENTITES as never)).toEqual([
-      { table: 'vehicule', champs: ['client id', 'marque', 'Immatriculation'] },
+      { table: 'vehicule', champs: ['marque', 'Immatriculation'] },
       { table: 'reparation', champs: ['description', 'statut', 'montant main oeuvre'] },
     ])
   })
@@ -72,7 +75,7 @@ describe('Décision 2 — publier nomme ce qui sera lu', () => {
     expect(d.lecturePublique).toBe(true)
     expect(d.tables).toEqual(['vehicule', 'reparation'])
     expect(d.contenus).toEqual(contenusPublics(ENTITES as never))
-    expect(d.error).toMatch(motifTexte('Tout le monde pourra lire : « vehicule » (client id, marque, Immatriculation) ; « reparation » (description, statut, montant main oeuvre).'))
+    expect(d.error).toMatch(motifTexte('Tout le monde pourra lire : « vehicule » (marque, Immatriculation) ; « reparation » (description, statut, montant main oeuvre).'))
     expect(d.error).toMatch(motifTexte(PHRASE_LISTE_ENTIERE))
     expect(d.error).toMatch(motifTexte('PAR TOUT LE MONDE, sans compte'))
     expect(d.error).toMatch(motifTexte('Personne ne pourra y écrire'))
@@ -89,7 +92,7 @@ describe('Décision 2 — publier nomme ce qui sera lu', () => {
       tables: ['vehicule', 'reparation'],
       contenus: contenusPublics(ENTITES as never),
     })).toBe(false)
-    expect(vu).toMatch(motifTexte('• vehicule — tout le monde pourra lire : client id, marque, Immatriculation'))
+    expect(vu).toMatch(motifTexte('• vehicule — tout le monde pourra lire : marque, Immatriculation'))
     expect(vu).toMatch(motifTexte('• reparation — tout le monde pourra lire : description, statut, montant main oeuvre'))
     expect(vu).toMatch(motifTexte(PHRASE_LISTE_ENTIERE))
   })

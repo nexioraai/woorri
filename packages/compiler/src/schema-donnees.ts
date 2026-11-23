@@ -66,6 +66,10 @@ export interface EntiteDonnees {
    * ne peut pas le connaître (`publiciteInconnue`, côté apps/web).
    */
   readonly lecturePublique?: boolean
+  /** Les colonnes qu'un visiteur sans compte reçoit (politiques-donnees.ts). */
+  readonly champsPublics?: readonly string[]
+  /** Les seules lignes qu'il reçoit : chaque `champ` vaut `vaut`. */
+  readonly lignesPubliques?: readonly { readonly champ: string; readonly vaut: boolean | number | string }[]
 }
 
 /** Le nom de table : l'identifiant, sans son préfixe. */

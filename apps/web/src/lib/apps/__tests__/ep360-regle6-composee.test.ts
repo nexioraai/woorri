@@ -187,7 +187,8 @@ describe('EP-360 · la règle 6 se compose', () => {
     // Mesuré : 5 600 exactement. La borne vaut la mesure plus 100.
     // ── 5 700 → 6 200 le 2026-11-18 : une règle GÉNÉRALE, donc posée là où
     // ce test l'exige — le bloc commun, qui entre dans `blocBase`. ⑬, 2026-11-18 : REGLE_ECRITURES dans le bloc COMMUN — lire `error`, l'écran ne change qu'après succès, retirer se confirme, chaque geste se dit (atita supprimait sans confirmer et sans lire l'erreur, mesuré en production). Mesuré : 6 104.
-    expect(sansTables, 'la moitié avec table a enflé hors des tables').toBeLessThan(6200)
+    // ── 6 200 → 6 800 le 2026-11-23 : CE QUE VOIT LE VISITEUR — même règle, même raison qu'EP-319 ⑥bis ; contenu énuméré par lecture-publique-bornee ⑨. Mesuré : 6 723.
+    expect(sansTables, 'la moitié avec table a enflé hors des tables').toBeLessThan(6800)
   })
 
   it('⑤ ET LES AUTRES RÈGLES RESTENT IDENTIQUES DES DEUX CÔTÉS', () => {

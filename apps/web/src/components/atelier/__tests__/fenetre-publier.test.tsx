@@ -60,10 +60,17 @@ describe('la fenêtre « Publier »', () => {
   })
 
   it('une liste publique : UNE phrase simple par liste, sans aucun mot technique', async () => {
-    const { racine } = await monter(demande({ listes: [{ nom: 'Produits', champs: ['nom', 'quantité', 'seuil d’alerte'] }, { nom: 'Clients', champs: [] }] }))
+    // 2026-11-23 : la phrase dit EXACTEMENT les informations visibles, les
+    // lignes conditionnées, et une liste qui n'accorde rien n'est pas promise.
+    const { racine } = await monter(demande({ listes: [
+      { nom: 'Produits', champs: ['nom', 'quantité', 'seuil d’alerte'] },
+      { nom: 'Annonces', champs: ['titre'], seulement: '« masqué » vaut non' },
+      { nom: 'Clients', champs: [] },
+    ] }))
     const texte = racine.textContent ?? ''
-    expect(texte).toContain('À savoir : votre liste « Produits » (nom, quantité, seuil d’alerte) sera visible par tout le monde. Personne ne pourra la modifier.')
-    expect(texte).toContain('À savoir : votre liste « Clients » sera visible par tout le monde.')
+    expect(texte).toContain('À savoir : de votre liste « Produits », ces informations seront visibles par tout le monde : nom, quantité, seuil d’alerte. Le reste ne l’est pas. Personne ne pourra la modifier.')
+    expect(texte).toContain('Seules les lignes où « masqué » vaut non le seront.')
+    expect(texte).toContain('À savoir : votre liste « Clients » ne sera visible par personne')
     expect(texte).toContain('Si vous ne le voulez pas, annulez et demandez la modification dans l’atelier.')
     expect(texte, 'un mot technique est revenu').not.toMatch(/clé de lecture|page servie|page publiée|téléchargeable|PAR TOUT LE MONDE|quand même/u)
   })

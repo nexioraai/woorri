@@ -39,7 +39,7 @@ describe('EP-353 · P2 · la lecture publique', () => {
   })
 
   it('② DÉCLARÉE, ELLE N’OUVRE QUE `select` — jamais autre chose', () => {
-    const s = sql({ lecturePublique: true })
+    const s = sql({ lecturePublique: true, champsPublics: ['t'] })
     expect(s, 'la politique publique est absente').toMatch(
       /create policy actualite_lecture_publique on actualite for select to anon/u,
     )
@@ -53,10 +53,13 @@ describe('EP-353 · P2 · la lecture publique', () => {
     expect(bloc.slice(0, bloc.indexOf(';')), 'la politique publique porte un `with check`').not.toMatch(
       /with check/u,
     )
-    // ── LE PRIVILÈGE SUIT LA POLITIQUE, et seulement `select`.
-    expect(s, 'le privilège anonyme n’est pas exactement `select`').toMatch(
-      /grant select on actualite to anon;/u,
+    // ── LE PRIVILÈGE SUIT LA POLITIQUE, et seulement `select` — DES
+    //    COLONNES DÉCLARÉES (2026-11-23), jamais la table entière : c'était
+    //    la fuite d'atitta (plaque, client) et de la place de marché.
+    expect(s, 'le privilège anonyme n’est pas exactement `select` des colonnes publiques').toMatch(
+      /grant select \(id, t\) on actualite to anon;/u,
     )
+    expect(s, 'la table entière est accordée au visiteur').not.toMatch(/grant select on actualite to anon/u)
     expect(s, 'le privilège anonyme dépasse la lecture').not.toMatch(
       /grant[^;]*(insert|update|delete)[^;]*to anon/u,
     )
@@ -65,9 +68,10 @@ describe('EP-353 · P2 · la lecture publique', () => {
   it('③ L’ORDRE EST LA GARDE : on révoque AVANT d’accorder', () => {
     // Accorder puis révoquer refermerait ce qu'on vient d'ouvrir — et la
     // table publique ne serait plus lisible, sans que rien ne rougisse.
-    const s = sql({ lecturePublique: true })
+    const s = sql({ lecturePublique: true, champsPublics: ['t'] })
     expect(s.indexOf('revoke all on actualite'), 'la révocation a disparu').toBeGreaterThan(-1)
-    expect(s.indexOf('revoke all on actualite')).toBeLessThan(s.indexOf('grant select on actualite to anon'))
+    expect(s.indexOf('grant select (id, t) on actualite to anon'), 'le privilège a disparu').toBeGreaterThan(-1)
+    expect(s.indexOf('revoke all on actualite')).toBeLessThan(s.indexOf('grant select (id, t) on actualite to anon'))
   })
 
   it('④ LE RETRAIT DE LA POLITIQUE EST INCONDITIONNEL — et c’est le piège', () => {
@@ -81,7 +85,7 @@ describe('EP-353 · P2 · la lecture publique', () => {
     // MESURÉ sur la vraie base : sans ce `drop`, la lecture reste refusée
     // (le `revoke` tient), mais `pg_policies` garde la politique. Le tir
     // interroge donc `pg_policies`, pas seulement le résultat.
-    for (const x of [{}, { lecturePublique: true }, { appendOnly: true }]) {
+    for (const x of [{}, { lecturePublique: true }, { lecturePublique: true, champsPublics: ['t'] }, { appendOnly: true }]) {
       expect(
         sql(x),
         `le retrait du régime public manque pour ${JSON.stringify(x)}`,
@@ -111,7 +115,7 @@ describe('EP-353 · P2 · la lecture publique', () => {
     // lit par tous et ne se réécrit par personne. Si le régime public
     // rendait `update` possible, « journal » cesserait d'être une étiquette
     // une seconde fois.
-    const s = emettrePolitiquesSql([e('registre', { appendOnly: true, lecturePublique: true })], ID)
+    const s = emettrePolitiquesSql([e('registre', { appendOnly: true, lecturePublique: true, champsPublics: ['t'] })], ID)
     expect(s, 'le journal public perd sa lecture publique').toMatch(
       /create policy registre_lecture_publique on registre for select to anon/u,
     )
@@ -121,5 +125,12 @@ describe('EP-353 · P2 · la lecture publique', () => {
     expect(s, 'le journal public accepte update ou delete').not.toMatch(
       /grant[^;]*(update|delete)[^;]*on registre/u,
     )
+  })
+
+  it('⑦ DÉCLARÉE SANS DIRE CE QUE LE VISITEUR REÇOIT, ELLE N’OUVRE RIEN (2026-11-23)', () => {
+    // Fail-closed : `lecturePublique` seul ouvrait la table ENTIÈRE.
+    for (const x of [{ lecturePublique: true }, { lecturePublique: true, champsPublics: [] }, { lecturePublique: true, champsPublics: ['inconnue'] }]) {
+      expect(sql(x), `${JSON.stringify(x)} a produit une porte anonyme`).not.toMatch(/to anon\b/u)
+    }
   })
 })

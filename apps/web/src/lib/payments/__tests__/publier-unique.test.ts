@@ -561,7 +561,8 @@ describe('AJOUT 3 · « Changer l’adresse », tant que l’appli n’a jamais 
 })
 
 describe('PARTIE 1 · une seule fenêtre avant Stripe, et l’accord gardé', () => {
-  const PRODUITS = { id: 'produit', name: 'Produits', lecturePublique: true, fields: [
+  // 2026-11-23 : une table publique dit ce que le visiteur reçoit (champsPublics).
+  const PRODUITS = { id: 'produit', name: 'Produits', lecturePublique: true, champsPublics: ['nom', 'quantite', 'seuil'], fields: [
     { id: 'nom', name: 'nom', type: 'text', required: true },
     { id: 'quantite', name: 'quantite', type: 'number', required: true, label: [{ locale: 'fr', text: 'quantité' }] },
     { id: 'seuil', name: 'seuil_alerte', type: 'number', required: false, label: [{ locale: 'fr', text: 'seuil d’alerte' }] },

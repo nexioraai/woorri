@@ -108,7 +108,7 @@ describe('EP-352 · P1 · la lecture publique se déclare', () => {
       motifEntre('omets', 'privée', 120),
     )
     expect(bloc, 'la conséquence n’est pas dite').toMatch(
-      /N’importe qui lit alors cette table, sans\s+compte/u,
+      /N’importe qui lit alors ces colonnes, sans\s+compte/u,
     )
     // ── ET L'ÉCRITURE N'EST JAMAIS OUVERTE, c'est dit au modèle aussi.
     expect(bloc, 'l’écriture pourrait sembler ouverte').toMatch(

@@ -1053,6 +1053,29 @@ const entitySchema = z.strictObject({
    * à ce qu'il y a des deux côtés.
    */
   lecturePublique: z.boolean().optional(),
+  /**
+   * CE QU'UN VISITEUR SANS COMPTE REÇOIT, ET RIEN DE PLUS (2026-11-23).
+   *
+   * MESURÉ : `lecturePublique` seul ouvrait la table ENTIÈRE — sur atitta la
+   * plaque et le client de chaque véhicule partaient vers le navigateur, sur
+   * la place de marché un produit « masqué » restait lisible. La page ne
+   * faisait que cacher. Ces deux listes portent la protection dans la BASE :
+   *
+   * · `champsPublics` — les colonnes que la page publique AFFICHE (noms de
+   *   colonne, sans `fld_`). Vide ou absent ⇒ AUCUNE colonne : fail-closed ;
+   * · `lignesPubliques` — les seules lignes lisibles (`masque` vaut faux…),
+   *   toutes les conditions à la fois.
+   */
+  champsPublics: z.array(z.string().regex(/^[a-z][a-z0-9_]*$/)).max(30).optional(),
+  lignesPubliques: z
+    .array(
+      z.strictObject({
+        champ: z.string().regex(/^[a-z][a-z0-9_]*$/),
+        vaut: z.union([z.boolean(), z.number(), z.string().regex(/^[A-Za-z0-9 _-]{1,60}$/)]),
+      }),
+    )
+    .max(5)
+    .optional(),
   fields: z.array(fieldSchema).min(1),
 });
 

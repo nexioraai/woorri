@@ -79,13 +79,20 @@ describe('EP-354 · P3 · la chaîne de la lecture publique', () => {
   })
 
   it('③ ET IL ARRIVE JUSQU’AU SQL — « c’est écrit » et « ça arrive »', () => {
-    const avec = chaine({ lecturePublique: true })
+    // ── ET CE QUE LE VISITEUR REÇOIT ARRIVE AVEC (2026-11-23) : le contrat
+    //    laisse passer `champsPublics`, la lecture le garde, le SQL l'accorde
+    //    colonne par colonne — jamais la table entière.
+    const avec = chaine({ lecturePublique: true, champsPublics: ['titre'] })
+    expect(avec.refus, `refusée : ${JSON.stringify(avec.refus)}`).toEqual([])
     expect(avec.sql, 'la politique anonyme n’arrive pas au bout de la chaîne').toMatch(
       /create policy actualite_lecture_publique on actualite for select to anon/u,
     )
     expect(avec.sql, 'le privilège anonyme n’arrive pas au bout de la chaîne').toMatch(
-      /grant select on actualite to anon;/u,
+      /grant\s+select\s+\(id,\s+titre\)\s+on\s+actualite\s+to\s+anon;/u,
     )
+    expect(avec.sql, 'la table entière est accordée').not.toMatch(/grant\s+select\s+on\s+actualite\s+to\s+anon/u)
+    // Sans `champsPublics`, la chaîne entière n'ouvre RIEN.
+    expect(chaine({ lecturePublique: true }).sql).not.toMatch(/to\s+anon\b/u)
   })
 
   it('④ SANS DÉCLARATION, RIEN NE S’OUVRE AU BOUT DE LA CHAÎNE', () => {

@@ -94,6 +94,8 @@ import { lireFichiers } from '@/lib/apps/ecriture-directe'
 import { jugerJetons } from '@/lib/apps/juge-jetons'
 import { jugerVivacite } from '@/lib/apps/juge-vivacite'
 import { jugerCouverture } from '@/lib/apps/juge-couverture'
+import { jugerLecturePublique } from '@/lib/apps/juge-lecture-publique'
+import { signaturePublique } from '@/lib/apps/signature-publique'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
 import {
   comparerJuges,
@@ -190,6 +192,8 @@ async function noter(
       // `produit.emplacement`, jamais créée — l'ajout et la modification d'un
       // produit cassés en silence (PGRST204). Aucun des six juges ne le voyait.
       { nom: 'colonnes inexistantes', defauts: jugerColonnes(fichiers, o.colonnes).inconnues.length },
+      // ── CE QU'UN VISITEUR REÇOIT = CE QUE LA PAGE LUI MONTRE (2026-11-23).
+      { nom: 'lecture publique', defauts: jugerLecturePublique(o.colonnes, fichiers).length },
     ],
     taux: couverture.taux,
   }
@@ -540,7 +544,7 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('document, nom')
+    .select('document, nom, publie_le')
     .eq('id', id)
     .eq('owner_id', proprietaire)
     .maybeSingle()
@@ -824,6 +828,21 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     )
   }
 
+  // ── CE QUE VOIT LE VISITEUR A CHANGÉ : ZÉRO DÉFAUT, PAS SEULEMENT « PAS PIRE »
+  // (2026-11-23). Une modification qui touche la déclaration publique réécrit
+  // la porte : elle ne peut pas la réécrire avec une fuite.
+  const publicChange = signaturePublique(contexte.entites) !== signaturePublique(fusion.entites)
+  if (publicChange && jugerLecturePublique(fusion.entites, fichiersLivres).length > 0) {
+    return NextResponse.json(
+      {
+        error:
+          'Cette modification laisserait un visiteur sans compte lire ce que votre page publique ne lui montre pas. Je ne l’ai pas appliquée.',
+        coutUsd,
+      },
+      { status: 409 },
+    )
+  }
+
   // ── LA COUVERTURE QUI BAISSE SE DEMANDE : supprimer un écran est une
   // demande légitime, et un juge qui l'interdirait ferait de la couverture
   // une prison.
@@ -911,6 +930,28 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
   let schemaApres = schemaPrecedent
   let politiquesApres = politiquesPrecedentes
   let apresMigration: string | null = null
+  // ── CE QUE VOIT LE VISITEUR A CHANGÉ SANS RIEN À MIGRER (2026-11-23).
+  //
+  // `publicite-changee` est « sans effet » sur les colonnes, mais la PORTE
+  // change : sans ces lignes, le document gardait l'ancienne politique et la
+  // base de l'appli publiée aussi. Les politiques font `drop … if exists`
+  // avant `create` : les réappliquer suffit, par le même migrateur.
+  if (plan.ajouts.length === 0 && publicChange) {
+    politiquesApres = emettrePolitiquesSql([...entitesApres], id)
+    if ((lu.data as { publie_le?: unknown }).publie_le != null) {
+      const applique = await appliquerMigration({ schema: nomSchemaOeuvre(id), sql: politiquesApres, env: process.env })
+      if (!applique.ok) {
+        return NextResponse.json(
+          {
+            error: 'Ce que voient les visiteurs n’a pas pu être changé. Votre application n’a pas changé.',
+            motif: applique.motif,
+            coutUsd,
+          },
+          { status: 409 },
+        )
+      }
+    }
+  }
   if (plan.ajouts.length > 0) {
     schemaApres = emettreSchemaSql([...entitesApres])
     politiquesApres = emettrePolitiquesSql([...entitesApres], id)

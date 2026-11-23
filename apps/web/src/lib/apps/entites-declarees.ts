@@ -82,6 +82,15 @@ export type EntiteDeclaree = {
    */
   readonly lecturePublique?: boolean
   /**
+   * CE QUE LE VISITEUR REÇOIT, ET RIEN D'AUTRE (2026-11-23) — les colonnes
+   * que la page publique affiche, et les seules lignes qu'elle montre. La
+   * BASE les tient (`grant select (…)` + condition de politique) : voir
+   * `lecturePubliqueEmise` du compilateur, dont `lecturePubliqueLue` est la
+   * copie prouvée égale.
+   */
+  readonly champsPublics?: readonly string[]
+  readonly lignesPubliques?: readonly { readonly champ: string; readonly vaut: boolean | number | string }[]
+  /**
    * SA PUBLICITÉ EST-ELLE INCONNAISSABLE ? — même raison qu'`obligation`.
    *
    * Une déclaration relue d'un SQL de schéma ne porte PAS ce drapeau : il
@@ -107,6 +116,60 @@ export type EntiteDeclaree = {
  */
 export function lecturePubliqueDe(e: { readonly lecturePublique?: unknown }): boolean {
   return e.lecturePublique === true
+}
+
+/**
+ * CE QU'UN VISITEUR SANS COMPTE REÇOIT — la copie, côté écran, de
+ * `lecturePubliqueEmise` (@deribfy/compiler).
+ *
+ * DUPLIQUÉE À DESSEIN, pour la même raison que `lecturePubliqueDe` : la
+ * fenêtre « Publier » la lit dans le navigateur, et le compilateur tire
+ * `node:sqlite` (EP-314). Une duplication qu'on ne peut pas supprimer doit
+ * être PROUVÉE ÉGALE : le test de la lecture publique les compare sur la
+ * même série de déclarations, bonnes et mauvaises.
+ */
+export type LecturePubliqueLue =
+  | { readonly ok: true; readonly colonnes: readonly string[]; readonly conditions: readonly { readonly champ: string; readonly vaut: boolean | number | string }[] }
+  | { readonly ok: false; readonly motif: string }
+
+export function lecturePubliqueLue(e: {
+  readonly fields: readonly { readonly id: string; readonly derived?: unknown; readonly sensitive?: boolean }[]
+  readonly champsPublics?: unknown
+  readonly lignesPubliques?: unknown
+}): LecturePubliqueLue {
+  const sansFld = (x: string): string => x.replace(/^fld_/u, '')
+  const ident = /^[a-z][a-z0-9_]*$/u
+  const existantes = new Set(
+    e.fields.filter((f) => f.derived === undefined && f.sensitive !== true).map((f) => sansFld(f.id)),
+  )
+  if (!Array.isArray(e.champsPublics) || e.champsPublics.length === 0) {
+    return { ok: false, motif: 'aucune colonne publique déclarée (champsPublics)' }
+  }
+  const colonnes: string[] = []
+  for (const brut of e.champsPublics as unknown[]) {
+    const c = typeof brut === 'string' ? sansFld(brut) : ''
+    if (!ident.test(c) || !existantes.has(c)) return { ok: false, motif: `colonne publique inconnue : « ${String(brut)} »` }
+    if (!colonnes.includes(c)) colonnes.push(c)
+  }
+  const conditions: { champ: string; vaut: boolean | number | string }[] = []
+  if (e.lignesPubliques !== undefined) {
+    if (!Array.isArray(e.lignesPubliques)) return { ok: false, motif: 'lignesPubliques illisible' }
+    for (const l of e.lignesPubliques as unknown[]) {
+      const champ = l !== null && typeof l === 'object' ? (l as { champ?: unknown }).champ : undefined
+      const vaut = l !== null && typeof l === 'object' ? (l as { vaut?: unknown }).vaut : undefined
+      const c = typeof champ === 'string' ? sansFld(champ) : ''
+      const valeurSure =
+        typeof vaut === 'boolean' ||
+        (typeof vaut === 'number' && Number.isFinite(vaut)) ||
+        (typeof vaut === 'string' && /^[A-Za-z0-9 _-]{1,60}$/u.test(vaut))
+      if (!ident.test(c) || !existantes.has(c) || !valeurSure) {
+        return { ok: false, motif: `condition de ligne illisible : ${JSON.stringify(l)}` }
+      }
+      conditions.push({ champ: c, vaut: vaut as boolean | number | string })
+      if (!colonnes.includes(c)) colonnes.push(c)
+    }
+  }
+  return { ok: true, colonnes: ['id', ...colonnes.filter((c) => c !== 'id')], conditions }
 }
 
 /**
@@ -382,6 +445,26 @@ export const REGLE_6_COMMUN: readonly string[] = [
   '   un mot.',
 ]
 
+/**
+ * CE QUE VOIT LE VISITEUR : LA BASE LE TIENT, PAS LA PAGE (2026-11-23).
+ *
+ * Mesuré : la page d'atitta téléchargeait chaque véhicule (plaque, client)
+ * pour n'en montrer qu'un état ; la place de marché cachait les produits
+ * masqués par un `.filter` dans le navigateur. Exportée : la consigne de
+ * retouche la reprend, pour qu'une appli RETOUCHÉE la suive aussi.
+ */
+export const REGLE_CE_QUE_VOIT_LE_VISITEUR: readonly string[] = [
+  '   LA BASE NE DONNE AU VISITEUR QUE CE QUE TU DÉCLARES :',
+  '   · "champsPublics" : les colonnes que la page publique AFFICHE ;',
+  '   · "lignesPubliques" : les seules lignes montrées, si elle en cache,',
+  '     "lignesPubliques": [{"champ": "masque", "vaut": false}].',
+  '   Sans "champsPublics", le visiteur ne reçoit RIEN. La page publique lit',
+  "   EXACTEMENT ces colonnes (select('id, nom, prix')), jamais « * ».",
+  '   Ne cache jamais des lignes par un `.filter` : déclare la condition.',
+  '   Non affiché (plaque, téléphone d’un client) = non public, même comme',
+  '   clé de recherche.',
+]
+
 export function blocBase(entites: readonly EntiteDeclaree[]): string {
   const tables = entites.map((e) => `  ${phraseTable(e)}`).join('\n')
   return [
@@ -501,9 +584,11 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '   dans l’application : c’est une déclaration.',
     '',
     '   LECTURE PUBLIQUE — OBLIGATOIRE dès qu’un écran public la lit :',
-    '     {"id": "ent_chose", "name": "chose", "lecturePublique": true, …}',
-    '   N’importe qui lit alors cette table, sans compte. L’écriture reste',
+    '     {"id": "ent_chose", "name": "chose", "lecturePublique": true,',
+    '      "champsPublics": ["nom"], …}',
+    '   N’importe qui lit alors ces colonnes, sans compte. L’écriture reste',
     '   au seul compte de l’application.',
+    ...REGLE_CE_QUE_VOIT_LE_VISITEUR,
     '',
     '   La règle est la même que plus haut, et elle vaut AUSSI pour une',
     '   table déjà déclarée : si tu veux la rendre publique, redéclare-la',

@@ -187,6 +187,15 @@ const FORMES_PERMISES: readonly { readonly nom: string; readonly motif: RegExp }
     motif: new RegExp(String.raw`^grant [a-z, ]+ on ${IDENT} to authenticated$`, 'u'),
   },
   {
+    // ── LE SEUL GRANT À `anon` : LA LECTURE DE COLONNES NOMMÉES (2026-11-23).
+    //
+    // La porte publique ne s'ouvre plus qu'en `select`, colonne par colonne
+    // (politiques-donnees.ts). `grant select on t to anon` — la table
+    // entière — reste NON NOMMÉ, donc refusé : c'était la fuite.
+    nom: 'grant select (colonnes) à anon',
+    motif: new RegExp(String.raw`^grant select \(${IDENT}(?:, ${IDENT})*\) on ${IDENT} to anon$`, 'u'),
+  },
+  {
     nom: 'revoke à anon et public',
     motif: new RegExp(String.raw`^revoke all on ${IDENT} from anon, public$`, 'u'),
   },

@@ -14,6 +14,7 @@ import 'server-only'
  * `publierOeuvre` pose et publie ; elle suppose la garde du paiement passée.
  */
 import { NextResponse } from 'next/server'
+import { politiquesAPoser } from '@/lib/apps/politiques-a-poser'
 import { lecturePubliqueDe, nomTable, type EntiteDeclaree } from '@/lib/apps/entites-declarees'
 import { contenusPublics, phraseContenus, PHRASE_LISTE_ENTIERE } from '@/lib/apps/contenu-public'
 import { configBaseOeuvres } from '@/lib/apps/base-oeuvres'
@@ -239,7 +240,7 @@ export async function publierOeuvre(o: {
 }): Promise<NextResponse> {
   const { id, lu, sous } = o
   const garde = { userId: o.proprietaire }
-  const docPublie = lu.data.document as { schema?: string; politiques?: string } | null
+  const docPublie = lu.data.document as { schema?: string; politiques?: string; entites?: unknown } | null
   const schemaSql = docPublie?.schema ?? ''
   const aDesDonnees = schemaSql.includes('create table')
 
@@ -266,7 +267,11 @@ export async function publierOeuvre(o: {
     const pose = await poserOeuvre({
       id,
       schemaSql,
-      politiquesSql: docPublie?.politiques ?? '',
+      // ── LA PORTE SE RÉÉMET À LA PUBLICATION (2026-11-23), depuis la
+      // DÉCLARATION, avec l'émetteur d'aujourd'hui. Le texte stocké d'une
+      // appli générée avant ce jour ouvrait ses tables publiques EN ENTIER ;
+      // le réémettre ferme ce que la déclaration ne dit pas public.
+      politiquesSql: politiquesAPoser(docPublie, id),
       connexion,
     })
     // ── CE QUI A ETE ELAGUE SE DIT, meme quand tout va bien.
