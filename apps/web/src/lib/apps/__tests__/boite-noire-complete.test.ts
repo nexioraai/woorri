@@ -125,8 +125,11 @@ describe('③ le message montré est celui de l’écran', () => {
     expect(paye).toBe(' Il vous en reste 36.')
     const avis = messageDeRetouche({ ok: true, fichiers: ['index.tsx'] }, true, paye)
     expect(avis.genre).toBe('avis')
-    expect(avis.texte).toMatch(motifTexte('Modifié — 1 fichier(s) touché(s)'))
-    expect(avis.texte).toMatch(motifTexte('Il vous en reste 36.'))
+    // 2026-11-23 : la phrase se ferme AVANT le compteur — plus de « touché(s) Il vous en reste 36.. ».
+    expect(avis.texte).toBe('Modifié — 1 fichier(s) touché(s). Il vous en reste 36.')
+    expect(messageDeRetouche({ ok: true, fichiers: ['APPARENCE.json'], couleur: '#2f7d4f' }, true, paye).texte).toBe('Couleur principale appliquée. Il vous en reste 36.')
+    expect(messageDeRetouche({ ok: true, fichiers: ['index.tsx'] }, true, ' (0.028 $ dépensés)').texte, 'le fondateur').toBe('Modifié — 1 fichier(s) touché(s) (0.028 $ dépensés).')
+    expect(messageDeRetouche({ ok: true, fichiers: ['index.tsx'] }, true, '').texte, 'aucun compteur').toBe('Modifié — 1 fichier(s) touché(s).')
     expect(messageDeRetouche({ error: 'Je ne l’ai pas appliquée.' }, false, ' Non décomptée.')).toEqual({ genre: 'erreur', texte: 'Je ne l’ai pas appliquée. Non décomptée.' })
     expect(messageDeRetouche({ aConfirmer: true, message: 'Retire 2 éléments.' }, false, '').genre).toBe('confirmation')
     expect(suffixeCompteur({ compteur: { exempte: true }, livree: true, aConfirmer: false, coutUsd: 0.028, modificationsRestantes: undefined })).toBe(' (0.028 $ dépensés)')

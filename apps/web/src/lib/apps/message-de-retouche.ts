@@ -56,13 +56,18 @@ export function messageDeRetouche(d: CorpsRetouche, httpOk: boolean, paye: strin
   if (!httpOk || d.ok !== true) return { genre: 'erreur', texte: `${String(d.error ?? 'La modification a échoué.')}${paye}` }
   const nonMesure =
     d.couvertureNonMesuree === true ? ' La couverture du cahier n’a pas pu être vérifiée sur cette demande.' : ''
+  // ── LA PHRASE SE FERME AVANT LE COMPTEUR (2026-11-23). Mesuré à l'écran :
+  // « touché(s) Il vous en reste 36.. ». Le coût (fondateur) reste dans la
+  // phrase, entre parenthèses ; le compteur est une phrase à lui.
+  const cout = /^ \([^)]*\)/u.exec(paye)?.[0] ?? ''
+  const compteur = paye.slice(cout.length)
   return {
     genre: 'avis',
     texte:
       (d.migration === undefined
         ? d.couleur !== undefined && (d.fichiers ?? []).filter((f) => f !== 'APPARENCE.json').length === 0
-          ? `Couleur principale appliquée${paye}.`
-          : `Modifié — ${String((d.fichiers ?? []).length)} fichier(s) touché(s)${paye}.`
+          ? `Couleur principale appliquée${cout}.${compteur}`
+          : `Modifié — ${String((d.fichiers ?? []).length)} fichier(s) touché(s)${cout}.${compteur}`
         : `${String(d.migration)}${paye}`) +
       nonMesure +
       (d.declarationRejetee === undefined ? '' : ` ${d.declarationRejetee}`),
