@@ -39,13 +39,14 @@ const etat = { stop: 'end_turn' as string, texte: '' }
 
 // Le compteur de modifications (étape ②, 2026-11-19) est hors sujet ici : il
 // accepte. Sa règle a ses propres tests (quota-retouche.test.ts).
+const compte = vi.hoisted(() => ({ email: 'a@b.c' }))
 vi.mock('@/lib/apps/quota', async (orig) => ({
   ...(await orig<typeof import('@/lib/apps/quota')>()),
   reserverModification: async () => ({ ok: true, restantes: 10 }),
   libererModification: async () => ({ ok: true }),
 }))
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
-  requireAuthenticatedUser: () => ({ ok: true, userId: 'u-1', email: 'a@b.c' }),
+  requireAuthenticatedUser: () => ({ ok: true, userId: 'u-1', email: compte.email }),
 }))
 
 /**
@@ -186,7 +187,13 @@ describe('EP-343 · la retouche tronquée', () => {
     // le recoupement des factures ne retomberait jamais sur ses pieds.
     etat.stop = 'max_tokens'
     etat.texte = COUPEE
+    // Un client ne reçoit JAMAIS le coût (2026-11-22, couts-visibles.ts)…
+    const client = (await (await POST(appel())).json()) as { coutUsd?: number }
+    expect(client.coutUsd, 'le coût part chez un client').toBeUndefined()
+    // …le fondateur, si : c'est là que « payé » se vérifie.
+    compte.email = 'issayamiyoussouf@gmail.com'
     const d = (await (await POST(appel())).json()) as { coutUsd?: number }
+    compte.email = 'a@b.c'
     expect(d.coutUsd, 'un appel payé est déclaré gratuit').toBeGreaterThan(0)
   })
 

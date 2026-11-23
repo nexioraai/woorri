@@ -37,6 +37,7 @@ import { projectAirSchema } from '@deribfy/air-schema'
 import { lireEntites } from '@/lib/apps/entites-declarees'
 import { CONSIGNE } from '@/lib/apps/consigne-lire-brief'
 import { decouperEnTranches, fusionnerLectures, FUSIBLE_SIGNES, type LectureBrief, type LecturePartielle, type TrancheLue } from '@/lib/apps/lecture-brief'
+import { reserverLesCoutsAuFondateur } from '@/lib/apps/couts-visibles'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -69,7 +70,7 @@ export const maxDuration = 60
  */
 
 
-export async function POST(req: Request) {
+async function postSansReserve(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
 
@@ -274,3 +275,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ deduites: {}, lecture: { resultat: 'erreur', tables: 0, tentatives, tranches: tranches.length, tranchesEchouees: tranches.length, signesLus: demande.length, coutUsd: coutDeLaLecture(), jetons: jetonsLus(), parTranche: [], roles: [], ecrans: [], questionsOuvertes: [] } satisfies LectureBrief })
   }
 }
+
+// LE COÛT N'EST JAMAIS MONTRÉ À UN CLIENT (2026-11-22) : couts-visibles.ts.
+export const POST = reserverLesCoutsAuFondateur(postSansReserve)

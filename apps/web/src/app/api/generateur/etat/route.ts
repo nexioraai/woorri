@@ -7,10 +7,11 @@ import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { etatGeneration, type BaseLecture } from '@/lib/apps/service-generations'
+import { reserverLesCoutsAuFondateur } from '@/lib/apps/couts-visibles'
 
 export const runtime = 'nodejs'
 
-export async function GET(req: Request) {
+async function getSansReserve(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
   const id = new URL(req.url).searchParams.get('id') ?? ''
@@ -24,3 +25,6 @@ export async function GET(req: Request) {
   if (etat === null) return NextResponse.json({ error: 'generation inconnue' }, { status: 404 })
   return NextResponse.json(etat, { headers: { 'Cache-Control': 'no-store' } })
 }
+
+// LE COÛT N'EST JAMAIS MONTRÉ À UN CLIENT (2026-11-22) : couts-visibles.ts.
+export const GET = reserverLesCoutsAuFondateur(getSansReserve)

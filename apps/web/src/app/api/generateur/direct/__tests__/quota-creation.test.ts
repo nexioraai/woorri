@@ -19,10 +19,12 @@ import { TABLE_TENTATIVES } from '@/lib/apps/tentatives'
 const etat = vi.hoisted(() => ({ texte: '', email: 'marchand@example.com', appels: 0 }))
 const reserver = vi.fn()
 const solder = vi.fn()
+const gratuite = vi.fn()
 
 vi.mock('@/lib/apps/quota', async (orig) => ({
   ...(await orig<typeof import('@/lib/apps/quota')>()),
   reserverCreation: (...a: unknown[]) => reserver(...a),
+  etatDeLaGratuite: (...a: unknown[]) => gratuite(...a),
   solderCreation: (...a: unknown[]) => solder(...a),
 }))
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
@@ -57,7 +59,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
 }))
 
 import { POST } from '../route'
-import { PHRASE_CREATION_OCCUPEE } from '@/lib/apps/quota'
+import { PHRASE_CREATION_EN_COURS, PHRASE_GRATUITE_UTILISEE } from '@/lib/apps/quota'
 
 const BON = [
   '=== index.tsx ===',
@@ -81,18 +83,47 @@ beforeEach(() => {
   etat.email = 'marchand@example.com'
   etat.texte = BON
   reserver.mockReset().mockResolvedValue({ ok: true, id: 'resa-1' })
+  gratuite.mockReset().mockResolvedValue({ appNonPayee: null, gratuiteSupprimee: false })
   solder.mockReset().mockResolvedValue({ ok: true })
   process.env.GENERATEUR_MOTEUR = 'direct'
   process.env.ANTHROPIC_API_KEY = 'cle-de-test'
 })
 
 describe('étape ② · une appli gratuite par compte', () => {
-  it('① une appli non payée existe : 402, la phrase, le modèle n’est pas appelé', async () => {
-    reserver.mockResolvedValue({ ok: false, raison: 'occupee' })
+  it('① une appli non payée existe : 402, « Passez à l’abonnement », l’appli à abonner nommée, sans prix ni suppression ; le modèle n’est pas appelé', async () => {
+    gratuite.mockResolvedValue({ appNonPayee: 'app-gratuite', gratuiteSupprimee: false })
     const r = await POST(appel())
     expect(r.status).toBe(402)
-    expect(((await r.json()) as { error: string }).error).toBe(PHRASE_CREATION_OCCUPEE)
+    const d = (await r.json()) as { error: string; gratuiteUtilisee: boolean; appAAbonner: string | null }
+    expect(d).toMatchObject({ error: PHRASE_GRATUITE_UTILISEE, gratuiteUtilisee: true, appAAbonner: 'app-gratuite' })
+    expect(d.error).toBe('Vous avez déjà utilisé votre application gratuite. Passez à l’abonnement pour en créer une autre.')
+    expect(d.error, 'un prix ou une suppression est revenu').not.toMatch(/\$|US|mois|supprim/u)
     expect(etat.appels).toBe(0)
+    expect(reserver).not.toHaveBeenCalled()
+  })
+
+  it('① bis B2 : l’appli gratuite a été SUPPRIMÉE sans avoir été payée → toujours refusé (supprimer ne rend rien)', async () => {
+    gratuite.mockResolvedValue({ appNonPayee: null, gratuiteSupprimee: true })
+    const r = await POST(appel())
+    expect(r.status).toBe(402)
+    expect(await r.json()).toMatchObject({ error: PHRASE_GRATUITE_UTILISEE, gratuiteUtilisee: true, appAAbonner: null })
+    expect(etat.appels).toBe(0)
+    expect(reserver).not.toHaveBeenCalled()
+  })
+
+  it('① ter une création déjà en cours : sa phrase à part, simple', async () => {
+    reserver.mockResolvedValue({ ok: false, raison: 'occupee' })
+    const r = await POST(appel())
+    expect(r.status).toBe(409)
+    expect(await r.json()).toMatchObject({ error: PHRASE_CREATION_EN_COURS, creationEnCours: true })
+    expect(etat.appels).toBe(0)
+  })
+
+  it('① quater l’état de la gratuité illisible : 503, rien n’est payé', async () => {
+    gratuite.mockResolvedValue(null)
+    expect((await POST(appel())).status).toBe(503)
+    expect(etat.appels).toBe(0)
+    expect(reserver).not.toHaveBeenCalled()
   })
 
   it('② compteur injoignable : 503, rien n’est payé', async () => {

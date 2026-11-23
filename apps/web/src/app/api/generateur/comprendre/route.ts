@@ -40,6 +40,7 @@ import { documentPour } from '@/lib/apps/pour'
 import { intentionDepuis, premiereIntention, sterile } from '@/lib/apps/dialogue'
 import { briefAvec, type ConfigurationRetenue } from '@/lib/apps/avant-de-depenser'
 import { Veille, alerter } from '@/lib/apps/surveillance'
+import { reserverLesCoutsAuFondateur } from '@/lib/apps/couts-visibles'
 
 export const runtime = 'nodejs'
 // ── 300 SECONDES, ET C'EST UNE MESURE.
@@ -55,7 +56,7 @@ export const runtime = 'nodejs'
 // portaient 120 et 60 — elles seraient mortes AVANT meme comprendre.
 export const maxDuration = 300
 
-export async function POST(req: Request) {
+async function postSansReserve(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
 
@@ -199,3 +200,6 @@ export async function POST(req: Request) {
     document: r.document,
   })
 }
+
+// LE COÛT N'EST JAMAIS MONTRÉ À UN CLIENT (2026-11-22) : couts-visibles.ts.
+export const POST = reserverLesCoutsAuFondateur(postSansReserve)

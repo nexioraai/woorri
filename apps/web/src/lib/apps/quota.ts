@@ -14,6 +14,7 @@
  */
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import type { EtatCompteur } from './compteur-phrases'
+import { TABLE_GENERATIONS } from './journal'
 
 export type Reservation =
   | { readonly ok: true; readonly restantes: number }
@@ -50,9 +51,51 @@ export type ReservationCreation =
   | { readonly ok: true; readonly id: string }
   | { readonly ok: false; readonly raison: 'occupee' | 'indisponible'; readonly detail?: string }
 
-export const PHRASE_CREATION_OCCUPEE =
-  'Vous avez déjà une application gratuite. Pour en créer une autre, abonnez celle-ci ' +
-  '(20 $ US par mois) ou supprimez-la. Une création déjà en cours compte aussi : attendez qu’elle se termine.'
+export { BOUTON_PASSER_A_L_ABONNEMENT, PHRASE_CREATION_EN_COURS, PHRASE_GRATUITE_UTILISEE } from './quota-phrases'
+
+/**
+ * OÙ EN EST L'APPLI GRATUITE DE CE COMPTE (2026-11-22).
+ *
+ *   appNonPayee       — une appli livrée, non payée aujourd'hui : c'est elle
+ *                        qu'on propose d'abonner (« Passer à l'abonnement ») ;
+ *   gratuiteSupprimee — une appli SUPPRIMÉE qui n'a JAMAIS été payée.
+ *
+ * ── UNE SEULE APPLI GRATUITE, POUR TOUJOURS. MESURÉ le 2026-11-22 dans
+ * `reserver_creation` (quota_creations.sql) : n'y comptent que les applis
+ * `livree` non payées — une appli supprimée passe à `supprimee` et ne compte
+ * plus. Supprimer son appli gratuite rendait donc une création gratuite.
+ * Désormais une appli supprimée jamais payée consomme la gratuité à jamais.
+ * Cette lecture se fait AVANT la réservation : une appli supprimée ne
+ * réapparaît pas entre-temps, la course est tenue par le verrou SQL.
+ * `null` = illisible : on ne crée rien.
+ */
+export type EtatGratuite = { readonly appNonPayee: string | null; readonly gratuiteSupprimee: boolean }
+
+export async function etatDeLaGratuite(proprietaire: string): Promise<EtatGratuite | null> {
+  try {
+    const [g, c] = await Promise.all([
+      supabaseAdmin.from(TABLE_GENERATIONS).select('id, statut').eq('owner_id', proprietaire).in('statut', ['livree', 'supprimee']),
+      supabaseAdmin.from('app_compteurs').select('app_id, statut, paye_jusqu_au').eq('owner_id', proprietaire),
+    ])
+    if (g.error !== null || c.error !== null) return null
+    const compteurs = new Map(((c.data ?? []) as { app_id: string; statut: string; paye_jusqu_au: string | null }[]).map((x) => [x.app_id, x]))
+    const payeeMaintenant = (id: string): boolean => {
+      const x = compteurs.get(id)
+      return x !== undefined && x.statut === 'abonnee' && x.paye_jusqu_au !== null && Date.parse(x.paye_jusqu_au) > Date.now()
+    }
+    const jamaisPayee = (id: string): boolean => {
+      const x = compteurs.get(id)
+      return x === undefined || (x.statut !== 'abonnee' && x.paye_jusqu_au === null)
+    }
+    const lignes = (g.data ?? []) as { id: string; statut: string }[]
+    return {
+      appNonPayee: lignes.find((l) => l.statut === 'livree' && !payeeMaintenant(l.id))?.id ?? null,
+      gratuiteSupprimee: lignes.some((l) => l.statut === 'supprimee' && jamaisPayee(l.id)),
+    }
+  } catch {
+    return null
+  }
+}
 
 export async function reserverCreation(proprietaire: string): Promise<ReservationCreation> {
   const r = await supabaseAdmin.rpc('reserver_creation', { p_owner: proprietaire })

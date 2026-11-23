@@ -17,6 +17,8 @@ const etat = vi.hoisted(() => ({ appels: 0, maxTokens: [] as number[] }))
 vi.mock('@/lib/apps/quota', async (orig) => ({
   ...(await orig<typeof import('@/lib/apps/quota')>()),
   reserverCreation: async () => ({ ok: true, id: 'resa-1' }),
+  // L'appli gratuite (B2, 2026-11-22) : hors sujet ici aussi — rien n'est pris.
+  etatDeLaGratuite: async () => ({ appNonPayee: null, gratuiteSupprimee: false }),
   solderCreation: async () => ({ ok: true }),
 }))
 vi.mock('@/lib/auth/require-authenticated-user', () => ({

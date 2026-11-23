@@ -143,11 +143,14 @@ describe('point 2 · la retouche laisse sa ligne', () => {
     etat.texte = '=== index.tsx ===\nexport const a = '
     const avant = new Date()
     const r = await appel()
-    const d = (await r.json()) as { coutUsd: number }
+    const d = (await r.json()) as { coutUsd?: number }
     const t = tarifDe(CONFIGS.deepseek.prixLeger, avant)
-    expect(d.coutUsd).toBeCloseTo(coutAppel({ entree: 1_000, entreeCache: 30_000, sortie: 2_000 }, t), 8)
+    // JAMAIS MONTRÉ À UN CLIENT (2026-11-22) : le coût vit dans la tentative, pas dans la réponse.
+    expect(d.coutUsd, 'le coût part chez un client').toBeUndefined()
+    const cout = Number(tentatives()[0]?.cout_usd)
+    expect(cout).toBeCloseTo(coutAppel({ entree: 1_000, entreeCache: 30_000, sortie: 2_000 }, t), 4)
     // Sans le cache, le coût serait plus bas : c'est exactement l'oubli corrigé.
-    expect(d.coutUsd).toBeGreaterThan((1_000 * t.entree + 2_000 * t.sortie) / 1e6)
+    expect(cout).toBeGreaterThan((1_000 * t.entree + 2_000 * t.sortie) / 1e6)
     expect(tentatives()[0]).toMatchObject({ jetons_entree: 31_000, jetons_sortie: 2_000 })
   })
 

@@ -57,7 +57,9 @@ const contenuEnvoye = (n: number) => (messagesCreateMock.mock.calls[n]![0] as { 
 beforeEach(() => {
   process.env.ANTHROPIC_API_KEY = 'sk-test'
   process.env.DEEPSEEK_API_KEY = 'sk-test'
-  getUserMock.mockResolvedValue({ data: { user: { id: 'u-1', email: 'a@b.c' } }, error: null })
+  // UN COMPTE FONDATEUR : ces cas vérifient le CALCUL du coût, que seul un
+  // fondateur reçoit (couts-visibles.ts, 2026-11-22). Le cas « client » est à part.
+  getUserMock.mockResolvedValue({ data: { user: { id: 'u-1', email: 'issayamiyoussouf@gmail.com' } }, error: null })
   messagesCreateMock.mockReset()
 })
 afterEach(() => { vi.useRealTimers() })

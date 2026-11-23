@@ -29,7 +29,7 @@ import 'server-only'
 import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
-import { PHRASE_COMPTEUR_INDISPONIBLE, PHRASE_CREATION_OCCUPEE, reserverCreation, solderCreation } from '@/lib/apps/quota'
+import { etatDeLaGratuite, PHRASE_COMPTEUR_INDISPONIBLE, PHRASE_CREATION_EN_COURS, PHRASE_GRATUITE_UTILISEE, reserverCreation, solderCreation } from '@/lib/apps/quota'
 import { sansQuota } from '@/lib/admin-emails'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
@@ -57,6 +57,7 @@ import { appelerFournisseur, CONFIGS, fournisseurChoisi, tarifDe, tarifPlafond }
 import { PHRASE_TROP_LONG, sortiePremierTour } from '@/lib/apps/plafond-premier-tour'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { jugerExecution } from '@/lib/apps/juge-execution'
+import { reserverLesCoutsAuFondateur, retirerCouts } from '@/lib/apps/couts-visibles'
 
 export const runtime = 'nodejs'
 // ── QUINZE MINUTES, ET C'EST UNE CONSÉQUENCE DU PLAFOND, PAS UN CONFORT.
@@ -309,7 +310,7 @@ export async function GET(req: Request) {
   )
 }
 
-export async function POST(req: Request) {
+async function postSansReserve(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
 
@@ -544,14 +545,27 @@ export async function POST(req: Request) {
   // cette réservation (prouvé : 6 simultanées → 1 sans verrou… 2 ou 3).
   // Soldée à la fin du flux : livrée avec l'appli, sinon libérée — une
   // création échouée ne compte pas. Comptes exemptés : jamais comptés.
+  //
+  // ── UNE SEULE, POUR TOUJOURS (décision du propriétaire, 2026-11-22) : une
+  // appli gratuite supprimée sans avoir jamais été payée ne rend pas sa place.
+  // Le refus dit « Passez à l'abonnement » et nomme l'appli à abonner ; une
+  // création en cours a sa phrase à part.
   let reservationCreation: string | null = null
   if (idExistant === '' && !sansQuota(garde.email)) {
+    const refusGratuite = (app: string | null) => NextResponse.json(
+      { error: PHRASE_GRATUITE_UTILISEE, creationOccupee: true, gratuiteUtilisee: true, appAAbonner: app },
+      { status: 402, headers: { 'Cache-Control': 'no-store' } },
+    )
+    const g = await etatDeLaGratuite(garde.userId)
+    if (g === null) {
+      return NextResponse.json({ error: PHRASE_COMPTEUR_INDISPONIBLE }, { status: 503, headers: { 'Cache-Control': 'no-store' } })
+    }
+    if (g.gratuiteSupprimee || g.appNonPayee !== null) return refusGratuite(g.appNonPayee)
     const r = await reserverCreation(garde.userId)
     if (!r.ok) {
-      return NextResponse.json(
-        { error: r.raison === 'occupee' ? PHRASE_CREATION_OCCUPEE : PHRASE_COMPTEUR_INDISPONIBLE, creationOccupee: r.raison === 'occupee' },
-        { status: r.raison === 'occupee' ? 402 : 503, headers: { 'Cache-Control': 'no-store' } },
-      )
+      return r.raison === 'occupee'
+        ? NextResponse.json({ error: PHRASE_CREATION_EN_COURS, creationOccupee: true, creationEnCours: true }, { status: 409, headers: { 'Cache-Control': 'no-store' } })
+        : NextResponse.json({ error: PHRASE_COMPTEUR_INDISPONIBLE }, { status: 503, headers: { 'Cache-Control': 'no-store' } })
     }
     reservationCreation = r.id
   }
@@ -572,7 +586,8 @@ export async function POST(req: Request) {
           const livree = fin.ok === true && typeof fin.id === 'string'
           await solderCreation(reservationCreation, proprietaire, livree ? 'livree' : 'liberee', livree ? (fin.id as string) : null)
         }
-        bouche.enqueue(encodeur.encode(JSON.stringify(fin)))
+        // LE COÛT RESTE AU FONDATEUR (2026-11-22) : le résultat en flux aussi.
+        bouche.enqueue(encodeur.encode(JSON.stringify(sansQuota(garde.email) ? fin : retirerCouts(fin))))
       } catch (e: unknown) {
         if (reservationCreation !== null) await solderCreation(reservationCreation, proprietaire, 'liberee', null)
         const message = e instanceof Error ? e.message : String(e)
@@ -1222,3 +1237,6 @@ export async function POST(req: Request) {
   }
   }
 }
+
+// LE COÛT N'EST JAMAIS MONTRÉ À UN CLIENT (2026-11-22) : couts-visibles.ts.
+export const POST = reserverLesCoutsAuFondateur(postSansReserve)

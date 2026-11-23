@@ -53,6 +53,7 @@ import {
 } from '@/lib/apps/document-joint';
 import { publierAvecAccord } from '@/components/apps/accordLecturePublique';
 import { lireReponseQuiBat } from '@/lib/apps/flux-lignes';
+import { BOUTON_PASSER_A_L_ABONNEMENT } from '@/lib/apps/quota-phrases';
 import {
   DELAI_MAX_MS,
   MESSAGE_ILLISIBLE,
@@ -197,6 +198,9 @@ export default function ConversationApplication({
   const [travail, setTravail] = useState<'' | 'apercu' | 'archive' | 'publication'>('');
   const [apercu, setApercu] = useState('');
   const [avis, setAvis] = useState('');
+  // L'APPLI À ABONNER quand la gratuite est utilisée (2026-11-22) : le bouton
+  // « Passer à l'abonnement » ouvre son parcours « Publier », dans l'atelier.
+  const [appAAbonner, setAppAAbonner] = useState<string | null>(null);
   // LE DOCUMENT COMPRIS, GARDE ICI. Sans lui, « voir » et « telecharger »
   // reliraient la phrase et repaieraient un appel chacun — trois pour une
   // seule application, avec le risque que l apercu et l archive different.
@@ -1109,7 +1113,7 @@ export default function ConversationApplication({
         const d =
           (await lireReponseQuiBat<{
             ok?: boolean; id?: string | null; html?: string; motif?: string; error?: string;
-            tours?: unknown[]; dureeMs?: number;
+            tours?: unknown[]; dureeMs?: number; gratuiteUtilisee?: boolean; appAAbonner?: string | null;
             jetons?: { fichier: string; reference: string }[];
             execution?: { monteDansSimulateur: boolean; indisponible?: string; ecransVisites?: number; ecransDecouverts?: number; ecransDistincts?: number; erreurs: { quoi: string; message: string }[] };
             persistance?: { table: string; lue: boolean; ecrite: boolean }[];
@@ -1126,6 +1130,7 @@ export default function ConversationApplication({
         if (!res.ok || d.ok !== true || typeof d.html !== 'string') {
           rendreLaMain(texte, noteAvant);
           setAvis(String(d.error ?? d.motif ?? MESSAGE_ILLISIBLE));
+          setAppAAbonner(d.gratuiteUtilisee === true && typeof d.appAAbonner === 'string' ? d.appAAbonner : null);
           return;
         }
         // L'APPLICATION EST LÀ TOUT DE SUITE. On la montre dans le cadre
@@ -2022,6 +2027,16 @@ export default function ConversationApplication({
       </div>
 
       {avis !== '' && <p className="text-sm text-amber-300/80 mt-3 text-center">{avis}</p>}
+      {/* « PASSER À L'ABONNEMENT » (2026-11-22) : le parcours « Publier » de
+          l'appli existante, dans son atelier — le même que partout. */}
+      {avis !== '' && appAAbonner !== null && (
+        <div className="mt-3 flex justify-center">
+          <Link href={`/atelier/${encodeURIComponent(appAAbonner)}?publier=1`}
+            className="rounded-xl bg-[#FA5D1E] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#FA5D1E]/85">
+            {BOUTON_PASSER_A_L_ABONNEMENT}
+          </Link>
+        </div>
+      )}
       {noteLecture !== '' && (
         <p role="status" className="text-sm text-amber-300/80 mt-3 text-center">{noteLecture}</p>
       )}

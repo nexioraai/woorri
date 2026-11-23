@@ -32,13 +32,14 @@ import { nomModifiable } from '@/lib/apps/nom-enregistre'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
+import { reserverLesCoutsAuFondateur } from '@/lib/apps/couts-visibles'
 
 export const runtime = 'nodejs'
 
 /** Une demande entière est illisible dans une liste ; on en montre le début. */
 const APERCU_DEMANDE = 160
 
-export async function GET(req: Request) {
+async function getSansReserve(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
 
@@ -119,3 +120,6 @@ export async function GET(req: Request) {
     { headers: { 'Cache-Control': 'private, no-store' } },
   )
 }
+
+// LE COÛT N'EST JAMAIS MONTRÉ À UN CLIENT (2026-11-22) : couts-visibles.ts.
+export const GET = reserverLesCoutsAuFondateur(getSansReserve)

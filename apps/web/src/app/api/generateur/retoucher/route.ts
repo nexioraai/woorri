@@ -105,6 +105,7 @@ import {
   refusHorsPerimetre,
   type NoteJuge,
 } from '@/lib/apps/retouche'
+import { reserverLesCoutsAuFondateur } from '@/lib/apps/couts-visibles'
 
 export const runtime = 'nodejs'
 // ── 900 s, LE RÉGIME DE LA GÉNÉRATION (point 2, 2026-11-18).
@@ -325,7 +326,7 @@ async function appliquerEnAttente(
  *
  * Aucun appel au modèle : on lit la taille du document et on multiplie.
  */
-export async function GET(req: Request) {
+async function getSansReserve(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
   const id = new URL(req.url).searchParams.get('id') ?? ''
@@ -389,7 +390,7 @@ type SuiviRetouche = {
   reservee: { app: string; proprietaire: string; restantes: number } | null
 }
 
-export async function POST(req: Request) {
+async function postSansReserve(req: Request) {
   const suivi: SuiviRetouche = {
     appele: false, debut: new Date(), generationId: '', demande: '',
     jetonsEntree: 0, jetonsCache: 0, jetonsSortie: 0, coutUsd: 0, tronquee: false, issue: null, reservee: null,
@@ -1001,3 +1002,7 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }
+
+// LE COÛT N'EST JAMAIS MONTRÉ À UN CLIENT (2026-11-22) : couts-visibles.ts.
+export const GET = reserverLesCoutsAuFondateur(getSansReserve)
+export const POST = reserverLesCoutsAuFondateur(postSansReserve)

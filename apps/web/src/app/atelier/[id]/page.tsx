@@ -633,6 +633,23 @@ export default function AtelierPage() {
     if (issue.compte != null) setCompte({ etat: 'actif', ...issue.compte });
   };
 
+  // ── « PASSER À L'ABONNEMENT » DEPUIS LA CRÉATION (2026-11-22) : on arrive
+  //    avec `?publier=1`, et le parcours « Publier » s'ouvre UNE fois, dès que
+  //    l'appli est chargée. Le paramètre est retiré : recharger ne relance rien.
+  const publierDemande = useRef(false);
+  useEffect(() => {
+    if (app === null || publierDemande.current) return;
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('publier') !== '1') return;
+    publierDemande.current = true;
+    p.delete('publier');
+    window.history.replaceState(null, '', `${window.location.pathname}${p.toString() === '' ? '' : `?${p.toString()}`}`);
+    // Au tour suivant : pas d'état posé pendant l'effet lui-même. Pas
+    // d'annulation au rendu suivant : le drapeau ci-dessus est déjà levé, une
+    // annulation ferait qu'il ne s'ouvre JAMAIS.
+    window.setTimeout(() => { void publier(); }, 0);
+  });
+
   const telecharger = async () => {
     const t = await jeton();
     if (t === null) return;

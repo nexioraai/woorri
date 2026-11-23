@@ -27,6 +27,7 @@
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { preVol } from '@/lib/apps/avant-de-depenser'
+import { reserverLesCoutsAuFondateur } from '@/lib/apps/couts-visibles'
 
 export const runtime = 'nodejs'
 
@@ -38,7 +39,7 @@ export const runtime = 'nodejs'
 // court le DIT au lieu de faire attendre.
 export const maxDuration = 30
 
-export async function POST(req: Request) {
+async function postSansReserve(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
 
@@ -63,3 +64,6 @@ export async function POST(req: Request) {
     coutUsd: 0,
   })
 }
+
+// LE COÛT N'EST JAMAIS MONTRÉ À UN CLIENT (2026-11-22) : couts-visibles.ts.
+export const POST = reserverLesCoutsAuFondateur(postSansReserve)

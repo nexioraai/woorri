@@ -73,7 +73,8 @@ describe('EP-315 — les versions d’une œuvre', () => {
       'utf8',
     )
     const sansCommentaires = route.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/^\s*\/\/.*$/gmu, '')
-    const apresPost = sansCommentaires.slice(sansCommentaires.indexOf('export async function POST'))
+    // Depuis le 2026-11-22, la route est enveloppée (couts-visibles.ts) : le corps du POST est `postSansReserve`.
+    const apresPost = sansCommentaires.slice(sansCommentaires.indexOf('async function postSansReserve'))
     expect(
       /from\(TABLE_VERSIONS\)[\s\S]{0,120}\.insert\(/u.test(apresPost),
       'le retour écrit de nouveau une version — quelques clics effaceront de vraies générations',

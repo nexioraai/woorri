@@ -37,6 +37,7 @@ import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { estRestaurable, rangCourant, type VersionDocument } from '@/lib/apps/versions-oeuvre'
+import { reserverLesCoutsAuFondateur } from '@/lib/apps/couts-visibles'
 
 export const runtime = 'nodejs'
 
@@ -51,7 +52,7 @@ export const runtime = 'nodejs'
  * `restaurable` est CALCULÉ ICI et pas déduit par l'écran : une version de
  * pipeline ne porte pas de fichiers, et c'est au serveur de le savoir.
  */
-export async function GET(req: Request) {
+async function getSansReserve(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
   const id = new URL(req.url).searchParams.get('id') ?? ''
@@ -98,7 +99,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ versions, courante }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
-export async function POST(req: Request) {
+async function postSansReserve(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
 
@@ -189,3 +190,7 @@ export async function POST(req: Request) {
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }
+
+// LE COÛT N'EST JAMAIS MONTRÉ À UN CLIENT (2026-11-22) : couts-visibles.ts.
+export const GET = reserverLesCoutsAuFondateur(getSansReserve)
+export const POST = reserverLesCoutsAuFondateur(postSansReserve)

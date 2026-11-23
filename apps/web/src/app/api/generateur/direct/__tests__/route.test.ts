@@ -41,6 +41,8 @@ const lignesEcrites = (): Record<string, unknown>[] =>
 vi.mock('@/lib/apps/quota', async (orig) => ({
   ...(await orig<typeof import('@/lib/apps/quota')>()),
   reserverCreation: async () => ({ ok: true, id: 'resa-1' }),
+  // L'appli gratuite (B2, 2026-11-22) : hors sujet ici aussi — rien n'est pris.
+  etatDeLaGratuite: async () => ({ appNonPayee: null, gratuiteSupprimee: false }),
   solderCreation: async () => ({ ok: true }),
 }))
 vi.mock('@/lib/auth/require-authenticated-user', () => ({
@@ -197,8 +199,11 @@ describe('EP-276 · la route de l’écriture directe', () => {
     expect(d.html, 'la page n’est pas montable').toContain('<div id="racine">')
     // LE COÛT EST RÉEL, pas inventé : 1200 entrée + 3400 sortie aux tarifs
     // du fournisseur. S'il tombait à zéro, personne ne verrait la dépense.
-    expect(d.coutUsd).toBeCloseTo((1200 * 5 + 3400 * 25) / 1e6, 6)
+    // ET IL N'EST JAMAIS MONTRÉ À UN CLIENT (2026-11-22, couts-visibles.ts) :
+    // la réponse n'en porte pas ; la ligne en base, si.
+    expect(d.coutUsd, 'le coût part chez un client').toBeUndefined()
     const l = lignesEcrites()[0] ?? {}
+    expect(Number(l.cout_usd)).toBeCloseTo((1200 * 5 + 3400 * 25) / 1e6, 4)
     expect(l.moteur, 'la ligne ne dit pas quel moteur l’a produite').toBe('direct')
     expect(l.statut).toBe('livree')
     expect(l.jetons_sortie).toBe(3400)
