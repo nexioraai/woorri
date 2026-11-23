@@ -189,6 +189,9 @@ résolvent le `Host`, un cache serait partagé entre locataires.
 | GET | `/api/admin/stats` | Statistiques globales plateforme. | Admin |
 | GET | `/api/admin/ai-usage` | Coût/usage IA agrégé (tarifs Anthropic appliqués aux tokens loggés). | Admin |
 | GET | `/api/admin/applications` | Coût de CHAQUE application générée — réussies et refusées, avec le total payé pour rien. Remplace le plafond de dépense : on surveille au lieu d'empêcher. | Admin |
+| GET | `/api/admin/boite-noire` | **Les boîtes noires (2026-11-23)** — les 200 plus récentes : création, régénération ou modification, issue, taille, coupée ou non, résumé de l'analyse phrase par phrase, nom de l'appli. Jamais les étapes. | fondateur seul (`estAdmin`), 403 sinon |
+| GET | `/api/admin/boite-noire/[id]` | **Une boîte noire entière** — la demande, la lecture du cahier, la consigne exacte et la réponse brute de chaque tour, les décisions, les contrôles, les mesures, la livraison, l'analyse. | fondateur seul (`estAdmin`), 403 sinon |
+| GET | `/api/admin/boite-noire/[id]/telecharger` | **« Télécharger »** — la même boîte en UN fichier Markdown lisible (`boite-noire-<id>.md`), à transmettre tel quel. | fondateur seul (`estAdmin`), 403 sinon |
 | GET | `/api/admin/cron-runs` | Historique des exécutions cron (`cron-tracker`). | Admin |
 | DELETE | `/api/account/delete` | Suppression du compte et des sites de l'utilisateur courant. | Utilisateur |
 

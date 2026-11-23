@@ -240,6 +240,7 @@ export default function AdminDashboard() {
         <StatCard icon={DollarSign} label="Revenus plateforme" value={`$${fmt(stats.revenue.commission)}`} sub={`$${fmt(stats.revenue.total)} total ventes`} color="text-amber-400" />
         <StatCard icon={Cpu} label="Consommation IA" value="Voir détails" sub="Coût par boutique" color="text-cyan-400" href="/admin/ai-usage" />
         <StatCard icon={Boxes} label="Applications générées" value="Voir détails" sub="Coût par application" color="text-violet-400" href="/admin/applications" />
+        <StatCard icon={Boxes} label="Boîtes noires" value="Lire" sub="Chaque génération, étape par étape" color="text-amber-400" href="/admin/boite-noire" />
         <StatCard icon={ShieldCheck} label="Surveillance technique" value="Voir détails" sub="Santé anti-régression" color="text-[#FA5D1E]" href="/admin/system-health" />
       </div>
 

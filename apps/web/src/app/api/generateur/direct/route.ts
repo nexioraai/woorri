@@ -58,6 +58,8 @@ import { PHRASE_TROP_LONG, sortiePremierTour } from '@/lib/apps/plafond-premier-
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { jugerExecution } from '@/lib/apps/juge-execution'
 import { reserverLesCoutsAuFondateur, retirerCouts } from '@/lib/apps/couts-visibles'
+import { BoiteNoire, empreinte } from '@/lib/apps/boite-noire'
+import { analyserDemande } from '@/lib/apps/analyse-demande'
 
 export const runtime = 'nodejs'
 // ── QUINZE MINUTES, ET C'EST UNE CONSÉQUENCE DU PLAFOND, PAS UN CONFORT.
@@ -464,6 +466,22 @@ async function postSansReserve(req: Request) {
   let entree = 0
   let sortie = 0
 
+  // ── LA BOÎTE NOIRE (décision du propriétaire, 2026-11-23) : tout ce que
+  //    Deribfy fait pendant cette génération, étape par étape, dans NOTRE base.
+  //    Elle observe, elle ne décide rien, et elle ne fait jamais échouer le travail.
+  const boite = new BoiteNoire({ nature: idExistant !== '' ? 'regeneration' : 'generation', compte: garde.ok ? garde.userId : null })
+  boite.noter('demande', 'La demande du client, mot pour mot', { demande, nom, configuration, regeneration: idExistant !== '' })
+  boite.noter('lecture_cahier', 'La lecture du cahier (rôles, tables, champs, questions ouvertes)', {
+    lecture: lectureBrief ?? null,
+    tables: entitesDeclarees.map((e) => ({ id: e.id, nom: e.name, lecturePublique: (e as { lecturePublique?: unknown }).lecturePublique === true, champs: e.fields.map((f) => `${f.name}: ${f.type}`) })),
+  })
+  let toursBoite = 0
+  let messagesVus = 0
+  let derniereConsigne = ''
+  /** Le code et le schéma LIVRÉS, pour l'analyse phrase par phrase. */
+  let livre: { readonly code: string; readonly schema: string } | null = null
+  let idCourant: string | null = idExistant !== '' ? idExistant : null
+
   /**
    * L'APPEL, ET IL EST NU.
    *
@@ -498,10 +516,38 @@ async function postSansReserve(req: Request) {
       if (p.refus) throw new Error(PHRASE_TROP_LONG)
       maxJetons = p.sortie
     }
+    toursBoite += 1
+    const tourBoite = toursBoite
+    boite.noter('consigne', `Tour ${String(tourBoite)} — la consigne envoyée au modèle`, {
+      tour: tourBoite,
+      fournisseur,
+      modele: config.modele,
+      maxJetons: maxJetons ?? config.maxJetons,
+      deploiement,
+      // LA VERSION DU MOULE ET DES CONSIGNES : l'empreinte du texte exact, et le déploiement.
+      empreinteConsigne: empreinte(consigne),
+      consigneSysteme: consigne === derniereConsigne ? '(identique au tour précédent — même empreinte)' : consigne,
+      // Les messages AJOUTÉS depuis le tour précédent ; la réponse du modèle
+      // n'est pas recopiée (elle est l'étape « réponse brute » du tour d'avant).
+      messagesAjoutes: messages.slice(messagesVus).map((m) => (m.role === 'assistant' ? { role: m.role, content: '(réponse brute du tour précédent)' } : m)),
+      messagesAuTotal: messages.length,
+    })
+    derniereConsigne = consigne
+    messagesVus = messages.length
+    const t0 = Date.now()
     const r = await appelerFournisseur(fournisseur, cle, consigne, messages, signalAppel, maxJetons)
     entree += r.usage.entree
     sortie += r.usage.sortie
     const t = tarifDe(config.prix, quand)
+    boite.noter('reponse_brute', `Tour ${String(tourBoite)} — la réponse brute du modèle`, {
+      tour: tourBoite,
+      texte: r.texte,
+      tronquee: r.tronquee,
+      jetonsEntree: r.usage.entree,
+      jetonsSortie: r.usage.sortie,
+      coutUsd: (r.usage.entree * t.entree + r.usage.sortie * t.sortie) / 1e6,
+      ms: Date.now() - t0,
+    })
     // LA TRONCATURE VOYAGE AVEC LE TEXTE. La boucle ne peut pas la deviner :
     // un texte coupé ressemble à un texte fautif, et seul le fournisseur sait
     // lequel des deux il vient de rendre. LE COÛT ET LES JETONS D'ENTRÉE
@@ -570,6 +616,36 @@ async function postSansReserve(req: Request) {
     reservationCreation = r.id
   }
 
+  /** Ferme la boîte noire : la fin du travail, l'analyse, l'écriture. Ne lève jamais. */
+  const fermerBoite = async (fin: Record<string, unknown>): Promise<void> => {
+    try {
+      const tours = Array.isArray(fin.tours) ? (fin.tours as Record<string, unknown>[]) : []
+      boite.noter('decisions', 'Ce que le code a gardé, modifié ou écarté, et pourquoi', {
+        tours: tours.map((t) => ({ rang: t.rang ?? null, garde: t.ok ?? null, motif: t.motif ?? null, tronquee: t.tronquee ?? null, fichiersLus: t.fichiers ?? null })),
+        tablesFinales: entitesCourantes.map((e) => ({ id: e.id, champs: e.fields.map((f) => `${f.name}: ${f.type}`) })),
+      })
+      const ouRien = (v: unknown): unknown => v ?? 'n’a pas tourné (ou rien rendu)'
+      boite.noter('controles', 'Les contrôles avant livraison', {
+        execution: ouRien(fin.execution), couverture: ouRien(fin.couverture), vivacite: ouRien(fin.vivacite),
+        persistance: ouRien(fin.persistance), jetons: ouRien(fin.jetons),
+      })
+      boite.noter('mesures', 'Modèle, jetons, coût, durée', {
+        fournisseur, modele: config.modele, jetonsEntree: entree, jetonsSortie: sortie, coutUsd: fin.coutUsd ?? null, dureeMs: fin.dureeMs ?? null, tours: toursBoite,
+      })
+      boite.noter('livraison', 'Ce qui a été livré, et le message montré au client', {
+        ok: fin.ok === true, id: fin.id ?? idCourant, fichiers: fin.fichiers ?? 0,
+        // Le fil de l'atelier dit cette phrase fixe après une création (fil-atelier.ts) ; en cas d'échec, l'erreur ci-dessous.
+        messageMontre: fin.ok === true ? 'J’ai créé votre application.' : String(fin.error ?? fin.motif ?? ''),
+      })
+      const analyse = livre === null
+        ? { phrases: [], resume: null, fiabilite: 'aucune livraison : rien à comparer' }
+        : analyserDemande({ demande, entites: entitesCourantes, roles: (lectureBrief as { readonly roles?: readonly string[] } | null)?.roles ?? [], code: livre.code, schema: livre.schema })
+      await boite.enregistrer(supabaseAdmin as never, { generationId: typeof fin.id === 'string' ? fin.id : idCourant, issue: fin.ok === true ? 'livree' : 'echec', analyse })
+    } catch (e) {
+      console.error('[boite-noire] fermeture', e instanceof Error ? e.message : e)
+    }
+  }
+
   const encodeur = new TextEncoder()
   const flux = new ReadableStream<Uint8Array>({
     async start(bouche) {
@@ -582,6 +658,7 @@ async function postSansReserve(req: Request) {
       }, 10_000)
       try {
         const fin = await travailler()
+        await fermerBoite(fin)
         if (reservationCreation !== null) {
           const livree = fin.ok === true && typeof fin.id === 'string'
           await solderCreation(reservationCreation, proprietaire, livree ? 'livree' : 'liberee', livree ? (fin.id as string) : null)
@@ -591,6 +668,7 @@ async function postSansReserve(req: Request) {
       } catch (e: unknown) {
         if (reservationCreation !== null) await solderCreation(reservationCreation, proprietaire, 'liberee', null)
         const message = e instanceof Error ? e.message : String(e)
+        await fermerBoite({ ok: false, error: message.slice(0, 2_000) })
         bouche.enqueue(
           encodeur.encode(JSON.stringify({ ok: false, error: message.slice(0, 200) })),
         )
@@ -800,6 +878,7 @@ async function postSansReserve(req: Request) {
   // régénération doit cuire l'identifiant EXISTANT : un identifiant neuf
   // fermerait la porte à tous les comptes déjà ouverts sur cette œuvre.
   const idOeuvre = idExistant !== '' ? idExistant : randomUUID()
+  idCourant = idOeuvre
   const politiquesDeLOeuvre = emettrePolitiquesSql(entitesCourantes, idOeuvre)
 
   // ── LE TARIF DE L'HEURE OÙ L'APPEL A EU LIEU (2026-11-02).
@@ -1219,6 +1298,7 @@ async function postSansReserve(req: Request) {
     return { ok: false as const, error: phrase, motif: phrase, tours: resultat.tours, coutUsd, dureeMs }
   }
 
+  livre = { code: [...resultat.fichiers.values()].join('\n'), schema: schemaDeLOeuvre }
   return {
     ok: true as const,
     id: ecrit.data?.id ?? null,

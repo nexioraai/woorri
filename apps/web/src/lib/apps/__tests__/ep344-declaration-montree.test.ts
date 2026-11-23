@@ -137,9 +137,13 @@ describe('EP-344 · la déclaration retrouvée et montrée', () => {
       join(__dirname, '..', '..', '..', 'app', 'api', 'generateur', 'retoucher', 'route.ts'),
       'utf8',
     )
+    // Depuis le 2026-11-23, la consigne est posée dans `systeme` (la boîte
+    // noire la garde mot pour mot), puis envoyée telle quelle : les DEUX
+    // ancres tiennent — la déclaration dans la consigne, la consigne dans l'appel.
     expect(src, 'la consigne ne porte pas la déclaration').toMatch(
-      /system: `\$\{CONSIGNE_RETOUCHE\}\\n\\n\$\{blocDeclaration\(declarationDe\(/u,
+      /const\s+systeme\s*=\s*`\$\{CONSIGNE_RETOUCHE\}\\n\\n\$\{blocDeclaration\(declarationDe\(/u,
     )
+    expect(src, 'la consigne n’est pas celle envoyée au modèle').toMatch(/system:\s*systeme,/u)
   })
 
   it('⑦ ET LA GÉNÉRATION LA STOCKE — sinon il n’y a rien à relire demain', async () => {

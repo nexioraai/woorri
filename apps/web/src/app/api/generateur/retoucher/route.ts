@@ -106,6 +106,7 @@ import {
   type NoteJuge,
 } from '@/lib/apps/retouche'
 import { reserverLesCoutsAuFondateur } from '@/lib/apps/couts-visibles'
+import { BoiteNoire, empreinte } from '@/lib/apps/boite-noire'
 
 export const runtime = 'nodejs'
 // ── 900 s, LE RÉGIME DE LA GÉNÉRATION (point 2, 2026-11-18).
@@ -388,15 +389,21 @@ type SuiviRetouche = {
   issue: Issue | null
   /** Une modification a été RÉSERVÉE au compteur (compte non exempté). */
   reservee: { app: string; proprietaire: string; restantes: number } | null
+  /** LA BOÎTE NOIRE (2026-11-23) : la demande, la consigne, la réponse brute, l'issue. */
+  boite: BoiteNoire
 }
 
 async function postSansReserve(req: Request) {
   const suivi: SuiviRetouche = {
     appele: false, debut: new Date(), generationId: '', demande: '',
     jetonsEntree: 0, jetonsCache: 0, jetonsSortie: 0, coutUsd: 0, tronquee: false, issue: null, reservee: null,
+    boite: new BoiteNoire({ nature: 'retouche', compte: null }),
   }
   const reponse = await retoucher(req, suivi)
-  if (suivi.appele) await consignerRetouche(suivi, reponse)
+  if (suivi.appele) {
+    await consignerRetouche(suivi, reponse)
+    await fermerBoiteRetouche(suivi, reponse)
+  }
   return await solderReservation(suivi, reponse)
 }
 
@@ -479,6 +486,31 @@ async function consignerRetouche(suivi: SuiviRetouche, reponse: Response): Promi
       sujet: 'oeuvre', sujetId: suivi.generationId, motif: `trace : retouche « ${issue} » non écrite`,
       etape: 'ecriture', detail: r.cause, coutUsd: Number(suivi.coutUsd.toFixed(4)),
     }).catch(() => undefined)
+  }
+}
+
+/** Ferme la boîte noire d'une retouche : ce que l'écran a reçu, et pourquoi. Ne lève jamais. */
+async function fermerBoiteRetouche(suivi: SuiviRetouche, reponse: Response): Promise<void> {
+  try {
+    const corps = (await reponse.clone().json().catch(() => ({}))) as Record<string, unknown>
+    const issue = issueDe(suivi, corps as { ok?: unknown; aConfirmer?: unknown })
+    suivi.boite.noter('decisions', 'Ce que le code a gardé, modifié ou écarté, et pourquoi', {
+      issue, fichiersModifies: corps.fichiers ?? null, horsPerimetre: corps.horsPerimetre === true,
+      declarationRejetee: corps.declarationRejetee ?? null, tronquee: suivi.tronquee, motif: corps.error ?? corps.raison ?? null,
+    })
+    suivi.boite.noter('mesures', 'Modèle, jetons, coût, durée', {
+      modele: MODELE_LEGER, jetonsEntree: suivi.jetonsEntree, jetonsCache: suivi.jetonsCache, jetonsSortie: suivi.jetonsSortie,
+      coutUsd: suivi.coutUsd, dureeMs: Date.now() - suivi.debut.getTime(),
+    })
+    suivi.boite.noter('livraison', 'Ce que l’écran a reçu', { statut: reponse.status, messageMontre: corps.message ?? corps.error ?? corps.raison ?? corps.migration ?? null, rang: corps.rang ?? null })
+    await suivi.boite.enregistrer(supabaseAdmin as never, {
+      generationId: suivi.generationId || null, issue,
+      // L'ANALYSE PHRASE PAR PHRASE vaut pour une CRÉATION (une demande entière
+      // contre une appli entière) ; une retouche est une consigne ponctuelle.
+      analyse: { phrases: [], resume: null, fiabilite: 'non calculée pour une modification' },
+    })
+  } catch (e) {
+    console.error('[boite-noire] retouche', e instanceof Error ? e.message : e)
   }
 }
 
@@ -569,16 +601,29 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
   suivi.appele = true
   suivi.generationId = id
   suivi.demande = demande
+  suivi.boite.definirCompte(proprietaire)
+  suivi.boite.noter('demande', 'La demande de modification, mot pour mot', { demande, application: id })
   try {
     // ── EN FLUX (point 2). Le SDK refuse un appel non streamé dès que
     // `max_tokens` autorise plus de dix minutes de réponse — la même raison
     // que la génération (`fournisseur.ts`).
+    const systeme = `${CONSIGNE_RETOUCHE}\n\n${blocDeclaration(declarationDe(docAvant))}`
+    const message = `${corpus}\n\n=== DEMANDE ===\n${demande}`
+    suivi.boite.noter('consigne', 'La consigne envoyée au modèle', {
+      modele: MODELE_LEGER, maxJetons: SORTIE_MAX_RETOUCHE, deploiement: deploiementQuiSert(process.env),
+      empreinteConsigne: empreinte(systeme), consigneSysteme: systeme, message,
+    })
+    const t0 = Date.now()
     const r = await clientIA().messages.stream({
       model: MODELE_LEGER,
       max_tokens: SORTIE_MAX_RETOUCHE,
-      system: `${CONSIGNE_RETOUCHE}\n\n${blocDeclaration(declarationDe(docAvant))}`,
-      messages: [{ role: 'user', content: `${corpus}\n\n=== DEMANDE ===\n${demande}` }],
+      system: systeme,
+      messages: [{ role: 'user', content: message }],
     }).finalMessage()
+    suivi.boite.noter('reponse_brute', 'La réponse brute du modèle', {
+      texte: r.content.map((b) => (b.type === 'text' ? b.text : '')).join(''),
+      arret: r.stop_reason, usage: r.usage, ms: Date.now() - t0,
+    })
     texte = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
     tronquee = r.stop_reason === 'max_tokens'
     // LE TARIF DU MODÈLE APPELÉ, À L'HEURE DE L'APPEL, CACHE COMPRIS.

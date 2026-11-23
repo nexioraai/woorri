@@ -38,6 +38,9 @@ const PAIEMENTS_FRAIS_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'p
 const CYCLE = readFileSync(join(ICI, '..', 'supabase', 'sql', 'stripe_cycle_de_vie.sql'), 'utf8')
 const CYCLE_VERIF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'stripe_cycle_de_vie_verification.sql'), 'utf8')
 const CYCLE_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'stripe_cycle_de_vie_annulation.sql'), 'utf8')
+const BN = readFileSync(join(ICI, '..', 'supabase', 'sql', 'boite_noire.sql'), 'utf8')
+const BN_VERIF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'boite_noire_verification.sql'), 'utf8')
+const BN_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'boite_noire_annulation.sql'), 'utf8')
 const PWA = readFileSync(join(ICI, '..', 'supabase', 'sql', 'pwa_arret.sql'), 'utf8')
 const PWA_VERIF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'pwa_arret_verification.sql'), 'utf8')
 const PWA_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'pwa_arret_annulation.sql'), 'utf8')
@@ -379,6 +382,27 @@ try {
   verdict(await refuse(admin, `insert into public.quota_reglages (cle, valeur) values ('pwa_arret', '')`, [], 'quota_reglages_cle_check'), 'arrêt d’urgence : après l’annulation, la clé n’est plus permise')
   await admin.query(PWA)
 
+  // ════ LA BOÎTE NOIRE (2026-11-23) : ajout seul, service seul, purge des expirées ════
+  await admin.query(BN)
+  await admin.query(BN)
+  const bnId = (await svc.query(`insert into public.app_boite_noire (nature, issue, debut_le, fin_le, etapes, taille_octets, garder_jusqu_au) values ('generation', 'livree', now(), now(), '[{"n":1}]', 12, now() + interval '90 days') returning id`)).rows[0].id
+  verdict(typeof bnId === 'string', 'boîte noire : la clé de service écrit une ligne')
+  verdict(await refuse(svc, `update public.app_boite_noire set issue = 'x' where id = $1`, [bnId]), 'boîte noire : la clé de service ne peut pas réécrire une ligne (droit absent ; le déclencheur d’ajout seul est prouvé par la vérification, côté administrateur)')
+  verdict(await refuse(svc, `insert into public.app_boite_noire (nature, issue, debut_le, fin_le, taille_octets, garder_jusqu_au) values ('autre', 'x', now(), now(), 0, now())`, [], 'check'), 'boîte noire : une nature inconnue est refusée')
+  verdict(await refuse(svc, `insert into public.app_boite_noire (nature, issue, debut_le, fin_le, taille_octets, garder_jusqu_au) values ('generation', 'x', now(), now(), 5000000, now())`, [], 'check'), 'boîte noire : plus de 4 Mio refusé')
+  await svc.query(`insert into public.app_boite_noire (nature, issue, debut_le, fin_le, taille_octets, garder_jusqu_au) values ('retouche', 'livree', now(), now(), 1, now() - interval '1 day')`)
+  const purgeesBn = (await svc.query('select public.purger_boite_noire() n')).rows[0].n
+  const restantes = (await svc.query('select count(*)::int n from public.app_boite_noire')).rows[0].n
+  verdict(purgeesBn === 1 && restantes === 1, `boîte noire : la purge efface la seule ligne expirée (${String(purgeesBn)} effacée, ${String(restantes)} gardée)`)
+  let msgBn = ''
+  try { await admin.query(BN_VERIF) } catch (e) { msgBn = String(e.message) }
+  verdict(msgBn.startsWith('VERIFICATION_OK : ajout seul'), `boîte noire : la vérification livrée répond « ${msgBn} »`)
+  verdict((await svc.query('select count(*)::int n from public.app_boite_noire')).rows[0].n === 1, 'boîte noire : la vérification n’a rien gardé')
+  await admin.query(BN_ANNUL)
+  verdict(await refuse(svc, 'select 1 from public.app_boite_noire', [], 'does not exist'), 'boîte noire : l’annulation retire la table')
+  await admin.query(BN)
+
+
   // ── Ajout seul : le registre et l'historique refusent update et delete.
   verdict(await refuse(svc, `update public.app_paiements set montant = 0`, [], ''), 'registre : un update est refusé')
   verdict(await refuse(admin, `delete from public.app_paiements`, [], 'AJOUT_SEUL'), 'registre : un delete est refusé, même au propriétaire de la base')
@@ -423,6 +447,8 @@ try {
   verdict(await refuse(anon, 'select * from public.app_creations_reservees', [], 'permission denied'), 'anon ne lit pas les créations réservées')
   verdict(await refuse(anon, `select public.annuler_paiement_stripe('in_cv2b', 'remboursement', 20)`, [], 'permission denied'), 'anon n’appelle pas l’annulation d’un paiement')
   verdict(await refuse(anon, 'select * from public.stripe_avis_traites', [], 'permission denied'), 'anon ne lit pas le journal des avis Stripe')
+  verdict(await refuse(anon, 'select * from public.app_boite_noire', [], 'permission denied'), 'anon ne lit pas les boîtes noires')
+  verdict(await refuse(anon, 'select public.purger_boite_noire()', [], 'permission denied'), 'anon n’appelle pas la purge des boîtes noires')
   await anon.end()
   await svc.end()
 

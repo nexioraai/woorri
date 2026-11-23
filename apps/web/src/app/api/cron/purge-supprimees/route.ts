@@ -62,8 +62,14 @@ export async function GET(req: Request) {
     if (e.error === null) purgees.push(String(l.id))
   }
 
+  // ── LES BOÎTES NOIRES EXPIRÉES (2026-11-23) : 90 jours, puis effacées par la
+  //    base elle-même (purger_boite_noire). Un échec ne bloque pas la purge
+  //    des œuvres : il se dit dans la réponse.
+  const bn = await supabaseAdmin.rpc('purger_boite_noire')
+  const boitesNoires = bn.error === null ? Number(bn.data ?? 0) : null
+
   return NextResponse.json(
-    { purgees: purgees.length, joursAvantPurge: JOURS_AVANT_PURGE },
+    { purgees: purgees.length, joursAvantPurge: JOURS_AVANT_PURGE, boitesNoiresPurgees: boitesNoires },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }
