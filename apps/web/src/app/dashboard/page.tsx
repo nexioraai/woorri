@@ -1,6 +1,7 @@
 'use client';
 import { ADRESSE_GESTION } from '@/lib/apps/entites-declarees';
-import { changerAdresse, CONFIRMER_MOT_DE_PASSE, lancerPublication, LIBELLE_MOT_DE_PASSE, refaireMotDePasse } from '@/components/apps/publierAppli';
+import { changerAdresse, CONFIRMER_MOT_DE_PASSE, lancerPublication, LIBELLE_MOT_DE_PASSE, refaireMotDePasse, type DemandeFenetre } from '@/components/apps/publierAppli';
+import { FenetrePublier } from '@/components/apps/FenetrePublier';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -107,6 +108,8 @@ export default function DashboardPage() {
    * dans la couleur du danger apprend à ne plus lire les couleurs.
    */
   const [avis, setAvis] = useState<string | null>(null);
+  // LA FENÊTRE « PUBLIER » (2026-11-22) : la même que l'atelier.
+  const [fenetre, setFenetre] = useState<DemandeFenetre | null>(null);
   // Le lien public de l'application qu'on vient de publier — affiché sous la
   // carte, copiable. Un seul à la fois : publier en remplace l'affichage.
   const [lienPublic, setLienPublic] = useState<
@@ -299,7 +302,7 @@ export default function DashboardPage() {
     setApercuErreur(null);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
-    const issue = await lancerPublication({ id: a.id, titre: a.nom ?? null, demande: a.demande, autorisation: `Bearer ${session.access_token}` });
+    const issue = await lancerPublication({ id: a.id, titre: a.nom ?? null, demande: a.demande, autorisation: `Bearer ${session.access_token}`, ouvrirFenetre: setFenetre });
     if (issue.type === 'fermee' || issue.type === 'erreur' || issue.type === 'amnesique') { setApercuErreur(issue.message); return; }
     if (issue.type !== 'publiee') return;
     // L'adresse nommée a pu échouer SANS casser la publication par jeton : on
@@ -315,7 +318,7 @@ export default function DashboardPage() {
     setApercuErreur(null);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
-    const r = await changerAdresse({ id: a.id, titre: a.nom ?? null, nomActuel: a.nomEnregistre, autorisation: `Bearer ${session.access_token}` });
+    const r = await changerAdresse({ id: a.id, nomActuel: a.nomEnregistre, autorisation: `Bearer ${session.access_token}`, ouvrirFenetre: setFenetre });
     if (r.type === 'erreur') { setApercuErreur(r.message); return; }
     if (r.type === 'changee') setApplications((liste) => liste.map((x) => (x.id === a.id ? { ...x, nomEnregistre: r.nom } : x)));
   };
@@ -623,6 +626,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen nexiora-bg text-white flex">
+      <FenetrePublier demande={fenetre} onFermer={() => { setFenetre(null); }} />
       <Sidebar />
       <div className="flex-1 min-w-0 max-w-6xl mx-auto px-6 py-12">
         <div className="flex items-center justify-between mb-10">

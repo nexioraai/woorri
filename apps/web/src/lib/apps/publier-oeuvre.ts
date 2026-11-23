@@ -47,7 +47,7 @@ export type LignePubliee = {
 export async function refusDuNom(id: string, sous: string): Promise<NextResponse | null> {
   if (sous !== '' && !nomValide(sous)) {
     return NextResponse.json(
-      { error: 'Ce nom n est pas utilisable : minuscules, chiffres et tirets, 3 a 40 signes, sans nom reserve.' },
+      { champ: 'nom', error: 'Ce nom n est pas utilisable : minuscules, chiffres et tirets, 3 a 40 signes, sans nom reserve.' },
       { status: 400 },
     )
   }
@@ -74,7 +74,7 @@ export async function refusDuNom(id: string, sous: string): Promise<NextResponse
       .neq('id', id)
       .maybeSingle()
     if (pris.data !== null) {
-      return NextResponse.json({ error: `« ${sous} » est deja pris par une autre application.` }, { status: 409 })
+      return NextResponse.json({ champ: 'nom', error: `« ${sous} » est deja pris par une autre application.` }, { status: 409 })
     }
     // ET PAR UN SITE : le proxy sert les sites D'ABORD sur deribfy.app —
     // un nom d'application qui heurte un slug de site serait une adresse
@@ -85,7 +85,7 @@ export async function refusDuNom(id: string, sous: string): Promise<NextResponse
       .eq('slug', sous)
       .maybeSingle()
     if (prisSite.data !== null) {
-      return NextResponse.json({ error: `« ${sous} » est deja pris par un site.` }, { status: 409 })
+      return NextResponse.json({ champ: 'nom', error: `« ${sous} » est deja pris par un site.` }, { status: 409 })
     }
   }
   return null

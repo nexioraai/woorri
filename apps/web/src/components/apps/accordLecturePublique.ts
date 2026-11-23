@@ -113,7 +113,19 @@ export const ENTETES_ACCORD: Readonly<Record<string, string>> = {
  * alors le message de la route, qui nomme les tables. Rendre une erreur
  * inventée ici effacerait la seule information utile.
  */
-export async function publierAvecAccord(url: string, autorisation: string): Promise<Response> {
+export async function publierAvecAccord(
+  url: string,
+  autorisation: string,
+  // ── LA FENÊTRE DERIBFY (2026-11-22). L'atelier et « Mes projets » montrent
+  //    la liste AVANT l'appel, dans leur propre fenêtre : `accordDonne` porte
+  //    l'accord dès le premier appel, et `demander` remplace la boîte native
+  //    (ici : ne rien redemander, l'écran le fera). Sans options : la boîte
+  //    native, comme avant (onboarding).
+  options: { readonly accordDonne?: boolean; readonly demander?: (d: RefusLecturePublique) => boolean } = {},
+): Promise<Response> {
+  if (options.accordDonne === true) {
+    return fetch(url, { method: 'POST', headers: { Authorization: autorisation, ...ENTETES_ACCORD }, body: CORPS_ACCORD })
+  }
   const premier = await fetch(url, { method: 'POST', headers: { Authorization: autorisation } })
   if (premier.ok) return premier
   // On lit une COPIE : l'appelant doit pouvoir relire le corps lui-même.
@@ -122,7 +134,7 @@ export async function publierAvecAccord(url: string, autorisation: string): Prom
     .json()
     .catch(() => ({}))) as RefusLecturePublique
   if (!estRefusLecturePublique(d)) return premier
-  if (!accordLecturePublique(d)) return premier
+  if (!(options.demander ?? accordLecturePublique)(d)) return premier
   return fetch(url, {
     method: 'POST',
     headers: { Authorization: autorisation, ...ENTETES_ACCORD },

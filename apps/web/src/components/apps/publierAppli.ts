@@ -18,6 +18,7 @@
 import { publierAvecAccord } from '@/components/apps/accordLecturePublique'
 import { adresseProposee } from '@/lib/apps/nom-produit'
 import { PHRASE_PUBLIER_FERMEE, type ActionPublier } from '@/lib/apps/compteur-phrases'
+import type { ListePublique } from '@/lib/apps/contenu-public'
 
 export type IssuePublication =
   | { readonly type: 'annulee' }
@@ -32,13 +33,26 @@ export type IssuePublication =
       readonly erreurSousDomaine: string | null
     }
 
-/** La question du nom, la même pour les deux boutons. */
-export function questionDuNom(titre: string | null): string {
-  return `Adresse publique de « ${titre ?? 'votre application'} » :\n` +
-    '<adresse>.deribfy.app\n\nMinuscules, chiffres et tirets. ' +
-    'Un seul niveau : les points sont refusés. Laisser vide pour un lien simple.'
+/**
+ * CE QUE LA FENÊTRE « PUBLIER » MONTRE ET FAIT (2026-11-22). `valider` appelle
+ * la route : il rend `null` quand la fenêtre peut se fermer, ou le message à
+ * afficher DANS la fenêtre (format, nom déjà pris, liste changée).
+ */
+export type DemandeFenetre = {
+  readonly titre: string
+  readonly adresseInitiale: string
+  /** Faux quand un nom est déjà enregistré : il se change par « Changer l'adresse ». */
+  readonly adresseModifiable: boolean
+  readonly listes: readonly ListePublique[]
+  readonly libelleBouton: string
+  readonly valider: (adresse: string) => Promise<string | null>
+  readonly annuler: () => void
 }
 
+export const TITRE_FENETRE_PUBLIER = 'Publier votre application'
+export const BOUTON_VERS_PAIEMENT = 'Continuer vers le paiement'
+export const BOUTON_PUBLIER = 'Publier'
+export const PHRASE_LISTE_CHANGEE = 'Les données visibles par tout le monde ont changé depuis l’ouverture de cette fenêtre : fermez-la et cliquez de nouveau sur « Publier ».'
 export const PHRASE_PUBLICATION_ECHOUEE = 'La publication a échoué. Réessayez.'
 
 export type OptionsPublication = {
@@ -47,51 +61,81 @@ export type OptionsPublication = {
   readonly demande: string
   /** `Bearer <jeton>` de la session. */
   readonly autorisation: string
-  /** Pour les tests ; l'écran prend `window.prompt` et `window.location.assign`. */
-  readonly demanderNom?: (question: string, suggestion: string) => string | null
+  /** La fenêtre de l'écran (FenetrePublier) : l'écran la montre, le module la pilote. */
+  readonly ouvrirFenetre: (d: DemandeFenetre) => void
+  /** Pour les tests ; l'écran prend `window.location.assign`. */
   readonly ouvrir?: (url: string) => void
 }
 
+type Envoi = IssuePublication | { readonly type: 'dans_la_fenetre'; readonly message: string }
+
 export async function lancerPublication(o: OptionsPublication): Promise<IssuePublication> {
-  const demanderNom = o.demanderNom ?? ((q: string, s: string) => window.prompt(q, s))
   const ouvrir = o.ouvrir ?? ((url: string) => { window.location.assign(url) })
   try {
-    const e = await fetch(`/api/generateur/publier/etat?id=${encodeURIComponent(o.id)}`, { headers: { Authorization: o.autorisation } })
-    const etat = (await e.json().catch(() => ({}))) as { action?: ActionPublier; nom?: string | null; error?: string }
-    if (!e.ok || etat.action === undefined) return { type: 'erreur', message: etat.error ?? PHRASE_PUBLICATION_ECHOUEE }
+    const etat = await lireEtatPublication(o.id, o.autorisation)
+    if (etat === null) return { type: 'erreur', message: PHRASE_PUBLICATION_ECHOUEE }
     if (etat.action === 'fermee') return { type: 'fermee', message: PHRASE_PUBLIER_FERMEE }
 
-    // LE NOM : demandé une fois. Enregistré, il n'est plus redemandé.
-    let sous = typeof etat.nom === 'string' && etat.nom !== '' ? etat.nom : null
-    if (sous === null) {
-      const saisi = demanderNom(questionDuNom(o.titre), adresseProposee(o.titre ?? o.demande))
-      if (saisi === null) return { type: 'annulee' }
-      sous = saisi.trim().toLowerCase()
+    const envoyer = async (sous: string, accordDonne: boolean): Promise<Envoi> => {
+      const res = await publierAvecAccord(
+        `/api/generateur/publier?id=${encodeURIComponent(o.id)}${sous !== '' ? `&sous=${encodeURIComponent(sous)}` : ''}`,
+        o.autorisation,
+        // Jamais de boîte native : la fenêtre a montré la liste, ou n'avait rien à montrer.
+        { accordDonne, demander: () => false },
+      )
+      // Le champ s'appelle `lien`, pas `url` — bug attrapé en production le
+      // 2026-10-30. On lit les deux : si la route renomme, le bouton survit.
+      const d = (await res.json().catch(() => null)) as {
+        paiement?: string; lien?: string; url?: string; error?: string; erreurSousDomaine?: string; champ?: string
+        compte?: { adresse?: string; motDePasse?: string | null } | null
+        amnesique?: boolean; regenerer?: string; quoiFaire?: string; lecturePublique?: boolean
+      } | null
+      if (res.ok && typeof d?.paiement === 'string') {
+        ouvrir(d.paiement)
+        return { type: 'paiement' }
+      }
+      // Les refus du NOM, et une liste publique qui a changé : dans la fenêtre.
+      if (!res.ok && d?.champ === 'nom') return { type: 'dans_la_fenetre', message: d.error ?? 'Cette adresse n’est pas utilisable.' }
+      if (!res.ok && d?.lecturePublique === true) return { type: 'dans_la_fenetre', message: PHRASE_LISTE_CHANGEE }
+      // UNE PUBLICATION REFUSÉE POUR AMNÉSIE DONNE SA SORTIE : la demande revient
+      // déjà augmentée, l'écran la porte telle quelle.
+      if (!res.ok && d?.amnesique === true) {
+        return { type: 'amnesique', message: `${String(d.error ?? '')} ${String(d.quoiFaire ?? '')}`.trim(), regenerer: String(d.regenerer ?? '') }
+      }
+      const lien = d?.lien ?? d?.url
+      if (!res.ok || lien === undefined || lien === '') return { type: 'erreur', message: d?.error ?? 'La publication a échoué.' }
+      return { type: 'publiee', lien, compte: d?.compte ?? null, erreurSousDomaine: d?.erreurSousDomaine ?? null }
     }
 
-    const res = await publierAvecAccord(
-      `/api/generateur/publier?id=${encodeURIComponent(o.id)}${sous !== '' ? `&sous=${encodeURIComponent(sous)}` : ''}`,
-      o.autorisation,
-    )
-    // Le champ s'appelle `lien`, pas `url` — bug attrapé en production le
-    // 2026-10-30. On lit les deux : si la route renomme, le bouton survit.
-    const d = (await res.json().catch(() => null)) as {
-      paiement?: string; lien?: string; url?: string; error?: string; erreurSousDomaine?: string
-      compte?: { adresse?: string; motDePasse?: string | null } | null
-      amnesique?: boolean; regenerer?: string; quoiFaire?: string
-    } | null
-    if (res.ok && typeof d?.paiement === 'string') {
-      ouvrir(d.paiement)
-      return { type: 'paiement' }
+    // RÈGLES 5 ET 7 : nom déjà choisi et rien de NOUVEAU à accepter → droit
+    // au but (Stripe si ce n'est pas payé, republication sinon), sans fenêtre.
+    const aAccepter = etat.lecturePublique.acceptee ? [] : etat.lecturePublique.listes
+    if (etat.nom !== null && aAccepter.length === 0) {
+      const r = await envoyer(etat.nom, false)
+      return r.type === 'dans_la_fenetre' ? { type: 'erreur', message: r.message } : r
     }
-    // UNE PUBLICATION REFUSÉE POUR AMNÉSIE DONNE SA SORTIE : la demande revient
-    // déjà augmentée, l'écran la porte telle quelle.
-    if (!res.ok && d?.amnesique === true) {
-      return { type: 'amnesique', message: `${String(d.error ?? '')} ${String(d.quoiFaire ?? '')}`.trim(), regenerer: String(d.regenerer ?? '') }
-    }
-    const lien = d?.lien ?? d?.url
-    if (!res.ok || lien === undefined || lien === '') return { type: 'erreur', message: d?.error ?? 'La publication a échoué.' }
-    return { type: 'publiee', lien, compte: d?.compte ?? null, erreurSousDomaine: d?.erreurSousDomaine ?? null }
+
+    // Sinon, LA fenêtre : l'adresse, et ce qui sera visible par tout le monde.
+    return await new Promise<IssuePublication>((resolve) => {
+      o.ouvrirFenetre({
+        titre: TITRE_FENETRE_PUBLIER,
+        adresseInitiale: etat.nom ?? adresseProposee(o.titre ?? o.demande),
+        adresseModifiable: etat.nom === null,
+        listes: aAccepter,
+        libelleBouton: etat.action === 'payer' ? BOUTON_VERS_PAIEMENT : BOUTON_PUBLIER,
+        valider: async (adresse) => {
+          try {
+            const r = await envoyer(etat.nom ?? adresse, aAccepter.length > 0)
+            if (r.type === 'dans_la_fenetre') return r.message
+            resolve(r)
+            return null
+          } catch {
+            return PHRASE_PUBLICATION_ECHOUEE
+          }
+        },
+        annuler: () => { resolve({ type: 'annulee' }) },
+      })
+    })
   } catch {
     return { type: 'erreur', message: PHRASE_PUBLICATION_ECHOUEE }
   }
@@ -104,6 +148,8 @@ export type EtatPublication = {
   readonly adresse: string | null
   readonly nomModifiable: boolean
   readonly publicationAuto: 'echec' | null
+  /** Les listes lisibles sans compte, et si l'accord pour CETTE liste est déjà donné. */
+  readonly lecturePublique: { readonly listes: readonly ListePublique[]; readonly acceptee: boolean }
 }
 
 export async function lireEtatPublication(id: string, autorisation: string): Promise<EtatPublication | null> {
@@ -118,6 +164,10 @@ export async function lireEtatPublication(id: string, autorisation: string): Pro
       adresse: typeof d.adresse === 'string' && d.adresse !== '' ? d.adresse : null,
       nomModifiable: d.nomModifiable === true,
       publicationAuto: d.publicationAuto === 'echec' ? 'echec' : null,
+      lecturePublique: {
+        listes: Array.isArray(d.lecturePublique?.listes) ? d.lecturePublique.listes : [],
+        acceptee: d.lecturePublique?.acceptee === true,
+      },
     }
   } catch {
     return null
@@ -162,28 +212,39 @@ export type IssueNom =
   | { readonly type: 'changee'; readonly nom: string }
   | { readonly type: 'erreur'; readonly message: string }
 
+export const TITRE_FENETRE_ADRESSE = 'Changer l’adresse'
+export const BOUTON_ENREGISTRER_ADRESSE = 'Enregistrer l’adresse'
+
 export async function changerAdresse(o: {
   readonly id: string
-  readonly titre: string | null
   readonly nomActuel: string
   readonly autorisation: string
-  readonly demanderNom?: (question: string, suggestion: string) => string | null
+  readonly ouvrirFenetre: (d: DemandeFenetre) => void
 }): Promise<IssueNom> {
-  const demanderNom = o.demanderNom ?? ((q: string, s: string) => window.prompt(q, s))
-  const saisi = demanderNom(questionDuNom(o.titre), o.nomActuel)
-  if (saisi === null) return { type: 'annulee' }
-  const sous = saisi.trim().toLowerCase()
-  if (sous === '') return { type: 'erreur', message: 'Choisissez une adresse.' }
-  try {
-    const res = await fetch(`/api/generateur/publier/nom?id=${encodeURIComponent(o.id)}&sous=${encodeURIComponent(sous)}`, {
-      method: 'POST', headers: { Authorization: o.autorisation },
+  return new Promise<IssueNom>((resolve) => {
+    o.ouvrirFenetre({
+      titre: TITRE_FENETRE_ADRESSE,
+      adresseInitiale: o.nomActuel,
+      adresseModifiable: true,
+      listes: [],
+      libelleBouton: BOUTON_ENREGISTRER_ADRESSE,
+      valider: async (adresse) => {
+        if (adresse === '') return 'Choisissez une adresse.'
+        try {
+          const res = await fetch(`/api/generateur/publier/nom?id=${encodeURIComponent(o.id)}&sous=${encodeURIComponent(adresse)}`, {
+            method: 'POST', headers: { Authorization: o.autorisation },
+          })
+          const d = (await res.json().catch(() => ({}))) as { nom?: string; error?: string }
+          if (!res.ok || typeof d.nom !== 'string') return d.error ?? 'L’adresse n’a pas pu être changée.'
+          resolve({ type: 'changee', nom: d.nom })
+          return null
+        } catch {
+          return 'L’adresse n’a pas pu être changée. Réessayez.'
+        }
+      },
+      annuler: () => { resolve({ type: 'annulee' }) },
     })
-    const d = (await res.json().catch(() => ({}))) as { nom?: string; error?: string }
-    if (!res.ok || typeof d.nom !== 'string') return { type: 'erreur', message: d.error ?? 'L’adresse n’a pas pu être changée.' }
-    return { type: 'changee', nom: d.nom }
-  } catch {
-    return { type: 'erreur', message: 'L’adresse n’a pas pu être changée. Réessayez.' }
-  }
+  })
 }
 
 // ── LE MOT DE PASSE DE L'APPLI : la fonction EXISTANTE « Refaire le mot de

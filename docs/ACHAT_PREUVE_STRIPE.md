@@ -29,11 +29,11 @@ Aucun nouveau SQL pour « Publier est Publier » : le nom choisi va dans la colo
 | # | Geste | Ce qu'il doit voir si c'est bon |
 |---|---|---|
 | B1 | Se connecter avec `contact@deribfy.com`, ouvrir **« Mes projets »** | la carte « Gestion de stock » porte un bouton **« Publier »**, sans prix |
-| B2 | Clic sur « Publier » | la question **« Adresse publique de « Gestion de stock » : <adresse>.deribfy.app »**, avec un nom proposé. Saisir le nom voulu (minuscules, chiffres, tirets), valider |
+| B2 | Clic sur « Publier » | **une seule fenêtre Deribfy** (plus aucune boîte grise du navigateur) : titre « Publier votre application », l'adresse déjà remplie (« gestion-de-stock » ou le nom déjà choisi) suivie de « .deribfy.app ». Si des listes sont visibles sans compte, une phrase simple par liste (« À savoir : votre liste « … » (…) sera visible par tout le monde… »). Boutons « Annuler » / **« Continuer vers le paiement »**. Un nom refusé (format, déjà pris) s'affiche dans la fenêtre |
 | B3 | — | la page Stripe s'ouvre **aussitôt** : « Deribfy — Application », **20 $ US par mois**, le bon courriel. Si Stripe propose la monnaie locale (CAD), noter le montant et la devise |
 | B4 | **Ne pas payer** : revenir en arrière (bouton retour de Stripe) | l'atelier dit « Paiement annulé : rien n'a été prélevé, l'application n'est pas publiée. » |
 | B4 bis | *(facultatif)* À côté de « Publier », clic sur **« Changer l'adresse »**, saisir un autre nom, valider | l'atelier dit « Adresse choisie : <nouveau nom>.deribfy.app ». Le lien n'existe que tant que l'appli n'a jamais été en ligne |
-| B5 | Ouvrir l'atelier de « Gestion de stock », clic sur **« Publier »** | **aucune question** : le nom est gardé, la page Stripe s'ouvre directement. C'est la preuve que les deux boutons font la même chose |
+| B5 | Ouvrir l'atelier de « Gestion de stock », clic sur **« Publier »** | **aucune fenêtre** : le nom et l'accord sont gardés, la page Stripe s'ouvre directement. La fenêtre ne revient que si les listes visibles par tout le monde ont changé |
 | B6 | Payer avec une vraie carte | Stripe confirme, puis revient seul à l'atelier, avec `?paiement=recu` dans l'adresse |
 | B7 | Attendre, **sans cliquer** | sous la barre, l'écran avance **seul** : « Paiement reçu par Stripe — l'activation arrive dans quelques secondes. », puis « Paiement reçu. Publication en cours… », puis **« Votre application est en ligne »**, l'adresse `https://<nom>.deribfy.app` cliquable, et un bouton **« Créer mon mot de passe »** |
 | B8 | Clic sur **« Créer mon mot de passe »** | le mot de passe s'affiche **une fois**, avec l'adresse de connexion `admin@<nom>.deribfy.app` et « Notez-le maintenant : il ne se relira pas. » Le noter |

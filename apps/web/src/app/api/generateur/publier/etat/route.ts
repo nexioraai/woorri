@@ -2,7 +2,7 @@ import 'server-only'
 /**
  * CE QUE « PUBLIER » VA FAIRE, LU AVANT LE CLIC (2026-11-22).
  *
- * GET ?id=<appli> → { action, nom, adresse, nomModifiable, publicationAuto }
+ * GET ?id=<appli> → { action, nom, adresse, nomModifiable, publicationAuto, lecturePublique }
  *   action  — 'publier' | 'payer' | 'fermee' (decisionDePublication) ;
  *   nom     — le nom d'adresse déjà ENREGISTRÉ pour cette appli, ou null :
  *             l'écran ne le redemande pas ;
@@ -22,6 +22,9 @@ import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { adressePubliee } from '@/lib/apps/sous-domaine'
 import { decisionDePublication, PHRASE_DECISION_ILLISIBLE } from '@/lib/apps/decision-publication'
 import { nomModifiable } from '@/lib/apps/nom-enregistre'
+import { listesPubliques } from '@/lib/apps/contenu-public'
+import { accordCouvre, accordGarde } from '@/lib/apps/accord-stripe'
+import { lecturePubliqueDe, nomTable, type EntiteDeclaree } from '@/lib/apps/entites-declarees'
 import { TYPE_ALERTE_PUBLICATION } from '@/lib/payments/publier-apres-paiement'
 
 /** Une alerte plus ancienne ne dit plus rien du retour de paiement en cours. */
@@ -37,7 +40,7 @@ export async function GET(req: Request) {
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('publication_slug, publication_jeton, publie_le')
+    .select('publication_slug, publication_jeton, publie_le, document, sections_acquises')
     .eq('id', id)
     .eq('owner_id', garde.userId)
     .maybeSingle()
@@ -45,7 +48,12 @@ export async function GET(req: Request) {
 
   const action = await decisionDePublication(id, garde.userId, garde.email)
   if (action === null) return NextResponse.json({ error: PHRASE_DECISION_ILLISIBLE }, { status: 503 })
-  const l = lu.data as { publication_slug: string | null; publication_jeton: string | null; publie_le: string | null }
+  const l = lu.data as { publication_slug: string | null; publication_jeton: string | null; publie_le: string | null; document: unknown; sections_acquises: unknown }
+  // LES LISTES QUE TOUT LE MONDE POURRA LIRE, en mots simples, et l'accord
+  // déjà donné pour CETTE liste : la fenêtre ne la remontre pas pour rien.
+  const entites = ((l.document as { entites?: readonly EntiteDeclaree[] } | null)?.entites ?? [])
+  const listes = listesPubliques(entites)
+  const acceptee = listes.length > 0 && accordCouvre(accordGarde(l.sections_acquises), entites.filter(lecturePubliqueDe).map(nomTable))
   // L'ÉCHEC DE LA PUBLICATION AUTOMATIQUE se lit dans les alertes, là où le
   // webhook l'a dit : le client n'attend pas une publication qui ne viendra pas.
   let publicationAuto: 'echec' | null = null
@@ -67,6 +75,7 @@ export async function GET(req: Request) {
       adresse: adressePubliee(l.publication_slug, l.publication_jeton),
       nomModifiable: nomModifiable(l),
       publicationAuto,
+      lecturePublique: { listes, acceptee },
     },
     { headers: { 'Cache-Control': 'no-store' } },
   )

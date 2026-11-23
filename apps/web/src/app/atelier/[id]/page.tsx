@@ -43,7 +43,8 @@
  * et « Télécharger » agiraient sur autre chose que ce que l'œil voit — et la
  * personne publierait ce qu'elle ne regarde pas. Un seul courant, partout.
  */
-import { changerAdresse, CONFIRMER_MOT_DE_PASSE, etapeDuRetour, lancerPublication, LIBELLE_CREER_MOT_DE_PASSE, LIBELLE_MOT_DE_PASSE, lireEtatPublication, PHRASES_RETOUR, refaireMotDePasse, RELECTURE_RETOUR_MAX, RELECTURE_RETOUR_MS, type EtapeRetour, type EtatPublication } from '@/components/apps/publierAppli';
+import { changerAdresse, CONFIRMER_MOT_DE_PASSE, etapeDuRetour, lancerPublication, LIBELLE_CREER_MOT_DE_PASSE, LIBELLE_MOT_DE_PASSE, lireEtatPublication, PHRASES_RETOUR, refaireMotDePasse, RELECTURE_RETOUR_MAX, RELECTURE_RETOUR_MS, type DemandeFenetre, type EtapeRetour, type EtatPublication } from '@/components/apps/publierAppli';
+import { FenetrePublier } from '@/components/apps/FenetrePublier';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -188,6 +189,8 @@ export default function AtelierPage() {
   const [etatPub, setEtatPub] = useState<EtatPublication | null>(null);
   // Le retour de Stripe : où en est la publication faite par le webhook.
   const [retour, setRetour] = useState<EtapeRetour | null>(null);
+  // LA FENÊTRE « PUBLIER » (2026-11-22) : la même que « Mes projets ».
+  const [fenetre, setFenetre] = useState<DemandeFenetre | null>(null);
   const basDuFil = useRef<HTMLDivElement | null>(null);
 
   /** Le jeton de session, ou `null` — et dans ce cas on le DIT. */
@@ -438,7 +441,7 @@ export default function AtelierPage() {
     const t = await jeton();
     if (t === null || app === null || etatPub?.nom == null) return;
     setErreur(null);
-    const r = await changerAdresse({ id, titre: app.nom ?? null, nomActuel: etatPub.nom, autorisation: `Bearer ${t}` });
+    const r = await changerAdresse({ id, nomActuel: etatPub.nom, autorisation: `Bearer ${t}`, ouvrirFenetre: setFenetre });
     if (r.type === 'erreur') { setErreur(r.message); return; }
     if (r.type === 'changee') setAvisPublication({ texte: `Adresse choisie : ${r.nom}.deribfy.app`, publierMaintenant: false });
     await lireEtat();
@@ -615,7 +618,7 @@ export default function AtelierPage() {
     if (t === null || app === null) return;
     setErreur(null);
     setAvisPublication(null);
-    const issue = await lancerPublication({ id, titre: app.nom ?? null, demande: app.demande, autorisation: `Bearer ${t}` });
+    const issue = await lancerPublication({ id, titre: app.nom ?? null, demande: app.demande, autorisation: `Bearer ${t}`, ouvrirFenetre: setFenetre });
     if (issue.type === 'fermee') { setAvisPublication({ texte: issue.message, publierMaintenant: false }); return; }
     if (issue.type === 'erreur') { setErreur(issue.message); return; }
     // ── UNE PUBLICATION REFUSÉE POUR AMNÉSIE DONNE SA SORTIE : la demande
@@ -788,6 +791,7 @@ export default function AtelierPage() {
         </div>
         </div>
       </header>
+      <FenetrePublier demande={fenetre} onFermer={() => { setFenetre(null); }} />
       {retour !== null && (
         <div role="status" id="retour-paiement" className="flex shrink-0 flex-col gap-2 border-b border-[#FA5D1E]/30 bg-[#FA5D1E]/[0.08] px-4 py-2 text-xs text-white">
           {retour === 'en_ligne' && lienPublic !== null ? (

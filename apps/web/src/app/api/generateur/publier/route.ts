@@ -29,7 +29,7 @@ import { PHRASE_ABONNEMENT_REQUIS } from '@/lib/apps/compteur-phrases'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { COLONNES_PUBLICATION, publierOeuvre, refusAvantPublication, refusDuNom, tablesPubliques, type LignePubliee } from '@/lib/apps/publier-oeuvre'
 import { decisionDePublication, PHRASE_DECISION_ILLISIBLE } from '@/lib/apps/decision-publication'
-import { accordPourStripe } from '@/lib/apps/accord-stripe'
+import { accordCouvre, accordGarde, accordPourStripe, CLE_ACCORD_GARDE } from '@/lib/apps/accord-stripe'
 import { ouvrirPaiementAppli } from '@/lib/payments/abonnement-appli'
 import { exigencesDuMagasin } from '@/lib/apps/exigences-magasin'
 import { projectAirSchema } from '@deribfy/air-schema'
@@ -154,6 +154,19 @@ export async function POST(req: Request) {
     accord = false
   }
   const ligne = { data: lu.data as LignePubliee }
+  // ── L'ACCORD DÉJÀ DONNÉ POUR CETTE LISTE EXACTE (2026-11-22) : la question
+  //    ne revient pas à chaque clic. Un accord donné dans ce corps se GARDE.
+  const publiquesDuJour = tablesPubliques(ligne.data)
+  if (accord && publiquesDuJour.length > 0) {
+    const garde_ = accordPourStripe(publiquesDuJour)
+    if (garde_ !== null && garde_ !== accordGarde(ligne.data.sections_acquises)) {
+      const sections = { ...((ligne.data.sections_acquises as Record<string, unknown> | null) ?? {}), [CLE_ACCORD_GARDE]: { tables: garde_, le: new Date().toISOString() } }
+      const g = await supabaseAdmin.from(TABLE_GENERATIONS).update({ sections_acquises: sections }).eq('id', id).eq('owner_id', garde.userId)
+      if (g.error !== null) console.error('[publier] accord de lecture publique non gardé', id, g.error.message)
+    }
+  } else if (!accord) {
+    accord = accordCouvre(accordGarde(ligne.data.sections_acquises), publiquesDuJour) && publiquesDuJour.length > 0
+  }
   const refus = refusAvantPublication(ligne, accord)
   if (refus !== null) return refus
 

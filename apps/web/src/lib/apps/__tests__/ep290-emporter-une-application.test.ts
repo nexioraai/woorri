@@ -102,7 +102,8 @@ describe('EP-290 · emporter une application', () => {
     const i = MODULE_PUBLIER.indexOf('generateur/publier?id=')
     expect(i, 'le module ne publie plus').toBeGreaterThan(-1)
     expect(
-      MODULE_PUBLIER.slice(i, i + 900),
+      // Jusqu'à la publication réussie de la MÊME fonction (la fenêtre, 2026-11-22, a allongé le chemin).
+      MODULE_PUBLIER.slice(i, MODULE_PUBLIER.indexOf("type: 'publiee'", i)),
       'l’écran ne lit plus `lien` : la route rend ce champ-là, mesuré en production',
     ).toMatch(/d\?\.lien/u)
   })

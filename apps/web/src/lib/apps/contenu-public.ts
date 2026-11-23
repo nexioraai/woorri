@@ -68,6 +68,28 @@ export function phraseContenus(contenus: readonly ContenuPublic[]): string {
     .join(' ; ')
 }
 
+/**
+ * LES LISTES PUBLIQUES, DITES À UN CLIENT (2026-11-22). Le propriétaire a jugé
+ * le texte technique incompréhensible (« clé de lecture », « page servie ») :
+ * la fenêtre « Publier » nomme chaque liste par son LIBELLÉ et ses colonnes.
+ */
+export type ListePublique = { readonly nom: string; readonly champs: readonly string[] }
+
+export function listesPubliques(entites: readonly EntiteDeclaree[]): ListePublique[] {
+  return entites.filter(lecturePubliqueDe).map((e) => ({
+    nom: libelleChamp(e as unknown as ChampLu) || nomTable(e),
+    champs: contenusPublics([e])[0]?.champs ?? [],
+  }))
+}
+
+/** Une phrase par liste, sans un mot technique. */
+export function phraseListePublique(l: ListePublique): string {
+  const colonnes = l.champs.length > 0 ? ` (${l.champs.join(', ')})` : ''
+  return `À savoir : votre liste « ${l.nom} »${colonnes} sera visible par tout le monde. Personne ne pourra la modifier.`
+}
+export const PHRASE_SI_VOUS_NE_VOULEZ_PAS =
+  'Si vous ne le voulez pas, annulez et demandez la modification dans l’atelier.'
+
 /** Ce que l'écran reçoit, relu strictement : un contenu mal formé est écarté. */
 export function lireContenus(v: unknown): ContenuPublic[] {
   if (!Array.isArray(v)) return []

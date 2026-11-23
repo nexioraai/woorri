@@ -21,6 +21,19 @@ export function accordPourStripe(tables: readonly string[]): string | null {
   return v.length <= LONGUEUR_MAX ? v : null
 }
 
+// ── L'ACCORD GARDÉ AVEC L'APPLI (2026-11-22). Mesuré : sans lui, la question
+//    revenait à CHAQUE clic sur « Publier », même nom choisi et liste inchangée.
+//    Il est rangé dans `sections_acquises` (la ligne de l'appli, aucune colonne
+//    neuve) sous la forme portée chez Stripe : il ne vaut que pour la liste
+//    EXACTE acceptée — une table publique de plus, et la question revient.
+export const CLE_ACCORD_GARDE = 'accordLecturePublique'
+
+/** L'accord gardé sur la ligne, ou null. */
+export function accordGarde(sections: unknown): string | null {
+  const a = (sections as Record<string, unknown> | null)?.[CLE_ACCORD_GARDE] as { tables?: unknown } | undefined
+  return typeof a?.tables === 'string' && a.tables !== '' ? a.tables : null
+}
+
 /** L'accord porté couvre-t-il les tables publiques d'AUJOURD'HUI ? Aucune table : rien à accepter. */
 export function accordCouvre(porte: string | null | undefined, tables: readonly string[]): boolean {
   if (tables.length === 0) return true

@@ -138,7 +138,7 @@ import { POST as PUBLIER } from '@/app/api/generateur/publier/route'
 import { publierApresPaiement } from '@/lib/payments/publier-apres-paiement'
 import { PHRASE_PUBLIER_FERMEE } from '@/lib/apps/compteur-phrases'
 import { PHRASE_ABONNEMENT_EN_COURS } from '@/lib/payments/abonnement-appli'
-import { changerAdresse, etapeDuRetour, lireEtatPublication, refaireMotDePasse } from '@/components/apps/publierAppli'
+import { changerAdresse, etapeDuRetour, lireEtatPublication, refaireMotDePasse, type DemandeFenetre } from '@/components/apps/publierAppli'
 import { GET as COMPTE } from '@/app/api/generateur/compte/route'
 import { POST as SUPPRIMER } from '@/app/api/generateur/supprimer/route'
 import { GET as MES_APPLICATIONS } from '@/app/api/generateur/mes-applications/route'
@@ -169,13 +169,27 @@ const reseau = async (url: string | URL | Request, init?: RequestInit): Promise<
   throw new Error(`appel inattendu : ${u}`)
 }
 
+// LA FENÊTRE « PUBLIER » (2026-11-22) : le double joue la personne — elle
+// tape `reponseAuNom` (ou annule si null) et valide. Ce que la fenêtre a
+// montré, et ce qu'elle a affiché comme refus, est noté.
+const fenetres: DemandeFenetre[] = []
+const erreursFenetre: string[] = []
 const questions: string[] = []
+const fenetre = (d: DemandeFenetre): void => {
+  fenetres.push(d)
+  questions.push(d.titre)
+  void (async () => {
+    if (reponseAuNom === null) { d.annuler(); return }
+    const e = await d.valider(reponseAuNom)
+    if (e !== null) { erreursFenetre.push(e); d.annuler() }
+  })()
+}
 const ouvertes: string[] = []
 let reponseAuNom: string | null = 'gestion-stock'
 const clic = (_b: Bouton): Promise<IssuePublication> =>
   lancerPublication({
     id: 'app-stock', titre: 'Gestion de stock', demande: 'Gérer le stock', autorisation: 'Bearer jeton',
-    demanderNom: (q) => { questions.push(q); return reponseAuNom },
+    ouvrirFenetre: fenetre,
     ouvrir: (url) => { ouvertes.push(url) },
   })
 const payer = async (): Promise<string> => {
@@ -202,6 +216,9 @@ beforeEach(() => {
   etat.abonnements = []; etat.sessions = []; etat.domaines = []; etat.alertes = []; etat.sequence = []
   etat.journal.filtres = {}; etat.journal.projections = {}; etat.journal.ecritures = {}; etat.appliquees = 0
   questions.length = 0; ouvertes.length = 0; reponseAuNom = 'gestion-stock'
+  fenetres.length = 0; erreursFenetre.length = 0
+  // AUCUNE BOÎTE NATIVE : un prompt ou un confirm ferait rougir le test.
+  vi.stubGlobal('window', { prompt: () => { throw new Error('boîte native « prompt »') }, confirm: () => { throw new Error('boîte native « confirm »') }, setTimeout, clearTimeout })
 })
 
 describe('⓪ les deux boutons appellent le MÊME module, avec les MÊMES options', () => {
@@ -211,9 +228,11 @@ describe('⓪ les deux boutons appellent le MÊME module, avec les MÊMES option
       const appels = [...src.matchAll(/lancerPublication\(\{([\s\S]*?)\}\);/gu)]
       expect(appels, `${b} n’appelle pas le module, ou l’appelle deux fois`).toHaveLength(1)
       const cles = (appels[0]?.[1] ?? '').split(',').map((x) => x.split(':')[0]?.trim()).filter((x) => x !== '')
-      expect(cles.sort()).toEqual(['autorisation', 'demande', 'id', 'titre'])
+      expect(cles.sort()).toEqual(['autorisation', 'demande', 'id', 'ouvrirFenetre', 'titre'])
+      expect(appels[0]?.[1], `${b} ne passe pas SA fenêtre`).toMatch(motifTexte('ouvrirFenetre: setFenetre'))
+      expect(src, `${b} ne montre pas la fenêtre partagée`).toMatch(motifTexte('<FenetrePublier demande={fenetre}'))
       // Aucune autre copie du geste : ni la question du nom, ni la route, ni Stripe en direct.
-      expect(src, `${b} pose encore sa propre question du nom`).not.toMatch(/window\.prompt\(\s*`Adresse publique/u)
+      expect(src, `${b} pose encore une boîte native pour publier`).not.toMatch(/window\.prompt\(\s*`Adresse publique|accordLecturePublique\(/u)
       expect(src, `${b} appelle encore la route lui-même`).not.toMatch(/generateur\/publier/u)
       expect(src, `${b} part encore chez Stripe lui-même`).not.toMatch(/versStripe\('abonnement'\)/u)
     })
@@ -225,13 +244,16 @@ for (const b of BOUTONS) {
     it('2 · premier clic, aucun nom : le nom est demandé, avec les contrôles (format, déjà pris)', async () => {
       reponseAuNom = 'A'
       const r1 = await clic(b)
-      expect(questions).toHaveLength(1)
-      expect(questions[0]).toContain('.deribfy.app')
-      expect(r1).toEqual({ type: 'erreur', message: expect.stringContaining('nom n est pas utilisable') })
+      // UNE fenêtre Deribfy : le titre, l'adresse proposée d'après le titre, le bouton du paiement.
+      expect(fenetres).toHaveLength(1)
+      expect(fenetres[0]).toMatchObject({ titre: 'Publier votre application', adresseInitiale: 'gestion-de-stock', adresseModifiable: true, listes: [], libelleBouton: 'Continuer vers le paiement' })
+      // Le refus s'affiche DANS la fenêtre ; la personne annule ensuite.
+      expect(erreursFenetre[0]?.includes('nom n est pas utilisable'), 'refus attendu dans la fenêtre').toBe(true)
+      expect(r1).toEqual({ type: 'annulee' })
       etat.autre = { id: 'autre-app', publication_slug: 'pris-ailleurs' }
       reponseAuNom = 'pris-ailleurs'
-      const r2 = await clic(b)
-      expect(r2).toEqual({ type: 'erreur', message: expect.stringContaining('deja pris') })
+      expect(await clic(b)).toEqual({ type: 'annulee' })
+      expect(erreursFenetre[1]?.includes('deja pris'), 'refus attendu dans la fenêtre').toBe(true)
       // Refusé : rien d'écrit, Stripe jamais ouvert.
       expect(etat.appli.publication_slug).toBeNull()
       expect(etat.sessions).toEqual([])
@@ -346,9 +368,9 @@ describe('la publication après paiement (webhook) : jamais de silence, jamais d
   it('une table publique ACCEPTÉE au clic : l’accord voyage chez Stripe, et la publication après paiement le reconnaît', async () => {
     etat.appli.document = { fichiers: { 'index.html': 'x' }, entites: [{ id: 'annonce', name: 'Annonce', fields: [], lecturePublique: true }] }
     const vues: string[] = []
-    vi.stubGlobal('window', { confirm: (m: string) => { vues.push(m); return true } })
     expect(await clic('atelier')).toEqual({ type: 'paiement' })
-    expect(vues, 'la liste publique n’a pas été montrée avant Stripe').toHaveLength(1)
+    vues.push(...(fenetres[0]?.listes ?? []).map((l) => l.nom))
+    expect(vues, 'la liste publique n’a pas été montrée avant Stripe').toEqual(['Annonce'])
     const accord = etat.sessions[0]?.metadata.deribfy_lecture_publique ?? null
     expect(accord).toBe('annonce')
     etat.paye = true
@@ -487,7 +509,7 @@ describe('AJOUT 2 · libérer le nom d’une appli supprimée qui n’a jamais �
 })
 
 describe('AJOUT 3 · « Changer l’adresse », tant que l’appli n’a jamais été en ligne', () => {
-  const changer = (nouveau: string | null) => changerAdresse({ id: 'app-stock', titre: 'Gestion de stock', nomActuel: 'gestion-stock', autorisation: 'Bearer jeton', demanderNom: () => nouveau })
+  const changer = (nouveau: string | null) => { reponseAuNom = nouveau; return changerAdresse({ id: 'app-stock', nomActuel: 'gestion-stock', autorisation: 'Bearer jeton', ouvrirFenetre: fenetre }) }
 
   it('visible seulement avec un nom enregistré et une appli jamais en ligne', async () => {
     expect((await lireEtatPublication('app-stock', 'Bearer jeton'))?.nomModifiable, 'sans nom').toBe(false)
@@ -513,17 +535,21 @@ describe('AJOUT 3 · « Changer l’adresse », tant que l’appli n’a jamais 
 
   it('mêmes contrôles que « Publier » : format refusé, nom déjà pris — rien ne change', async () => {
     await clic('atelier')
-    expect(await changer('A')).toEqual({ type: 'erreur', message: expect.stringContaining('nom n est pas utilisable') })
+    expect(await changer('A')).toEqual({ type: 'annulee' })
+    expect(erreursFenetre.at(-1)?.includes('nom n est pas utilisable'), 'refus attendu dans la fenêtre').toBe(true)
     etat.autre = { id: 'autre-app', publication_slug: 'pris-ailleurs' }
-    expect(await changer('pris-ailleurs')).toEqual({ type: 'erreur', message: expect.stringContaining('deja pris') })
+    expect(await changer('pris-ailleurs')).toEqual({ type: 'annulee' })
+    expect(erreursFenetre.at(-1)?.includes('deja pris'), 'refus attendu dans la fenêtre').toBe(true)
     expect(etat.appli.publication_slug).toBe('gestion-stock')
   })
 
   it('après une mise en ligne, le nom ne change plus (409), même dépubliée', async () => {
     await clic('atelier'); await payer()
-    expect(await changer('autre-nom')).toEqual({ type: 'erreur', message: PHRASE_NOM_FIGE })
+    expect(await changer('autre-nom')).toEqual({ type: 'annulee' })
+    expect(erreursFenetre.at(-1)).toBe(PHRASE_NOM_FIGE)
     etat.appli.publication_jeton = null
-    expect(await changer('autre-nom')).toEqual({ type: 'erreur', message: PHRASE_NOM_FIGE })
+    expect(await changer('autre-nom')).toEqual({ type: 'annulee' })
+    expect(erreursFenetre.at(-1)).toBe(PHRASE_NOM_FIGE)
     expect(etat.appli.publication_slug).toBe('gestion-stock')
   })
 
@@ -531,5 +557,68 @@ describe('AJOUT 3 · « Changer l’adresse », tant que l’appli n’a jamais 
     expect(PAGES.atelier).toMatch(motifTexte('etatPub?.nomModifiable === true && ('))
     expect(PAGES['Mes projets']).toMatch(motifTexte('a.nomModifiable === true && ('))
     for (const b of BOUTONS) expect(PAGES[b]).toMatch(/changerAdresse\(\{/u)
+  })
+})
+
+describe('PARTIE 1 · une seule fenêtre avant Stripe, et l’accord gardé', () => {
+  const PRODUITS = { id: 'produit', name: 'Produits', lecturePublique: true, fields: [
+    { id: 'nom', name: 'nom', type: 'text', required: true },
+    { id: 'quantite', name: 'quantite', type: 'number', required: true, label: [{ locale: 'fr', text: 'quantité' }] },
+    { id: 'seuil', name: 'seuil_alerte', type: 'number', required: false, label: [{ locale: 'fr', text: 'seuil d’alerte' }] },
+  ] }
+  const avecListe = (entites: unknown[]) => { etat.appli.document = { fichiers: { 'index.html': 'x' }, entites } }
+
+  it('des données lisibles sans compte : la fenêtre les nomme en mots simples, et l’accord part avec le paiement', async () => {
+    avecListe([PRODUITS])
+    expect(await clic('Mes projets')).toEqual({ type: 'paiement' })
+    expect(fenetres).toHaveLength(1)
+    expect(fenetres[0]?.listes).toEqual([{ nom: 'Produits', champs: ['nom', 'quantité', 'seuil d’alerte'] }])
+    expect(etat.sessions[0]?.metadata.deribfy_lecture_publique).toBe('produit')
+  })
+
+  it('RÈGLE 5 : nom choisi et accord DÉJÀ donné pour cette liste → Stripe directement, sans fenêtre', async () => {
+    avecListe([PRODUITS])
+    await clic('atelier')
+    fenetres.length = 0
+    expect(await clic('Mes projets')).toEqual({ type: 'paiement' })
+    expect(fenetres, 'la fenêtre réapparaît alors que rien n’a changé').toEqual([])
+    // L'accord gardé voyage chez Stripe comme avant.
+    expect(etat.sessions[1]?.metadata.deribfy_lecture_publique).toBe('produit')
+  })
+
+  it('les données publiques ONT CHANGÉ depuis l’accord : la fenêtre revient, avec la nouvelle liste, nom figé', async () => {
+    avecListe([PRODUITS])
+    await clic('atelier')
+    avecListe([PRODUITS, { id: 'client', name: 'Clients', lecturePublique: true, fields: [{ id: 'tel', name: 'telephone', type: 'text', required: true }] }])
+    fenetres.length = 0
+    expect(await clic('atelier')).toEqual({ type: 'paiement' })
+    expect(fenetres).toHaveLength(1)
+    expect(fenetres[0]).toMatchObject({ adresseInitiale: 'gestion-stock', adresseModifiable: false })
+    expect(fenetres[0]?.listes.map((l) => l.nom)).toEqual(['Produits', 'Clients'])
+  })
+
+  it('rien de public : pas de phrase dans la fenêtre', async () => {
+    await clic('atelier')
+    expect(fenetres[0]?.listes).toEqual([])
+  })
+
+  it('appli DÉJÀ payée, sans nom : la fenêtre dit « Publier », pas « Continuer vers le paiement »', async () => {
+    etat.paye = true
+    expect(await clic('atelier')).toMatchObject({ type: 'publiee', lien: 'https://gestion-stock.deribfy.app' })
+    expect(fenetres[0]?.libelleBouton).toBe('Publier')
+    expect(etat.sessions).toEqual([])
+  })
+
+  it('la route garde l’accord pour la liste EXACTE, et ne le rejoue pas pour une autre', async () => {
+    avecListe([PRODUITS])
+    await clic('atelier')
+    const garde = (etat.appli.sections_acquises as Record<string, { tables?: string }>).accordLecturePublique
+    expect(garde?.tables).toBe('produit')
+    // Une appel SANS accord dans le corps, liste inchangée : accepté par l'accord gardé.
+    const r = await appelDe(PUBLIER, '/api/generateur/publier?id=app-stock', { method: 'POST' })
+    expect(r.status, 'l’accord gardé n’est pas reconnu').toBe(200)
+    // Liste changée : refus 409, la question revient.
+    avecListe([PRODUITS, { id: 'client', name: 'Clients', lecturePublique: true, fields: [] }])
+    expect((await appelDe(PUBLIER, '/api/generateur/publier?id=app-stock', { method: 'POST' })).status).toBe(409)
   })
 })
