@@ -64,9 +64,11 @@ describe('EP-330 · A · le verdict se voit', () => {
   })
 
   it('③ LA LIVRAISON LE DIT AUSSI — c’est là qu’on décide de garder', () => {
-    const src = lireSource(
-      join(WEB, 'components', 'onboarding', 'ConversationApplication.tsx'),
-    )
+    // 2026-11-23 : la phrase vit dans le module partagé avec la boîte noire ; l'écran l'emploie.
+    const src =
+      lireSource(join(WEB, 'components', 'onboarding', 'ConversationApplication.tsx')) +
+      lireSource(join(WEB, 'lib', 'apps', 'message-de-creation.ts'))
+    expect(src, 'l’écran n’emploie plus le module de son message').toMatch(/compris:\s+messageDeCreation\(d\)/u)
     expect(src, 'l’écran de livraison ne lit pas le verdict').toMatch(/d\.persistance/u)
     expect(src, 'la livraison ne nomme pas la conséquence').toMatch(
       /disparaîtra au rechargement/u,

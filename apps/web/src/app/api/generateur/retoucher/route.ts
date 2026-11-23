@@ -95,6 +95,8 @@ import { jugerJetons } from '@/lib/apps/juge-jetons'
 import { jugerVivacite } from '@/lib/apps/juge-vivacite'
 import { jugerCouverture } from '@/lib/apps/juge-couverture'
 import { jugerLecturePublique } from '@/lib/apps/juge-lecture-publique'
+import { analyserDemande } from '@/lib/apps/analyse-demande'
+import { messageDeRetouche, suffixeCompteur, type CorpsRetouche } from '@/lib/apps/message-de-retouche'
 import { signaturePublique } from '@/lib/apps/signature-publique'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
 import {
@@ -165,7 +167,7 @@ async function noter(
      */
     readonly colonnes: readonly EntiteDeclaree[]
   },
-): Promise<{ notes: NoteJuge[]; taux: number | null }> {
+): Promise<{ notes: NoteJuge[]; taux: number | null; portee: Record<string, unknown> }> {
   const systeme = fichiersSysteme(undefined)
   const bundle = await assembler(fichiers)
   // ── UN DOCUMENT QUI NE S'ASSEMBLE PAS N'A PAS D'ÉCRANS.
@@ -196,6 +198,19 @@ async function noter(
       { nom: 'lecture publique', defauts: jugerLecturePublique(o.colonnes, fichiers).length },
     ],
     taux: couverture.taux,
+    // CE QUI A TOURNÉ, ET CE QUI N'A PAS TOURNÉ (2026-11-23) — dit, jamais tu.
+    portee: !bundle.ok
+      ? { execution: 'n’a pas tourné : le document ne s’assemble pas', couverture: 'sans écrans' }
+      : execution?.indisponible !== undefined
+        ? { execution: `n’a pas pu s’exécuter : ${execution.indisponible}` }
+        : {
+            ouverts: execution?.ecransVisites ?? 0,
+            connus: execution?.ecransDecouverts ?? 0,
+            nonOuverts: execution?.controlesNonOuverts ?? [],
+            ou: 'aperçu en mémoire, sans base ni connexion',
+            couverture: couverture.taux === null ? 'non mesurée sur cette demande' : couverture.taux,
+            lecturePublique: jugerLecturePublique(o.colonnes, fichiers),
+          },
   }
 }
 
@@ -395,6 +410,14 @@ type SuiviRetouche = {
   reservee: { app: string; proprietaire: string; restantes: number } | null
   /** LA BOÎTE NOIRE (2026-11-23) : la demande, la consigne, la réponse brute, l'issue. */
   boite: BoiteNoire
+  /** Le compte est-il exempté (fondateur) ? Le message montré en dépend. */
+  exempte: boolean
+  /** LES CONTRÔLES D'AVANT ET D'APRÈS, et leur comparaison — absents : ils n'ont pas tourné. */
+  controles: Record<string, unknown> | null
+  /** Le livrable jugé, pour l'analyse et ses constats. */
+  livre: { fichiers: ReadonlyMap<string, string>; entites: readonly EntiteDeclaree[]; politiques: string } | null
+  /** La demande d'origine de l'appli : l'analyse la relit contre l'appli modifiée. */
+  demandeOrigine: string | null
 }
 
 async function postSansReserve(req: Request) {
@@ -402,13 +425,15 @@ async function postSansReserve(req: Request) {
     appele: false, debut: new Date(), generationId: '', demande: '',
     jetonsEntree: 0, jetonsCache: 0, jetonsSortie: 0, coutUsd: 0, tronquee: false, issue: null, reservee: null,
     boite: new BoiteNoire({ nature: 'retouche', compte: null }),
+    exempte: false, controles: null, livre: null, demandeOrigine: null,
   }
   const reponse = await retoucher(req, suivi)
-  if (suivi.appele) {
-    await consignerRetouche(suivi, reponse)
-    await fermerBoiteRetouche(suivi, reponse)
-  }
-  return await solderReservation(suivi, reponse)
+  if (suivi.appele) await consignerRetouche(suivi, reponse)
+  const finale = await solderReservation(suivi, reponse)
+  // LA BOÎTE SE FERME SUR LA RÉPONSE FINALE (2026-11-23) : celle qui porte le
+  // compteur, donc le message exactement tel que l'écran le compose.
+  if (suivi.appele) await fermerBoiteRetouche(suivi, finale)
+  return finale
 }
 
 /**
@@ -506,13 +531,28 @@ async function fermerBoiteRetouche(suivi: SuiviRetouche, reponse: Response): Pro
       modele: MODELE_LEGER, jetonsEntree: suivi.jetonsEntree, jetonsCache: suivi.jetonsCache, jetonsSortie: suivi.jetonsSortie,
       coutUsd: suivi.coutUsd, dureeMs: Date.now() - suivi.debut.getTime(),
     })
-    suivi.boite.noter('livraison', 'Ce que l’écran a reçu', { statut: reponse.status, messageMontre: corps.message ?? corps.error ?? corps.raison ?? corps.migration ?? null, rang: corps.rang ?? null })
-    await suivi.boite.enregistrer(supabaseAdmin as never, {
-      generationId: suivi.generationId || null, issue,
-      // L'ANALYSE PHRASE PAR PHRASE vaut pour une CRÉATION (une demande entière
-      // contre une appli entière) ; une retouche est une consigne ponctuelle.
-      analyse: { phrases: [], resume: null, fiabilite: 'non calculée pour une modification' },
+    // ── LES CONTRÔLES : ceux d'avant, ceux d'après, la comparaison, ce qui
+    // n'a pas tourné (2026-11-23 — la boîte 1a4298f8 n'en portait aucun).
+    suivi.boite.noter('controles', 'Les contrôles avant et après la modification', suivi.controles ?? {
+      nonTourne: `aucun contrôle n’a tourné : la modification s’est arrêtée avant (${issue})`,
     })
+    // ── LE MESSAGE RÉELLEMENT MONTRÉ : la MÊME fonction que l'atelier.
+    const livree = reponse.ok && corps.ok === true
+    const montre = messageDeRetouche(corps as CorpsRetouche, reponse.ok, suffixeCompteur({
+      compteur: { exempte: suivi.exempte }, livree, aConfirmer: corps.aConfirmer === true,
+      coutUsd: typeof corps.coutUsd === 'number' ? corps.coutUsd : undefined,
+      modificationsRestantes: typeof corps.modificationsRestantes === 'number' ? corps.modificationsRestantes : undefined,
+    }))
+    suivi.boite.noter('livraison', 'Ce que l’écran a reçu, et le message montré', { statut: reponse.status, genre: montre.genre, messageMontre: montre.texte, rang: corps.rang ?? null })
+    // ── L'ANALYSE, AUSSI POUR UNE MODIFICATION : la demande de modification,
+    // puis la demande d'ORIGINE relue contre l'appli modifiée, et les constats.
+    const l = suivi.livre
+    const code = l === null ? '' : [...l.fichiers.values()].join('\n')
+    const sur = (demande: string) => analyserDemande({ demande, entites: l?.entites ?? [], roles: [], code, schema: '', ...(l === null ? {} : { livre: l }) })
+    const analyse = l === null
+      ? { phrases: [], resume: null, constats: [], fiabilite: 'aucun livrable jugé : la modification s’est arrêtée avant' }
+      : { ...sur(suivi.demande), ...(suivi.demandeOrigine === null ? {} : { origine: (({ phrases, resume }) => ({ phrases, resume }))(sur(suivi.demandeOrigine)) }) }
+    await suivi.boite.enregistrer(supabaseAdmin as never, { generationId: suivi.generationId || null, issue, analyse })
   } catch (e) {
     console.error('[boite-noire] retouche', e instanceof Error ? e.message : e)
   }
@@ -544,13 +584,14 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('document, nom, publie_le')
+    .select('document, nom, publie_le, demande')
     .eq('id', id)
     .eq('owner_id', proprietaire)
     .maybeSingle()
   if (lu.error !== null || lu.data === null) {
     return NextResponse.json({ error: 'application inconnue' }, { status: 404 })
   }
+  suivi.demandeOrigine = typeof (lu.data as { demande?: unknown }).demande === 'string' ? (lu.data as { demande: string }).demande : null
   const docAvant = lu.data.document as {
     fichiers?: Record<string, string>
     schema?: string
@@ -606,6 +647,7 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
   suivi.generationId = id
   suivi.demande = demande
   suivi.boite.definirCompte(proprietaire)
+  suivi.exempte = sansQuota(garde.email)
   suivi.boite.noter('demande', 'La demande de modification, mot pour mot', { demande, application: id })
   try {
     // ── EN FLUX (point 2). Le SDK refuse un appel non streamé dès que
@@ -811,6 +853,12 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     avant: noteAvant.taux,
     apres: noteApres.taux,
   })
+  suivi.controles = {
+    avant: noteAvant.notes, apres: noteApres.notes,
+    comparaison: verdict,
+    porteeAvant: noteAvant.portee, porteeApres: noteApres.portee,
+  }
+  suivi.livre = { fichiers: fichiersLivres, entites: fusion.entites, politiques: politiquesPrecedentes ?? '' }
 
   if (verdict.regressions.length > 0) {
     const quoi = verdict.regressions
@@ -998,6 +1046,9 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
           : phraseApresMigration(plan, instantaneAvant, instantaneApres)
     }
   }
+
+  // La porte QUI PART avec cette version : c'est elle que l'analyse juge.
+  suivi.livre = { fichiers: fichiersLivres, entites: entitesApres, politiques: politiquesApres ?? '' }
 
   // ── ET SEULEMENT MAINTENANT ON ÉCRIT. La version D'ABORD : si elle
   // échoue, le document courant n'a pas bougé.

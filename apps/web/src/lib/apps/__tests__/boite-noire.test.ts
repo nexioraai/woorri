@@ -128,7 +128,9 @@ describe('④ l’analyse phrase par phrase, sur la vraie demande de la place de
   const statut = (debut: string) => a.phrases.find((p) => p.phrase.startsWith(debut))
   it('cinq phrases, et la couverture par tables (100 %) ne peut plus mentir', () => {
     expect(a.phrases).toHaveLength(5)
-    expect(a.resume).toEqual({ faite: 1, 'faite en partie': 3, perdue: 1, 'indéterminée': 0 })
+    // 2026-11-23 : deux verdicts de plus, à zéro ici — ce CODE de test ne porte
+    // aucune trace (ni signUp, ni filtre par compte) : tout est ABSENT.
+    expect(a.resume).toEqual({ faite: 1, 'faite en partie': 3, 'écrite mais inutilisable une fois publiée': 0, 'écrite, non éprouvée une fois publiée': 0, perdue: 1, 'indéterminée': 0 })
   })
   it('« que ses propres produits » : PERDUE, dans le moule (une seule porte)', () => {
     expect(statut('Chaque vendeur')).toMatchObject({ verdict: 'perdue', methode: 'brique' })

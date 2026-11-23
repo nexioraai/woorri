@@ -14,9 +14,23 @@ type Resume = Record<string, number> | null;
 type Boite = { id: string; cree_le: string; generation_id: string | null; nature: string; issue: string; tronquee: boolean; taille_octets: number; resume: Resume; nom: string | null };
 type Etape = { n: number; quand: string; type: string; titre: string; donnees: unknown };
 type Phrase = { phrase: string; verdict: string; etape: string | null; raison: string; methode: string };
-type Detail = { id: string; etapes: Etape[]; analyse_phrases: { phrases?: Phrase[]; fiabilite?: string } | null };
+type Constat = { quoi: string; preuve: string };
+type Detail = { id: string; etapes: Etape[]; analyse_phrases: { phrases?: Phrase[]; fiabilite?: string; constats?: Constat[]; origine?: { phrases?: Phrase[] } } | null };
 
-const COULEUR: Record<string, string> = { faite: 'text-emerald-300', 'faite en partie': 'text-amber-300', perdue: 'text-red-300', 'indéterminée': 'text-slate-400' };
+const COULEUR: Record<string, string> = { faite: 'text-emerald-300', 'faite en partie': 'text-amber-300', 'écrite mais inutilisable une fois publiée': 'text-orange-300', 'écrite, non éprouvée une fois publiée': 'text-sky-300', perdue: 'text-red-300', 'indéterminée': 'text-slate-400' };
+
+function Phrases({ phrases }: { phrases: readonly Phrase[] }) {
+  return (
+    <ul className="space-y-2 text-sm">
+      {phrases.map((p, i) => (
+        <li key={i} className="rounded-lg border border-white/10 p-3">
+          <span className={`font-semibold ${COULEUR[p.verdict] ?? ''}`}>[{p.verdict}]</span> {p.phrase}
+          <p className="mt-1 text-xs text-slate-400">{p.etape ?? '—'} · {p.raison}</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 async function jeton(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -91,14 +105,26 @@ export default function BoiteNoirePage() {
           <section className="mt-8 space-y-4">
             <h2 className="text-lg font-semibold">Analyse phrase par phrase</h2>
             {detail.analyse_phrases?.fiabilite !== undefined && <p className="text-xs text-slate-400">{detail.analyse_phrases.fiabilite}</p>}
-            <ul className="space-y-2 text-sm">
-              {(detail.analyse_phrases?.phrases ?? []).map((p, i) => (
-                <li key={i} className="rounded-lg border border-white/10 p-3">
-                  <span className={`font-semibold ${COULEUR[p.verdict] ?? ''}`}>[{p.verdict}]</span> {p.phrase}
-                  <p className="mt-1 text-xs text-slate-400">{p.etape ?? '—'} · {p.raison}</p>
-                </li>
-              ))}
-            </ul>
+            <Phrases phrases={detail.analyse_phrases?.phrases ?? []} />
+            {(detail.analyse_phrases?.origine?.phrases ?? []).length > 0 && (
+              <>
+                <h2 className="text-lg font-semibold">La demande d’origine, relue contre l’appli modifiée</h2>
+                <Phrases phrases={detail.analyse_phrases?.origine?.phrases ?? []} />
+              </>
+            )}
+            {(detail.analyse_phrases?.constats ?? []).length > 0 && (
+              <>
+                <h2 className="text-lg font-semibold">Constats sur l’appli livrée</h2>
+                <ul className="space-y-2 text-sm">
+                  {(detail.analyse_phrases?.constats ?? []).map((c, i) => (
+                    <li key={i} className="rounded-lg border border-red-400/30 p-3">
+                      <span className="font-semibold text-red-300">{c.quoi}</span>
+                      <p className="mt-1 text-xs text-slate-400">{c.preuve}</p>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
             <h2 className="text-lg font-semibold">Les étapes, dans l’ordre</h2>
             {detail.etapes.map((e) => (
               <details key={e.n} className="rounded-lg border border-white/10 p-3">

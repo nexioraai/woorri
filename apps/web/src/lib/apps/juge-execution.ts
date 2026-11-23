@@ -77,6 +77,8 @@ export type VerdictExecution = {
    * Rendu, lié, et pourtant inutilisable : on ne sait pas ce qu'il fait.
    */
   readonly controlesMuets?: readonly { readonly balise: string; readonly extrait: string }[]
+  /** Les contrôles CONNUS mais NON OUVERTS, le budget épuisé — nommés (2026-11-23). */
+  readonly controlesNonOuverts?: readonly string[]
   /**
    * LES ÉCRANS RÉELLEMENT OUVERTS, avec leur texte et s'ils ont été
    * EXERCÉS. C'est la matière qui manquait au juge de couverture : une
@@ -232,6 +234,7 @@ export async function jugerExecution(
       ecransDecouverts?: number
       ecransDistincts?: number
       controlesMuets?: { balise: string; extrait: string }[]
+      controlesNonOuverts?: string[]
       ecrans?: { texte: string; exerce: boolean }[]
     }
     return {
@@ -243,6 +246,7 @@ export async function jugerExecution(
       ecransDecouverts: lu.ecransDecouverts ?? 0,
       ecransDistincts: lu.ecransDistincts ?? 0,
       controlesMuets: lu.controlesMuets ?? [],
+      controlesNonOuverts: lu.controlesNonOuverts ?? [],
       ecrans: lu.ecrans ?? [],
       ms: Date.now() - debut,
     }

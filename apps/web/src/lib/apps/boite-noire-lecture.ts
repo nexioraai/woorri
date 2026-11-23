@@ -5,6 +5,8 @@ import 'server-only'
  * elle-même refuse anon et authenticated (boite_noire.sql).
  */
 
+type PhraseLue = { phrase: string; verdict: string; etape: string | null; raison: string; methode: string }
+
 type Ligne = {
   readonly id: string
   readonly cree_le: string
@@ -14,7 +16,13 @@ type Ligne = {
   readonly tronquee: boolean
   readonly taille_octets: number
   readonly etapes: readonly { n: number; quand: string; type: string; titre: string; donnees: unknown }[]
-  readonly analyse_phrases: { phrases?: readonly { phrase: string; verdict: string; etape: string | null; raison: string; methode: string }[]; resume?: unknown; fiabilite?: string } | null
+  readonly analyse_phrases: {
+    phrases?: readonly PhraseLue[]
+    resume?: unknown
+    fiabilite?: string
+    constats?: readonly { quoi: string; preuve: string }[]
+    origine?: { phrases?: readonly PhraseLue[] }
+  } | null
 }
 
 const bloc = (texte: string): string => {
@@ -52,8 +60,19 @@ export function boiteEnTexte(l: Ligne, nomAppli: string | null): string {
     a?.fiabilite !== undefined ? `> Fiabilité : ${a.fiabilite}` : '> Pas d’analyse.',
     '',
   ]
-  for (const p of a?.phrases ?? []) {
-    lignes.push(`- **[${p.verdict}]** ${p.phrase}`, `  - étape : ${p.etape ?? '—'} · méthode : ${p.methode}`, `  - ${p.raison}`)
+  const phrases = (liste: readonly PhraseLue[]): void => {
+    for (const p of liste) {
+      lignes.push(`- **[${p.verdict}]** ${p.phrase}`, `  - étape : ${p.etape ?? '—'} · méthode : ${p.methode}`, `  - ${p.raison}`)
+    }
+  }
+  phrases(a?.phrases ?? [])
+  if ((a?.origine?.phrases ?? []).length > 0) {
+    lignes.push('', '### La demande d’origine, relue contre l’appli modifiée', '')
+    phrases(a?.origine?.phrases ?? [])
+  }
+  if ((a?.constats ?? []).length > 0) {
+    lignes.push('', '## Constats sur l’appli livrée', '')
+    for (const c of a?.constats ?? []) lignes.push(`- **${c.quoi}**`, `  - ${c.preuve}`)
   }
   lignes.push('', '## Les étapes, dans l’ordre', '')
   for (const e of l.etapes) lignes.push(`### ${String(e.n)}. ${e.titre}`, '', `_${e.type} · ${e.quand}_`, '', rendreDonnees(e.donnees), '')

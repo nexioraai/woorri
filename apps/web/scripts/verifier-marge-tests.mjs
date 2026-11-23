@@ -58,6 +58,16 @@ const PLAFOND = BUDGET / MARGE
  */
 const CONNUS = [
   {
+    motif: /ep302-ca-demarre[\s\S]*⑪bis/u,
+    plafond: 4000,
+    raison:
+      'ATTENTE DU JUGE RÉEL (2026-11-23). Le test épuise le budget de 24 visites ' +
+      'pour prouver que les contrôles non ouverts sont NOMMÉS : 24 clics × 60 ms ' +
+      'de décantation fixés dans l’enfant, plus le montage du simulateur. Le ' +
+      'temps vient de l’attente, pas du calcul ; moins de 25 boutons ne prouverait ' +
+      'plus rien.',
+  },
+  {
     motif: /ep230-repetition[\s\S]*reste REPRENABLE/u,
     plafond: 3500,
     raison:

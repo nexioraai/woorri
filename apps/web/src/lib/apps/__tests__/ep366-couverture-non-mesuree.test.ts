@@ -141,7 +141,9 @@ describe('EP-366 · une couverture non mesurée se dit', () => {
     //
     // Un aveu écrit dans une branche que rien n'atteint est une pièce
     // détachée. On vérifie donc la CONDITION, pas seulement la phrase.
-    const src = lire('components/onboarding/ConversationApplication.tsx')
+    // 2026-11-23 : la phrase vit dans le module partagé avec la boîte noire ; l'écran l'emploie.
+    const src = lire('components/onboarding/ConversationApplication.tsx') + lire('lib/apps/message-de-creation.ts')
+    expect(src).toMatch(motifTexte('compris: messageDeCreation(d)'))
     expect(src).toMatch(motifTexte('d.couverture.taux === null'))
     expect(src).toMatch(motifTexte('Couverture du cahier : NON MESURÉE'))
     // Le champ doit voyager jusqu'à l'écran, sinon la condition est morte.
@@ -153,7 +155,9 @@ describe('EP-366 · une couverture non mesurée se dit', () => {
     expect(lire('app/api/generateur/retoucher/route.ts')).toMatch(
       motifTexte('couvertureNonMesuree: verdict.couvertureNonMesuree'),
     )
-    const ecran = lire('app/atelier/[id]/page.tsx')
+    // 2026-11-23 : la phrase vit dans le module partagé avec la boîte noire ; l'écran l'emploie.
+    const ecran = lire('app/atelier/[id]/page.tsx') + lire('lib/apps/message-de-retouche.ts')
+    expect(ecran).toMatch(motifTexte('messageDeRetouche(d, res.ok, paye)'))
     expect(ecran).toMatch(motifTexte('d.couvertureNonMesuree === true'))
     expect(ecran).toMatch(motifTexte('n’a pas pu être vérifiée sur cette demande'))
   })

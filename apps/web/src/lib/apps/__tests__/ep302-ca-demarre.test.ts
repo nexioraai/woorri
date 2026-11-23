@@ -147,9 +147,11 @@ describe('EP-302 · le juge d’exécution', () => {
     expect(ROUTE, 'un juge indisponible ne remonte pas aux diagnostics').toMatch(
       /indisponible !== undefined[\s\S]{0,200}PAS/u,
     )
-    const ECRAN = nu(
-      join(__dirname, '..', '..', '..', 'components', 'onboarding', 'ConversationApplication.tsx'),
-    )
+    // 2026-11-23 : la phrase vit dans le module partagé avec la boîte noire ; l'écran l'emploie.
+    const ECRAN =
+      nu(join(__dirname, '..', '..', '..', 'components', 'onboarding', 'ConversationApplication.tsx')) +
+      nu(join(__dirname, '..', 'message-de-creation.ts'))
+    expect(ECRAN, 'l’écran n’emploie plus le module de son message').toMatch(/compris:\s+messageDeCreation\(d\)/u)
     expect(ECRAN, 'l’écran tait le juge indisponible').toMatch(
       /exec\.indisponible !== undefined/u,
     )
@@ -211,6 +213,20 @@ describe('EP-302 · le juge d’exécution', () => {
   )
 
   it(
+    '⑪bis CE QUI N’A PAS ÉTÉ OUVERT EST NOMMÉ — pas seulement compté (2026-11-23)',
+    async () => {
+      // 30 boutons inertes : le budget de 24 s'épuise, il en reste 6 à nommer.
+      const boutons = Array.from({ length: 30 }, (_, i) => `<button>B${String(i)}</button>`).join('')
+      const v = await jugerExecution(await assembleOuEchoue(page(`function App() { return <nav>${boutons}</nav> }`)))
+      expect(v.ecransVisites).toBe(24)
+      expect(v.controlesNonOuverts, 'les contrôles non ouverts ne sont pas nommés').toEqual(
+        Array.from({ length: 6 }, (_, i) => `button « B${String(24 + i)} »`),
+      )
+    },
+    60_000,
+  )
+
+  it(
     '⑫ UN CONTRÔLE SANS NOM LISIBLE EST UN DÉFAUT — rendu, lié, et muet',
     async () => {
       // CLASSE NEUVE, vue sur trois ecrans du tir 52f34017 : une pilule
@@ -262,7 +278,10 @@ describe('EP-302 · le juge d’exécution', () => {
     const nu = (p: string) =>
       readFileSync(p, 'utf8').replace(/\/\*[\s\S]*?\*\//gu, ' ').replace(/^\s*\/\/.*$/gmu, ' ')
     const surfaces = {
-      écran: nu(join(__dirname, '..', '..', '..', 'components', 'onboarding', 'ConversationApplication.tsx')),
+      // 2026-11-23 : l'écran ET le module de son message (message-de-creation).
+      écran:
+        nu(join(__dirname, '..', '..', '..', 'components', 'onboarding', 'ConversationApplication.tsx')) +
+        nu(join(__dirname, '..', 'message-de-creation.ts')),
       route: nu(join(__dirname, '..', '..', '..', 'app', 'api', 'generateur', 'direct', 'route.ts')),
       boucle: nu(join(__dirname, '..', 'boucle-directe.ts')),
     }

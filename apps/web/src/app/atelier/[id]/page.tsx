@@ -65,7 +65,8 @@ import { IdentifiantsOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { TITRE_SANS_NOM } from '@/lib/apps/nom-produit';
 import { echangesDe, heureCourte, type VersionLue } from '@/lib/apps/fil-atelier';
 import { phraseVersion } from '@/lib/apps/versions-oeuvre';
-import { boutonOuvert, libelleBouton, phraseApresRetouche, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
+import { boutonOuvert, libelleBouton, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
+import { messageDeRetouche, suffixeCompteur } from '@/lib/apps/message-de-retouche';
 import { PayerMobileMoney } from '@/components/atelier/PayerMobileMoney';
 import type { EtatCompteur } from '@/lib/apps/compteur-phrases';
 
@@ -504,9 +505,10 @@ export default function AtelierPage() {
       // LES DOLLARS POUR LE PROPRIÉTAIRE SEUL (décision 5A) ; le commerçant lit
       // le compteur : « Il vous en reste 36. » ou « Non décomptée. »
       const livree = res.ok && d.ok === true;
-      const paye =
-        (voitLesCouts(compteur) && d.coutUsd !== undefined && d.coutUsd > 0 ? ` (${d.coutUsd.toFixed(3)} $ dépensés)` : '') +
-        (d.aConfirmer === true ? '' : phraseApresRetouche(compteur, livree, d.modificationsRestantes));
+      // LA MÊME FONCTION que la boîte noire (2026-11-23) : ce qui est montré
+      // ici est ce qui est enregistré, au mot près.
+      const paye = suffixeCompteur({ compteur, livree, aConfirmer: d.aConfirmer === true, coutUsd: d.coutUsd, modificationsRestantes: d.modificationsRestantes });
+      const montre = messageDeRetouche(d, res.ok, paye);
       if (compteur !== null && !compteur.exempte && typeof d.modificationsRestantes === 'number') {
         setCompteur({ ...compteur, restantes: d.modificationsRestantes });
       }
@@ -514,7 +516,7 @@ export default function AtelierPage() {
 
       if (d.aConfirmer === true) {
         setEnCours(false);
-        if (window.confirm(`${String(d.message)}\n\nAppliquer ?`)) {
+        if (window.confirm(montre.texte)) {
           // ── UNE MODIFICATION MISE DE CÔTÉ S'APPLIQUE, ELLE NE SE REJOUE PAS.
           //
           // `envoyer(true)` repostait la demande, donc rappelait le
@@ -533,11 +535,11 @@ export default function AtelierPage() {
       if (d.horsPerimetre === true) {
         // LA RAISON EST DITE, mais elle n'est plus la fin du chemin.
         setARegenerer(demande);
-        setErreur(`${String(d.raison)}${paye}`);
+        setErreur(montre.texte);
         return;
       }
-      if (!res.ok || d.ok !== true) {
-        setErreur(`${String(d.error ?? 'La modification a échoué.')}${paye}`);
+      if (montre.genre === 'erreur') {
+        setErreur(montre.texte);
         return;
       }
 
@@ -553,20 +555,7 @@ export default function AtelierPage() {
       // La couverture du cahier n'est pas comparable quand le contrôle ne
       // reconnaît aucune famille dans la demande — mesuré sur quatre
       // demandes réalistes sur quatre. Son silence ressemblait à un vert.
-      const nonMesure =
-        d.couvertureNonMesuree === true
-          ? ' La couverture du cahier n’a pas pu être vérifiée sur cette demande.'
-          : '';
-      setAvis(
-        (d.migration === undefined
-          ? d.couleur !== undefined && (d.fichiers ?? []).filter((f) => f !== 'APPARENCE.json').length === 0
-            // SURCHARGE DE THÈME : aucune ligne de code touchée, et ça se dit.
-            ? `Couleur principale appliquée${paye}.`
-            : `Modifié — ${String((d.fichiers ?? []).length)} fichier(s) touché(s)${paye}.`
-          : `${d.migration}${paye}`) + nonMesure +
-          // UNE DONNÉE DEMANDÉE ET NON AJOUTÉE SE DIT (défaut A, 2026-11-18).
-          (d.declarationRejetee === undefined ? '' : ` ${d.declarationRejetee}`),
-      );
+      setAvis(montre.texte);
       // ── LE CŒUR DE LA BOUCLE. On ne demande rien à la personne : le fil
       // et l'aperçu se remettent à jour, et le vert apparaît.
       await Promise.all([chargerVersions(), chargerApercu()]);

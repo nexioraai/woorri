@@ -120,8 +120,12 @@ describe('EP-314 — les modules purs le restent', () => {
       join(__dirname, '..', '..', '..', 'components', 'onboarding', 'ConversationApplication.tsx'),
       'utf8',
     )
-    // L'écran l'importe du module PUR, jamais du juge.
-    expect(ecran).toContain("from '@/lib/apps/portee-epreuve'")
-    expect(ecran.includes("proportionEprouvee } from '@/lib/apps/juge-execution'")).toBe(false)
+    // L'écran l'emploie par le module de son message (2026-11-23), qui
+    // l'importe du module PUR — jamais du juge.
+    expect(ecran).toContain("from '@/lib/apps/message-de-creation'")
+    expect(ecran.includes("from '@/lib/apps/juge-execution'")).toBe(false)
+    const message = readFileSync(join(__dirname, '..', 'message-de-creation.ts'), 'utf8')
+    expect(message).toContain("from './portee-epreuve'")
+    expect(message.includes('juge-execution')).toBe(false)
   })
 })

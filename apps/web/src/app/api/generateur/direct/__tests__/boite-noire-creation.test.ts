@@ -64,7 +64,10 @@ describe('la boîte noire d’une création', () => {
     expect(consigne.empreinteConsigne).toMatch(/^[0-9a-f]{16}$/u)
     expect(consigne.messagesAjoutes[0]?.content).toContain(DEMANDE)
     expect(b.etapes[3]?.donnees.texte, 'la réponse brute n’est pas mot pour mot').toBe(BON)
-    expect(b.etapes.at(-1)?.donnees.messageMontre).toBe('J’ai créé votre application.')
+    // 2026-11-23 : le message RÉELLEMENT montré (la bulle de la conversation),
+    // et non plus la phrase fixe du fil — qui n'était pas ce que l'écran disait.
+    const montre = b.etapes.at(-1)?.donnees.messageMontre as string[]
+    expect(montre[0]).toMatch(/^Votre application est prête en \d+ secondes \(1 essai\(s\)\)\.$/u)
     // « que ses propres factures » : une brique absente, dite perdue.
     expect(b.analyse_phrases.phrases.map((p) => p.verdict)).toContain('perdue')
     // Aucune clé : celle du fournisseur n'apparaît nulle part.

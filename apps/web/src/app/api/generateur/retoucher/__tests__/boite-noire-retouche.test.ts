@@ -51,13 +51,36 @@ describe('la boîte noire d’une modification', () => {
     const b = etat.boites[0] as { nature: string; generation_id: string; etapes: { type: string; donnees: Record<string, unknown> }[] }
     expect(b.nature).toBe('retouche')
     expect(b.generation_id).toBe('g1')
-    expect(b.etapes.map((e) => e.type)).toEqual(['demande', 'consigne', 'reponse_brute', 'decisions', 'mesures', 'livraison'])
+    expect(b.etapes.map((e) => e.type)).toEqual(['demande', 'consigne', 'reponse_brute', 'decisions', 'mesures', 'controles', 'livraison'])
     expect(b.etapes[0]?.donnees.demande).toBe('mets les boutons en vert')
     const consigne = b.etapes[1]?.donnees as { consigneSysteme: string; message: string; empreinteConsigne: string }
     expect(consigne.consigneSysteme.length).toBeGreaterThan(200)
     expect(consigne.message).toContain('=== DEMANDE ===\nmets les boutons en vert')
     expect(consigne.empreinteConsigne).toMatch(/^[0-9a-f]{16}$/u)
     expect(b.etapes[2]?.donnees.texte, 'la réponse brute n’est pas mot pour mot').toBe(etat.texte)
+  })
+  it('2026-11-23 : les contrôles d’avant et d’après, la comparaison, le message montré, l’analyse', async () => {
+    const r = await appel()
+    const corps = (await r.clone().json()) as Record<string, unknown>
+    const b = etat.boites[0] as { etapes: { type: string; donnees: Record<string, unknown> }[]; analyse_phrases: { phrases: unknown[]; fiabilite: string; constats: unknown[] } }
+    const c = b.etapes.find((e) => e.type === 'controles')?.donnees as { avant: { nom: string }[]; apres: { nom: string }[]; comparaison: { regressions: unknown[] }; porteeApres: Record<string, unknown> }
+    expect(c.avant.map((n) => n.nom)).toContain('lecture publique')
+    expect(c.apres.map((n) => n.nom)).toEqual(c.avant.map((n) => n.nom))
+    expect(c.comparaison.regressions).toEqual([])
+    expect(c.porteeApres, 'ce qui a tourné, ou pas, se dit').toBeDefined()
+    const l = b.etapes.find((e) => e.type === 'livraison')?.donnees as { messageMontre: unknown; genre: string }
+    const { messageDeRetouche, suffixeCompteur } = await import('@/lib/apps/message-de-retouche')
+    const attendu = messageDeRetouche(corps, r.ok, suffixeCompteur({ compteur: { exempte: false }, livree: r.ok && corps.ok === true, aConfirmer: false, coutUsd: corps.coutUsd as number, modificationsRestantes: corps.modificationsRestantes as number }))
+    expect(l.messageMontre, 'messageMontre valait null sur 1a4298f8').toBe(attendu.texte)
+    expect(l.genre).toBe(attendu.genre)
+    expect(b.analyse_phrases.phrases.length, 'l’analyse n’est plus « non calculée »').toBeGreaterThan(0)
+    expect(b.analyse_phrases.fiabilite).toContain('FIABLE')
+  })
+  it('une modification arrêtée avant les juges : la boîte dit que rien n’a tourné', async () => {
+    etat.texte = ''
+    await appel()
+    const b = etat.boites[0] as { etapes: { type: string; donnees: Record<string, unknown> }[] }
+    expect(String(b.etapes.find((e) => e.type === 'controles')?.donnees.nonTourne)).toMatch(/aucun contrôle n’a tourné/u)
   })
   it('une écriture refusée : la réponse rendue est EXACTEMENT la même', async () => {
     const avec = await (await appel()).json()

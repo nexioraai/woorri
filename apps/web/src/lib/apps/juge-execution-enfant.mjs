@@ -258,6 +258,9 @@ const muetsVus = new Set()
  *  portee trop etroite faisait sortir l'enfant SANS verdict, l'erreur
  *  avalee par le filet d'exceptions (mesure du 2026-11-01). */
 const ecransOuverts = new Map()
+/** LES CONTRÔLES CONNUS MAIS NON OUVERTS, NOMMÉS (2026-11-23) : la boîte
+ *  noire disait « 24 sur 80 » sans dire LESQUELS restaient. */
+let nonOuverts = []
 if (racineNav !== null) {
   // ── ON RÉÉNUMÈRE APRÈS CHAQUE CLIC, et c'est la correction du défaut.
   //
@@ -361,6 +364,11 @@ if (racineNav !== null) {
   for (const k of restants) connus.add(k)
   decouverts = connus.size
   ecransDistincts = ecransVus.size
+  const lisible = (k) => {
+    const [balise, , ...texte] = k.split('|')
+    return `${String(balise).toLowerCase()} « ${texte.join('|') || '(sans texte)'} »`
+  }
+  nonOuverts = [...new Set([...connus].filter((k) => !vus.has(k)).map(lisible))].slice(0, 150)
 }
 
 const racine = document.getElementById('racine')
@@ -379,6 +387,7 @@ writeFileSync(
     ecransDecouverts: decouverts,
     ecransDistincts: ecransDistincts,
     controlesMuets: muets.slice(0, 12),
+    controlesNonOuverts: nonOuverts,
     ecrans: [...ecransOuverts.values()].map((e) => ({ texte: e.texte, exerce: e.exerce })),
   }),
 )

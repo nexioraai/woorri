@@ -79,7 +79,7 @@ export function lecturesDuCode(fichiers: ReadonlyMap<string, string>): Lecture[]
 }
 
 /** Les colonnes vrai/faux qu'un `.filter(` du code consulte. */
-function colonnesTrieesALEcran(fichiers: ReadonlyMap<string, string>, booleens: readonly string[]): Set<string> {
+export function colonnesTrieesALEcran(fichiers: ReadonlyMap<string, string>, booleens: readonly string[]): Set<string> {
   const vues = new Set<string>()
   if (booleens.length === 0) return vues
   for (const [chemin, code] of fichiers) {

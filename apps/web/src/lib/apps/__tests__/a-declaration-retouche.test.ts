@@ -99,7 +99,10 @@ describe('A · la déclaration d’une retouche', () => {
     const route = readFileSync(path.join(__dirname, '../../../app/api/generateur/retoucher/route.ts'), 'utf8')
     expect(route).toMatch(motifTexte('illisible, refus: declaration.refus, pertes: fusion.pertes,'))
     expect(route).toMatch(motifTexte('...(declarationRejetee === null ? {} : { declarationRejetee })'))
+    // 2026-11-23 : la phrase vit dans le module partagé avec la boîte noire ; l'écran l'emploie.
     const atelier = readFileSync(path.join(__dirname, '../../../app/atelier/[id]/page.tsx'), 'utf8')
-    expect(atelier).toMatch(motifTexte("(d.declarationRejetee === undefined ? '' : ` ${d.declarationRejetee}`)"))
+    expect(atelier).toMatch(motifTexte('messageDeRetouche(d, res.ok, paye)'))
+    const message = readFileSync(path.join(__dirname, '../message-de-retouche.ts'), 'utf8')
+    expect(message).toMatch(motifTexte("(d.declarationRejetee === undefined ? '' : ` ${d.declarationRejetee}`)"))
   })
 })

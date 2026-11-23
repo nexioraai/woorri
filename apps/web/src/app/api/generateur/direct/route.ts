@@ -49,6 +49,7 @@ import { FUSIBLE_SIGNES, lectureAEnregistrer } from '@/lib/apps/lecture-brief'
 import { deploiementQuiSert } from '@/lib/apps/deploiement'
 import { ecrireTentative, type Issue } from '@/lib/apps/tentatives'
 import { NOTE_EPROUVEE_PARTIELLEMENT, NOTE_JUGE_INDISPONIBLE } from '@/lib/apps/notes-internes'
+import { messageDeCreation, type CorpsCreation } from '@/lib/apps/message-de-creation'
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { TEMOIN_FICHIERS } from '@/lib/apps/temoin-sonde'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
@@ -479,7 +480,7 @@ async function postSansReserve(req: Request) {
   let messagesVus = 0
   let derniereConsigne = ''
   /** Le code et le schéma LIVRÉS, pour l'analyse phrase par phrase. */
-  let livre: { readonly code: string; readonly schema: string } | null = null
+  let livre: { readonly code: string; readonly schema: string; readonly fichiers: ReadonlyMap<string, string>; readonly politiques: string } | null = null
   let idCourant: string | null = idExistant !== '' ? idExistant : null
 
   /**
@@ -625,21 +626,30 @@ async function postSansReserve(req: Request) {
         tablesFinales: entitesCourantes.map((e) => ({ id: e.id, champs: e.fields.map((f) => `${f.name}: ${f.type}`) })),
       })
       const ouRien = (v: unknown): unknown => v ?? 'n’a pas tourné (ou rien rendu)'
+      const ex = fin.execution as { ecransVisites?: number; ecransDecouverts?: number; controlesNonOuverts?: readonly string[]; indisponible?: string } | null | undefined
       boite.noter('controles', 'Les contrôles avant livraison', {
+        // COMBIEN ONT ÉTÉ OUVERTS SUR COMBIEN, ET LESQUELS NE L'ONT PAS ÉTÉ (2026-11-23).
+        portee: ex === null || ex === undefined
+          ? 'le juge d’exécution n’a pas tourné'
+          : ex.indisponible !== undefined
+            ? `le juge d’exécution n’a pas pu s’exécuter : ${ex.indisponible}`
+            : { ouverts: ex.ecransVisites ?? 0, connus: ex.ecransDecouverts ?? 0, nonOuverts: ex.controlesNonOuverts ?? [], ou: 'aperçu en mémoire, sans base ni connexion' },
         execution: ouRien(fin.execution), couverture: ouRien(fin.couverture), vivacite: ouRien(fin.vivacite),
-        persistance: ouRien(fin.persistance), jetons: ouRien(fin.jetons),
+        persistance: ouRien(fin.persistance), jetons: ouRien(fin.jetons), lecturePublique: ouRien(fin.lecturePublique),
       })
       boite.noter('mesures', 'Modèle, jetons, coût, durée', {
         fournisseur, modele: config.modele, jetonsEntree: entree, jetonsSortie: sortie, coutUsd: fin.coutUsd ?? null, dureeMs: fin.dureeMs ?? null, tours: toursBoite,
       })
       boite.noter('livraison', 'Ce qui a été livré, et le message montré au client', {
         ok: fin.ok === true, id: fin.id ?? idCourant, fichiers: fin.fichiers ?? 0,
-        // Le fil de l'atelier dit cette phrase fixe après une création (fil-atelier.ts) ; en cas d'échec, l'erreur ci-dessous.
-        messageMontre: fin.ok === true ? 'J’ai créé votre application.' : String(fin.error ?? fin.motif ?? ''),
+        // LE MESSAGE RÉELLEMENT MONTRÉ (2026-11-23) : la bulle de la conversation,
+        // calculée par la MÊME fonction que l'écran ; en cas d'échec, l'avis
+        // que l'écran affiche (`d.error ?? d.motif`).
+        messageMontre: fin.ok === true ? messageDeCreation(fin as CorpsCreation) : String(fin.error ?? fin.motif ?? ''),
       })
       const analyse = livre === null
         ? { phrases: [], resume: null, fiabilite: 'aucune livraison : rien à comparer' }
-        : analyserDemande({ demande, entites: entitesCourantes, roles: (lectureBrief as { readonly roles?: readonly string[] } | null)?.roles ?? [], code: livre.code, schema: livre.schema })
+        : analyserDemande({ demande, entites: entitesCourantes, roles: (lectureBrief as { readonly roles?: readonly string[] } | null)?.roles ?? [], code: livre.code, schema: livre.schema, livre: { entites: entitesCourantes, fichiers: livre.fichiers, politiques: livre.politiques } })
       await boite.enregistrer(supabaseAdmin as never, { generationId: typeof fin.id === 'string' ? fin.id : idCourant, issue: fin.ok === true ? 'livree' : 'echec', analyse })
     } catch (e) {
       console.error('[boite-noire] fermeture', e instanceof Error ? e.message : e)
@@ -1303,7 +1313,7 @@ async function postSansReserve(req: Request) {
     return { ok: false as const, error: phrase, motif: phrase, tours: resultat.tours, coutUsd, dureeMs }
   }
 
-  livre = { code: [...resultat.fichiers.values()].join('\n'), schema: schemaDeLOeuvre }
+  livre = { code: [...resultat.fichiers.values()].join('\n'), schema: schemaDeLOeuvre, fichiers: resultat.fichiers, politiques: politiquesDeLOeuvre }
   return {
     ok: true as const,
     id: ecrit.data?.id ?? null,
