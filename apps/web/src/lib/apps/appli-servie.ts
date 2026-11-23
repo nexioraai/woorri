@@ -10,9 +10,17 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { nomValide } from '@/lib/apps/sous-domaine'
 import { apparenceDuDocument } from '@/lib/apps/apparence'
-import { identitePwa, type IdentitePwa } from '@/lib/apps/pwa'
+import { identitePwa, pageDOuverture, type IdentitePwa } from '@/lib/apps/pwa'
+import { lecturePubliqueDe, type EntiteDeclaree } from '@/lib/apps/entites-declarees'
+
+export type AppliServie = { readonly identite: IdentitePwa; readonly ouverture: string }
 
 export async function identiteDeLAppliServie(sous: string): Promise<IdentitePwa | null> {
+  return (await appliServie(sous))?.identite ?? null
+}
+
+/** L'appli publiée sous ce nom : son identité, et la page où elle s'ouvre une fois installée. */
+export async function appliServie(sous: string): Promise<AppliServie | null> {
   if (!nomValide(sous)) return null
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
@@ -21,7 +29,35 @@ export async function identiteDeLAppliServie(sous: string): Promise<IdentitePwa 
     .maybeSingle()
   if (lu.error !== null || lu.data === null || lu.data.publication_jeton === null) return null
   const titre = typeof lu.data.nom === 'string' && lu.data.nom !== '' ? lu.data.nom : 'Application'
-  return identitePwa(titre, apparenceDuDocument(lu.data.document))
+  const doc = lu.data.document as { schema?: string; entites?: readonly EntiteDeclaree[] } | null
+  return {
+    identite: identitePwa(titre, apparenceDuDocument(lu.data.document)),
+    ouverture: pageDOuverture({
+      aUneBase: (doc?.schema ?? '').includes('create table'),
+      aUnePagePublique: (doc?.entites ?? []).some(lecturePubliqueDe),
+    }),
+  }
+}
+
+// ── L'ARRÊT D'URGENCE DE L'INSTALLATION (décision du propriétaire, 2026-11-22).
+//
+// Un seul réglage, `quota_reglages.pwa_arret = 'oui'`, et TOUTES les applis :
+//   · servent un service worker qui efface son cache et se désinstalle ;
+//   · ne servent plus de manifeste (404) : plus d'invitation à installer ;
+//   · leur page ne porte plus le lien du manifeste ni l'inscription, mais un
+//     petit script qui retire un service worker déjà installé.
+// Réglage absent, vide, autre que « oui », ou ILLISIBLE : marche normale —
+// l'arrêt est un geste du propriétaire, jamais l'effet d'une panne de lecture.
+export const CLE_ARRET_INSTALLATION = 'pwa_arret'
+
+export async function installationArretee(): Promise<boolean> {
+  try {
+    const r = await supabaseAdmin.from('quota_reglages').select('valeur').eq('cle', CLE_ARRET_INSTALLATION).maybeSingle()
+    if (r.error !== null || r.data === null) return false
+    return String((r.data as { valeur?: unknown }).valeur ?? '').trim().toLowerCase() === 'oui'
+  } catch {
+    return false
+  }
 }
 
 export const introuvable = (): Response =>

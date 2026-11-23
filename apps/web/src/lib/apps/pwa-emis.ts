@@ -27,3 +27,12 @@ export const MARQUE_HTML_APRES = '<html lang="fr" data-deribfy-hors-ligne="1">'
  */
 export const INSCRIPTION_SERVICE_WORKER =
   `<script>(function(){try{if(!("serviceWorker" in navigator))return;if(!/\\.deribfy\\.app$/.test(location.hostname))return;navigator.serviceWorker.register(${JSON.stringify(CHEMIN_SERVICE_WORKER)},{scope:"/"}).catch(function(){})}catch(e){}})()</script>`
+
+/**
+ * L'ARRÊT D'URGENCE, CÔTÉ PAGE (2026-11-22) : ni manifeste ni inscription ;
+ * on demande au navigateur de revérifier `/sw.js`, qui sert alors le service
+ * worker d'arrêt — c'est LUI qui efface les caches et se désinstalle. Un
+ * seul chemin de nettoyage.
+ */
+export const RELANCE_ARRET_SERVICE_WORKER =
+  `<script>(function(){try{if(!("serviceWorker" in navigator))return;if(!/\\.deribfy\\.app$/.test(location.hostname))return;navigator.serviceWorker.getRegistration().then(function(r){if(r)r.update()}).catch(function(){})}catch(e){}})()</script>`

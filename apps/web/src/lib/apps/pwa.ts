@@ -22,6 +22,7 @@
  * résoluble ni de portée — et Bubblewrap (Play) lit un manifeste par son URL.
  */
 import type { Apparence } from './apparence'
+import { ADRESSE_GESTION } from './entites-declarees'
 
 /** Les chemins publics, sous l'origine de l'appli. Le proxy les mène aux routes internes. */
 export const CHEMIN_MANIFESTE = '/manifest.webmanifest'
@@ -40,6 +41,13 @@ export const FOND_PAR_DEFAUT = '#f7f8fb'
 /** Chrome tronque le nom sous l'icône vers 12 signes : on coupe au mot. */
 const LONGUEUR_NOM_COURT = 12
 
+/**
+ * LES PETITS MOTS PAR LESQUELS UN NOM COURT NE FINIT JAMAIS (décision du
+ * propriétaire, 2026-11-22) : « Gestion de » n'est pas présentable.
+ */
+export const PETITS_MOTS: ReadonlySet<string> = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'à', 'a', 'pour', 'en', 'au', 'aux', 'sur', 'par', 'un', 'une', "d'", "l'", 'd’', 'l’'])
+const estPetitMot = (m: string): boolean => PETITS_MOTS.has(m.toLocaleLowerCase('fr'))
+
 export type IdentitePwa = {
   readonly nom: string
   readonly nomCourt: string
@@ -50,23 +58,55 @@ export type IdentitePwa = {
 
 export function identitePwa(titre: string, apparence: Apparence | null): IdentitePwa {
   const nom = titre.replace(/[<>&"]/gu, '').replace(/\s+/gu, ' ').trim() || 'Application'
-  let nomCourt = nom
-  if (nomCourt.length > LONGUEUR_NOM_COURT) {
-    const mots = nom.split(' ')
-    nomCourt = mots[0] ?? nom
-    for (const m of mots.slice(1)) {
-      if (`${nomCourt} ${m}`.length > LONGUEUR_NOM_COURT) break
-      nomCourt = `${nomCourt} ${m}`
-    }
-    nomCourt = nomCourt.slice(0, LONGUEUR_NOM_COURT)
-  }
+  const nomCourt = nomCourtDe(nom)
   // La première LETTRE (accents compris), sinon le premier chiffre, sinon « A ».
   const lettre = /\p{L}|\p{N}/u.exec(nom)?.[0] ?? 'A'
   return { nom, nomCourt, couleur: apparence?.couleur ?? COULEUR_PAR_DEFAUT, initiale: lettre.toLocaleUpperCase('fr') }
 }
 
+/**
+ * LE NOM SOUS L'ICÔNE (2026-11-22), au plus 12 signes, coupé au MOT, et
+ * jamais fini par un petit mot. Pour un nom « X de Y… » (« Gestion de
+ * pharmacie »), c'est la partie PROPRE à l'appli qui parle : « Pharmacie »,
+ * pas « Gestion ». Sinon, le début du nom.
+ */
+export function nomCourtDe(nom: string): string {
+  if (nom.length <= LONGUEUR_NOM_COURT) return nom
+  const mots = nom.split(' ').filter((m) => m !== '')
+  const prendre = (liste: readonly string[]): string => {
+    let r = ''
+    for (const m of liste) {
+      const suite = r === '' ? m : `${r} ${m}`
+      if (suite.length > LONGUEUR_NOM_COURT) break
+      r = suite
+    }
+    const reste = r.split(' ')
+    while (reste.length > 1 && estPetitMot(reste[reste.length - 1] ?? '')) reste.pop()
+    return reste.join(' ')
+  }
+  const i = mots.findIndex((m, k) => k > 0 && estPetitMot(m))
+  if (i > 0) {
+    let j = i
+    while (j < mots.length && estPetitMot(mots[j] ?? '')) j += 1
+    const propre = prendre(mots.slice(j))
+    if (propre !== '' && !estPetitMot(propre)) return propre.charAt(0).toLocaleUpperCase('fr') + propre.slice(1)
+  }
+  return prendre(mots) || nom.slice(0, LONGUEUR_NOM_COURT)
+}
+
+/**
+ * OÙ S'OUVRE L'APPLI INSTALLÉE (règle du propriétaire, 2026-11-22) : du côté
+ * VISITEURS — la face publique, à `/`. Le propriétaire entre dans sa gestion
+ * par « Espace de gestion », avec son mot de passe. Une appli qui a une base
+ * mais AUCUNE liste publique n'a pas de face visiteurs : elle s'ouvre sur la
+ * connexion, à l'adresse de la gestion. Sans base, `/` (il n'y a qu'une face).
+ */
+export function pageDOuverture(o: { readonly aUneBase: boolean; readonly aUnePagePublique: boolean }): string {
+  return o.aUneBase && !o.aUnePagePublique ? `/${ADRESSE_GESTION}` : '/'
+}
+
 /** Le manifeste de l'appli, servi à `CHEMIN_MANIFESTE`. */
-export function manifestePwa(id: IdentitePwa): Record<string, unknown> {
+export function manifestePwa(id: IdentitePwa, ouverture = '/'): Record<string, unknown> {
   return {
     // `id` STABLE : Chrome (et Play) reconnaissent l'appli par lui, même si
     // son nom change. Relatif à l'origine — chaque appli a la sienne.
@@ -74,7 +114,7 @@ export function manifestePwa(id: IdentitePwa): Record<string, unknown> {
     name: id.nom,
     short_name: id.nomCourt,
     lang: 'fr',
-    start_url: '/',
+    start_url: ouverture,
     scope: '/',
     display: 'standalone',
     background_color: FOND_PAR_DEFAUT,

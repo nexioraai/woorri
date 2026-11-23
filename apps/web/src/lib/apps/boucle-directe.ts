@@ -20,7 +20,7 @@
  */
 import { cssApparence, type Apparence } from './apparence'
 import { CHEMIN_MANIFESTE, CHEMINS_ICONES, identitePwa } from './pwa'
-import { BANDEAU_HORS_LIGNE, INSCRIPTION_SERVICE_WORKER } from './pwa-emis'
+import { BANDEAU_HORS_LIGNE, INSCRIPTION_SERVICE_WORKER, RELANCE_ARRET_SERVICE_WORKER } from './pwa-emis'
 import { LIEN_COMPTE_EMIS } from './page-compte'
 import { assembler } from './bac-a-sable'
 import {
@@ -1341,10 +1341,13 @@ export function pageAutonome(
    * icônes et service worker (`pwa.ts`). Ailleurs (aperçu, archive, lien par
    * jeton), le manifeste reste cuit en `data:` comme avant.
    */
-  installable = false,
+  installable: boolean | 'arret' = false,
 ): string {
   const sur = titre.replace(/[<>&"]/gu, '')
-  const pwa = installable ? identitePwa(titre, apparence) : null
+  const pwa = installable === true ? identitePwa(titre, apparence) : null
+  // L'ARRÊT D'URGENCE (2026-11-22) : aucune invitation à installer, et le
+  // service worker déjà posé est remplacé par celui d'arrêt.
+  const arret = installable === 'arret'
   // ── LA CONFIGURATION EST SÉRIALISÉE EN JSON, PAS INTERPOLÉE À LA MAIN.
   //
   // `JSON.stringify` échappe ce qu'il faut ; une concaténation de guillemets
@@ -1368,12 +1371,12 @@ export function pageAutonome(
     '<meta name="viewport" content="width=device-width, initial-scale=1" />',
     `<title>${sur}</title>`,
     // N2 : installable — manifeste cuit, balises Apple, couleur de thème.
-    pwa !== null ? `<link rel="manifest" href="${CHEMIN_MANIFESTE}" />` : `<link rel="manifest" href="${manifesteDataUri(sur)}" />`,
+    arret ? RELANCE_ARRET_SERVICE_WORKER : pwa !== null ? `<link rel="manifest" href="${CHEMIN_MANIFESTE}" />` : `<link rel="manifest" href="${manifesteDataUri(sur)}" />`,
     `<meta name="theme-color" content="${apparence?.couleur ?? '#2a5bd7'}" />`,
     '<meta name="apple-mobile-web-app-capable" content="yes" />',
     '<meta name="apple-mobile-web-app-status-bar-style" content="default" />',
     `<meta name="apple-mobile-web-app-title" content="${sur}" />`,
-    pwa !== null ? `<link rel="apple-touch-icon" href="${CHEMINS_ICONES[192]}" />` : `<link rel="apple-touch-icon" href="data:image/png;base64,${ICONE_192}" />`,
+    arret ? '' : pwa !== null ? `<link rel="apple-touch-icon" href="${CHEMINS_ICONES[192]}" />` : `<link rel="apple-touch-icon" href="data:image/png;base64,${ICONE_192}" />`,
     pwa !== null ? `<link rel="icon" type="image/png" href="${CHEMINS_ICONES[192]}" />` : '',
     pwa !== null ? INSCRIPTION_SERVICE_WORKER : '',
     `<style>${VARIABLES_CSS}*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--foreground);font-family:system-ui,-apple-system,sans-serif}</style>`,

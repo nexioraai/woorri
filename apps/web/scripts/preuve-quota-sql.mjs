@@ -38,6 +38,9 @@ const PAIEMENTS_FRAIS_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'p
 const CYCLE = readFileSync(join(ICI, '..', 'supabase', 'sql', 'stripe_cycle_de_vie.sql'), 'utf8')
 const CYCLE_VERIF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'stripe_cycle_de_vie_verification.sql'), 'utf8')
 const CYCLE_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'stripe_cycle_de_vie_annulation.sql'), 'utf8')
+const PWA = readFileSync(join(ICI, '..', 'supabase', 'sql', 'pwa_arret.sql'), 'utf8')
+const PWA_VERIF = readFileSync(join(ICI, '..', 'supabase', 'sql', 'pwa_arret_verification.sql'), 'utf8')
+const PWA_ANNUL = readFileSync(join(ICI, '..', 'supabase', 'sql', 'pwa_arret_annulation.sql'), 'utf8')
 const PORT = 54000 + Math.floor(Math.random() * 900)
 const DOSSIER = mkdtempSync(join(tmpdir(), 'preuve-quota-'))
 const URL = `postgresql://postgres@127.0.0.1:${PORT}/postgres`
@@ -362,6 +365,20 @@ try {
   verdict((await admin.query(`select count(*)::int n from public.app_paiements where objet = 'annulation'`)).rows[0].n === 2, 'cycle : l’annulation du fichier garde les 2 lignes d’annulation du registre')
   await admin.query(CYCLE)
 
+  // ════ L'ARRÊT D'URGENCE DE L'INSTALLATION (2026-11-22) ════
+  const clesAvant = (await admin.query('select count(*)::int n from public.quota_reglages')).rows[0].n
+  await admin.query(PWA)
+  await admin.query(PWA)
+  const pwa = (await admin.query(PWA_VERIF)).rows
+  verdict(pwa.length === 1 && pwa[0].valeur === '' && Number(pwa[0].cles_au_total) === clesAvant + 1, `arrêt d’urgence : la clé pwa_arret posée VIDE, une seule fois (${clesAvant} → ${String(pwa[0]?.cles_au_total)} clés)`)
+  verdict(await refuse(admin, `insert into public.quota_reglages (cle, valeur) values ('pas_une_cle', 'x')`, [], 'quota_reglages_cle_check'), 'arrêt d’urgence : la liste des clés reste fermée')
+  await admin.query(`update public.quota_reglages set valeur = 'oui' where cle = 'pwa_arret'`)
+  verdict((await admin.query(`select valeur from public.quota_reglages where cle = 'pwa_arret'`)).rows[0].valeur === 'oui', 'arrêt d’urgence : le propriétaire l’active d’une écriture')
+  await admin.query(PWA_ANNUL)
+  verdict((await admin.query(`select count(*)::int n from public.quota_reglages where cle = 'pwa_arret'`)).rows[0].n === 0, 'arrêt d’urgence : l’annulation retire la clé et remet la liste d’avant')
+  verdict(await refuse(admin, `insert into public.quota_reglages (cle, valeur) values ('pwa_arret', '')`, [], 'quota_reglages_cle_check'), 'arrêt d’urgence : après l’annulation, la clé n’est plus permise')
+  await admin.query(PWA)
+
   // ── Ajout seul : le registre et l'historique refusent update et delete.
   verdict(await refuse(svc, `update public.app_paiements set montant = 0`, [], ''), 'registre : un update est refusé')
   verdict(await refuse(admin, `delete from public.app_paiements`, [], 'AJOUT_SEUL'), 'registre : un delete est refusé, même au propriétaire de la base')
@@ -387,6 +404,13 @@ try {
   verdict((await svc.query('select public.reserver_creation($1) r', [AUTRE])).rows[0].r === null, 'un compte avec une appli livrée NON payée : nouvelle création refusée')
   // Le compte PROPRIO : toutes ses applis livrées sont payées (A abonnée, la publiée offerte) → permis.
   verdict((await svc.query('select public.reserver_creation($1) r', [PROPRIO])).rows[0].r !== null, 'un compte dont les applis sont payées : nouvelle création permise')
+  // ── B2, LE CONSTAT (2026-11-22) : la BASE SEULE rend une création gratuite à
+  //    un compte dont l'appli gratuite a été SUPPRIMÉE sans être payée — elle
+  //    ne compte que les applis `livree`. La fermeture vit dans le code, avant
+  //    la réservation (etatDeLaGratuite, quota.ts ; gratuite-une-fois.test.ts).
+  const SUPPR = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
+  await admin.query(`insert into public.app_generations values ('eeeeeeee-0000-4000-8000-000000000001', $1, 'supprimee', null)`, [SUPPR])
+  verdict((await svc.query('select public.reserver_creation($1) r', [SUPPR])).rows[0].r !== null, 'CONSTAT B2 : la base seule accorde une création au compte dont l’appli gratuite a été supprimée (le code la refuse avant)')
 
   // ── Personne d'autre que la clé de service.
   const anon = new pg.Client({ connectionString: `postgresql://testeur_anon@127.0.0.1:${PORT}/postgres` })

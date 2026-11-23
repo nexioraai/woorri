@@ -12,12 +12,14 @@
 | 2 | Toucher l'écran une fois, attendre une trentaine de secondes sur la page | rien de visible : Chrome exige un geste et un peu de temps avant de proposer l'installation |
 | 3 | Menu **⋮** (en haut à droite) | une ligne **« Installer l'application »** (ou « Ajouter à l'écran d'accueil » sur un Chrome ancien). Parfois Chrome la propose seul, en bas de l'écran |
 | 4 | Toucher « Installer » | une fenêtre montre **l'icône verte avec un « G » blanc** et le nom **« Gestion de pharmacie »** ; confirmer |
-| 5 | Revenir à l'écran d'accueil du téléphone | l'icône verte « G », avec sous elle le nom court (**« Gestion de »**, coupé au mot) |
-| 6 | Toucher l'icône | l'appli s'ouvre **en plein écran, sans barre d'adresse** : comme une vraie appli |
+| 5 | Revenir à l'écran d'accueil du téléphone | l'icône verte « G », avec sous elle le nom court **« Pharmacie »** |
+| 6 | Toucher l'icône | l'appli s'ouvre **en plein écran, sans barre d'adresse**. **pharma n'a pas de page publique (mesuré le 2026-11-22) : elle s'ouvre sur la CONNEXION** (adresse et mot de passe de l'appli). Pour montrer le côté VISITEURS, prendre `https://atitta.deribfy.app` (« Atelier de réparation automobile », nom court « Réparation ») : elle s'ouvre sur sa page publique, et le propriétaire entre par « Espace de gestion » |
 | 7 | *(facultatif)* Passer le téléphone en mode avion, rouvrir l'appli | elle s'ouvre sur son écran d'accueil, avec en haut **« Pas de connexion — ce que vous voyez peut ne pas être à jour, et rien ne s'enregistre. »** Rien ne s'enregistre tant que le réseau manque |
 | 8 | Couper le mode avion | la page se recharge seule, le bandeau disparaît |
 
 ## Si quelque chose ne va pas
+
+- **Arrêt d'urgence** : si l'installation pose un problème chez un client, mettre `quota_reglages.pwa_arret` à `oui` (éditeur SQL de nexiora-ai). À la prochaine ouverture de chaque appli, son service worker efface sa copie et se désinstalle, et l'invitation à installer disparaît. Remettre à vide pour revenir à la marche normale.
 
 - **Pas de ligne « Installer » au pas 3** : vérifier que c'est bien Chrome, que l'adresse est en `https://<nom>.deribfy.app`, et attendre 30 secondes de plus après avoir touché la page. Si elle n'apparaît toujours pas, m'envoyer le modèle du téléphone et la version de Chrome (Paramètres → À propos de Chrome).
 - **L'icône est bleue avec un carré** : c'est l'ancienne installation (d'avant le commit). Désinstaller l'icône et recommencer.
@@ -25,5 +27,6 @@
 
 ## Ce qui est prouvé, et ce qui ne l'est pas
 
-- **Prouvé** dans Chromium (bureau, émulation d'un téléphone Android), sous la vraie CSP de production : installabilité sans aucune erreur (`Page.getInstallabilityErrors` vide), manifeste sans erreur, icônes 192/512/maskable chargées, service worker actif, écran hors ligne, mise à jour automatique, effacement à la dépublication.
+- **Prouvé** dans Chromium (bureau, émulation d'un téléphone Android), sous la vraie CSP de production : le manifeste est lu et analysé par Chrome sans erreur (`Page.getAppManifest`), les icônes 192/512/maskable se chargent aux bonnes tailles, le service worker est actif, l'écran hors ligne, la mise à jour automatique, l'effacement à la dépublication, l'arrêt d'urgence. Les champs exigés par Chrome sont tenus par les tests de la gate.
+- **Retiré comme preuve (2026-11-22)** : `Page.getInstallabilityErrors` rendait une liste vide — mais il la rend AUSSI sur une page sans aucun manifeste. Dans ce navigateur sans écran, ce signal ne distingue rien.
 - **Pas prouvé** : l'installation sur un vrai téléphone Android, et le dessin exact de l'icône découpée par le lanceur du téléphone. C'est l'essai du jour J.

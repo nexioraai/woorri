@@ -18,6 +18,7 @@ import { apparenceDuDocument } from '@/lib/apps/apparence'
 import { baseDeLOeuvre } from '@/lib/apps/base-de-l-oeuvre'
 import { entetesSousDomaine } from '@/lib/apps/publication'
 import { nomValide } from '@/lib/apps/sous-domaine'
+import { installationArretee } from '@/lib/apps/appli-servie'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -71,7 +72,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ sous: string }
     // LE LIEN « COMPTE » seulement si l'appli a une base : sans elle, pas de compte.
     // INSTALLABLE (2026-11-22) : sous SA propre origine, la page porte le manifeste,
     // les icônes et le service worker de l'appli (pwa.ts).
-    pageAutonome(v.code, titre, base, 'servie', null, apparenceDuDocument(lu.data.document), base !== undefined && base.url !== '', true),
+    pageAutonome(v.code, titre, base, 'servie', null, apparenceDuDocument(lu.data.document), base !== undefined && base.url !== '', (await installationArretee()) ? 'arret' : true),
     { status: 200, headers: entetesSousDomaine(base?.url ?? '') },
   )
 }

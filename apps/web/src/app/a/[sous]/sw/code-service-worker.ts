@@ -81,3 +81,21 @@ export function pageHorsLigne(nomAppli: string): string {
     '<button onclick="location.reload()" style="padding:10px 18px;border-radius:10px;border:0;background:#1f2937;color:#fff;font-size:15px">Réessayer</button></div></body></html>'
 }
 
+
+/**
+ * LE SERVICE WORKER D'ARRÊT (2026-11-22) : servi quand l'arrêt d'urgence est
+ * activé. Le navigateur revérifie `/sw.js` à chaque ouverture (no-cache) : il
+ * remplace l'ancien, efface TOUS les caches, se désinstalle, et recharge les
+ * pages ouvertes — qui se rechargent alors sans service worker. Aucun
+ * gestionnaire `fetch` : il ne sert plus rien.
+ */
+export const CODE_SERVICE_WORKER_ARRET = `'use strict';
+self.addEventListener('install', () => { self.skipWaiting(); });
+self.addEventListener('activate', (e) => {
+  e.waitUntil((async () => {
+    for (const k of await caches.keys()) await caches.delete(k);
+    await self.registration.unregister();
+    for (const c of await self.clients.matchAll({ type: 'window' })) c.navigate(c.url);
+  })());
+});
+`

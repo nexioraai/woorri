@@ -21,17 +21,22 @@ vi.mock('server-only', () => ({}))
 vi.mock('@/app/sites/[slug]/themes/shared', () => ({ fetchSiteEtLangueParDomaine: async () => null, fetchSiteParNomPublic: async () => null, fetchSiteParSlug: async () => null }))
 const etat = vi.hoisted(() => ({
   ligne: null as null | Record<string, unknown>,
+  arret: null as null | { data: unknown; error: unknown },
   journal: { filtres: {}, projections: {}, ecritures: {} } as import('@/lib/testing/postgrest').JournalPostgrest,
 }))
 vi.mock('@/lib/supabase-admin', async () => {
   const { creerFrom } = await import('@/lib/testing/postgrest')
   const { TABLE_GENERATIONS } = await import('@/lib/apps/journal')
-  return { supabaseAdmin: { from: creerFrom({ [TABLE_GENERATIONS]: { reponse: () => ({ data: etat.ligne, error: null }) } }, etat.journal) } }
+  return { supabaseAdmin: { from: creerFrom({
+    [TABLE_GENERATIONS]: { reponse: () => ({ data: etat.ligne, error: null }) },
+    // L'arrêt d'urgence : `quota_reglages.pwa_arret` (absent par défaut).
+    quota_reglages: { reponse: () => etat.arret ?? { data: null, error: null } },
+  }, etat.journal) } }
 })
 
-import { CHEMINS_ICONES, CHEMIN_MANIFESTE, CHEMIN_SERVICE_WORKER, identitePwa, manifestePwa } from '../pwa'
-import { BANDEAU_HORS_LIGNE, INSCRIPTION_SERVICE_WORKER, MARQUE_HTML_APRES } from '../pwa-emis'
-import { codeServiceWorker, VERSION_SERVICE_WORKER } from '@/app/a/[sous]/sw/code-service-worker'
+import { CHEMINS_ICONES, CHEMIN_MANIFESTE, CHEMIN_SERVICE_WORKER, identitePwa, manifestePwa, nomCourtDe, pageDOuverture, PETITS_MOTS } from '../pwa'
+import { BANDEAU_HORS_LIGNE, INSCRIPTION_SERVICE_WORKER, MARQUE_HTML_APRES, RELANCE_ARRET_SERVICE_WORKER } from '../pwa-emis'
+import { codeServiceWorker, CODE_SERVICE_WORKER_ARRET, VERSION_SERVICE_WORKER } from '@/app/a/[sous]/sw/code-service-worker'
 import { cheminApplication } from '@/proxy'
 import { pageAutonome } from '../boucle-directe'
 import { cspSousDomaine, CSP_PAGE_PUBLIEE } from '../publication'
@@ -43,6 +48,7 @@ import { geometrieIcone } from '../icone-appli'
 const PUBLIEE = { nom: 'Gestion de stock', document: { apparence: { couleur: '#0f766e' } }, publication_jeton: 'jt-1' }
 beforeEach(() => {
   etat.ligne = { ...PUBLIEE }
+  etat.arret = null
   etat.journal.filtres = {}; etat.journal.projections = {}; etat.journal.ecritures = {}
 })
 const param = (sous: string, forme = '') => ({ params: Promise.resolve({ sous, forme }) })
@@ -50,7 +56,7 @@ const req = new Request('https://gestion-stock.deribfy.app/')
 
 describe('a) son nom, sa couleur, son initiale', () => {
   it('le nom court se coupe au MOT sous 12 signes ; l’initiale garde son accent ; la couleur est celle de l’appli', () => {
-    expect(identitePwa('Gestion de stock', { couleur: '#0f766e' })).toEqual({ nom: 'Gestion de stock', nomCourt: 'Gestion de', couleur: '#0f766e', initiale: 'G' })
+    expect(identitePwa('Gestion de stock', { couleur: '#0f766e' })).toEqual({ nom: 'Gestion de stock', nomCourt: 'Stock', couleur: '#0f766e', initiale: 'G' })
     expect(identitePwa('Épicerie', null)).toMatchObject({ nomCourt: 'Épicerie', initiale: 'É', couleur: '#2a5bd7' })
     expect(identitePwa('Tontinedesmamansdumarché', null).nomCourt).toHaveLength(12)
     expect(identitePwa('  ', null)).toMatchObject({ nom: 'Application', initiale: 'A' })
@@ -69,7 +75,7 @@ describe('a) son nom, sa couleur, son initiale', () => {
 describe('b) le manifeste remplit les critères d’installation de Chrome', () => {
   const m = manifestePwa(identitePwa('Gestion de stock', { couleur: '#0f766e' })) as Record<string, unknown> & { icons: { src: string; sizes: string; purpose: string }[] }
   it('nom, nom court, start_url, display standalone, id et portée stables, couleur de thème', () => {
-    expect(m).toMatchObject({ id: '/', name: 'Gestion de stock', short_name: 'Gestion de', start_url: '/', scope: '/', display: 'standalone', theme_color: '#0f766e', lang: 'fr' })
+    expect(m).toMatchObject({ id: '/', name: 'Gestion de stock', short_name: 'Stock', start_url: '/', scope: '/', display: 'standalone', theme_color: '#0f766e', lang: 'fr' })
     expect('prefer_related_applications' in m, 'Chrome refuse l’installation (critère)').toBe(false)
   })
   it('des icônes 192 ET 512, plus une 512 « maskable », servies par l’origine (jamais data:)', () => {
@@ -145,7 +151,7 @@ describe('la page servie : installable sous son origine, inchangée ailleurs', (
 // ── LE SERVICE WORKER, EXÉCUTÉ. Un environnement simulé : `self`, `caches`,
 //    `fetch`, et les trois événements. Ce qu'il fait se lit dans le journal.
 type Cache = Map<string, Response>
-function environnement(reseau: (r: Request) => Promise<Response>) {
+function environnement(reseau: (r: Request) => Promise<Response>, code = codeServiceWorker('Gestion de stock')) {
   const caches = new Map<string, Cache>()
   const ecouteurs: Record<string, (e: unknown) => void> = {}
   const journal: string[] = []
@@ -168,11 +174,11 @@ function environnement(reseau: (r: Request) => Promise<Response>) {
     location: { origin: 'https://gestion-stock.deribfy.app' },
     addEventListener: (t: string, f: (e: unknown) => void) => { ecouteurs[t] = f },
     skipWaiting: () => { journal.push('skipWaiting') },
-    clients: { claim: async () => { journal.push('claim') } },
     registration: { unregister: async () => { journal.push('desinscrit'); return true } },
+    clients: { claim: async () => { journal.push('claim') }, matchAll: async () => [{ url: 'https://gestion-stock.deribfy.app/', navigate: (u: string) => { journal.push(`recharge ${u}`) } }] },
   }
   class Req extends Request { constructor(u: string, o?: RequestInit) { super(new URL(u, self.location.origin).toString(), o) } }
-  new Function('self', 'caches', 'fetch', 'Request', codeServiceWorker('Gestion de stock'))(self, api, reseau, Req)
+  new Function('self', 'caches', 'fetch', 'Request', code)(self, api, reseau, Req)
   const declencher = async (type: string, donnees: Record<string, unknown> = {}) => {
     let promesse: Promise<unknown> | undefined
     let reponse: Promise<Response> | undefined
@@ -185,7 +191,7 @@ function environnement(reseau: (r: Request) => Promise<Response>) {
     Object.defineProperty(r, 'mode', { value: o.mode ?? 'navigate' })
     return declencher('fetch', { request: r })
   }
-  return { caches, journal, declencher, naviguer }
+  return { caches, journal, declencher, naviguer, ecouteurs }
 }
 const PAGE = '<!doctype html><html lang="fr"><head></head><body>ACCUEIL</body></html>'
 const enLigne = async (r: Request) => (new URL(r.url).pathname === '/' ? new Response(PAGE, { status: 200 }) : new Response('autre', { status: 200 }))
@@ -283,5 +289,81 @@ describe('l’inscription et le bandeau, exécutés', () => {
     expect(voir(true, false)).toBe(false)
     expect(voir(false, false)).toBe(true)
     expect(voir(true, true), 'wifi sans internet : la copie gardée doit dire « Pas de connexion »').toBe(true)
+  })
+})
+
+describe('A1 · le nom sous l’icône ne finit jamais par un petit mot', () => {
+  it('les 4 applis en ligne, et deux autres titres', () => {
+    expect(nomCourtDe('Gestion de pharmacie')).toBe('Pharmacie')
+    expect(nomCourtDe('Application')).toBe('Application')
+    expect(nomCourtDe('Atelier de réparation automobile')).toBe('Réparation')
+    expect(nomCourtDe('Place de marché Tchad')).toBe('Marché Tchad')
+    expect(nomCourtDe('Gestion de stock')).toBe('Stock')
+  })
+  it('sur une série de titres : 12 signes au plus, coupé au mot, jamais un petit mot à la fin', () => {
+    const titres = ['Gestion de pharmacie', 'Place de marché Tchad', 'Suivi des élèves de Moundou', 'Carnet de dépenses et recettes', 'Registre pour la tontine', 'Boutique en ligne du quartier', 'Annuaire des artisans à Sarh', 'Réservations au salon de coiffure']
+    for (const t of titres) {
+      const c = nomCourtDe(t)
+      expect(c.length, t).toBeLessThanOrEqual(12)
+      expect(t.toLocaleLowerCase('fr'), `${t} → « ${c} » n’est pas pris dans le titre`).toContain(c.toLocaleLowerCase('fr'))
+      const dernier = c.split(' ').at(-1) ?? ''
+      expect(PETITS_MOTS.has(dernier.toLocaleLowerCase('fr')), `${t} → « ${c} »`).toBe(false)
+    }
+  })
+})
+
+describe('A3 · l’appli installée s’ouvre du côté VISITEURS', () => {
+  it('avec une page publique : « / » ; une base sans page publique : la connexion (« /#gestion ») ; sans base : « / »', () => {
+    expect(pageDOuverture({ aUneBase: true, aUnePagePublique: true })).toBe('/')
+    expect(pageDOuverture({ aUneBase: true, aUnePagePublique: false })).toBe('/#gestion')
+    expect(pageDOuverture({ aUneBase: false, aUnePagePublique: false })).toBe('/')
+  })
+  it('le manifeste servi porte cette page d’ouverture', async () => {
+    const lire = async () => ((await (await MANIFESTE(req, param('gestion-stock'))).json()) as { start_url: string }).start_url
+    etat.ligne = { ...PUBLIEE, document: { schema: 'create table public.produit (id uuid)', entites: [{ id: 'produit', name: 'Produits', fields: [], lecturePublique: true }] } }
+    expect(await lire()).toBe('/')
+    etat.ligne = { ...PUBLIEE, document: { schema: 'create table public.stock (id uuid)', entites: [{ id: 'stock', name: 'Stock', fields: [] }] } }
+    expect(await lire()).toBe('/#gestion')
+    etat.ligne = { ...PUBLIEE, document: { fichiers: {} } }
+    expect(await lire()).toBe('/')
+  })
+})
+
+describe('A2 · l’arrêt d’urgence : un réglage, et toutes les applis se désinstallent', () => {
+  const ARRET = { data: { valeur: 'oui' }, error: null }
+  it('activé : plus de manifeste (404), et /sw.js sert le service worker d’arrêt — même pour une appli dépubliée', async () => {
+    etat.arret = ARRET
+    expect((await MANIFESTE(req, param('gestion-stock'))).status).toBe(404)
+    expect(await (await SW(req, param('gestion-stock'))).text()).toBe(CODE_SERVICE_WORKER_ARRET)
+    etat.ligne = { ...PUBLIEE, publication_jeton: null }
+    const s = await SW(req, param('gestion-stock'))
+    expect(s.status).toBe(200)
+    expect(await s.text()).toBe(CODE_SERVICE_WORKER_ARRET)
+    expect(etat.journal.filtres.quota_reglages).toContainEqual(['eq', 'cle', 'pwa_arret'])
+  })
+
+  it('le service worker d’arrêt, exécuté : il efface TOUS les caches, se désinstalle, recharge la page, et ne sert plus rien', async () => {
+    const env = environnement(enLigne, CODE_SERVICE_WORKER_ARRET)
+    env.caches.set(VERSION_SERVICE_WORKER, new Map([['/', new Response(PAGE)]]))
+    await env.declencher('install'); await env.declencher('activate')
+    expect([...env.caches.keys()]).toEqual([])
+    expect(env.journal).toEqual(['skipWaiting', `efface ${VERSION_SERVICE_WORKER}`, 'desinscrit', 'recharge https://gestion-stock.deribfy.app/'])
+    expect(env.ecouteurs.fetch, 'le service worker d’arrêt intercepte encore').toBeUndefined()
+  })
+
+  it('la page en arrêt : ni manifeste ni inscription ni icône d’écran d’accueil ; la relance du service worker d’arrêt', () => {
+    const p = pageAutonome('void 0', 'Gestion de stock', undefined, 'servie', null, null, false, 'arret')
+    expect(p).not.toContain('rel="manifest"')
+    expect(p).not.toContain('apple-touch-icon')
+    expect(p).not.toContain(INSCRIPTION_SERVICE_WORKER)
+    expect(p).toContain(RELANCE_ARRET_SERVICE_WORKER)
+  })
+
+  it('réglage absent, vide, « non », ou illisible : marche NORMALE (l’arrêt est un geste, jamais l’effet d’une panne)', async () => {
+    for (const a of [null, { data: { valeur: '' }, error: null }, { data: { valeur: 'non' }, error: null }, { data: null, error: { message: 'panne' } }]) {
+      etat.arret = a
+      expect((await MANIFESTE(req, param('gestion-stock'))).status).toBe(200)
+      expect(await (await SW(req, param('gestion-stock'))).text()).toContain(VERSION_SERVICE_WORKER)
+    }
   })
 })
