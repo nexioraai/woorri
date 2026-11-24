@@ -8,6 +8,12 @@ const REGLAGES = {
   prix_mensuel_xaf: '12000', frais_encaissement_airtel_pct: '7', frais_encaissement_moov_pct: '5',
   frais_reversement_pct: '3.5', arrondi_frais_xaf: '100',
 }
+// 2026-11-23 : le verrou et le journal en base ont leur propre test (mobile-money-l1-l2) ; ici, un registre qui ouvre toujours.
+vi.mock('@/lib/payments/mobile-money/demandes', () => ({
+  masquer: (t: string) => t.slice(0, 3) + '••••••' + t.slice(-2),
+  registreDemandes: { ouvrir: async () => ({ issue: 'ouverte', id: 'd1' }), noterReference: async () => undefined, abandonner: async () => undefined, noterAvis: async () => undefined, aRattraper: async () => [], lire: async () => null, marquerActivee: async () => undefined },
+}))
+vi.mock('@/lib/alertes', () => ({ alerter: async () => 'alerte' }))
 vi.mock('@/lib/auth/require-authenticated-user', () => ({ requireAuthenticatedUser: () => ({ ok: true, userId: 'u1', email: 'client@exemple.com' }) }))
 vi.mock('@/lib/supabase-admin', async () => {
   const { creerFrom, journalVierge } = await import('@/lib/testing/postgrest')

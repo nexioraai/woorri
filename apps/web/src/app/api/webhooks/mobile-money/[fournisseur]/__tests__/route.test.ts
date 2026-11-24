@@ -5,6 +5,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHmac } from 'node:crypto'
 const etat = vi.hoisted(() => ({ rpc: [] as unknown[], deja: new Set<string>() }))
+// 2026-11-23 : le verrou et le journal en base ont leur propre test (mobile-money-l1-l2) ; ici, un registre qui ouvre toujours.
+vi.mock('@/lib/payments/mobile-money/demandes', () => ({
+  masquer: (t: string) => t.slice(0, 3) + '••••••' + t.slice(-2),
+  registreDemandes: { ouvrir: async () => ({ issue: 'ouverte', id: 'd1' }), noterReference: async () => undefined, abandonner: async () => undefined, noterAvis: async () => undefined, aRattraper: async () => [], lire: async () => null, marquerActivee: async () => undefined },
+}))
+vi.mock('@/lib/alertes', () => ({ alerter: async () => 'alerte' }))
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: {
     rpc: async (n: string, p: { p_reference: string }) => {

@@ -4,6 +4,12 @@
  * l'opérateur, lus dans les réglages), rattaché, écrit au registre.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+// 2026-11-23 : le verrou et le journal en base ont leur propre test (mobile-money-l1-l2) ; ici, un registre qui ouvre toujours.
+vi.mock('@/lib/payments/mobile-money/demandes', () => ({
+  masquer: (t: string) => t.slice(0, 3) + '••••••' + t.slice(-2),
+  registreDemandes: { ouvrir: async () => ({ issue: 'ouverte', id: 'd1' }), noterReference: async () => undefined, abandonner: async () => undefined, noterAvis: async () => undefined, aRattraper: async () => [], lire: async () => null, marquerActivee: async () => undefined },
+}))
+vi.mock('@/lib/alertes', () => ({ alerter: async () => 'alerte' }))
 vi.mock('server-only', () => ({}))
 const REGLAGES = {
   prix_mensuel_xaf: '12000', frais_encaissement_airtel_pct: '7', frais_encaissement_moov_pct: '5',
@@ -31,8 +37,8 @@ describe('numéro tchadien', () => {
     expect(telephoneTchad('6600000')).toBeNull()
   })
   it('idempotence : même appli, numéro, opérateur et fenêtre de 10 min → même clé', () => {
-    expect(cleIdempotence('a', '2356', 'AIRTEL', 1_000_000)).toBe(cleIdempotence('a', '2356', 'AIRTEL', 1_000_000 + 60_000))
-    expect(cleIdempotence('a', '2356', 'AIRTEL', 0)).not.toBe(cleIdempotence('a', '2356', 'MOOV', 0))
+    expect(cleIdempotence('a', '2356', 'AIRTEL', 13400, 1_000_000)).toBe(cleIdempotence('a', '2356', 'AIRTEL', 13400, 1_000_000 + 60_000))
+    expect(cleIdempotence('a', '2356', 'AIRTEL', 13400, 0)).not.toBe(cleIdempotence('a', '2356', 'MOOV', 13400, 0))
   })
 })
 
@@ -188,10 +194,10 @@ describe('traiter un avis vérifié', () => {
     expect((await traiterAvis(avis({ test: false }), 'monerails', { modeTestSeulement: false })).issue).toBe('erreur')
     expect(etat.rpc).toEqual([])
   })
-  it('échec, état non final, sans rattachement : ignoré, rien n’est écrit', async () => {
+  it('échec, état non final : ignoré ; PAYÉ sans rattachement : REFUSÉ (appli introuvable, 2026-11-23) ; rien n’est écrit', async () => {
     expect((await traiterAvis(avis({}, 'encaissement_echoue'), 'monerails')).issue).toBe('ignore')
     expect((await traiterAvis(avis({ etat: 'en_attente' }), 'monerails')).issue).toBe('ignore')
-    expect((await traiterAvis(avis({ rattachement: null }), 'monerails')).issue).toBe('ignore')
+    expect(await traiterAvis(avis({ rattachement: null }), 'monerails')).toEqual({ issue: 'refuse', raison: 'appli introuvable : encaissement sans rattachement Deribfy' })
     expect(etat.rpc).toEqual([])
   })
   it('COLONNE FRAIS · p_frais = ce qui dépasse le prix : 13 400 Airtel → 1 400 ; payé 13 500 → 1 500 ; Moov 13 100 → 1 100', async () => {
@@ -206,7 +212,11 @@ describe('traiter un avis vérifié', () => {
     expect(etat.rpc.map((x) => (x as [string, { p_reference: string; p_app: string }])[1]).map((p) => `${p.p_app}/${p.p_reference}`)).toEqual(['a1/c1', 'a1/c2'])
   })
   it('mode réel ouvert, erreur de la base : l’issue le dit (le webhook rendra 500, le prestataire réessaiera)', async () => {
-    etat.reponse = { data: null, error: { message: 'PAIEMENT_APPLI_ETRANGERE' } }
-    expect(await traiterAvis(avis({ test: false }), 'monerails', { modeTestSeulement: false })).toEqual({ issue: 'erreur', raison: 'PAIEMENT_APPLI_ETRANGERE' })
+    etat.reponse = { data: null, error: { message: 'connexion perdue' } }
+    expect(await traiterAvis(avis({ test: false }), 'monerails', { modeTestSeulement: false })).toEqual({ issue: 'erreur', raison: 'connexion perdue' })
+  })
+  it('2026-11-23 · appli introuvable pour ce compte : REFUS définitif (redonner l’avis n’y changerait rien)', async () => {
+    etat.reponse = { data: null, error: { message: 'PAIEMENT_APPLI_ETRANGERE: cette appli n’appartient pas à ce compte' } }
+    expect(await traiterAvis(avis({ test: false }), 'monerails', { modeTestSeulement: false })).toEqual({ issue: 'refuse', raison: 'appli introuvable pour ce compte (a1)' })
   })
 })

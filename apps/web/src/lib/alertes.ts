@@ -47,6 +47,8 @@ export type EtapeAlerte =
   | 'ecriture'
   | 'reponse-perdue'
   | 'publication'
+  /** Un paiement reçu que nous n'avons pas pu activer (mobile money, 2026-11-23). */
+  | 'paiement'
   | 'inconnue'
 
 export type Alerte = {

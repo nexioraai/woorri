@@ -17,7 +17,7 @@ import 'server-only'
  *
  * Variables (Vercel, Production) : MONERAILS_SECRET_KEY, MONERAILS_WEBHOOK_SECRET.
  */
-import { createHmac, timingSafeEqual } from 'node:crypto'
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
 import {
   ErreurFournisseur,
   type ActionClient, type AvisVerifie, type DemandeEncaissement, type Encaissement, type EncaissementOuvert,
@@ -25,6 +25,11 @@ import {
 } from './types'
 
 const API = 'https://api.monerails.com'
+
+/** La clé d'idempotence d'une confirmation par code : même demande + même code = même clé. */
+export function cleConfirmation(id: string, code: string): string {
+  return createHash('sha256').update(`autoriser|${id}|${code}`).digest('hex').slice(0, 48)
+}
 /** Tolérance de l'horodatage d'un avis, en secondes (docs : 5 minutes). */
 export const TOLERANCE_AVIS_S = 300
 
@@ -199,7 +204,10 @@ export const monerails: FournisseurMobileMoney = {
   },
 
   async autoriser(id, code) {
-    return versEncaissement(await appeler(`/v1/collections/${encodeURIComponent(id)}/authorize`, { method: 'POST', corps: { otp: code }, journaliser: true }))
+    // ── UNE CLÉ D'IDEMPOTENCE AUSSI ICI (2026-11-23) : la doc la demande « sur
+    // chaque POST qui déplace de l'argent ». La même demande et le même code
+    // donnent la même clé — un double clic ne confirme pas deux fois.
+    return versEncaissement(await appeler(`/v1/collections/${encodeURIComponent(id)}/authorize`, { method: 'POST', corps: { otp: code }, idempotence: cleConfirmation(id, code), journaliser: true }))
   },
 
   verifierAvis(corpsBrut, entetes, maintenantSecondes = Math.floor(Date.now() / 1000)) {

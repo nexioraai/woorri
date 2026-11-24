@@ -18,6 +18,8 @@ import { interrupteurOuvert } from '@/lib/payments/interrupteur'
 import { fournisseurMobileMoney } from './fournisseur'
 import { CLES_TARIF, PHRASE_FRAIS_NON_REGLES, prixPour, tarifDepuisReglages, type Tarif } from './frais'
 import { ErreurFournisseur, type AvisVerifie, type Encaissement, type EncaissementOuvert, type FournisseurMobileMoney } from './types'
+import { masquer, registreDemandes, type EtatDemande, type RegistreDemandes } from './demandes'
+import { alerter } from '@/lib/alertes'
 
 /** Le tarif du moment (prix + frais), lu en une requête ; ce qui manque est nommé. */
 export async function lireTarifMobileMoney(): Promise<{ ok: true; tarif: Tarif } | { ok: false; manque: string[] }> {
@@ -45,10 +47,16 @@ export function telephoneTchad(saisie: string): string | null {
   return null
 }
 
-/** Deux clics dans les dix minutes = la même clé = un seul encaissement. */
-export function cleIdempotence(app: string, telephone: string, operateur: string, maintenantMs: number): string {
+/**
+ * Deux clics dans les dix minutes = la même clé = un seul encaissement.
+ *
+ * LE MONTANT ENTRE DANS LA CLÉ (2026-11-23). MoneRails refuse la même clé avec
+ * un corps différent (`422 idempotency_key_reused`, docs : idempotency) : un prix
+ * changé dans la fenêtre rendait la demande impossible pendant dix minutes.
+ */
+export function cleIdempotence(app: string, telephone: string, operateur: string, montant: number, maintenantMs: number): string {
   const fenetre = Math.floor(maintenantMs / 600_000)
-  return createHash('sha256').update(`${app}|${telephone}|${operateur}|${String(fenetre)}`).digest('hex').slice(0, 48)
+  return createHash('sha256').update(`${app}|${telephone}|${operateur}|${String(montant)}|${String(fenetre)}`).digest('hex').slice(0, 48)
 }
 
 /**
@@ -84,7 +92,12 @@ export type DemandePaiement = {
   readonly nomClient: string
 }
 
-export async function ouvrirEncaissement(d: DemandePaiement, f: FournisseurMobileMoney = fournisseurMobileMoney(), maintenantMs: number = Date.now()): Promise<Encaissement> {
+export async function ouvrirEncaissement(
+  d: DemandePaiement,
+  f: FournisseurMobileMoney = fournisseurMobileMoney(),
+  maintenantMs: number = Date.now(),
+  registre: RegistreDemandes = registreDemandes,
+): Promise<Encaissement> {
   // Le montant demandé = prix + frais, pour CET opérateur, lus MAINTENANT.
   const t = await lireTarifMobileMoney()
   if (!t.ok) throw new ErreurFournisseur(PHRASE_FRAIS_NON_REGLES, 409, 'frais_non_regles')
@@ -94,15 +107,34 @@ export async function ouvrirEncaissement(d: DemandePaiement, f: FournisseurMobil
   if (tel === null) throw new ErreurFournisseur('Numéro non reconnu : 8 chiffres, ou +235 suivi de 8 chiffres.', 400, 'telephone')
   const nom = d.nomClient.trim()
   if (nom.length < 2 || nom.length > 80) throw new ErreurFournisseur('Indiquez le nom du titulaire du compte (2 à 80 signes).', 400, 'nom')
-  // Une demande déjà ouverte pour cette appli ? La liste illisible = refus
-  // (on ne prend pas le risque d'un second débit).
-  let ouverts: EncaissementOuvert[]
-  try { ouverts = await f.encaissementsDe(d.app) } catch (e) {
-    throw new ErreurFournisseur(PHRASE_VERIFICATION_IMPOSSIBLE, 503, 'verification_en_cours', e instanceof ErreurFournisseur ? { status: e.status, code: e.code, brut: e.brut } : String(e))
+  // ── ① LE VERROU EN BASE (2026-11-23) : une seule demande ouverte par appli,
+  // tenue par un index unique. Deux demandes VRAIMENT simultanées — deux
+  // numéros, deux onglets — ne passent plus : la base refuse la seconde.
+  // Illisible = refus (on ne prend pas le risque d'un second débit).
+  let verrou: Awaited<ReturnType<RegistreDemandes['ouvrir']>>
+  try {
+    verrou = await registre.ouvrir({
+      fournisseur: f.nom, app: d.app, proprietaire: d.proprietaire, operateur: d.operateur,
+      telephoneMasque: masquer(tel), montant: p.total, prix: p.prix, frais: p.frais, attenteS: ATTENTE_MAX_MS / 1000,
+    })
+  } catch (e) {
+    throw new ErreurFournisseur(PHRASE_VERIFICATION_IMPOSSIBLE, 503, 'verrou_illisible', String(e))
   }
-  const enCours = demandeEnCours(ouverts, maintenantMs)
-  if (enCours !== null) throw new ErreurFournisseur(phraseDemandeEnCours(enCours.resteMs), 409, 'paiement_en_cours', { encaissement: enCours.id })
-  return f.encaisser({
+  if (verrou.issue === 'deja_ouverte') {
+    const age = verrou.creeLe === null ? 0 : maintenantMs - Date.parse(verrou.creeLe)
+    throw new ErreurFournisseur(phraseDemandeEnCours(ATTENTE_MAX_MS - Math.max(0, age)), 409, 'paiement_en_cours', { demande: verrou.id })
+  }
+  const idDemande = verrou.id
+  // ② ET LA LISTE DU PRESTATAIRE, gardée en second rempart : une demande
+  // ouverte AVANT cette table n'y figure pas.
+  try {
+    let ouverts: EncaissementOuvert[]
+    try { ouverts = await f.encaissementsDe(d.app) } catch (e) {
+      throw new ErreurFournisseur(PHRASE_VERIFICATION_IMPOSSIBLE, 503, 'verification_en_cours', e instanceof ErreurFournisseur ? { status: e.status, code: e.code, brut: e.brut } : String(e))
+    }
+    const enCours = demandeEnCours(ouverts, maintenantMs)
+    if (enCours !== null) throw new ErreurFournisseur(phraseDemandeEnCours(enCours.resteMs), 409, 'paiement_en_cours', { encaissement: enCours.id })
+    const e = await f.encaisser({
     montant: p.total,
     devise: 'XAF',
     pays: 'TD',
@@ -112,8 +144,15 @@ export async function ouvrirEncaissement(d: DemandePaiement, f: FournisseurMobil
     description: 'Deribfy — abonnement d’un mois',
     rattachement: { app: d.app, proprietaire: d.proprietaire, objet: 'abonnement', montantInscrit: p.total },
     ventilation: { prix: p.prix, frais: p.frais },
-    cle: cleIdempotence(d.app, tel, d.operateur, maintenantMs),
-  })
+    cle: cleIdempotence(d.app, tel, d.operateur, p.total, maintenantMs),
+    })
+    await registre.noterReference(idDemande, e.id, e.test)
+    return e
+  } catch (e) {
+    // La demande n'a pas pu partir : le verrou se libère, la raison reste écrite.
+    await registre.abandonner(idDemande, e instanceof ErreurFournisseur ? `${e.code ?? 'erreur'} : ${e.message}` : String(e)).catch(() => undefined)
+    throw e
+  }
 }
 
 /**
@@ -148,7 +187,9 @@ export async function traiterAvis(
   // Un avis réel tant que seul le test est autorisé : refusé, rien n'est lu de plus.
   if (!e.test && testSeulement) return { issue: 'ignore', raison: 'avis réel refusé : mode test seulement' }
   const r = e.rattachement
-  if (r === null) return { issue: 'ignore', raison: 'encaissement sans rattachement Deribfy' }
+  // PAYÉ MAIS SANS APPLI À ACTIVER (2026-11-23) : un refus, pas un « ignoré » —
+  // l'argent est arrivé, l'alerte part et l'activation à la main devient possible.
+  if (r === null) return { issue: 'refuse', raison: 'appli introuvable : encaissement sans rattachement Deribfy' }
   if (e.devise !== 'XAF') return { issue: 'refuse', raison: `devise ${e.devise}` }
   // LE MONTANT ATTENDU EST RECALCULÉ (2026-11-21) depuis les réglages du
   // moment et l'opérateur de l'avis — jamais lu dans les métadonnées de la
@@ -173,7 +214,52 @@ export async function traiterAvis(
   // RIEN — il dit seulement ce qu'il aurait écrit.
   if (e.test) return { issue: 'test_verifie', app: r.app, serait: ecriture, ventilation: { abonnement: attendu.prix, frais: ecriture.p_frais } }
   const res = await supabaseAdmin.rpc('enregistrer_paiement', ecriture)
+  // L'appli n'existe pas, ou pas pour ce compte : refus DÉFINITIF (redonner
+  // l'avis 8 fois n'y changerait rien), donc alerte et activation à la main.
+  if (res.error !== null && res.error.message.includes('PAIEMENT_APPLI_ETRANGERE')) {
+    return { issue: 'refuse', raison: `appli introuvable pour ce compte (${r.app})` }
+  }
   if (res.error !== null) return { issue: 'erreur', raison: res.error.message }
   const statut = (res.data as { statut?: string } | null)?.statut
   return { issue: statut === 'deja_enregistre' ? 'deja_enregistre' : 'enregistre', app: r.app }
+}
+
+/**
+ * L'AVIS, TRAITÉ PUIS ÉCRIT AU JOURNAL (2026-11-23) — demande, avis reçu,
+ * décision, raison, lisibles dans /admin. Un avis PAYÉ mais refusé chez nous
+ * (prix monté, montant insuffisant, appli introuvable) déclenche une alerte —
+ * trace ET courriel au fondateur — et devient activable à la main.
+ *
+ * Le journal ne décide RIEN : un journal illisible n'empêche ni n'annule une
+ * activation, il se dit dans les journaux du serveur.
+ */
+export async function traiterEtNoterAvis(
+  avis: AvisVerifie,
+  fournisseur: string,
+  o: { readonly registre?: RegistreDemandes; readonly alerte?: typeof alerter; readonly modeTestSeulement?: boolean; readonly tarif?: () => ReturnType<typeof lireTarifMobileMoney> } = {},
+): Promise<IssueAvis> {
+  const issue = await traiterAvis(avis, fournisseur, o)
+  const e = avis.encaissement
+  if (e === null) return issue
+  const etat: EtatDemande | null =
+    issue.issue === 'refuse' ? 'refusee'
+      : issue.issue === 'erreur' ? null // le prestataire redonnera l'avis : rien n'est clos
+        : e.etat === 'reussi' ? 'reussie'
+          : e.etat === 'echoue' ? 'echouee'
+            : e.etat === 'expire' ? 'expiree' : null
+  const raison = 'raison' in issue ? issue.raison : null
+  if (etat !== null) {
+    await (o.registre ?? registreDemandes).noterAvis({
+      fournisseur, reference: e.id, etat, decision: issue.issue, raison, test: e.test,
+      ...(e.rattachement === null ? {} : { connu: { app: e.rattachement.app, proprietaire: e.rattachement.proprietaire, operateur: e.operateur ?? '?', montant: e.montant } }),
+    }).catch((x: unknown) => { console.error('[mobile-money] journal non écrit', e.id, x instanceof Error ? x.message : x) })
+  }
+  if (issue.issue === 'refuse' && e.etat === 'reussi') {
+    await (o.alerte ?? alerter)({
+      sujet: 'oeuvre', sujetId: e.rattachement?.app ?? null, etape: 'paiement',
+      motif: `Paiement mobile money REÇU mais non activé : ${issue.raison}`,
+      detail: `${fournisseur} ${e.id} · ${String(e.montant)} ${e.devise} · ${e.test ? 'TEST' : 'RÉEL'} — à activer à la main dans /admin/mobile-money si le paiement est bon.`,
+    }).catch(() => undefined)
+  }
+  return issue
 }

@@ -101,6 +101,10 @@
       "schedule": "30 4 * * *"
     },
     {
+      "path": "/api/cron/mobile-money",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/cron/sauvegardes",
       "schedule": "17 3 * * *"
     }
