@@ -251,3 +251,15 @@ describe('⑤ chaque demande se relit avec la clé de SON mode', () => {
     expect(lire('src/lib/payments/mobile-money/activation-main.ts')).toMatch(motifTexte("fournisseurMobileMoney('reel')"))
   })
 })
+
+describe('la page /admin mène au mobile money', () => {
+  it('une carte de /admin pointe /admin/mobile-money, et cette page existe', () => {
+    // Une carte mise en commentaire ne compte pas : elle n'apparaît pas à l'écran.
+    const admin = lire('src/app/admin/page.tsx').replace(/\{\/\*[\s\S]*?\*\/\}/gu, '')
+    const cartes = admin.match(/<StatCard\b[^>]*\/>/gu) ?? []
+    const carte = cartes.find((c) => c.includes('href="/admin/mobile-money"'))
+    expect(carte, 'aucune carte de /admin ne pointe /admin/mobile-money').toBeDefined()
+    expect(carte).toMatch(motifTexte('Mobile money'))
+    expect(statSync(join(process.cwd(), 'src/app/admin/mobile-money/page.tsx')).isFile()).toBe(true)
+  })
+})

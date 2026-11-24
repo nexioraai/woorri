@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Boxes, Users, Globe, ShoppingCart, DollarSign, Monitor, Store, Truck, AlertTriangle, Cpu, ShieldCheck } from "lucide-react";
+import { Boxes, Users, Globe, ShoppingCart, DollarSign, Monitor, Store, Truck, AlertTriangle, Cpu, ShieldCheck, Smartphone } from "lucide-react";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import PublishOverrideCard from "@/components/admin/PublishOverrideCard";
@@ -241,6 +241,7 @@ export default function AdminDashboard() {
         <StatCard icon={Cpu} label="Consommation IA" value="Voir détails" sub="Coût par boutique" color="text-cyan-400" href="/admin/ai-usage" />
         <StatCard icon={Boxes} label="Applications générées" value="Voir détails" sub="Coût par application" color="text-violet-400" href="/admin/applications" />
         <StatCard icon={Boxes} label="Boîtes noires" value="Lire" sub="Chaque génération, étape par étape" color="text-amber-400" href="/admin/boite-noire" />
+        <StatCard icon={Smartphone} label="Mobile money" value="Ouvrir" sub="Demandes, activation, remboursement" color="text-emerald-400" href="/admin/mobile-money" />
         <StatCard icon={ShieldCheck} label="Surveillance technique" value="Voir détails" sub="Santé anti-régression" color="text-[#FA5D1E]" href="/admin/system-health" />
       </div>
 
