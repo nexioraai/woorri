@@ -20,10 +20,11 @@ import 'server-only'
  * répond 500 tout de suite — le prestataire redonnera l'avis, et
  * l'enregistrement, idempotent par référence, ne double rien.
  */
-import { NextResponse } from 'next/server'
+import { after, NextResponse } from 'next/server'
 import { fournisseurNomme } from '@/lib/payments/mobile-money/fournisseur'
 import { traiterEtNoterAvis } from '@/lib/payments/mobile-money/encaissement'
 import { dansLeBudget } from '@/lib/payments/mobile-money/budget-avis'
+import { publierApresEncaissement } from '@/lib/payments/mobile-money/publication'
 
 export const runtime = 'nodejs'
 
@@ -43,5 +44,16 @@ export async function POST(req: Request, ctx: { params: Promise<{ fournisseur: s
   if (issue.issue === 'test_verifie') console.log(`[mobile-money] avis de TEST vérifié, RIEN n'est écrit — serait enregistré : ${JSON.stringify(issue.serait)}`)
   if (issue.issue === 'refuse') console.error(`[mobile-money] AVIS SIGNÉ MAIS INCOHÉRENT ${avis.id} : ${issue.raison}`)
   if (issue.issue === 'erreur') return NextResponse.json({ recu: true, issue: issue.issue }, { status: 500 })
+  // ── LE PAIEMENT REÇU PUBLIE L'APPLI (2026-11-24), comme la carte — APRÈS la
+  //    réponse : la publication ne compte pas dans le budget de 10 s. Un avis
+  //    redonné (« déjà enregistré ») relance une publication qui aurait échoué ;
+  //    une appli déjà en ligne n'est pas touchée (« deja_publiee »).
+  if (issue.issue === 'enregistre' || issue.issue === 'deja_enregistre') {
+    const { app, proprietaire } = issue
+    after(async () => {
+      const effet = await publierApresEncaissement(app, proprietaire)
+      console.log(`[mobile-money] publication après paiement ${app} → ${effet}`)
+    })
+  }
   return NextResponse.json({ recu: true, issue: issue.issue })
 }

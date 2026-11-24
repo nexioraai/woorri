@@ -607,7 +607,11 @@ export default function AtelierPage() {
     if (t === null || app === null) return;
     setErreur(null);
     setAvisPublication(null);
-    const issue = await lancerPublication({ id, titre: app.nom ?? null, demande: app.demande, autorisation: `Bearer ${t}`, ouvrirFenetre: setFenetre });
+    const issue = await lancerPublication({
+      id, titre: app.nom ?? null, demande: app.demande, autorisation: `Bearer ${t}`, ouvrirFenetre: setFenetre,
+      // Mobile money abouti dans la fenêtre : le compteur et l'état se relisent (l'avis publie).
+      apresMobileMoney: async () => { await relireCompteur(); await lireEtat(); },
+    });
     if (issue.type === 'fermee') { setAvisPublication({ texte: issue.message, publierMaintenant: false }); return; }
     if (issue.type === 'erreur') { setErreur(issue.message); return; }
     // ── UNE PUBLICATION REFUSÉE POUR AMNÉSIE DONNE SA SORTIE : la demande
@@ -1094,7 +1098,10 @@ export default function AtelierPage() {
             {abonnementAvis !== null && (
               <p role="status" className="mt-1.5 text-[11px] leading-relaxed text-slate-300">{abonnementAvis}</p>
             )}
-            {compteur !== null && !compteur.exempte && mobileMoney && (
+            {/* LE MOBILE MONEY DANS LA BARRE : le RENOUVELLEMENT seulement
+                (2026-11-24). S'abonner passe par « Publier », comme la carte :
+                un seul bouton, le choix du moyen est dans la fenêtre. */}
+            {compteur !== null && !compteur.exempte && mobileMoney && compteur.formule === 'abonnee' && (
               <PayerMobileMoney app={id} jeton={jeton} renouveler={compteur.formule === 'abonnee'} onPaye={relireCompteur} />
             )}
           </div>

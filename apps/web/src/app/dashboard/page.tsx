@@ -1,6 +1,6 @@
 'use client';
 import { ADRESSE_GESTION } from '@/lib/apps/entites-declarees';
-import { changerAdresse, CONFIRMER_MOT_DE_PASSE, lancerPublication, LIBELLE_MOT_DE_PASSE, refaireMotDePasse, type DemandeFenetre } from '@/components/apps/publierAppli';
+import { adresseEnLigne, changerAdresse, CONFIRMER_MOT_DE_PASSE, lancerPublication, LIBELLE_MOT_DE_PASSE, refaireMotDePasse, type DemandeFenetre } from '@/components/apps/publierAppli';
 import { FenetrePublier } from '@/components/apps/FenetrePublier';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -302,7 +302,15 @@ export default function DashboardPage() {
     setApercuErreur(null);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
-    const issue = await lancerPublication({ id: a.id, titre: a.nom ?? null, demande: a.demande, autorisation: `Bearer ${session.access_token}`, ouvrirFenetre: setFenetre });
+    const autorisation = `Bearer ${session.access_token}`;
+    const issue = await lancerPublication({
+      id: a.id, titre: a.nom ?? null, demande: a.demande, autorisation, ouvrirFenetre: setFenetre,
+      // Mobile money abouti dans la fenêtre : l'avis publie, la carte montre l'adresse dès qu'elle existe.
+      apresMobileMoney: async () => {
+        const lien = await adresseEnLigne(a.id, autorisation);
+        if (lien !== null) setApplications((liste) => liste.map((x) => (x.id === a.id ? { ...x, adresse: lien, nomModifiable: false, nomEnregistre: null } : x)));
+      },
+    });
     if (issue.type === 'fermee' || issue.type === 'erreur' || issue.type === 'amnesique') { setApercuErreur(issue.message); return; }
     if (issue.type !== 'publiee') return;
     // L'adresse nommée a pu échouer SANS casser la publication par jeton : on

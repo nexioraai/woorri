@@ -104,9 +104,29 @@ export type ActionPublier = 'publier' | 'payer' | 'fermee'
  * (un prix illisible = un paiement mal réglé : personne n'y est envoyé) ; sinon, dire
  * que le paiement en ligne n'est pas encore ouvert — jamais une erreur brute.
  */
-export function actionPublier(etat: EtatCompteur | null, carteOuverte: boolean, prix: PrixCarte | null): ActionPublier {
+export function actionPublier(etat: EtatCompteur | null, carteOuverte: boolean, prix: PrixCarte | null, mobileMoneyOuvert = false): ActionPublier {
   if (publicationOuverte(etat)) return 'publier'
-  return carteOuverte && prix !== null ? 'payer' : 'fermee'
+  return moyensDePublication(carteOuverte, prix, mobileMoneyOuvert).length > 0 ? 'payer' : 'fermee'
+}
+
+/**
+ * LES MOYENS PROPOSÉS PAR LA FENÊTRE « PUBLIER » (décision du propriétaire,
+ * 2026-11-24) : « Carte bancaire » (Stripe) et « Mobile money (Airtel / Moov) »
+ * (MoneRails). La carte, seulement si elle est ouverte ET son prix lisible ;
+ * le mobile money, seulement s'il est ouvert pour ce compte et son tarif réglé.
+ */
+export type MoyenPublication = 'carte' | 'mobile_money'
+export function moyensDePublication(carteOuverte: boolean, prix: PrixCarte | null, mobileMoneyOuvert: boolean): MoyenPublication[] {
+  const m: MoyenPublication[] = []
+  if (carteOuverte && prix !== null) m.push('carte')
+  if (mobileMoneyOuvert) m.push('mobile_money')
+  return m
+}
+
+/** Le libellé de chaque moyen dans la fenêtre — aucun prix, aucun mot « frais ». */
+export const LIBELLE_MOYEN: Readonly<Record<MoyenPublication, string>> = {
+  carte: 'Carte bancaire',
+  mobile_money: 'Mobile money (Airtel / Moov)',
 }
 
 // LE LIBELLÉ EST « PUBLIER », PARTOUT (décision du propriétaire, 2026-11-22) :

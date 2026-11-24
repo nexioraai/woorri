@@ -169,8 +169,8 @@ describe('payer par mobile money — l’écran', () => {
     vi.unstubAllGlobals()
   })
 
-  it('l’atelier ne montre le formulaire que si l’interrupteur est ouvert', () => {
+  it('l’atelier ne montre le formulaire dans la barre que si l’interrupteur est ouvert, et pour RENOUVELER seulement (2026-11-24)', () => {
     const atelier = readFileSync(join(__dirname, '../../../app/atelier/[id]/page.tsx'), 'utf8')
-    expect(atelier).toMatch(motifTexte('{compteur !== null && !compteur.exempte && mobileMoney && ('))
+    expect(atelier).toMatch(motifTexte("{compteur !== null && !compteur.exempte && mobileMoney && compteur.formule === 'abonnee' && ("))
   })
 })

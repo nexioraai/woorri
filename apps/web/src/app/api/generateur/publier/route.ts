@@ -28,7 +28,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { PHRASE_ABONNEMENT_REQUIS } from '@/lib/apps/compteur-phrases'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { COLONNES_PUBLICATION, publierOeuvre, refusAvantPublication, refusDuNom, tablesPubliques, type LignePubliee } from '@/lib/apps/publier-oeuvre'
-import { decisionDePublication, PHRASE_DECISION_ILLISIBLE } from '@/lib/apps/decision-publication'
+import { decisionEtMoyens, PHRASE_DECISION_ILLISIBLE, PHRASE_MOYEN_FERME } from '@/lib/apps/decision-publication'
 import { accordCouvre, accordGarde, accordPourStripe, CLE_ACCORD_GARDE } from '@/lib/apps/accord-stripe'
 import { ouvrirPaiementAppli } from '@/lib/payments/abonnement-appli'
 import { exigencesDuMagasin } from '@/lib/apps/exigences-magasin'
@@ -126,8 +126,9 @@ export async function POST(req: Request) {
   // décision, la même que celle que l'écran lit avant de demander le nom :
   // payé → publier ; non payé, carte ouverte → le nom s'enregistre et Stripe
   // s'ouvre ; carte fermée → 402, comme avant.
-  const decision = await decisionDePublication(id, garde.userId, garde.email)
-  if (decision === null) {
+  const lueDecision = await decisionEtMoyens(id, garde.userId, garde.email)
+  const decision = lueDecision?.action ?? null
+  if (lueDecision === null || decision === null) {
     return NextResponse.json({ error: PHRASE_DECISION_ILLISIBLE }, { status: 503 })
   }
   if (decision === 'fermee') {
@@ -179,6 +180,18 @@ export async function POST(req: Request) {
   // reçoit pas de nouveau nom ici : il deviendrait public sans paiement.
   // Le paiement reçu, le webhook publie au nom enregistré (publier-apres-paiement).
   if (decision === 'payer') {
+    // ── LE MOYEN CHOISI DANS LA FENÊTRE (2026-11-24) : `?moyen=mobile_money`
+    //    ou `carte` (absent = carte, comme avant). Un moyen fermé pour ce
+    //    compte est refusé AVANT toute écriture (pas même le nom). Le mobile money ne quitte pas
+    //    Deribfy : le nom est enregistré ci-dessous, l'écran montre le
+    //    formulaire, et l'avis signé du prestataire publie au nom enregistré.
+    const moyen = new URL(req.url).searchParams.get('moyen') ?? 'carte'
+    if (moyen !== 'carte' && moyen !== 'mobile_money') {
+      return NextResponse.json({ error: 'Moyen de paiement inconnu.' }, { status: 400 })
+    }
+    if (!lueDecision.moyens.includes(moyen)) {
+      return NextResponse.json({ error: PHRASE_MOYEN_FERME }, { status: 409 })
+    }
     if (lu.data.statut !== 'livree') {
       return NextResponse.json({ error: 'Seule une application livrée peut être abonnée.' }, { status: 409 })
     }
@@ -192,6 +205,9 @@ export async function POST(req: Request) {
       if (nom.error !== null) {
         return NextResponse.json({ error: 'Le nom n’a pas pu être enregistré : rien n’a été prélevé. Réessayez.' }, { status: 500 })
       }
+    }
+    if (moyen === 'mobile_money') {
+      return NextResponse.json({ mobileMoney: true }, { headers: { 'Cache-Control': 'no-store' } })
     }
     try {
       const r = await ouvrirPaiementAppli({

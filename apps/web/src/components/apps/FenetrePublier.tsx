@@ -16,19 +16,26 @@ import { useEffect, useRef, useState } from 'react';
 import { nomValide } from '@/lib/apps/sous-domaine';
 import { phraseListePublique, PHRASE_SI_VOUS_NE_VOULEZ_PAS } from '@/lib/apps/contenu-public';
 import type { DemandeFenetre } from '@/components/apps/publierAppli';
+import { LIBELLE_MOYEN, type MoyenPublication } from '@/lib/apps/compteur-phrases';
+import { PayerMobileMoney } from '@/components/atelier/PayerMobileMoney';
 
+export const PHRASE_APRES_MOBILE_MONEY = 'Le paiement validé sur votre téléphone, l’application se publie seule à cette adresse.';
 export const PHRASE_FORMAT_NOM = 'Minuscules, chiffres et tirets, de 3 à 40 signes.';
 
 export function FenetrePublier({ demande, onFermer }: { readonly demande: DemandeFenetre | null; readonly onFermer: () => void }) {
   const [adresse, setAdresse] = useState('');
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
+  // LE MOYEN DE PAIEMENT (2026-11-24) : le premier proposé, changeable ; puis,
+  // mobile money choisi, la fenêtre montre son formulaire au lieu de se fermer.
+  const [moyen, setMoyen] = useState<MoyenPublication | null>(null);
+  const [etape, setEtape] = useState<'adresse' | 'mobile_money'>('adresse');
   const champ = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (demande === null) return;
     // Au tour suivant : pas d'état posé pendant l'effet lui-même.
-    const t = window.setTimeout(() => { setAdresse(demande.adresseInitiale); setErreur(null); setEnCours(false); champ.current?.focus(); }, 0);
+    const t = window.setTimeout(() => { setAdresse(demande.adresseInitiale); setErreur(null); setEnCours(false); setMoyen(demande.moyens[0] ?? null); setEtape('adresse'); champ.current?.focus(); }, 0);
     return () => { window.clearTimeout(t); };
   }, [demande]);
 
@@ -41,11 +48,31 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
     if (!formatOk || enCours) return;
     setEnCours(true);
     setErreur(null);
-    const e = await demande.valider(nom);
+    const e = await demande.valider(nom, moyen);
     setEnCours(false);
     if (e === null) onFermer();
+    else if (e === 'mobile_money') setEtape('mobile_money');
     else setErreur(e);
   };
+
+  if (etape === 'mobile_money' && demande.mobileMoney !== null) {
+    const mm = demande.mobileMoney;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onFermer}>
+        <div role="dialog" aria-modal="true" aria-labelledby="fenetre-publier-titre"
+          className="w-full max-w-md rounded-2xl border border-white/10 bg-bg-deep p-5 text-white shadow-2xl"
+          onClick={(e) => { e.stopPropagation(); }}>
+          <h2 id="fenetre-publier-titre" className="text-lg font-bold">{demande.titre}</h2>
+          <p className="mt-1 text-xs text-white/60">{PHRASE_APRES_MOBILE_MONEY}</p>
+          <PayerMobileMoney app={mm.app} jeton={mm.jeton} renouveler={false} onPaye={mm.onPaye} ouvertDOffice />
+          <button type="button" onClick={onFermer}
+            className="mt-4 w-full rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
+            Fermer
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={annuler}>
@@ -69,6 +96,19 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
             {demande.listes.map((l) => <p key={l.nom}>{phraseListePublique(l)}</p>)}
             <p>{PHRASE_SI_VOUS_NE_VOULEZ_PAS}</p>
           </div>
+        )}
+        {demande.moyens.length > 1 && (
+          <fieldset className="mt-4">
+            <legend className="text-xs text-white/60">Moyen de paiement</legend>
+            <div className="mt-1.5 space-y-1.5">
+              {demande.moyens.map((m) => (
+                <label key={m} className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm ${moyen === m ? 'border-[#FA5D1E]/60 bg-[#FA5D1E]/10' : 'border-white/15 bg-white/[0.03]'}`}>
+                  <input type="radio" name="fenetre-publier-moyen" value={m} checked={moyen === m} onChange={() => { setMoyen(m); }} className="accent-[#FA5D1E]" />
+                  {LIBELLE_MOYEN[m]}
+                </label>
+              ))}
+            </div>
+          </fieldset>
         )}
         <div className="mt-5 flex gap-3">
           <button type="button" onClick={annuler}

@@ -187,7 +187,7 @@ export async function ouvrirEncaissement(
  */
 
 export type IssueAvis =
-  | { readonly issue: 'enregistre' | 'deja_enregistre'; readonly app: string }
+  | { readonly issue: 'enregistre' | 'deja_enregistre'; readonly app: string; readonly proprietaire: string }
   /** Avis de test, vérifié de bout en bout, JAMAIS écrit : voici ce qui l'aurait été. */
   | { readonly issue: 'test_verifie'; readonly app: string; readonly serait: Readonly<Record<string, unknown>>; readonly ventilation: { readonly abonnement: number; readonly frais: number } }
   | { readonly issue: 'ignore'; readonly raison: string }
@@ -245,7 +245,7 @@ export async function traiterAvis(
   }
   if (res.error !== null) return { issue: 'erreur', raison: res.error.message }
   const statut = (res.data as { statut?: string } | null)?.statut
-  return { issue: statut === 'deja_enregistre' ? 'deja_enregistre' : 'enregistre', app: r.app }
+  return { issue: statut === 'deja_enregistre' ? 'deja_enregistre' : 'enregistre', app: r.app, proprietaire: r.proprietaire }
 }
 
 /**

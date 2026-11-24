@@ -26,6 +26,11 @@ import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
 import { join } from 'node:path'
 
 vi.mock('server-only', () => ({}))
+vi.mock('@/lib/payments/mobile-money/encaissement', async (origine) => ({
+  ...(await origine<typeof import('@/lib/payments/mobile-money/encaissement')>()),
+  mobileMoneyOuvert: async () => etat.mm,
+  lireTarifMobileMoney: async () => (etat.tarifMm ? { ok: true, tarif: {} } : { ok: false, manque: ['frais_retrait_pct'] }),
+}))
 
 type Appli = {
   id: string; owner_id: string; nom: string | null; demande: string; statut: string
@@ -35,6 +40,9 @@ type Appli = {
 const etat = vi.hoisted(() => ({
   email: 'contact@deribfy.com',
   carte: 'contact@deribfy.com' as string,
+  // 2026-11-24 : le mobile money proposé à ce compte (interrupteur) et son tarif réglé.
+  mm: false,
+  tarifMm: true,
   appli: null as unknown as Appli,
   autre: null as null | { id: string; publication_slug: string },
   paye: false,
@@ -136,7 +144,8 @@ import { lancerPublication, adresseEnLigne, type IssuePublication } from '@/comp
 import { GET as ETAT } from '@/app/api/generateur/publier/etat/route'
 import { POST as PUBLIER } from '@/app/api/generateur/publier/route'
 import { publierApresPaiement } from '@/lib/payments/publier-apres-paiement'
-import { PHRASE_PUBLIER_FERMEE } from '@/lib/apps/compteur-phrases'
+import { LIBELLE_MOYEN, PHRASE_PUBLIER_FERMEE } from '@/lib/apps/compteur-phrases'
+import { PHRASE_MOYEN_FERME } from '@/lib/apps/decision-publication'
 import { PHRASE_ABONNEMENT_EN_COURS } from '@/lib/payments/abonnement-appli'
 import { changerAdresse, etapeDuRetour, lireEtatPublication, refaireMotDePasse, type DemandeFenetre } from '@/components/apps/publierAppli'
 import { GET as COMPTE } from '@/app/api/generateur/compte/route'
@@ -180,12 +189,13 @@ const fenetre = (d: DemandeFenetre): void => {
   questions.push(d.titre)
   void (async () => {
     if (reponseAuNom === null) { d.annuler(); return }
-    const e = await d.valider(reponseAuNom)
-    if (e !== null) { erreursFenetre.push(e); d.annuler() }
+    const e = await d.valider(reponseAuNom, moyenChoisi)
+    if (e !== null && e !== 'mobile_money') { erreursFenetre.push(e); d.annuler() }
   })()
 }
 const ouvertes: string[] = []
 let reponseAuNom: string | null = 'gestion-stock'
+let moyenChoisi: 'carte' | 'mobile_money' | null = null
 const clic = (_b: Bouton): Promise<IssuePublication> =>
   lancerPublication({
     id: 'app-stock', titre: 'Gestion de stock', demande: 'Gérer le stock', autorisation: 'Bearer jeton',
@@ -205,6 +215,9 @@ beforeEach(() => {
   process.env.CLOUDFLARE_API_TOKEN = 'cf'; process.env.VERCEL_API_TOKEN = 'vc'; process.env.VERCEL_PROJECT_ID = 'prj'
   etat.email = 'contact@deribfy.com'
   etat.carte = 'contact@deribfy.com'
+  etat.mm = false
+  etat.tarifMm = true
+  moyenChoisi = null
   etat.appli = {
     id: 'app-stock', owner_id: 'u-contact', nom: 'Gestion de stock', demande: 'Gérer le stock', statut: 'livree',
     document: { fichiers: { 'index.html': '<p>stock</p>' } }, publication_jeton: null, publication_slug: null, sections_acquises: {}, publie_le: null,
@@ -221,14 +234,38 @@ beforeEach(() => {
   vi.stubGlobal('window', { prompt: () => { throw new Error('boîte native « prompt »') }, confirm: () => { throw new Error('boîte native « confirm »') }, setTimeout, clearTimeout })
 })
 
+/**
+ * Les clés d'un objet littéral, au PREMIER niveau seulement (2026-11-24) : les
+ * commentaires sont retirés, et ce qui est entre parenthèses, accolades ou
+ * crochets imbriqués ne compte pas — une option écrite sur plusieurs lignes,
+ * ou une fonction qui construit un objet, n'ajoute pas de fausses clés.
+ */
+function clesDePremierNiveau(corps: string): string[] {
+  const sans = corps.replace(/\/\/[^\n]*/gu, '')
+  const cles: string[] = []
+  let profondeur = 0
+  let debut = true
+  for (let i = 0; i < sans.length; i += 1) {
+    const c = sans[i]!
+    if ('({['.includes(c)) profondeur += 1
+    else if (')}]'.includes(c)) profondeur -= 1
+    else if (c === ',' && profondeur === 0) debut = true
+    else if (debut && profondeur === 0 && /[A-Za-z]/u.test(c)) {
+      const m = /^([A-Za-z]+)\s*(:|,|$)/u.exec(sans.slice(i))
+      if (m !== null) { cles.push(m[1]!); i += m[1]!.length - 1 }
+      debut = false
+    }
+  }
+  return cles
+}
+
 describe('⓪ les deux boutons appellent le MÊME module, avec les MÊMES options', () => {
   for (const b of BOUTONS) {
     it(`${b} : un seul appel, à lancerPublication, sans question ni redirection à lui`, () => {
       const src = PAGES[b]
       const appels = [...src.matchAll(/lancerPublication\(\{([\s\S]*?)\}\);/gu)]
       expect(appels, `${b} n’appelle pas le module, ou l’appelle deux fois`).toHaveLength(1)
-      const cles = (appels[0]?.[1] ?? '').split(',').map((x) => x.split(':')[0]?.trim()).filter((x) => x !== '')
-      expect(cles.sort()).toEqual(['autorisation', 'demande', 'id', 'ouvrirFenetre', 'titre'])
+      expect(clesDePremierNiveau(appels[0]?.[1] ?? '').sort()).toEqual(['apresMobileMoney', 'autorisation', 'demande', 'id', 'ouvrirFenetre', 'titre'])
       expect(appels[0]?.[1], `${b} ne passe pas SA fenêtre`).toMatch(motifTexte('ouvrirFenetre: setFenetre'))
       expect(src, `${b} ne montre pas la fenêtre partagée`).toMatch(motifTexte('<FenetrePublier demande={fenetre}'))
       // Aucune autre copie du geste : ni la question du nom, ni la route, ni Stripe en direct.
@@ -246,7 +283,7 @@ for (const b of BOUTONS) {
       const r1 = await clic(b)
       // UNE fenêtre Deribfy : le titre, l'adresse proposée d'après le titre, le bouton du paiement.
       expect(fenetres).toHaveLength(1)
-      expect(fenetres[0]).toMatchObject({ titre: 'Publier votre application', adresseInitiale: 'gestion-de-stock', adresseModifiable: true, listes: [], libelleBouton: 'Continuer vers le paiement' })
+      expect(fenetres[0]).toMatchObject({ titre: 'Publier votre application', adresseInitiale: 'gestion-de-stock', adresseModifiable: true, listes: [], libelleBouton: 'Publier' })
       // Le refus s'affiche DANS la fenêtre ; la personne annule ensuite.
       expect(erreursFenetre[0]?.includes('nom n est pas utilisable'), 'refus attendu dans la fenêtre').toBe(true)
       expect(r1).toEqual({ type: 'annulee' })
@@ -621,5 +658,78 @@ describe('PARTIE 1 · une seule fenêtre avant Stripe, et l’accord gardé', ()
     // Liste changée : refus 409, la question revient.
     avecListe([PRODUITS, { id: 'client', name: 'Clients', lecturePublique: true, fields: [] }])
     expect((await appelDe(PUBLIER, '/api/generateur/publier?id=app-stock', { method: 'POST' })).status).toBe(409)
+  })
+})
+
+
+describe('MOBILE MONEY DANS LA FENÊTRE « PUBLIER » (2026-11-24)', () => {
+  const fenetreDu = () => fenetres[fenetres.length - 1]!
+  it('carte ET mobile money ouverts : la fenêtre propose les deux, UN bouton « Publier », sans prix ni « frais »', async () => {
+    etat.mm = true
+    moyenChoisi = 'carte'
+    expect(await clic('atelier')).toEqual({ type: 'paiement' })
+    const f = fenetreDu()
+    expect(f.moyens).toEqual(['carte', 'mobile_money'])
+    expect(f.libelleBouton).toBe('Publier')
+    expect(f.mobileMoney?.app).toBe('app-stock')
+    const vu = JSON.stringify({ titre: f.titre, bouton: f.libelleBouton, moyens: f.moyens, LIBELLE_MOYEN })
+    expect(vu).not.toMatch(/frais|%|FCFA|\$|[0-9]{3}/iu)
+    expect(LIBELLE_MOYEN).toEqual({ carte: 'Carte bancaire', mobile_money: 'Mobile money (Airtel / Moov)' })
+    // La carte choisie : Stripe, comme avant.
+    expect(etat.sessions).toHaveLength(1)
+  })
+  it('mobile money choisi : le nom s’enregistre, AUCUNE page Stripe, la fenêtre passe au formulaire', async () => {
+    etat.mm = true
+    moyenChoisi = 'mobile_money'
+    expect(await clic('Mes projets')).toEqual({ type: 'mobile_money' })
+    expect(etat.appli.publication_slug).toBe('gestion-stock')
+    expect(etat.appli.publication_jeton, 'publiée sans paiement').toBeNull()
+    expect(etat.sessions).toEqual([])
+    expect(ouvertes).toEqual([])
+    expect(erreursFenetre).toEqual([])
+  })
+  it('carte FERMÉE, mobile money ouvert : « Publier » propose le mobile money (plus « paiement pas ouvert »)', async () => {
+    etat.carte = ''
+    etat.mm = true
+    const r = await (await ETAT(new Request('https://www.deribfy.com/api/generateur/publier/etat?id=app-stock', { headers: { Authorization: 'Bearer x' } }))).json() as { action: string; moyens: string[] }
+    expect(r).toMatchObject({ action: 'payer', moyens: ['mobile_money'] })
+  })
+  it('nom déjà choisi, rien à accepter, mobile money seul : la fenêtre s’ouvre quand même (le formulaire y est)', async () => {
+    etat.carte = ''
+    etat.mm = true
+    etat.appli.publication_slug = 'gestion-stock'
+    moyenChoisi = 'mobile_money'
+    expect(await clic('atelier')).toEqual({ type: 'mobile_money' })
+    expect(fenetres).toHaveLength(1)
+    expect(fenetreDu().moyens).toEqual(['mobile_money'])
+  })
+  it('nom déjà choisi, carte seule : droit à Stripe sans fenêtre, comme avant', async () => {
+    etat.appli.publication_slug = 'gestion-stock'
+    expect(await clic('atelier')).toEqual({ type: 'paiement' })
+    expect(fenetres).toEqual([])
+  })
+  it('tarif mobile money incomplet : seule la carte est proposée ; tout fermé : la phrase', async () => {
+    etat.mm = true
+    etat.tarifMm = false
+    const lire = async () => (await (await ETAT(new Request('https://www.deribfy.com/api/generateur/publier/etat?id=app-stock', { headers: { Authorization: 'Bearer x' } }))).json()) as { action: string; moyens: string[] }
+    expect(await lire()).toMatchObject({ action: 'payer', moyens: ['carte'] })
+    etat.carte = ''
+    expect(await lire()).toMatchObject({ action: 'fermee', moyens: [] })
+  })
+  it('la route refuse un moyen fermé (409) ou inconnu (400) : rien n’est écrit, rien n’est ouvert', async () => {
+    const poster = (moyen: string) => PUBLIER(new Request(`https://www.deribfy.com/api/generateur/publier?id=app-stock&sous=gestion-stock&moyen=${moyen}`, { method: 'POST', headers: { Authorization: 'Bearer x' } }))
+    const r1 = await poster('mobile_money')
+    expect(r1.status).toBe(409)
+    expect(((await r1.json()) as { error: string }).error).toBe(PHRASE_MOYEN_FERME)
+    expect((await poster('bitcoin')).status).toBe(400)
+    expect(etat.appli.publication_slug).toBeNull()
+    expect(etat.sessions).toEqual([])
+  })
+  it('appli déjà payée : aucun moyen, « Publier » publie', async () => {
+    etat.mm = true
+    etat.paye = true
+    const r = await (await ETAT(new Request('https://www.deribfy.com/api/generateur/publier/etat?id=app-stock', { headers: { Authorization: 'Bearer x' } }))).json() as { action: string; moyens: string[] }
+    expect(r).toMatchObject({ action: 'publier', moyens: [] })
+    etat.paye = false
   })
 })

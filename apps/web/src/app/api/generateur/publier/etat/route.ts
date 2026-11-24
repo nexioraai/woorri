@@ -4,6 +4,7 @@ import 'server-only'
  *
  * GET ?id=<appli> → { action, nom, adresse, nomModifiable, publicationAuto, lecturePublique }
  *   action  — 'publier' | 'payer' | 'fermee' (decisionDePublication) ;
+ *   moyens  — ['carte'] / ['mobile_money'] / les deux : ce que la fenêtre propose (2026-11-24) ;
  *   nom     — le nom d'adresse déjà ENREGISTRÉ pour cette appli, ou null :
  *             l'écran ne le redemande pas ;
  *   adresse — l'adresse EN LIGNE, ou null : un nom enregistré sans
@@ -20,7 +21,7 @@ import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { adressePubliee } from '@/lib/apps/sous-domaine'
-import { decisionDePublication, PHRASE_DECISION_ILLISIBLE } from '@/lib/apps/decision-publication'
+import { decisionEtMoyens, PHRASE_DECISION_ILLISIBLE } from '@/lib/apps/decision-publication'
 import { nomModifiable } from '@/lib/apps/nom-enregistre'
 import { listesPubliques } from '@/lib/apps/contenu-public'
 import { accordCouvre, accordGarde } from '@/lib/apps/accord-stripe'
@@ -46,8 +47,9 @@ export async function GET(req: Request) {
     .maybeSingle()
   if (lu.error !== null || lu.data === null) return NextResponse.json({ error: 'generation inconnue' }, { status: 404 })
 
-  const action = await decisionDePublication(id, garde.userId, garde.email)
-  if (action === null) return NextResponse.json({ error: PHRASE_DECISION_ILLISIBLE }, { status: 503 })
+  const decision = await decisionEtMoyens(id, garde.userId, garde.email)
+  if (decision === null) return NextResponse.json({ error: PHRASE_DECISION_ILLISIBLE }, { status: 503 })
+  const { action, moyens } = decision
   const l = lu.data as { publication_slug: string | null; publication_jeton: string | null; publie_le: string | null; document: unknown; sections_acquises: unknown }
   // LES LISTES QUE TOUT LE MONDE POURRA LIRE, en mots simples, et l'accord
   // déjà donné pour CETTE liste : la fenêtre ne la remontre pas pour rien.
@@ -71,6 +73,7 @@ export async function GET(req: Request) {
   return NextResponse.json(
     {
       action,
+      moyens,
       nom: typeof l.publication_slug === 'string' && l.publication_slug !== '' ? l.publication_slug : null,
       adresse: adressePubliee(l.publication_slug, l.publication_jeton),
       nomModifiable: nomModifiable(l),

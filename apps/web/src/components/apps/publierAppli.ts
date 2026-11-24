@@ -17,13 +17,15 @@
  */
 import { publierAvecAccord } from '@/components/apps/accordLecturePublique'
 import { adresseProposee } from '@/lib/apps/nom-produit'
-import { PHRASE_PUBLIER_FERMEE, type ActionPublier } from '@/lib/apps/compteur-phrases'
+import { PHRASE_PUBLIER_FERMEE, type ActionPublier, type MoyenPublication } from '@/lib/apps/compteur-phrases'
 import type { ListePublique } from '@/lib/apps/contenu-public'
 
 export type IssuePublication =
   | { readonly type: 'annulee' }
   | { readonly type: 'fermee'; readonly message: string }
   | { readonly type: 'paiement' }
+  /** Mobile money choisi : la fenêtre reste ouverte et montre le formulaire (2026-11-24). */
+  | { readonly type: 'mobile_money' }
   | { readonly type: 'amnesique'; readonly message: string; readonly regenerer: string }
   | { readonly type: 'erreur'; readonly message: string }
   | {
@@ -45,12 +47,20 @@ export type DemandeFenetre = {
   readonly adresseModifiable: boolean
   readonly listes: readonly ListePublique[]
   readonly libelleBouton: string
-  readonly valider: (adresse: string) => Promise<string | null>
+  /**
+   * LES MOYENS DE PAIEMENT (2026-11-24) : vide quand rien n'est à payer ; deux
+   * moyens → la fenêtre propose « Carte bancaire » / « Mobile money (Airtel /
+   * Moov) », sans prix ni frais à côté du bouton.
+   */
+  readonly moyens: readonly MoyenPublication[]
+  /** Pour le formulaire mobile money, montré DANS la fenêtre. */
+  readonly mobileMoney: { readonly app: string; readonly jeton: () => Promise<string | null>; readonly onPaye: () => Promise<unknown> } | null
+  /** `'mobile_money'` : la fenêtre reste ouverte et passe au formulaire. */
+  readonly valider: (adresse: string, moyen: MoyenPublication | null) => Promise<string | null | 'mobile_money'>
   readonly annuler: () => void
 }
 
 export const TITRE_FENETRE_PUBLIER = 'Publier votre application'
-export const BOUTON_VERS_PAIEMENT = 'Continuer vers le paiement'
 export const BOUTON_PUBLIER = 'Publier'
 export const PHRASE_LISTE_CHANGEE = 'Les données visibles par tout le monde ont changé depuis l’ouverture de cette fenêtre : fermez-la et cliquez de nouveau sur « Publier ».'
 export const PHRASE_PUBLICATION_ECHOUEE = 'La publication a échoué. Réessayez.'
@@ -65,6 +75,8 @@ export type OptionsPublication = {
   readonly ouvrirFenetre: (d: DemandeFenetre) => void
   /** Pour les tests ; l'écran prend `window.location.assign`. */
   readonly ouvrir?: (url: string) => void
+  /** Après un paiement mobile money abouti (relire l'état de l'écran). */
+  readonly apresMobileMoney?: () => Promise<unknown>
 }
 
 type Envoi = IssuePublication | { readonly type: 'dans_la_fenetre'; readonly message: string }
@@ -76,9 +88,9 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
     if (etat === null) return { type: 'erreur', message: PHRASE_PUBLICATION_ECHOUEE }
     if (etat.action === 'fermee') return { type: 'fermee', message: PHRASE_PUBLIER_FERMEE }
 
-    const envoyer = async (sous: string, accordDonne: boolean): Promise<Envoi> => {
+    const envoyer = async (sous: string, accordDonne: boolean, moyen: MoyenPublication | null): Promise<Envoi> => {
       const res = await publierAvecAccord(
-        `/api/generateur/publier?id=${encodeURIComponent(o.id)}${sous !== '' ? `&sous=${encodeURIComponent(sous)}` : ''}`,
+        `/api/generateur/publier?id=${encodeURIComponent(o.id)}${sous !== '' ? `&sous=${encodeURIComponent(sous)}` : ''}${moyen !== null ? `&moyen=${moyen}` : ''}`,
         o.autorisation,
         // Jamais de boîte native : la fenêtre a montré la liste, ou n'avait rien à montrer.
         { accordDonne, demander: () => false },
@@ -86,7 +98,7 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
       // Le champ s'appelle `lien`, pas `url` — bug attrapé en production le
       // 2026-10-30. On lit les deux : si la route renomme, le bouton survit.
       const d = (await res.json().catch(() => null)) as {
-        paiement?: string; lien?: string; url?: string; error?: string; erreurSousDomaine?: string; champ?: string
+        paiement?: string; mobileMoney?: boolean; lien?: string; url?: string; error?: string; erreurSousDomaine?: string; champ?: string
         compte?: { adresse?: string; motDePasse?: string | null } | null
         amnesique?: boolean; regenerer?: string; quoiFaire?: string; lecturePublique?: boolean
       } | null
@@ -94,6 +106,7 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
         ouvrir(d.paiement)
         return { type: 'paiement' }
       }
+      if (res.ok && d?.mobileMoney === true) return { type: 'mobile_money' }
       // Les refus du NOM, et une liste publique qui a changé : dans la fenêtre.
       if (!res.ok && d?.champ === 'nom') return { type: 'dans_la_fenetre', message: d.error ?? 'Cette adresse n’est pas utilisable.' }
       if (!res.ok && d?.lecturePublique === true) return { type: 'dans_la_fenetre', message: PHRASE_LISTE_CHANGEE }
@@ -110,10 +123,15 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
     // RÈGLES 5 ET 7 : nom déjà choisi et rien de NOUVEAU à accepter → droit
     // au but (Stripe si ce n'est pas payé, republication sinon), sans fenêtre.
     const aAccepter = etat.lecturePublique.acceptee ? [] : etat.lecturePublique.listes
-    if (etat.nom !== null && aAccepter.length === 0) {
-      const r = await envoyer(etat.nom, false)
+    // À payer : les moyens ouverts. Un CHOIX (deux moyens) ou le mobile money
+    // (son formulaire est dans la fenêtre) ouvrent toujours la fenêtre.
+    const moyens = etat.action === 'payer' ? etat.moyens : []
+    const sansFenetre = moyens.length === 0 || (moyens.length === 1 && moyens[0] === 'carte')
+    if (etat.nom !== null && aAccepter.length === 0 && sansFenetre) {
+      const r = await envoyer(etat.nom, false, moyens[0] ?? null)
       return r.type === 'dans_la_fenetre' ? { type: 'erreur', message: r.message } : r
     }
+    const sansBearer = o.autorisation.replace(/^Bearer\s+/u, '')
 
     // Sinon, LA fenêtre : l'adresse, et ce qui sera visible par tout le monde.
     return await new Promise<IssuePublication>((resolve) => {
@@ -122,13 +140,18 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
         adresseInitiale: etat.nom ?? adresseProposee(o.titre ?? o.demande),
         adresseModifiable: etat.nom === null,
         listes: aAccepter,
-        libelleBouton: etat.action === 'payer' ? BOUTON_VERS_PAIEMENT : BOUTON_PUBLIER,
-        valider: async (adresse) => {
+        // UN SEUL BOUTON « PUBLIER » (2026-11-24), qu'il y ait à payer ou non.
+        libelleBouton: BOUTON_PUBLIER,
+        moyens,
+        mobileMoney: moyens.includes('mobile_money')
+          ? { app: o.id, jeton: () => Promise.resolve(sansBearer), onPaye: o.apresMobileMoney ?? (() => Promise.resolve()) }
+          : null,
+        valider: async (adresse, moyen) => {
           try {
-            const r = await envoyer(etat.nom ?? adresse, aAccepter.length > 0)
+            const r = await envoyer(etat.nom ?? adresse, aAccepter.length > 0, moyens.length === 0 ? null : (moyen ?? moyens[0] ?? null))
             if (r.type === 'dans_la_fenetre') return r.message
             resolve(r)
-            return null
+            return r.type === 'mobile_money' ? 'mobile_money' : null
           } catch {
             return PHRASE_PUBLICATION_ECHOUEE
           }
@@ -144,6 +167,8 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
 /** Ce que « Publier » va faire, et où en est l'appli (GET /api/generateur/publier/etat). */
 export type EtatPublication = {
   readonly action: ActionPublier
+  /** Les moyens de paiement ouverts pour ce compte (2026-11-24). */
+  readonly moyens: readonly MoyenPublication[]
   readonly nom: string | null
   readonly adresse: string | null
   readonly nomModifiable: boolean
@@ -160,6 +185,7 @@ export async function lireEtatPublication(id: string, autorisation: string): Pro
     if (d.action === undefined) return null
     return {
       action: d.action,
+      moyens: (Array.isArray(d.moyens) ? d.moyens : []).filter((m): m is MoyenPublication => m === 'carte' || m === 'mobile_money'),
       nom: typeof d.nom === 'string' && d.nom !== '' ? d.nom : null,
       adresse: typeof d.adresse === 'string' && d.adresse !== '' ? d.adresse : null,
       nomModifiable: d.nomModifiable === true,
@@ -228,6 +254,8 @@ export async function changerAdresse(o: {
       adresseModifiable: true,
       listes: [],
       libelleBouton: BOUTON_ENREGISTRER_ADRESSE,
+      moyens: [],
+      mobileMoney: null,
       valider: async (adresse) => {
         if (adresse === '') return 'Choisissez une adresse.'
         try {

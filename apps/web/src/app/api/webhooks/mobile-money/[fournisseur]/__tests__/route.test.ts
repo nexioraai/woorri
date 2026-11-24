@@ -4,13 +4,16 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHmac } from 'node:crypto'
-const etat = vi.hoisted(() => ({ rpc: [] as unknown[], deja: new Set<string>(), mobileMoney: '' as string }))
+const etat = vi.hoisted(() => ({ rpc: [] as unknown[], deja: new Set<string>(), mobileMoney: '' as string, apres: [] as (() => Promise<void>)[], publiees: [] as [string, string][] }))
 // 2026-11-23 : le verrou et le journal en base ont leur propre test (mobile-money-l1-l2) ; ici, un registre qui ouvre toujours.
 vi.mock('@/lib/payments/mobile-money/demandes', () => ({
   masquer: (t: string) => t.slice(0, 3) + '••••••' + t.slice(-2),
   registreDemandes: { ouvrir: async () => ({ issue: 'ouverte', id: 'd1' }), noterReference: async () => undefined, abandonner: async () => undefined, noterAvis: async () => undefined, aRattraper: async () => [], lire: async () => null, marquerActivee: async () => undefined },
 }))
 vi.mock('@/lib/alertes', () => ({ alerter: async () => 'alerte' }))
+// `after` (2026-11-24) : hors d'une vraie requête, on garde le travail pour le lancer à la main.
+vi.mock('next/server', async (origine) => ({ ...(await origine<typeof import('next/server')>()), after: (f: () => Promise<void>) => { etat.apres.push(f) } }))
+vi.mock('@/lib/payments/mobile-money/publication', () => ({ publierApresEncaissement: async (app: string, proprietaire: string) => { etat.publiees.push([app, proprietaire]); return 'publiee' } }))
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: {
     // Le courriel du propriétaire, relu par son identifiant (jamais pris dans l'avis).
@@ -41,7 +44,7 @@ const appel = (brut: string, signature: string, fournisseur = 'monerails') =>
 const signe = (brut: string, t = Math.floor(Date.now() / 1000), secret = SECRET) => `t=${String(t)},v1=${createHmac('sha256', secret).update(`${String(t)}.${brut}`).digest('hex')}`
 const SECRET_LIVE = 'whsec_live'
 
-beforeEach(() => { etat.rpc = []; etat.deja = new Set(); etat.mobileMoney = ''; vi.stubEnv('MONERAILS_WEBHOOK_SECRET', SECRET) })
+beforeEach(() => { etat.rpc = []; etat.deja = new Set(); etat.mobileMoney = ''; etat.apres = []; etat.publiees = []; vi.stubEnv('MONERAILS_WEBHOOK_SECRET', SECRET) })
 afterEach(() => { vi.unstubAllEnvs() })
 
 describe('webhook mobile money', () => {
@@ -102,6 +105,23 @@ describe('webhook mobile money', () => {
     const b = corps({ livemode: true })
     expect(await (await appel(b, signe(b, Math.floor(Date.now() / 1000), SECRET_LIVE))).json()).toEqual({ recu: true, issue: 'enregistre' })
     expect(etat.rpc.map((x) => (x as [string])[0])).toEqual(['enregistrer_paiement'])
+    // LE PAIEMENT REÇU PUBLIE L'APPLI (2026-11-24), APRÈS la réponse au prestataire.
+    expect(etat.publiees, 'publié avant la réponse').toEqual([])
+    expect(etat.apres).toHaveLength(1)
+    await etat.apres[0]!()
+    expect(etat.publiees).toEqual([['a1', 'u1']])
+  })
+  it('un avis de TEST, refusé ou ignoré ne publie RIEN', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const b = corps()
+    expect(await (await appel(b, signe(b))).json()).toEqual({ recu: true, issue: 'test_verifie' })
+    const r = corps({ amount: 100 })
+    expect(await (await appel(r, signe(r))).json()).toEqual({ recu: true, issue: 'refuse' })
+    const e = corps({ status: 'failed' })
+    await appel(e, signe(e))
+    err.mockRestore()
+    expect(etat.apres).toEqual([])
+    expect(etat.publiees).toEqual([])
   })
   it('OUVERT À TOUS · le même avis, réglage vide ou clé live absente : refusé, rien n’est écrit', async () => {
     vi.stubEnv('MONERAILS_WEBHOOK_SECRET_LIVE', SECRET_LIVE)

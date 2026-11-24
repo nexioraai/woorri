@@ -88,12 +88,15 @@ export function PayerMobileMoney({
   jeton,
   renouveler,
   onPaye,
+  ouvertDOffice = false,
 }: {
   app: string;
   jeton: () => Promise<string | null>;
   /** Abonnée (même échue) : « Renouveler ». Gratuite : « S'abonner ». */
   renouveler: boolean;
   onPaye: () => Promise<unknown>;
+  /** Dans la fenêtre « Publier » (2026-11-24) : le formulaire s'ouvre seul, sans bouton intermédiaire. */
+  ouvertDOffice?: boolean;
 }) {
   const [ouvert, setOuvert] = useState(false);
   const [offre, setOffre] = useState<Offre | null>(null);
@@ -136,6 +139,15 @@ export function PayerMobileMoney({
     setOffre({ montant, test: r.d.test !== false, operateurs: ops });
     if (ops.length > 0) setOperateur(ops[0]!.code);
   };
+  // Ouvert d'office : une seule fois, au tour suivant (pas d'état posé pendant l'effet).
+  const ouvertUneFois = useRef(false);
+  useEffect(() => {
+    if (!ouvertDOffice || ouvertUneFois.current) return;
+    // Le drapeau se lève DANS le minuteur : un rendu qui annule celui-ci en
+    // replanifie un autre, au lieu de ne jamais ouvrir.
+    const t = window.setTimeout(() => { ouvertUneFois.current = true; void ouvrir(); }, 0);
+    return () => { window.clearTimeout(t); };
+  });
 
   /** Suit l'encaissement jusqu'à un état final (toutes les 4 s, 10 min au plus). */
   const suivre = async (id: string, debut: number) => {

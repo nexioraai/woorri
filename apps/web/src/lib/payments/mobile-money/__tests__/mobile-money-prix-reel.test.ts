@@ -234,8 +234,11 @@ describe('④ le dropshipping : carte seulement', () => {
     parcourir('src/app')
     parcourir('src/components')
     const branches = fichiers.filter((p) => /PayerMobileMoney|\/api\/generateur\/mobile-money/u.test(readFileSync(join(process.cwd(), p), 'utf8')))
+    // 2026-11-24 : la fenêtre « Publier » des APPLIS montre le formulaire
+    // (atelier et « Mes projets ») — une appli n'est jamais du dropshipping.
     expect(branches.sort()).toEqual([
       'src/app/atelier/[id]/page.tsx',
+      'src/components/apps/FenetrePublier.tsx',
       'src/components/atelier/PayerMobileMoney.tsx',
     ])
   })
