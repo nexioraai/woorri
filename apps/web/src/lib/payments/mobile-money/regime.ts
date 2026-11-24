@@ -1,13 +1,14 @@
 /**
- * TEST OU RÉEL — LA RÈGLE DU PASSAGE AU RÉEL (lot L3, 2026-11-23).
+ * TEST OU RÉEL — LA RÈGLE DU PASSAGE AU RÉEL (lot L3 2026-11-23, ouvert à tous le 2026-11-24).
  *
- * Décision du propriétaire : le RÉEL est limité à SON compte. Un compte paie en
- * réel seulement si les TROIS conditions tiennent ensemble :
- *   ① son courriel est dans `COMPTES_REEL` (écrit ici, par un commit nommé) ;
- *   ② la clé live `MONERAILS_CLE_LIVE` est présente dans Vercel (`mr_live_…`) ;
- *   ③ le réglage `mobile_money` contient CE courriel, écrit en toutes lettres
- *      (« tous » ne suffit pas : il ouvre le TEST à tous, jamais le réel).
- * Une seule manque → TEST. Tous les autres comptes : TEST, toujours.
+ * Le réglage `mobile_money` décide, à condition que la clé live
+ * `MONERAILS_CLE_LIVE` (`mr_live_…`) soit présente dans Vercel :
+ *   · « tous »            → TOUS les comptes connectés paient en RÉEL ;
+ *   · un courriel listé    → ce compte en réel, s'il est aussi dans
+ *                            `COMPTES_REEL` (écrit ici, par un commit nommé) ;
+ *   · vide                 → personne en réel.
+ * Sans clé live, ou sans compte connecté : TEST, toujours. Ce fichier ne
+ * change pas le réglage : c'est le propriétaire qui l'écrit.
  *
  * Fichier PUR (aucun import serveur) : la décision se teste sans base.
  */
@@ -30,10 +31,15 @@ export function reglageNommeLeCourriel(valeur: string | null, email: string): bo
   return valeur.split(',').map((x) => x.trim().toLowerCase()).includes(e)
 }
 
+/** Le réglage vaut-il « tous » (casse et espaces ignorés, comme l'interrupteur) ? */
+export function reglageOuvreATous(valeur: string | null): boolean {
+  return (valeur ?? '').trim().toLowerCase() === 'tous'
+}
+
 export function decideRegime(c: { readonly email: string | null; readonly cleLive: string | undefined; readonly reglage: string | null }): RegimeMobileMoney {
   if (c.email === null) return 'test'
+  if (cleDuRegime('reel', c.cleLive) === null) return 'test'
+  if (reglageOuvreATous(c.reglage)) return 'reel'
   const e = c.email.trim().toLowerCase()
-  const permis = COMPTES_REEL.includes(e)
-  const cle = cleDuRegime('reel', c.cleLive) !== null
-  return permis && cle && reglageNommeLeCourriel(c.reglage, e) ? 'reel' : 'test'
+  return COMPTES_REEL.includes(e) && reglageNommeLeCourriel(c.reglage, e) ? 'reel' : 'test'
 }

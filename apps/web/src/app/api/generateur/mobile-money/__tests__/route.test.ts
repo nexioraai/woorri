@@ -118,9 +118,13 @@ describe('formulaire mobile money', () => {
     // + la clé live : encore test (le réglage ne le nomme pas).
     vi.stubEnv('MONERAILS_CLE_LIVE', 'mr_live_abc')
     expect(await regime()).toEqual(['test', true])
-    // « tous » n'ouvre jamais le réel.
+    // « tous » + clé live : réel pour ce compte…
     etat.reglages = { ...REGLAGES, mobile_money: 'tous' }
-    expect(await regime()).toEqual(['test', true])
+    expect(await regime()).toEqual(['reel', false])
+    // … et pour n'importe quel autre compte.
+    etat.email = 'abbas@x.com'
+    expect(await regime()).toEqual(['reel', false])
+    etat.email = 'contact@deribfy.com'
     // Les trois : réel.
     etat.reglages = { ...REGLAGES, mobile_money: 'abbas@x.com, Contact@Deribfy.com' }
     expect(await regime()).toEqual(['reel', false])

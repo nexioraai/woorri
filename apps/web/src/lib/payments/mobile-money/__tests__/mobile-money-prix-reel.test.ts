@@ -31,7 +31,7 @@ vi.mock('@/lib/supabase-admin', () => ({
 vi.mock('@/lib/apps/quota', () => ({ lireReglagesTexte: async () => etat.reglages }))
 vi.mock('@/lib/payments/interrupteur', () => ({ interrupteurOuvert: async () => false }))
 vi.mock('@/lib/alertes', () => ({ alerter: async () => 'alerte' }))
-import { COMPTES_REEL, cleDuRegime, decideRegime, reglageNommeLeCourriel } from '../regime'
+import { COMPTES_REEL, cleDuRegime, decideRegime, reglageNommeLeCourriel, reglageOuvreATous } from '../regime'
 import { estMasque, FORME_MASQUEE, masquePourEcrire, masquer, registreDemandes, type DemandeEnBase, type RegistreDemandes } from '../demandes'
 import { regimeDuCompte, reelPermisPourProprietaire } from '../encaissement'
 import { FORME_PAIEMENT_SORTANT, rembourserALaMain } from '../remboursement'
@@ -60,9 +60,24 @@ describe('① L3 · le réel pour le seul compte du propriétaire', () => {
     expect(decideRegime({ ...ok, cleLive: 'mr_test_x' }), 'une clé de test posée comme clé live').toBe('test')
     expect(decideRegime({ ...ok, reglage: null })).toBe('test')
     expect(decideRegime({ ...ok, reglage: '' })).toBe('test')
-    expect(decideRegime({ ...ok, reglage: 'tous' }), '« tous » n’ouvre jamais le réel').toBe('test')
+    expect(decideRegime({ ...ok, reglage: 'tous' }), '« tous » ouvre le réel (clé live présente)').toBe('reel')
     expect(decideRegime({ ...ok, reglage: 'contact@deribfy.co' }), 'un courriel voisin').toBe('test')
     expect(decideRegime({ ...ok, reglage: 'a@b.c, CONTACT@deribfy.com' })).toBe('reel')
+  })
+  it('« tous » + clé live → TOUS les comptes en réel ; sans clé live ou sans compte → test', () => {
+    const tous = { email: 'abbas@x.com', cleLive: 'mr_live_x', reglage: 'tous' }
+    expect(decideRegime(tous)).toBe('reel')
+    expect(decideRegime({ ...tous, reglage: ' TOUS ' }), 'casse et espaces ignorés').toBe('reel')
+    expect(decideRegime({ ...tous, cleLive: undefined })).toBe('test')
+    expect(decideRegime({ ...tous, cleLive: '' })).toBe('test')
+    expect(decideRegime({ ...tous, cleLive: 'mr_test_x' }), 'une clé de test posée comme clé live').toBe('test')
+    expect(decideRegime({ ...tous, email: null }), 'personne de connecté').toBe('test')
+    expect(decideRegime({ ...tous, reglage: 'tous les comptes' }), 'seul « tous » exactement').toBe('test')
+    expect(decideRegime({ ...tous, reglage: '' }), 'vide : personne en réel').toBe('test')
+    expect(decideRegime({ ...tous, reglage: null })).toBe('test')
+    expect(decideRegime({ ...tous, reglage: 'contact@deribfy.com' }), 'mon courriel seul : un autre reste en test').toBe('test')
+    expect(reglageOuvreATous('tous')).toBe(true)
+    expect(reglageOuvreATous('tous,abbas@x.com')).toBe(false)
   })
   it('le réglage doit NOMMER le courriel : « tous » ou un identifiant de compte ne suffisent pas', () => {
     expect(reglageNommeLeCourriel('tous', PROPRIO)).toBe(false)
