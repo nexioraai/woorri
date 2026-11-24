@@ -43,7 +43,7 @@
  * et « Télécharger » agiraient sur autre chose que ce que l'œil voit — et la
  * personne publierait ce qu'elle ne regarde pas. Un seul courant, partout.
  */
-import { changerAdresse, CONFIRMER_MOT_DE_PASSE, etapeDuRetour, lancerPublication, LIBELLE_CREER_MOT_DE_PASSE, LIBELLE_MOT_DE_PASSE, lireEtatPublication, PHRASES_RETOUR, refaireMotDePasse, RELECTURE_RETOUR_MAX, RELECTURE_RETOUR_MS, type DemandeFenetre, type EtapeRetour, type EtatPublication } from '@/components/apps/publierAppli';
+import { changerAdresse, CONFIRMER_MOT_DE_PASSE, etapeDuRetour, PHRASE_DEJA_EN_LIGNE, lancerPublication, LIBELLE_CREER_MOT_DE_PASSE, LIBELLE_MOT_DE_PASSE, lireEtatPublication, PHRASES_RETOUR, refaireMotDePasse, RELECTURE_RETOUR_MAX, RELECTURE_RETOUR_MS, type DemandeFenetre, type EtapeRetour, type EtatPublication } from '@/components/apps/publierAppli';
 import { FenetrePublier } from '@/components/apps/FenetrePublier';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
@@ -621,6 +621,8 @@ export default function AtelierPage() {
     void lireEtat();
     if (issue.erreurSousDomaine !== null) setErreur(`Adresse nommée refusée : ${issue.erreurSousDomaine}`);
     setLienPublic(issue.lien);
+    // B (2026-11-24) : déjà en ligne, on le DIT sous la barre — sinon le clic semble ne rien faire.
+    if (issue.dejaEnLigne) setAvisPublication({ texte: PHRASE_DEJA_EN_LIGNE, publierMaintenant: false });
     // ── LE MOT DE PASSE NE REVIENT JAMAIS, mesuré le 2026-11-04 : la
     //    route le rend À LA CRÉATION, et republier rend `null`.
     if (issue.compte != null) setCompte({ etat: 'actif', ...issue.compte });

@@ -1,6 +1,6 @@
 'use client';
 import { ADRESSE_GESTION } from '@/lib/apps/entites-declarees';
-import { adresseEnLigne, changerAdresse, CONFIRMER_MOT_DE_PASSE, lancerPublication, LIBELLE_MOT_DE_PASSE, refaireMotDePasse, type DemandeFenetre } from '@/components/apps/publierAppli';
+import { adresseEnLigne, changerAdresse, CONFIRMER_MOT_DE_PASSE, lancerPublication, PHRASE_DEJA_EN_LIGNE, LIBELLE_MOT_DE_PASSE, refaireMotDePasse, type DemandeFenetre } from '@/components/apps/publierAppli';
 import { FenetrePublier } from '@/components/apps/FenetrePublier';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -113,7 +113,7 @@ export default function DashboardPage() {
   // Le lien public de l'application qu'on vient de publier — affiché sous la
   // carte, copiable. Un seul à la fois : publier en remplace l'affichage.
   const [lienPublic, setLienPublic] = useState<
-    { id: string; url: string; compte?: EtatCompteOeuvre | null } | null
+    { id: string; url: string; compte?: EtatCompteOeuvre | null; deja?: boolean } | null
   >(null);
   /**
    * LES VERSIONS D'UNE ŒUVRE — chargées à la demande, jamais en masse.
@@ -316,7 +316,7 @@ export default function DashboardPage() {
     // L'adresse nommée a pu échouer SANS casser la publication par jeton : on
     // montre le lien qui marche ET la raison de l'échec, jamais l'un sans l'autre.
     if (issue.erreurSousDomaine !== null) setApercuErreur(`Adresse nommée refusée : ${issue.erreurSousDomaine}`);
-    setLienPublic({ id: a.id, url: issue.lien, compte: issue.compte });
+    setLienPublic({ id: a.id, url: issue.lien, compte: issue.compte, deja: issue.dejaEnLigne });
     setApplications((liste) => liste.map((x) => (x.id === a.id ? { ...x, adresse: issue.lien, nomModifiable: false, nomEnregistre: null } : x)));
   };
 
@@ -975,6 +975,9 @@ export default function DashboardPage() {
                         recopierait le contenu d'avant le premier. La liste
                         supprime l'ambiguïté — on désigne la version voulue,
                         avec sa date. */}
+                    {lienPublic?.id === a.id && lienPublic.deja === true && (
+                      <p role="status" className="text-xs text-emerald-300">{PHRASE_DEJA_EN_LIGNE}</p>
+                    )}
                     {lienPublic?.id === a.id && (
                       <div className="flex items-center gap-2 text-xs">
                         <a href={lienPublic.url} target="_blank" rel="noreferrer"

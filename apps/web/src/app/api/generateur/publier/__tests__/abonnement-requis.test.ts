@@ -7,7 +7,8 @@
  * ③ compteur illisible → 503, rien n'est écrit ;
  * ④ abonné et payé → la garde laisse passer (la route va jusqu'au contrôle
  *    du nom, l'étape suivante) ; idem pour republier une appli déjà publiée ;
- * ⑤ compte exempté → la garde ne lit même pas le compteur.
+ * ⑤ compte fondateur (`sansQuota`) → PAS d'exemption pour publier (A1,
+ *    2026-11-24) : le compteur est lu, et une appli non payée rend 402.
  *
  * « Laisser passer » se prouve par l'étape SUIVANTE : un nom invalide rend
  * 400 « nom pas utilisable ». Si la garde bloquait, on aurait 402.
@@ -91,10 +92,18 @@ describe('publier demande l’abonnement', () => {
     expect((await appel('A')).status).toBe(400)
   })
 
-  it('⑤ compte exempté : la garde ne lit pas le compteur et laisse passer', async () => {
+  it('⑤ A1 · compte fondateur (hors quota de génération) : publier N’EST PAS gratuit — compteur lu, 402 sans paiement', async () => {
+    for (const email of ['issayamiyoussouf@gmail.com', 'abbasissay@gmail.com']) {
+      etat.email = email
+      etat.lectures = 0
+      const r = await appel('A')
+      expect(r.status, email).toBe(402)
+      expect(etat.lectures, email).toBe(1)
+    }
+  })
+  it('⑤ bis A1 · compte fondateur PAYÉ : la garde laisse passer, comme pour tout le monde', async () => {
     etat.email = 'issayamiyoussouf@gmail.com'
-    const r = await appel('A')
-    expect(r.status).toBe(400)
-    expect(etat.lectures).toBe(0)
+    etat.compteur = ABONNEE
+    expect((await appel('A')).status).toBe(400)
   })
 })

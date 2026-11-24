@@ -147,7 +147,7 @@ import { publierApresPaiement } from '@/lib/payments/publier-apres-paiement'
 import { LIBELLE_MOYEN, PHRASE_PUBLIER_FERMEE } from '@/lib/apps/compteur-phrases'
 import { PHRASE_MOYEN_FERME } from '@/lib/apps/decision-publication'
 import { PHRASE_ABONNEMENT_EN_COURS } from '@/lib/payments/abonnement-appli'
-import { changerAdresse, etapeDuRetour, lireEtatPublication, refaireMotDePasse, type DemandeFenetre } from '@/components/apps/publierAppli'
+import { changerAdresse, etapeDuRetour, lireEtatPublication, PHRASE_DEJA_EN_LIGNE, refaireMotDePasse, type DemandeFenetre } from '@/components/apps/publierAppli'
 import { GET as COMPTE } from '@/app/api/generateur/compte/route'
 import { POST as SUPPRIMER } from '@/app/api/generateur/supprimer/route'
 import { GET as MES_APPLICATIONS } from '@/app/api/generateur/mes-applications/route'
@@ -731,5 +731,49 @@ describe('MOBILE MONEY DANS LA FENÊTRE « PUBLIER » (2026-11-24)', () => {
     const r = await (await ETAT(new Request('https://www.deribfy.com/api/generateur/publier/etat?id=app-stock', { headers: { Authorization: 'Bearer x' } }))).json() as { action: string; moyens: string[] }
     expect(r).toMatchObject({ action: 'publier', moyens: [] })
     etat.paye = false
+  })
+})
+
+
+describe('A1 · B · « tous » pour la carte (2026-11-24)', () => {
+  const lireEtat = async () => (await (await ETAT(new Request('https://www.deribfy.com/api/generateur/publier/etat?id=app-stock', { headers: { Authorization: 'Bearer x' } }))).json()) as { action: string; moyens: string[] }
+  it('A1 · compte fondateur (hors quota) : publier N’EST PLUS gratuit — la fenêtre propose les moyens, rien n’est publié sans paiement', async () => {
+    for (const email of ['issayamiyoussouf@gmail.com', 'abbasissay@gmail.com']) {
+      etat.email = email
+      etat.carte = email
+      etat.mm = true
+      expect(await lireEtat(), email).toMatchObject({ action: 'payer', moyens: ['carte', 'mobile_money'] })
+    }
+    moyenChoisi = 'mobile_money'
+    expect(await clic('Mes projets')).toEqual({ type: 'mobile_money' })
+    expect(etat.appli.publication_jeton, 'publiée sans paiement').toBeNull()
+  })
+  it('« abonnement_carte = tous » : la carte est proposée à N’IMPORTE QUEL compte, avec le mobile money', async () => {
+    etat.carte = 'tous'
+    etat.mm = true
+    for (const email of ['client@exemple.com', 'autre@x.td', 'contact@deribfy.com']) {
+      etat.email = email
+      expect(await lireEtat(), email).toMatchObject({ action: 'payer', moyens: ['carte', 'mobile_money'] })
+    }
+    etat.carte = ' TOUS '
+    expect(await lireEtat(), 'casse et espaces').toMatchObject({ moyens: ['carte', 'mobile_money'] })
+    etat.carte = 'tous les comptes'
+    expect(await lireEtat(), 'seul « tous » exactement').toMatchObject({ moyens: ['mobile_money'] })
+  })
+  it('B · « Publier » sur une appli DÉJÀ en ligne : réussi ET dit (dejaEnLigne) ; une première publication ne le dit pas', async () => {
+    etat.paye = true
+    etat.appli.publication_slug = 'gestion-stock'
+    const premiere = await clic('atelier')
+    expect(premiere).toMatchObject({ type: 'publiee', dejaEnLigne: false })
+    const seconde = await clic('Mes projets')
+    expect(seconde).toMatchObject({ type: 'publiee', dejaEnLigne: true })
+    etat.paye = false
+  })
+  it('B · les deux écrans affichent la phrase quand c’est déjà en ligne', () => {
+    expect(PHRASE_DEJA_EN_LIGNE).toBe('Votre application est déjà en ligne : rien n’a changé, son adresse reste la même.')
+    expect(PAGES.atelier).toMatch(motifTexte('if (issue.dejaEnLigne) setAvisPublication({ texte: PHRASE_DEJA_EN_LIGNE, publierMaintenant: false });'))
+    expect(PAGES['Mes projets']).toMatch(motifTexte('deja: issue.dejaEnLigne'))
+    expect(PAGES['Mes projets']).toMatch(motifTexte('{lienPublic?.id === a.id && lienPublic.deja === true && ('))
+    expect(PAGES['Mes projets']).toMatch(motifTexte('{PHRASE_DEJA_EN_LIGNE}'))
   })
 })

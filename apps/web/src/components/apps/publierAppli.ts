@@ -31,6 +31,8 @@ export type IssuePublication =
   | {
       readonly type: 'publiee'
       readonly lien: string
+      /** Déjà en ligne avant ce clic : rien n'a changé à l'adresse (B, 2026-11-24). */
+      readonly dejaEnLigne: boolean
       readonly compte: { adresse?: string; motDePasse?: string | null } | null
       readonly erreurSousDomaine: string | null
     }
@@ -63,6 +65,8 @@ export type DemandeFenetre = {
 export const TITRE_FENETRE_PUBLIER = 'Publier votre application'
 export const BOUTON_PUBLIER = 'Publier'
 export const PHRASE_LISTE_CHANGEE = 'Les données visibles par tout le monde ont changé depuis l’ouverture de cette fenêtre : fermez-la et cliquez de nouveau sur « Publier ».'
+/** Ce que dit l'écran quand « Publier » vise une appli DÉJÀ en ligne (B, 2026-11-24). */
+export const PHRASE_DEJA_EN_LIGNE = 'Votre application est déjà en ligne : rien n’a changé, son adresse reste la même.'
 export const PHRASE_PUBLICATION_ECHOUEE = 'La publication a échoué. Réessayez.'
 
 export type OptionsPublication = {
@@ -98,7 +102,7 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
       // Le champ s'appelle `lien`, pas `url` — bug attrapé en production le
       // 2026-10-30. On lit les deux : si la route renomme, le bouton survit.
       const d = (await res.json().catch(() => null)) as {
-        paiement?: string; mobileMoney?: boolean; lien?: string; url?: string; error?: string; erreurSousDomaine?: string; champ?: string
+        paiement?: string; mobileMoney?: boolean; dejaPublie?: boolean; lien?: string; url?: string; error?: string; erreurSousDomaine?: string; champ?: string
         compte?: { adresse?: string; motDePasse?: string | null } | null
         amnesique?: boolean; regenerer?: string; quoiFaire?: string; lecturePublique?: boolean
       } | null
@@ -117,7 +121,7 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
       }
       const lien = d?.lien ?? d?.url
       if (!res.ok || lien === undefined || lien === '') return { type: 'erreur', message: d?.error ?? 'La publication a échoué.' }
-      return { type: 'publiee', lien, compte: d?.compte ?? null, erreurSousDomaine: d?.erreurSousDomaine ?? null }
+      return { type: 'publiee', lien, dejaEnLigne: d?.dejaPublie === true, compte: d?.compte ?? null, erreurSousDomaine: d?.erreurSousDomaine ?? null }
     }
 
     // RÈGLES 5 ET 7 : nom déjà choisi et rien de NOUVEAU à accepter → droit

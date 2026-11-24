@@ -6,13 +6,12 @@ import 'server-only'
  * et par la route au moment de publier : les deux boutons « Publier »
  * (atelier, « Mes projets ») et la route ne peuvent donc pas diverger.
  *
- *   'publier' — compte exempté, ou appli payée ;
+ *   'publier' — appli payée (abonnement en cours) ;
  *   'payer'   — non payée, et au moins un moyen ouvert : carte (prix lisible)
  *               ou mobile money (interrupteur ouvert, tarif réglé) ;
  *   'fermee'  — non payée, carte fermée (ou prix illisible) ;
  *   null      — le compteur ne répond pas : on ne décide rien.
  */
-import { sansQuota } from '@/lib/admin-emails'
 import { lireCompteur } from '@/lib/apps/quota'
 import { actionPublier, moyensDePublication, publicationOuverte, type ActionPublier, type MoyenPublication } from '@/lib/apps/compteur-phrases'
 import { lireTarifMobileMoney, mobileMoneyOuvert } from '@/lib/payments/mobile-money/encaissement'
@@ -32,8 +31,11 @@ export type DecisionPublication = { readonly action: ActionPublier; readonly moy
  * produit l'accepte (jamais le dropshipping) et que son tarif est réglé :
  * un tarif incomplet ne propose rien, plutôt qu'un prix faux.
  */
+// ── A1 (décision du propriétaire, 2026-11-24) : l'exemption des comptes
+//    fondateurs (`sansQuota`) ne vaut QUE pour la génération. Mesuré : avec
+//    elle, « Gestion pharmacie » s'est publiée sans paiement ni choix du moyen.
+//    Publier passe désormais par la fenêtre Carte / Mobile money pour TOUS.
 export async function decisionEtMoyens(app: string, proprietaire: string, email: string | null): Promise<DecisionPublication | null> {
-  if (sansQuota(email)) return { action: 'publier', moyens: [] }
   const compteur = await lireCompteur(app, proprietaire)
   if (compteur === null) return null
   if (publicationOuverte(compteur)) return { action: 'publier', moyens: [] }
