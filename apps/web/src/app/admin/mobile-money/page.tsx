@@ -13,6 +13,7 @@
  * « annulation » et coupe le service — il n'envoie AUCUN argent.
  */
 import { useEffect, useState } from 'react';
+import { ligneCle, type EtatDesCles } from '@/lib/payments/mobile-money/cles';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
@@ -39,6 +40,7 @@ async function jeton(): Promise<string | null> {
 
 export default function MobileMoneyAdminPage() {
   const [demandes, setDemandes] = useState<Demande[] | null>(null);
+  const [cles, setCles] = useState<EtatDesCles | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
 
@@ -47,9 +49,10 @@ export default function MobileMoneyAdminPage() {
       const t = await jeton();
       if (t === null) { setMessage('Connectez-vous.'); return; }
       const r = await fetch('/api/admin/mobile-money', { headers: { Authorization: `Bearer ${t}` } });
-      const d = (await r.json().catch(() => ({}))) as { demandes?: Demande[]; error?: string };
+      const d = (await r.json().catch(() => ({}))) as { demandes?: Demande[]; cles?: EtatDesCles; error?: string };
       if (!r.ok) { setMessage(d.error ?? 'Lecture impossible.'); return; }
       setDemandes(d.demandes ?? []);
+      setCles(d.cles ?? null);
     })();
   }, [version]);
 
@@ -89,6 +92,12 @@ export default function MobileMoneyAdminPage() {
         <Link href="/admin" className="text-xs text-slate-400 hover:text-white">← Administration</Link>
         <h1 className="mt-2 text-2xl font-bold">Mobile money</h1>
         <p className="mt-1 text-sm text-slate-400">Chaque demande, l’avis reçu, la décision et sa raison. Les numéros sont masqués.</p>
+        {cles !== null && (
+          <ul aria-label="Clés MoneRails" className="mt-4 space-y-1 font-mono text-xs">
+            <li className={cles.test ? 'text-emerald-300' : 'text-red-300'}>{ligneCle('test', cles.test)}</li>
+            <li className={cles.live ? 'text-emerald-300' : 'text-red-300'}>{ligneCle('live', cles.live)}</li>
+          </ul>
+        )}
         {message !== null && <p role="status" className="mt-4 text-sm text-amber-200">{message}</p>}
         {demandes !== null && demandes.length === 0 && <p className="mt-6 text-sm text-slate-400">Aucune demande pour l’instant.</p>}
         <ul className="mt-6 space-y-2">
