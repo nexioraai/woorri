@@ -8,17 +8,17 @@
  * (`lib/payments/mobile-money/types.ts`). Changer de prestataire ne touche
  * pas ce fichier.
  *
- * Le montant vient du serveur (réglage `prix_mensuel_xaf` + les frais de
- * l'opérateur choisi, 2026-11-21) ; le formulaire affiche le détail AVANT le
- * clic, et le total change avec l'opérateur. L'écran ne déclare rien de payé : il suit l'état
+ * UN SEUL PRIX (2026-11-23) : le serveur rend UN montant, le même pour tout
+ * opérateur ; l'écran l'affiche tel quel — jamais le mot « frais », jamais
+ * un pourcentage, jamais une différence entre opérateurs. Le badge « mode
+ * test » suit le mode que le serveur dit (lot L3). L'écran ne déclare rien de payé : il suit l'état
  * du prestataire, puis relit le compteur — c'est l'avis signé qui active.
  */
 import { useEffect, useRef, useState } from 'react';
-import type { Prix } from '@/lib/payments/mobile-money/frais';
 import type { ActionClient, EtatEncaissement, Operateur } from '@/lib/payments/mobile-money/types';
 
-/** Un opérateur proposé : toujours avec son prix, ses frais et son total. */
-type OperateurTarife = Operateur & Prix;
+/** Ce que le serveur propose : UN montant, des opérateurs sans prix propre. */
+type Offre = { readonly montant: number; readonly test: boolean; readonly operateurs: Operateur[] };
 
 type Vue = { encaissement: string; etat: EtatEncaissement; montant: number; devise: string; test: boolean; action: ActionClient | null; echec: string | null };
 
@@ -70,9 +70,9 @@ function ecrireAttente(app: string, v: EnAttente | null): void {
   } catch { /* stockage indisponible : le suivi vit seulement dans la page */ }
 }
 
-/** « 12 000 FCFA + 1 400 FCFA de frais de paiement mobile money = 13 400 FCFA » */
-export function phraseDetail(p: Prix): string {
-  return `${fcfa(p.prix)} + ${fcfa(p.frais)} de frais de paiement mobile money = ${fcfa(p.total)}`;
+/** « Un mois d'abonnement : 14 000 FCFA. » — un seul montant, rien d'autre. */
+export function phrasePrix(montant: number): string {
+  return `Un mois d’abonnement : ${fcfa(montant)}.`;
 }
 
 /** Une seule demande ouverte par appli (2026-11-21) : le serveur refuse la suivante avant 10 minutes. */
@@ -96,7 +96,7 @@ export function PayerMobileMoney({
   onPaye: () => Promise<unknown>;
 }) {
   const [ouvert, setOuvert] = useState(false);
-  const [offre, setOffre] = useState<{ operateurs: OperateurTarife[] } | null>(null);
+  const [offre, setOffre] = useState<Offre | null>(null);
   const [operateur, setOperateur] = useState('');
   const [telephone, setTelephone] = useState('');
   const [nom, setNom] = useState('');
@@ -129,9 +129,11 @@ export function PayerMobileMoney({
     const r = await appeler('GET', '');
     if (r === null) return;
     if (!r.ok) { setAvis(String(r.d.error ?? 'Le paiement mobile money ne répond pas.')); return; }
-    // Un opérateur sans total chiffré n'est pas proposé : jamais un montant sans frais.
-    const ops = ((r.d.operateurs as OperateurTarife[] | undefined) ?? []).filter((o) => Number.isInteger(o.total) && Number.isInteger(o.frais) && Number.isInteger(o.prix));
-    setOffre({ operateurs: ops });
+    // Sans montant entier, rien n'est proposé.
+    const montant = r.d.montant;
+    if (typeof montant !== 'number' || !Number.isInteger(montant) || montant <= 0) { setAvis('Le paiement mobile money est indisponible pour le moment.'); return; }
+    const ops = ((r.d.operateurs as Operateur[] | undefined) ?? []).filter((o) => typeof o.code === 'string' && o.code !== '');
+    setOffre({ montant, test: r.d.test !== false, operateurs: ops });
     if (ops.length > 0) setOperateur(ops[0]!.code);
   };
 
@@ -238,12 +240,12 @@ export function PayerMobileMoney({
     <div className="mt-2 rounded-xl border border-white/15 p-3 text-xs text-slate-200" aria-live="polite">
       <p className="mb-2 flex items-center justify-between font-semibold text-white">
         {libelle}
-        <span className="rounded border border-amber-300/50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">mode test</span>
+        {(vue?.test ?? offre?.test ?? true) && <span className="rounded border border-amber-300/50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">mode test</span>}
       </p>
       {offre === null && avis === null && vue === null && <p className="text-slate-400">Chargement…</p>}
       {offre !== null && vue === null && (
         <form onSubmit={(e) => { e.preventDefault(); void payer(); }} className="space-y-2">
-          <p>Un mois d’abonnement : <strong className="text-white">{choisi === null ? 'choisissez un opérateur' : phraseDetail(choisi)}</strong>.</p>
+          <p><strong className="text-white">{phrasePrix(offre.montant)}</strong></p>
           <label className="block">Opérateur
             <select value={operateur} onChange={(e) => setOperateur(e.target.value)} className={`${champ} mt-1`} required>
               {offre.operateurs.map((o) => <option key={o.code} value={o.code}>{o.nom}</option>)}
@@ -257,7 +259,7 @@ export function PayerMobileMoney({
           </label>
           <button type="submit" disabled={envoi || choisi === null}
             className="w-full rounded-lg bg-[#FA5D1E] px-3 py-2 font-semibold text-white disabled:opacity-50">
-            {envoi ? 'Envoi…' : choisi === null ? 'Payer' : `Payer ${fcfa(choisi.total)}`}
+            {envoi ? 'Envoi…' : `Payer ${fcfa(offre.montant)}`}
           </button>
         </form>
       )}

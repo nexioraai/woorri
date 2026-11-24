@@ -31,7 +31,8 @@ export async function activerALaMain(
   if (d === null) return { ok: false, status: 404, erreur: 'Demande inconnue.' }
   if (d.etat !== 'refusee') return { ok: false, status: 409, erreur: `Seule une demande refusée s’active à la main (celle-ci : ${d.etat}).` }
   if (d.test !== false || d.reference === null) return { ok: false, status: 409, erreur: 'Un paiement de test ne s’active pas : il n’y a pas d’argent derrière.' }
-  const e = await (o.fournisseur ?? fournisseurMobileMoney()).lire(d.reference)
+  // Une demande réelle se relit avec la clé LIVE (lot L3).
+  const e = await (o.fournisseur ?? fournisseurMobileMoney('reel')).lire(d.reference)
   if (e.etat !== 'reussi' || e.test) return { ok: false, status: 409, erreur: `Le prestataire ne confirme pas ce paiement (état : ${e.etat}${e.test ? ', test' : ''}).` }
   const enregistrer = o.enregistrer ?? ((p) => supabaseAdmin.rpc('enregistrer_paiement', p) as unknown as Promise<{ data: unknown; error: { message: string } | null }>)
   const r = await enregistrer({

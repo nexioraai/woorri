@@ -16,9 +16,10 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { lireReglagesTexte } from '@/lib/apps/quota'
 import { interrupteurOuvert } from '@/lib/payments/interrupteur'
 import { fournisseurMobileMoney } from './fournisseur'
-import { CLES_TARIF, PHRASE_FRAIS_NON_REGLES, prixPour, tarifDepuisReglages, type Tarif } from './frais'
+import { CLES_TARIF, PHRASE_FRAIS_NON_REGLES, operateurPropose, prixMobileMoney, tarifDepuisReglages, type Tarif } from './frais'
+import { decideRegime, type RegimeMobileMoney } from './regime'
 import { ErreurFournisseur, type AvisVerifie, type Encaissement, type EncaissementOuvert, type FournisseurMobileMoney } from './types'
-import { masquer, registreDemandes, type EtatDemande, type RegistreDemandes } from './demandes'
+import { registreDemandes, type EtatDemande, type RegistreDemandes } from './demandes'
 import { alerter } from '@/lib/alertes'
 
 /** Le tarif du moment (prix + frais), lu en une requête ; ce qui manque est nommé. */
@@ -33,6 +34,26 @@ export const PHRASE_MOBILE_MONEY_FERME = 'Le paiement par mobile money n’est p
 /** L'interrupteur `mobile_money` (réglage, éteint par défaut). */
 export function mobileMoneyOuvert(proprietaire: string, email: string | null): Promise<boolean> {
   return interrupteurOuvert('mobile_money', proprietaire, email)
+}
+
+/**
+ * LE MODE DE CE COMPTE (lot L3, 2026-11-23) — `mode.ts` décide ; ici on lit le
+ * réglage `mobile_money` et la présence de la clé live. Réglage illisible → TEST.
+ */
+export async function regimeDuCompte(email: string | null): Promise<RegimeMobileMoney> {
+  if (email === null) return 'test'
+  const v = await lireReglagesTexte(['mobile_money'])
+  return decideRegime({ email, cleLive: process.env.MONERAILS_CLE_LIVE, reglage: v?.mobile_money ?? null })
+}
+
+/**
+ * Un avis RÉEL pour ce propriétaire est-il permis ? Son courriel est relu par
+ * son identifiant (jamais pris dans l'avis) ; illisible → non.
+ */
+export async function reelPermisPourProprietaire(proprietaire: string): Promise<boolean> {
+  const u = await supabaseAdmin.auth.admin.getUserById(proprietaire).catch(() => null)
+  const email = u?.data.user?.email ?? null
+  return (await regimeDuCompte(email)) === 'reel'
 }
 
 /**
@@ -98,11 +119,11 @@ export async function ouvrirEncaissement(
   maintenantMs: number = Date.now(),
   registre: RegistreDemandes = registreDemandes,
 ): Promise<Encaissement> {
-  // Le montant demandé = prix + frais, pour CET opérateur, lus MAINTENANT.
+  // UN SEUL PRIX (2026-11-23), le même pour tout opérateur, lu MAINTENANT.
   const t = await lireTarifMobileMoney()
-  if (!t.ok) throw new ErreurFournisseur(PHRASE_FRAIS_NON_REGLES, 409, 'frais_non_regles')
-  const p = prixPour(t.tarif, d.operateur)
-  if (p === null) throw new ErreurFournisseur('Cet opérateur n’a pas de frais réglés : choisissez Airtel Money ou Moov Money.', 400, 'operateur_sans_frais')
+  if (!t.ok) throw new ErreurFournisseur(PHRASE_FRAIS_NON_REGLES, 409, 'tarif_non_regle')
+  if (!operateurPropose(d.operateur)) throw new ErreurFournisseur('Choisissez Airtel Money ou Moov Money.', 400, 'operateur_inconnu')
+  const p = prixMobileMoney(t.tarif)
   const tel = telephoneTchad(d.telephone)
   if (tel === null) throw new ErreurFournisseur('Numéro non reconnu : 8 chiffres, ou +235 suivi de 8 chiffres.', 400, 'telephone')
   const nom = d.nomClient.trim()
@@ -115,7 +136,8 @@ export async function ouvrirEncaissement(
   try {
     verrou = await registre.ouvrir({
       fournisseur: f.nom, app: d.app, proprietaire: d.proprietaire, operateur: d.operateur,
-      telephoneMasque: masquer(tel), montant: p.total, prix: p.prix, frais: p.frais, attenteS: ATTENTE_MAX_MS / 1000,
+      // Le NUMÉRO ENTIER va au registre, qui le MASQUE lui-même avant d'écrire (2026-11-23).
+      telephone: tel, montant: p.total, prix: p.prix, frais: p.frais, attenteS: ATTENTE_MAX_MS / 1000,
     })
   } catch (e) {
     throw new ErreurFournisseur(PHRASE_VERIFICATION_IMPOSSIBLE, 503, 'verrou_illisible', String(e))
@@ -156,13 +178,13 @@ export async function ouvrirEncaissement(
 }
 
 /**
- * MODE TEST SEULEMENT (2026-11-21). Tant que c'est vrai : un avis RÉEL est
- * refusé, et un avis de TEST est vérifié puis seulement JOURNALISÉ — option A
- * du propriétaire : « en mode test, un avis ne doit rien écrire de réel ».
- * Rien n'atteint `app_paiements` (registre en ajout seul, sans effacement).
- * Ouvrir le mode réel = passer ceci à `false`, par un commit nommé.
+ * LE RÉEL, POUR LE SEUL COMPTE DU PROPRIÉTAIRE (lot L3, 2026-11-23 ; jusque-là
+ * `MODE_TEST_SEULEMENT = true`, tout avis réel refusé). Un avis RÉEL n'écrit
+ * au registre que si son propriétaire passe `mode.ts` (son compte, la clé live,
+ * le réglage qui le nomme) ; sinon il est refusé — et, payé, il alerte.
+ * Un avis de TEST est vérifié puis seulement JOURNALISÉ (option A, inchangée) :
+ * rien n'atteint `app_paiements`.
  */
-export const MODE_TEST_SEULEMENT = true
 
 export type IssueAvis =
   | { readonly issue: 'enregistre' | 'deja_enregistre'; readonly app: string }
@@ -177,19 +199,20 @@ export type IssueAvis =
 export async function traiterAvis(
   avis: AvisVerifie,
   fournisseur: string,
-  o: { readonly modeTestSeulement?: boolean; readonly tarif?: () => ReturnType<typeof lireTarifMobileMoney> } = {},
+  o: { readonly reelPermis?: (proprietaire: string) => Promise<boolean>; readonly tarif?: () => ReturnType<typeof lireTarifMobileMoney> } = {},
 ): Promise<IssueAvis> {
-  const testSeulement = o.modeTestSeulement ?? MODE_TEST_SEULEMENT
   if (avis.type !== 'encaissement_reussi') return { issue: 'ignore', raison: `type ${avis.type}` }
   const e = avis.encaissement
   if (e === null) return { issue: 'ignore', raison: 'avis sans encaissement' }
   if (e.etat !== 'reussi') return { issue: 'ignore', raison: `état ${e.etat}` }
-  // Un avis réel tant que seul le test est autorisé : refusé, rien n'est lu de plus.
-  if (!e.test && testSeulement) return { issue: 'ignore', raison: 'avis réel refusé : mode test seulement' }
   const r = e.rattachement
   // PAYÉ MAIS SANS APPLI À ACTIVER (2026-11-23) : un refus, pas un « ignoré » —
   // l'argent est arrivé, l'alerte part et l'activation à la main devient possible.
   if (r === null) return { issue: 'refuse', raison: 'appli introuvable : encaissement sans rattachement Deribfy' }
+  // UN AVIS RÉEL pour un compte qui n'a pas le réel : refusé (et, payé, alerte).
+  if (!e.test && !(await (o.reelPermis ?? reelPermisPourProprietaire)(r.proprietaire).catch(() => false))) {
+    return { issue: 'refuse', raison: 'avis réel pour un compte sans le mode réel' }
+  }
   if (e.devise !== 'XAF') return { issue: 'refuse', raison: `devise ${e.devise}` }
   // LE MONTANT ATTENDU EST RECALCULÉ (2026-11-21) depuis les réglages du
   // moment et l'opérateur de l'avis — jamais lu dans les métadonnées de la
@@ -198,8 +221,9 @@ export async function traiterAvis(
   // `erreur` → 500 → le prestataire redonne l'avis plus tard.
   const t = await (o.tarif ?? lireTarifMobileMoney)()
   if (!t.ok) return { issue: 'erreur', raison: `frais non réglés : ${t.manque.join(', ')}` }
-  const attendu = e.operateur === null ? null : prixPour(t.tarif, e.operateur)
-  if (attendu === null) return { issue: 'refuse', raison: `opérateur sans frais réglés : ${String(e.operateur)}` }
+  if (e.operateur === null || !operateurPropose(e.operateur)) return { issue: 'refuse', raison: `opérateur non proposé : ${String(e.operateur)}` }
+  // UN SEUL PRIX (2026-11-23) : le même attendu quel que soit l'opérateur.
+  const attendu = prixMobileMoney(t.tarif)
   if (!Number.isInteger(e.montant) || e.montant < attendu.total) {
     return { issue: 'refuse', raison: `montant ${String(e.montant)} < attendu ${String(attendu.total)} (${String(attendu.prix)} + ${String(attendu.frais)} de frais, ${String(e.operateur)})` }
   }
@@ -236,7 +260,7 @@ export async function traiterAvis(
 export async function traiterEtNoterAvis(
   avis: AvisVerifie,
   fournisseur: string,
-  o: { readonly registre?: RegistreDemandes; readonly alerte?: typeof alerter; readonly modeTestSeulement?: boolean; readonly tarif?: () => ReturnType<typeof lireTarifMobileMoney> } = {},
+  o: { readonly registre?: RegistreDemandes; readonly alerte?: typeof alerter; readonly reelPermis?: (proprietaire: string) => Promise<boolean>; readonly tarif?: () => ReturnType<typeof lireTarifMobileMoney> } = {},
 ): Promise<IssueAvis> {
   const issue = await traiterAvis(avis, fournisseur, o)
   const e = avis.encaissement

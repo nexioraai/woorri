@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
-import { PHRASE_UNE_DEMANDE, phraseAttente, phraseDetail, phraseEtat } from '@/components/atelier/PayerMobileMoney'
+import { PHRASE_UNE_DEMANDE, phraseAttente, phrasePrix, phraseEtat } from '@/components/atelier/PayerMobileMoney'
 
 beforeAll(() => { GlobalRegistrator.register({ url: 'http://localhost/' }) })
 afterAll(() => { GlobalRegistrator.unregister() })
@@ -92,16 +92,16 @@ describe('payer par mobile money — l’écran', () => {
     window.localStorage.removeItem('deribfy-mobile-money-a3')
     vi.unstubAllGlobals()
   })
-  it('FRAIS · la phrase du détail, au format exact demandé', () => {
-    expect(phraseDetail({ prix: 12000, frais: 1400, total: 13400 })).toBe('12 000 FCFA + 1 400 FCFA de frais de paiement mobile money = 13 400 FCFA')
-    expect(phraseDetail({ prix: 12000, frais: 1100, total: 13100 })).toBe('12 000 FCFA + 1 100 FCFA de frais de paiement mobile money = 13 100 FCFA')
+  it('UN SEUL PRIX · la phrase du prix : un montant, rien d’autre', () => {
+    expect(phrasePrix(14000)).toBe('Un mois d’abonnement : 14 000 FCFA.')
+    expect(phrasePrix(7000)).toBe('Un mois d’abonnement : 7 000 FCFA.')
   })
 
   it('FRAIS · réglage manquant : la phrase du serveur, AUCUN formulaire, aucun montant', async () => {
     const React = await import('react')
     const { createRoot } = await import('react-dom/client')
     const { PayerMobileMoney } = await import('@/components/atelier/PayerMobileMoney')
-    const phrase = 'Le paiement mobile money est indisponible pour le moment : son prix ou ses frais ne sont pas réglés. Aucun montant n’est demandé.'
+    const phrase = 'Le paiement mobile money est indisponible pour le moment. Aucun montant n’est demandé.'
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: phrase }), { status: 409 })))
     const racine = document.createElement('div')
     document.body.appendChild(racine)
@@ -116,13 +116,13 @@ describe('payer par mobile money — l’écran', () => {
     vi.unstubAllGlobals()
   })
 
-  it('FRAIS · le détail s’affiche AVANT de payer, le total change avec l’opérateur, le bouton porte le total ; « Renouveler » pour une appli abonnée', async () => {
+  it('UN SEUL PRIX · le même montant pour Airtel et Moov, AVANT de payer, sur le bouton ; jamais « frais » ni %, ; « Renouveler » pour une appli abonnée', async () => {
     const React = await import('react')
     const { createRoot } = await import('react-dom/client')
     const { PayerMobileMoney } = await import('@/components/atelier/PayerMobileMoney')
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ prix: 12000, devise: 'XAF', operateurs: [
-      { code: 'AIRTEL', nom: 'Airtel Money', validation: ['pin'], prix: 12000, frais: 1400, total: 13400 },
-      { code: 'MOOV', nom: 'Moov Money', validation: ['pin'], prix: 12000, frais: 1100, total: 13100 },
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ montant: 14000, devise: 'XAF', test: true, operateurs: [
+      { code: 'AIRTEL', nom: 'Airtel Money', validation: ['pin'] },
+      { code: 'MOOV', nom: 'Moov Money', validation: ['pin'] },
     ] }), { status: 200 })))
     const racine = document.createElement('div')
     document.body.appendChild(racine)
@@ -133,20 +133,39 @@ describe('payer par mobile money — l’écran', () => {
     expect(bouton.textContent).toBe('Renouveler — mobile money')
     await React.act(async () => { bouton.click() })
     await React.act(async () => { await new Promise((ok) => setTimeout(ok, 0)) })
-    expect(racine.textContent).toMatch(motifTexte('Un mois d’abonnement : 12 000 FCFA + 1 400 FCFA de frais de paiement mobile money = 13 400 FCFA.'))
+    expect(racine.textContent).toMatch(motifTexte('Un mois d’abonnement : 14 000 FCFA.'))
     expect(racine.textContent).toMatch(motifTexte('mode test'))
     expect([...racine.querySelectorAll('option')].map((o) => o.textContent)).toEqual(['Airtel Money', 'Moov Money'])
     const soumettre = () => (racine.querySelector('button[type="submit"]') as HTMLButtonElement).textContent
-    expect(soumettre()).toBe('Payer 13 400 FCFA')
-    // Le client passe à Moov : le détail ET le bouton suivent.
+    expect(soumettre()).toBe('Payer 14 000 FCFA')
+    const avant = racine.textContent
+    // Le client passe à Moov : RIEN ne change, ni le montant ni le bouton.
     const choix = racine.querySelector('select') as HTMLSelectElement
     await React.act(async () => {
       const poser = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set
       poser?.call(choix, 'MOOV')
       choix.dispatchEvent(new Event('change', { bubbles: true }))
     })
-    expect(racine.textContent).toMatch(motifTexte('12 000 FCFA + 1 100 FCFA de frais de paiement mobile money = 13 100 FCFA'))
-    expect(soumettre()).toBe('Payer 13 100 FCFA')
+    expect(racine.textContent).toBe(avant)
+    expect(soumettre()).toBe('Payer 14 000 FCFA')
+    expect(racine.textContent).not.toMatch(/frais|%/iu)
+    vi.unstubAllGlobals()
+  })
+
+  it('L3 · le badge « mode test » suit le serveur : absent quand le compte est en réel', async () => {
+    const React = await import('react')
+    const { createRoot } = await import('react-dom/client')
+    const { PayerMobileMoney } = await import('@/components/atelier/PayerMobileMoney')
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ montant: 14000, devise: 'XAF', test: false, operateurs: [{ code: 'AIRTEL', nom: 'Airtel Money', validation: ['pin'] }] }), { status: 200 })))
+    const racine = document.createElement('div')
+    document.body.appendChild(racine)
+    await React.act(async () => {
+      createRoot(racine).render(React.createElement(PayerMobileMoney, { app: 'a9', jeton: async () => 't', renouveler: false, onPaye: async () => null }))
+    })
+    await React.act(async () => { (racine.querySelector('button') as HTMLButtonElement).click() })
+    await React.act(async () => { await new Promise((ok) => setTimeout(ok, 0)) })
+    expect(racine.textContent).toMatch(motifTexte('Un mois d’abonnement : 14 000 FCFA.'))
+    expect(racine.textContent).not.toMatch(motifTexte('mode test'))
     vi.unstubAllGlobals()
   })
 

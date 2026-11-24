@@ -23,20 +23,21 @@ vi.mock('@/lib/supabase-admin', () => ({
 }))
 vi.mock('@/lib/apps/quota', () => ({ lireReglagesTexte: async () => ({
   prix_mensuel_xaf: '12000', frais_encaissement_airtel_pct: '7', frais_encaissement_moov_pct: '5',
-  frais_reversement_pct: '3.5', arrondi_frais_xaf: '100',
+  frais_reversement_pct: '3.5', frais_retrait_pct: '4', arrondi_frais_xaf: '100',
 }) }))
 import { POST } from '../route'
 
 const SECRET = 'whsec_essai'
 const corps = (o: Record<string, unknown> = {}) => JSON.stringify({
   id: 'evt_1', object: 'event', type: 'collection.succeeded', livemode: false,
-  data: { object: { id: 'col_1', object: 'collection', status: 'succeeded', amount: 13400, currency: 'XAF', operator: 'AIRTEL', livemode: false,
-    metadata: { deribfy_app: 'a1', deribfy_proprietaire: 'u1', deribfy_objet: 'abonnement', deribfy_montant: '13400' }, ...o } },
+  data: { object: { id: 'col_1', object: 'collection', status: 'succeeded', amount: 14000, currency: 'XAF', operator: 'AIRTEL', livemode: false,
+    metadata: { deribfy_app: 'a1', deribfy_proprietaire: 'u1', deribfy_objet: 'abonnement', deribfy_montant: '14000' }, ...o } },
 })
 const appel = (brut: string, signature: string, fournisseur = 'monerails') =>
   POST(new Request(`https://www.deribfy.com/api/webhooks/mobile-money/${fournisseur}`, { method: 'POST', body: brut, headers: { 'Monerail-Signature': signature } }),
     { params: Promise.resolve({ fournisseur }) })
-const signe = (brut: string, t = Math.floor(Date.now() / 1000)) => `t=${String(t)},v1=${createHmac('sha256', SECRET).update(`${String(t)}.${brut}`).digest('hex')}`
+const signe = (brut: string, t = Math.floor(Date.now() / 1000), secret = SECRET) => `t=${String(t)},v1=${createHmac('sha256', secret).update(`${String(t)}.${brut}`).digest('hex')}`
+const SECRET_LIVE = 'whsec_live'
 
 beforeEach(() => { etat.rpc = []; etat.deja = new Set(); vi.stubEnv('MONERAILS_WEBHOOK_SECRET', SECRET) })
 afterEach(() => { vi.unstubAllEnvs() })
@@ -63,9 +64,9 @@ describe('webhook mobile money', () => {
     expect(etat.rpc, 'un avis de test a écrit dans le registre').toEqual([])
     const lignes = log.mock.calls.map((c) => String(c[0]))
     log.mockRestore()
-    expect(lignes.some((l) => l.includes('avis de TEST vérifié, RIEN n\'est écrit') && l.includes('"p_reference":"col_1"') && l.includes('"p_montant":13400'))).toBe(true)
+    expect(lignes.some((l) => l.includes('avis de TEST vérifié, RIEN n\'est écrit') && l.includes('"p_reference":"col_1"') && l.includes('"p_montant":14000'))).toBe(true)
   })
-  it('FRAIS · l’avis de l’essai 3 (12 000, inscrit 12 000) : refusé — le montant attendu est recalculé (13 400)', async () => {
+  it('FRAIS · l’avis de l’essai 3 (12 000, inscrit 12 000) : refusé — le montant attendu est recalculé (14 000, prix unique)', async () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const b = corps({ amount: 12000, metadata: { deribfy_app: 'a1', deribfy_proprietaire: 'u1', deribfy_objet: 'abonnement', deribfy_montant: '12000' } })
     expect(await (await appel(b, signe(b))).json()).toEqual({ recu: true, issue: 'refuse' })
@@ -77,9 +78,19 @@ describe('webhook mobile money', () => {
     expect(await (await appel(b, signe(b))).json()).toEqual({ recu: true, issue: 'refuse' })
     expect(etat.rpc).toEqual([])
   })
-  it('avis réel (mode test seulement) : ignoré', async () => {
+  it('L3 · avis réel signé par le secret de TEST : 400 (le secret et livemode doivent s’accorder), rien n’est écrit', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const b = corps({ livemode: true })
-    expect(await (await appel(b, signe(b))).json()).toEqual({ recu: true, issue: 'ignore' })
+    expect((await appel(b, signe(b))).status).toBe(400)
+    warn.mockRestore()
+    expect(etat.rpc).toEqual([])
+  })
+  it('L3 · avis réel signé par le secret LIVE, pour un compte SANS le mode réel : refusé, rien n’est écrit', async () => {
+    vi.stubEnv('MONERAILS_WEBHOOK_SECRET_LIVE', SECRET_LIVE)
+    const err = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const b = corps({ livemode: true })
+    expect(await (await appel(b, signe(b, Math.floor(Date.now() / 1000), SECRET_LIVE))).json()).toEqual({ recu: true, issue: 'refuse' })
+    err.mockRestore()
     expect(etat.rpc).toEqual([])
   })
   it('prestataire inconnu : 404', async () => {

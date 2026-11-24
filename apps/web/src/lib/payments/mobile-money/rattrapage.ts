@@ -38,7 +38,9 @@ export async function rattraper(o: {
   readonly traiter?: typeof traiterEtNoterAvis
   readonly maintenantMs?: number
 } = {}): Promise<BilanRattrapage> {
-  const f = o.fournisseur ?? fournisseurMobileMoney()
+  // LE MODE DE CHAQUE DEMANDE (lot L3) : une demande réelle se relit avec la
+  // clé live, une demande de test avec la clé de test.
+  const fPour = (test: boolean | null) => o.fournisseur ?? fournisseurMobileMoney(test === false ? 'reel' : 'test')
   const registre = o.registre ?? registreDemandes
   const traiter = o.traiter ?? traiterEtNoterAvis
   const maintenant = o.maintenantMs ?? Date.now()
@@ -50,7 +52,7 @@ export async function rattraper(o: {
     if (d.reference === null || age < RATTRAPAGE_MIN_MS) continue
     bilan.relues += 1
     let e
-    try { e = await f.lire(d.reference) } catch (x) {
+    try { e = await fPour(d.test).lire(d.reference) } catch (x) {
       bilan.illisibles.push({ reference: d.reference, erreur: x instanceof Error ? x.message : String(x) })
       continue
     }

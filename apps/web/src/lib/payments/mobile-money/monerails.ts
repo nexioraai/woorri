@@ -11,13 +11,21 @@ import 'server-only'
  *     `t + "." + corps brut`, secret entier `whsec_…`, hexadécimal minuscule, comparaison
  *     en temps constant, refus au-delà de 5 minutes, deux v1 pendant une rotation.
  *
- * ── MODE TEST SEULEMENT (décision du propriétaire, 2026-11-21).
- * Une clé qui ne commence pas par `mr_test_` est REFUSÉE ici : aucun argent
- * réel ne bouge tant que ce garde n'est pas retiré, par un commit nommé.
+ * ── DEUX MODES, DEUX CLÉS (lot L3, 2026-11-23 ; test seul jusque-là).
+ * Une instance par mode (`creerMonerails`) : le TEST ne lit que
+ * `MONERAILS_CLE_TEST`, qui DOIT commencer par `mr_test_` ; le RÉEL ne lit
+ * que `MONERAILS_CLE_LIVE`, qui DOIT commencer par `mr_live_`. Une clé live
+ * posée à la place de la clé de test est REFUSÉE, et inversement. Qui paie en
+ * réel : `mode.ts` (le compte du propriétaire seul).
  *
- * Variables (Vercel, Production) : MONERAILS_SECRET_KEY, MONERAILS_WEBHOOK_SECRET.
+ * LES AVIS : un avis signé par le secret de TEST doit porter `livemode:
+ * false` ; signé par le secret LIVE, `livemode: true`. Sinon il est refusé.
+ *
+ * Variables (Vercel, Production) : MONERAILS_CLE_TEST, MONERAILS_WEBHOOK_SECRET
+ * (test) ; MONERAILS_CLE_LIVE, MONERAILS_WEBHOOK_SECRET_LIVE (réel).
  */
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
+import { cleDuRegime, type RegimeMobileMoney } from './regime'
 import {
   ErreurFournisseur,
   type ActionClient, type AvisVerifie, type DemandeEncaissement, type Encaissement, type EncaissementOuvert,
@@ -33,18 +41,20 @@ export function cleConfirmation(id: string, code: string): string {
 /** Tolérance de l'horodatage d'un avis, en secondes (docs : 5 minutes). */
 export const TOLERANCE_AVIS_S = 300
 
-/** La clé de test, ou une erreur dite en clair. Jamais affichée. */
-function cleTest(): string {
-  const k = (process.env.MONERAILS_SECRET_KEY ?? '').trim()
-  if (k === '') throw new ErreurFournisseur('Le paiement mobile money n’est pas configuré.', 503, 'cle_absente')
-  if (!k.startsWith('mr_test_')) {
-    throw new ErreurFournisseur('Seul le mode test est autorisé pour le paiement mobile money.', 503, 'cle_non_test')
-  }
+/** La variable de la clé, par mode. */
+export const VARIABLE_CLE: Readonly<Record<RegimeMobileMoney, string>> = { test: 'MONERAILS_CLE_TEST', reel: 'MONERAILS_CLE_LIVE' }
+
+/** La clé du mode, ou une erreur dite en clair. Jamais affichée. */
+function cle(regime: RegimeMobileMoney): string {
+  const brut = (process.env[VARIABLE_CLE[regime]] ?? '').trim()
+  if (brut === '') throw new ErreurFournisseur('Le paiement mobile money n’est pas configuré.', 503, 'cle_absente')
+  const k = cleDuRegime(regime, brut)
+  if (k === null) throw new ErreurFournisseur('Le paiement mobile money est mal configuré.', 503, regime === 'reel' ? 'cle_non_live' : 'cle_non_test')
   return k
 }
 
-async function appeler(chemin: string, init: { method: 'GET' | 'POST'; corps?: unknown; idempotence?: string; journaliser?: boolean }): Promise<unknown> {
-  const entetes: Record<string, string> = { Authorization: `Bearer ${cleTest()}`, Accept: 'application/json' }
+async function appeler(regime: RegimeMobileMoney, chemin: string, init: { method: 'GET' | 'POST'; corps?: unknown; idempotence?: string; journaliser?: boolean }): Promise<unknown> {
+  const entetes: Record<string, string> = { Authorization: `Bearer ${cle(regime)}`, Accept: 'application/json' }
   if (init.corps !== undefined) entetes['Content-Type'] = 'application/json'
   if (init.idempotence !== undefined) entetes['Idempotency-Key'] = init.idempotence
   const r = await fetch(`${API}${chemin}`, {
@@ -57,8 +67,8 @@ async function appeler(chemin: string, init: { method: 'GET' | 'POST'; corps?: u
   // LA RÉPONSE BRUTE DE MONERAILS, À CHAQUE DEMANDE DE PAIEMENT (2026-11-21,
   // demande du propriétaire) : création d'encaissement et envoi de code. Les
   // lectures de suivi (toutes les 4 s) ne sont pas journalisées : du bruit.
-  // Mode test seulement : la clé `mr_test_` est exigée plus haut.
-  if (init.journaliser === true) console.log(`[mobile-money] réponse brute MoneRails ${init.method} ${chemin.split('?')[0]} → ${String(r.status)} ${texte.slice(0, 4000)}`)
+  // Le corps ne porte jamais la clé (elle va dans l'en-tête, non journalisé).
+  if (init.journaliser === true) console.log(`[mobile-money] réponse brute MoneRails (${regime}) ${init.method} ${chemin.split('?')[0]} → ${String(r.status)} ${texte.slice(0, 4000)}`)
   let json: unknown = null
   try { json = texte === '' ? null : JSON.parse(texte) } catch { json = null }
   if (!r.ok) {
@@ -158,11 +168,32 @@ export function signatureValide(corpsBrut: string, entete: string, secret: strin
   })
 }
 
-export const monerails: FournisseurMobileMoney = {
+/** Les secrets des avis, par mode. */
+export const VARIABLE_SECRET_AVIS: Readonly<Record<RegimeMobileMoney, string>> = { test: 'MONERAILS_WEBHOOK_SECRET', reel: 'MONERAILS_WEBHOOK_SECRET_LIVE' }
+
+/**
+ * Le mode d'un avis : celui du secret qui le signe, et `livemode` doit
+ * s'accorder (test → false, réel → true). `null` = refusé. Exporté pour les tests.
+ */
+export function regimeDeLAvis(corpsBrut: string, entete: string, secrets: Readonly<Record<RegimeMobileMoney, string>>, maintenant: number): RegimeMobileMoney | null {
+  for (const regime of ['test', 'reel'] as const) {
+    if (!signatureValide(corpsBrut, entete, secrets[regime], maintenant)) continue
+    let e: unknown
+    try { e = JSON.parse(corpsBrut) } catch { return null }
+    const objet = (e as { data?: { object?: unknown } } | null)?.data?.object
+    const enDirectLu = enDirect(objet) ?? enDirect(e)
+    return enDirectLu === (regime === 'reel') ? regime : null
+  }
+  return null
+}
+
+export function creerMonerails(regime: RegimeMobileMoney): FournisseurMobileMoney {
+  const appeler_ = (chemin: string, init: Parameters<typeof appeler>[2]) => appeler(regime, chemin, init)
+  return {
   nom: 'monerails',
 
   async operateurs(devise, pays) {
-    const r = (await appeler(`/v1/operators?currency=${devise}&country=${pays}`, { method: 'GET' })) as { data?: unknown[] }
+    const r = (await appeler_(`/v1/operators?currency=${devise}&country=${pays}`, { method: 'GET' })) as { data?: unknown[] }
     return (r.data ?? []).map((o): Operateur => {
       const x = o as { code?: string; name?: string; authorization?: string[] }
       const v = (x.authorization ?? []).map((a) => (a === 'PIN' ? 'pin' : a === 'OTP' ? 'code' : a === 'REDIRECT' ? 'page' : 'aucune') as Operateur['validation'][number])
@@ -190,29 +221,34 @@ export const monerails: FournisseurMobileMoney = {
         deribfy_frais: String(d.ventilation.frais),
       },
     }
-    return versEncaissement(await appeler('/v1/collections', { method: 'POST', corps, idempotence: d.cle, journaliser: true }))
+    return versEncaissement(await appeler_('/v1/collections', { method: 'POST', corps, idempotence: d.cle, journaliser: true }))
   },
 
   async lire(id) {
-    return versEncaissement(await appeler(`/v1/collections/${encodeURIComponent(id)}`, { method: 'GET' }))
+    return versEncaissement(await appeler_(`/v1/collections/${encodeURIComponent(id)}`, { method: 'GET' }))
   },
 
   async encaissementsDe(app) {
     // 100 = le maximum de la page, les plus récentes d'abord : une seule page suffit,
     // sauf plus de 100 demandes en 10 minutes pour UNE appli (non lu au-delà).
-    return versOuverts(await appeler(`/v1/collections?client_reference=${encodeURIComponent(referenceClient(app))}&limit=100`, { method: 'GET' }), app)
+    return versOuverts(await appeler_(`/v1/collections?client_reference=${encodeURIComponent(referenceClient(app))}&limit=100`, { method: 'GET' }), app)
   },
 
   async autoriser(id, code) {
     // ── UNE CLÉ D'IDEMPOTENCE AUSSI ICI (2026-11-23) : la doc la demande « sur
     // chaque POST qui déplace de l'argent ». La même demande et le même code
     // donnent la même clé — un double clic ne confirme pas deux fois.
-    return versEncaissement(await appeler(`/v1/collections/${encodeURIComponent(id)}/authorize`, { method: 'POST', corps: { otp: code }, idempotence: cleConfirmation(id, code), journaliser: true }))
+    return versEncaissement(await appeler_(`/v1/collections/${encodeURIComponent(id)}/authorize`, { method: 'POST', corps: { otp: code }, idempotence: cleConfirmation(id, code), journaliser: true }))
   },
 
   verifierAvis(corpsBrut, entetes, maintenantSecondes = Math.floor(Date.now() / 1000)) {
-    const secret = (process.env.MONERAILS_WEBHOOK_SECRET ?? '').trim()
-    if (!signatureValide(corpsBrut, entetes.get('monerail-signature') ?? '', secret, maintenantSecondes)) return null
+    const secrets = {
+      test: (process.env[VARIABLE_SECRET_AVIS.test] ?? '').trim(),
+      reel: (process.env[VARIABLE_SECRET_AVIS.reel] ?? '').trim(),
+    }
+    // Un avis est vérifié par LES DEUX secrets (une seule adresse de webhook) ;
+    // son mode est celui du secret qui le signe, `livemode` concordant.
+    if (regimeDeLAvis(corpsBrut, entetes.get('monerail-signature') ?? '', secrets, maintenantSecondes) === null) return null
     let e: { id?: unknown; type?: unknown; data?: { object?: unknown } }
     try { e = JSON.parse(corpsBrut) as typeof e } catch { return null }
     const type = e.type === 'collection.succeeded' ? 'encaissement_reussi'
@@ -225,3 +261,7 @@ export const monerails: FournisseurMobileMoney = {
     return { id: String(e.id ?? ''), type, encaissement: estCollecte ? versEncaissement(o) : null }
   },
 }
+}
+
+/** Le TEST, gardé sous son ancien nom pour les appelants et les tests. */
+export const monerails: FournisseurMobileMoney = creerMonerails('test')

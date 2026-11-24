@@ -15,7 +15,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 export const TABLE_DEMANDES = 'mm_demandes'
 
 /** L'état d'une demande, dans les mots de la table. */
-export type EtatDemande = 'ouverte' | 'reussie' | 'echouee' | 'expiree' | 'refusee' | 'abandonnee' | 'activee_main'
+export type EtatDemande = 'ouverte' | 'reussie' | 'echouee' | 'expiree' | 'refusee' | 'abandonnee' | 'activee_main' | 'remboursee'
 
 export type DemandeEnBase = {
   readonly id: string
@@ -37,6 +37,10 @@ export type DemandeEnBase = {
   readonly raison: string | null
   readonly active_par: string | null
   readonly active_le: string | null
+  /** Remboursement (mobile_money_remboursement.sql) : absents avant ce fichier. */
+  readonly paiement_sortant?: string | null
+  readonly rembourse_par?: string | null
+  readonly rembourse_le?: string | null
 }
 
 export type Ouverture = { readonly issue: 'ouverte'; readonly id: string } | { readonly issue: 'deja_ouverte'; readonly id: string; readonly creeLe: string | null }
@@ -53,7 +57,8 @@ export type NoteAvis = {
 }
 
 export interface RegistreDemandes {
-  ouvrir(o: { fournisseur: string; app: string; proprietaire: string; operateur: string; telephoneMasque: string; montant: number; prix: number; frais: number; attenteS: number }): Promise<Ouverture>
+  /** `telephone` : le numéro ENTIER — le registre le masque lui-même avant d'écrire. */
+  ouvrir(o: { fournisseur: string; app: string; proprietaire: string; operateur: string; telephone: string; montant: number; prix: number; frais: number; attenteS: number }): Promise<Ouverture>
   noterReference(id: string, reference: string, test: boolean): Promise<void>
   /** Ferme une demande qui n'a pas abouti à un encaissement (le prestataire a refusé, etc.). */
   abandonner(id: string, raison: string): Promise<void>
@@ -64,11 +69,32 @@ export interface RegistreDemandes {
   marquerActivee(id: string, par: string): Promise<void>
 }
 
-/** Le numéro, sans ce qui identifierait la personne : « 235••••••01 ». */
+/**
+ * Le numéro, sans ce qui identifierait la personne : « 235••••••01 » — au
+ * plus 3 chiffres devant (l'indicatif), 2 derrière, et au moins 4 points.
+ * Trop court pour garder 4 points cachés : tout est masqué.
+ */
 export function masquer(telephone: string): string {
   const c = telephone.replace(/\D/gu, '')
-  if (c.length < 6) return '••••••'
+  if (c.length < 9) return '••••••'
   return c.slice(0, 3) + '•'.repeat(c.length - 5) + c.slice(-2)
+}
+
+/**
+ * LA MÊME RÈGLE QUE LA BASE (mobile_money_telephone_masque.sql, 2026-11-23) :
+ * au plus 3 chiffres, AU MOINS 4 points, au plus 2 chiffres. Un numéro en
+ * clair — « 23566000001 » — ne passe ni ici ni là-bas.
+ */
+export const FORME_MASQUEE = /^[0-9]{0,3}•{4,}[0-9]{0,2}$/u
+export function estMasque(v: string): boolean {
+  return FORME_MASQUEE.test(v)
+}
+
+/** Le masque à écrire, ou une erreur : JAMAIS un numéro en clair n'atteint la table. */
+export function masquePourEcrire(telephone: string, masquage: (t: string) => string = masquer): string {
+  const m = masquage(telephone)
+  if (!estMasque(m)) throw new Error('numéro non masqué : écriture refusée')
+  return m
 }
 
 const lever = (quoi: string, e: { message: string } | null): void => {
@@ -79,7 +105,7 @@ export const registreDemandes: RegistreDemandes = {
   async ouvrir(o) {
     const r = await supabaseAdmin.rpc('mm_ouvrir_demande', {
       p_fournisseur: o.fournisseur, p_app: o.app, p_owner: o.proprietaire, p_operateur: o.operateur,
-      p_telephone_masque: o.telephoneMasque, p_montant: o.montant, p_prix: o.prix, p_frais: o.frais, p_attente_s: o.attenteS,
+      p_telephone_masque: masquePourEcrire(o.telephone), p_montant: o.montant, p_prix: o.prix, p_frais: o.frais, p_attente_s: o.attenteS,
     })
     lever('mm_ouvrir_demande', r.error)
     const d = r.data as { statut: string; id: string; cree_le?: string }

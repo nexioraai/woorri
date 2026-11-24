@@ -15,19 +15,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('server-only', () => ({}))
 const etat = vi.hoisted(() => ({ rpc: [] as [string, Record<string, unknown>][], reponse: { data: { statut: 'enregistre' }, error: null } as { data: unknown; error: unknown }, admin: true }))
 vi.mock('@/lib/supabase-admin', () => ({ supabaseAdmin: { rpc: async (n: string, p: Record<string, unknown>) => { etat.rpc.push([n, p]); return etat.reponse } } }))
-vi.mock('@/lib/apps/quota', () => ({ lireReglagesTexte: async () => ({ prix_mensuel_xaf: '12000', frais_encaissement_airtel_pct: '7', frais_encaissement_moov_pct: '5', frais_reversement_pct: '3.5', arrondi_frais_xaf: '100' }) }))
+vi.mock('@/lib/apps/quota', () => ({ lireReglagesTexte: async () => ({ prix_mensuel_xaf: '12000', frais_encaissement_airtel_pct: '7', frais_encaissement_moov_pct: '5', frais_reversement_pct: '3.5', frais_retrait_pct: '4', arrondi_frais_xaf: '100' }) }))
 vi.mock('@/lib/payments/interrupteur', () => ({ interrupteurOuvert: async () => false }))
 vi.mock('@/lib/alertes', () => ({ alerter: async () => 'alerte' }))
 import { cleIdempotence, ouvrirEncaissement, traiterEtNoterAvis } from '../encaissement'
 import { cleConfirmation, monerails } from '../monerails'
-import { masquer, type DemandeEnBase, type NoteAvis, type RegistreDemandes } from '../demandes'
+import { masquePourEcrire, masquer, type DemandeEnBase, type NoteAvis, type RegistreDemandes } from '../demandes'
 import { dansLeBudget } from '../budget-avis'
 import { rattraper, RATTRAPAGE_MAX_MS } from '../rattrapage'
 import { activerALaMain } from '../activation-main'
 import type { AvisVerifie, Encaissement, FournisseurMobileMoney } from '../types'
 import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
 
-const ENC: Encaissement = { id: 'col_1', etat: 'reussi', montant: 13400, devise: 'XAF', operateur: 'AIRTEL', test: true, action: null, rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 13400 }, echec: null }
+const ENC: Encaissement = { id: 'col_1', etat: 'reussi', montant: 14000, devise: 'XAF', operateur: 'AIRTEL', test: true, action: null, rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 14000 }, echec: null }
 const MAINTENANT = Date.parse('2026-11-23T12:00:00Z')
 
 /** Un registre en mémoire, avec le verrou « une ouverte par appli » de l'index unique. */
@@ -42,7 +42,7 @@ function registreMemoire(lignes: DemandeEnBase[] = []): RegistreDemandes & { lig
       const ouverte = lignes.find((l) => l.app_id === o.app && l.ferme_le === null)
       if (ouverte !== undefined) return { issue: 'deja_ouverte', id: ouverte.id, creeLe: ouverte.cree_le }
       const id = `d${String(lignes.length + 1)}`
-      lignes.push(demandeEnBase({ id, app_id: o.app, montant: o.montant, prix: o.prix, frais: o.frais, operateur: o.operateur, telephone_masque: o.telephoneMasque }))
+      lignes.push(demandeEnBase({ id, app_id: o.app, montant: o.montant, prix: o.prix, frais: o.frais, operateur: o.operateur, telephone_masque: masquePourEcrire(o.telephone) }))
       return { issue: 'ouverte', id }
     },
     async noterReference(id, reference, test) { references.push([id, reference, test]) },
@@ -54,7 +54,7 @@ function registreMemoire(lignes: DemandeEnBase[] = []): RegistreDemandes & { lig
   }
 }
 function demandeEnBase(x: Partial<DemandeEnBase>): DemandeEnBase {
-  return { id: 'd1', cree_le: new Date(MAINTENANT - 60_000).toISOString(), fournisseur: 'monerails', app_id: 'a1', owner_id: 'u1', operateur: 'AIRTEL', telephone_masque: '235••••••00', montant: 13400, prix: 12000, frais: 1400, reference: null, test: true, etat: 'ouverte', ferme_le: null, avis_recu_le: null, decision: null, raison: null, active_par: null, active_le: null, ...x }
+  return { id: 'd1', cree_le: new Date(MAINTENANT - 60_000).toISOString(), fournisseur: 'monerails', app_id: 'a1', owner_id: 'u1', operateur: 'AIRTEL', telephone_masque: '235••••••00', montant: 14000, prix: 12000, frais: 2000, reference: null, test: true, etat: 'ouverte', ferme_le: null, avis_recu_le: null, decision: null, raison: null, active_par: null, active_le: null, ...x }
 }
 function fournisseur(o: { encaisser?: () => Promise<Encaissement>; liste?: () => Promise<never[]>; lire?: (id: string) => Promise<Encaissement> } = {}): FournisseurMobileMoney & { encaissements: number } {
   const f = {
@@ -80,7 +80,7 @@ describe('L1 · les clés d’idempotence', () => {
     expect(cleConfirmation('c9', '1234')).toBe(cleConfirmation('c9', '1234'))
     expect(cleConfirmation('c9', '1234')).not.toBe(cleConfirmation('c9', '4321'))
     expect(cleConfirmation('c9', '1234')).toMatch(/^[0-9a-f]{48}$/u)
-    vi.stubEnv('MONERAILS_SECRET_KEY', 'mr_test_abc')
+    vi.stubEnv('MONERAILS_CLE_TEST', 'mr_test_abc')
     const appels: RequestInit[] = []
     vi.stubGlobal('fetch', vi.fn(async (_u: string, init: RequestInit) => { appels.push(init); return new Response(JSON.stringify({ id: 'c9', object: 'collection', status: 'processing', amount: 13400, currency: 'XAF', livemode: false }), { status: 200 }) }))
     await monerails.autoriser('c9', '1234')
@@ -157,7 +157,7 @@ describe('L2 · l’avis journalisé, l’avis payé mais refusé', () => {
     await traiterEtNoterAvis(avis({ etat: 'echoue' }, 'encaissement_echoue'), 'monerails', { registre: r })
     expect(r.notes[0]?.etat).toBe('echouee')
     etat.reponse = { data: null, error: { message: 'connexion perdue' } }
-    await traiterEtNoterAvis(avis({ test: false }), 'monerails', { registre: r, modeTestSeulement: false })
+    await traiterEtNoterAvis(avis({ test: false }), 'monerails', { registre: r, reelPermis: async () => true })
     expect(r.notes).toHaveLength(1)
   })
 })
@@ -165,7 +165,7 @@ describe('L2 · l’avis journalisé, l’avis payé mais refusé', () => {
 describe('L2 · le rattrapage des avis perdus', () => {
   it('une demande ouverte, payée chez le prestataire : réglée par le MÊME chemin, avec la MÊME référence', async () => {
     const r = registreMemoire([demandeEnBase({ reference: 'col_1', test: false, cree_le: new Date(MAINTENANT - 3600_000).toISOString() })])
-    const bilan = await rattraper({ registre: r, fournisseur: fournisseur({ lire: async () => ({ ...ENC, test: false }) }), maintenantMs: MAINTENANT, traiter: (a, f, o) => traiterEtNoterAvis(a, f, { ...o, modeTestSeulement: false }) })
+    const bilan = await rattraper({ registre: r, fournisseur: fournisseur({ lire: async () => ({ ...ENC, test: false }) }), maintenantMs: MAINTENANT, traiter: (a, f, o) => traiterEtNoterAvis(a, f, { ...o, reelPermis: async () => true }) })
     expect(bilan.reglees).toEqual([{ reference: 'col_1', issue: 'enregistre' }])
     // LA RÉFÉRENCE DU REGISTRE est celle du prestataire, comme pour un avis :
     // un avis tardif tombe sur `deja_enregistre` — jamais deux activations.
@@ -174,7 +174,7 @@ describe('L2 · le rattrapage des avis perdus', () => {
   })
   it('le même paiement rattrapé deux fois : le registre dit « déjà enregistré » la seconde', async () => {
     const r = registreMemoire([demandeEnBase({ reference: 'col_1', test: false, cree_le: new Date(MAINTENANT - 3600_000).toISOString() })])
-    const o = { registre: r, fournisseur: fournisseur({ lire: async () => ({ ...ENC, test: false }) }), maintenantMs: MAINTENANT, traiter: (a: AvisVerifie, f: string, x?: Parameters<typeof traiterEtNoterAvis>[2]) => traiterEtNoterAvis(a, f, { ...x, modeTestSeulement: false }) }
+    const o = { registre: r, fournisseur: fournisseur({ lire: async () => ({ ...ENC, test: false }) }), maintenantMs: MAINTENANT, traiter: (a: AvisVerifie, f: string, x?: Parameters<typeof traiterEtNoterAvis>[2]) => traiterEtNoterAvis(a, f, { ...x, reelPermis: async () => true }) }
     await rattraper(o)
     etat.reponse = { data: { statut: 'deja_enregistre' }, error: null }
     expect((await rattraper(o)).reglees).toEqual([{ reference: 'col_1', issue: 'deja_enregistre' }])
@@ -194,12 +194,12 @@ describe('L2 · le rattrapage des avis perdus', () => {
 })
 
 describe('L2 · « Activer ce paiement », fondateur seul', () => {
-  const refusee = () => demandeEnBase({ id: 'r1', reference: 'col_1', test: false, etat: 'refusee', montant: 13400, prix: 12000 })
+  const refusee = () => demandeEnBase({ id: 'r1', reference: 'col_1', test: false, etat: 'refusee', montant: 14000, prix: 12000 })
   it('une demande refusée, réelle, confirmée par le prestataire : inscrite (manuelle, MÊME référence), et le nom reste', async () => {
     const r = registreMemoire([refusee()]); const enregistrer = vi.fn<(p: Record<string, unknown>) => Promise<{ data: unknown; error: null }>>(async () => ({ data: { statut: 'enregistre' }, error: null }))
     const issue = await activerALaMain('r1', 'issayamiyoussouf@gmail.com', { registre: r, fournisseur: fournisseur({ lire: async () => ({ ...ENC, test: false }) }), enregistrer })
     expect(issue).toEqual({ ok: true, statut: 'enregistre' })
-    expect(enregistrer.mock.calls[0]?.[0]).toMatchObject({ p_source: 'manuelle', p_fournisseur: 'monerails', p_reference: 'col_1', p_montant: 13400, p_frais: 1400, p_saisi_par: 'activation-main:issayamiyoussouf@gmail.com' })
+    expect(enregistrer.mock.calls[0]?.[0]).toMatchObject({ p_source: 'manuelle', p_fournisseur: 'monerails', p_reference: 'col_1', p_montant: 14000, p_frais: 2000, p_saisi_par: 'activation-main:issayamiyoussouf@gmail.com' })
     expect(r.activees).toEqual([['r1', 'issayamiyoussouf@gmail.com']])
   })
   it('jamais une demande non refusée, jamais un TEST, jamais sans confirmation du prestataire', async () => {

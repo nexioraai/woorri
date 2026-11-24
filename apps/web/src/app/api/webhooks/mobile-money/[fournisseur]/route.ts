@@ -4,11 +4,12 @@ import 'server-only'
  *
  * POST /api/webhooks/mobile-money/<prestataire> — corps BRUT lu tel quel
  * (la signature porte sur les octets reçus). Signature refusée → 400, rien
- * n'est lu. Signature bonne → `traiterEtNoterAvis`. Tant que `MODE_TEST_SEULEMENT`
- * (option A, 2026-11-21) : un avis de TEST réussi est vérifié (appli, montant,
- * devise) puis seulement JOURNALISÉ — RIEN n'est écrit au registre ; un avis
- * réel est refusé. Le mode réel ouvert, un encaissement réussi au montant
- * demandé écrit dans `app_paiements`, une seule fois par référence.
+ * n'est lu. UNE SEULE ADRESSE pour le test et le réel (lot L3) : l'avis est
+ * vérifié par les deux secrets, et `livemode` doit s'accorder avec celui qui
+ * signe. Signature bonne → `traiterEtNoterAvis` : un avis de TEST réussi est
+ * vérifié puis seulement JOURNALISÉ (option A) ; un avis RÉEL n'écrit dans
+ * `app_paiements` que pour le compte du propriétaire (mode.ts), une seule fois
+ * par référence — pour tout autre compte il est refusé, et alerte.
  *
  * Réponse 200 aussi pour un avis ignoré : le prestataire n'a pas à le
  * renvoyer. Erreur d'enregistrement → 500 : le prestataire réessaie
