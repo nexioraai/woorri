@@ -18,7 +18,7 @@ import { interrupteurOuvert } from '@/lib/payments/interrupteur'
 import { fournisseurMobileMoney } from './fournisseur'
 import { CLES_TARIF, PHRASE_FRAIS_NON_REGLES, operateurPropose, prixMobileMoney, tarifDepuisReglages, type Tarif } from './frais'
 import { decideRegime, type RegimeMobileMoney } from './regime'
-import { ErreurFournisseur, type AvisVerifie, type Encaissement, type EncaissementOuvert, type FournisseurMobileMoney } from './types'
+import { ErreurFournisseur, type AvisVerifie, type Encaissement, type EncaissementOuvert, type FournisseurMobileMoney, type ObjetPaiement } from './types'
 import { registreDemandes, type EtatDemande, type RegistreDemandes } from './demandes'
 import { alerter } from '@/lib/alertes'
 
@@ -30,6 +30,25 @@ export async function lireTarifMobileMoney(): Promise<{ ok: true; tarif: Tarif }
 }
 
 export const PHRASE_MOBILE_MONEY_FERME = 'Le paiement par mobile money n’est pas encore ouvert.'
+
+/**
+ * LE LOT DE MODIFICATIONS PAR MOBILE MONEY (2026-11-24). Son prix NET est le
+ * réglage `lot_prix_xaf` ; le prix payé suit la MÊME formule que l'abonnement
+ * (retrait, reversement, encaissement le plus haut, centaine supérieure) :
+ * 3 000 net → 3 500 FCFA. Illisible ou nul → `null` : rien n'est proposé.
+ */
+export async function lireLotXaf(): Promise<number | null> {
+  const v = await lireReglagesTexte(['lot_prix_xaf'])
+  const n = Number((v?.lot_prix_xaf ?? '').trim())
+  return Number.isInteger(n) && n > 0 ? n : null
+}
+
+export const PHRASE_LOT_NON_REGLE = 'Le prix du lot de modifications n’est pas réglé : rien n’est demandé.'
+
+/** Le prix NET de ce qu'on paie : le mois d'abonnement, ou le lot. */
+async function prixNetDe(objet: ObjetPaiement, t: Tarif, lot: () => Promise<number | null>): Promise<number | null> {
+  return objet === 'lot' ? lot() : t.prix
+}
 
 /** L'interrupteur `mobile_money` (réglage, éteint par défaut). */
 export function mobileMoneyOuvert(proprietaire: string, email: string | null): Promise<boolean> {
@@ -111,6 +130,8 @@ export type DemandePaiement = {
   readonly operateur: string
   readonly telephone: string
   readonly nomClient: string
+  /** Un mois d'abonnement (défaut) ou un lot de modifications (2026-11-24). */
+  readonly objet?: ObjetPaiement
 }
 
 export async function ouvrirEncaissement(
@@ -123,7 +144,10 @@ export async function ouvrirEncaissement(
   const t = await lireTarifMobileMoney()
   if (!t.ok) throw new ErreurFournisseur(PHRASE_FRAIS_NON_REGLES, 409, 'tarif_non_regle')
   if (!operateurPropose(d.operateur)) throw new ErreurFournisseur('Choisissez Airtel Money ou Moov Money.', 400, 'operateur_inconnu')
-  const p = prixMobileMoney(t.tarif)
+  const objet: ObjetPaiement = d.objet ?? 'abonnement'
+  const net = await prixNetDe(objet, t.tarif, lireLotXaf)
+  if (net === null) throw new ErreurFournisseur(PHRASE_LOT_NON_REGLE, 409, 'lot_non_regle')
+  const p = prixMobileMoney(t.tarif, net)
   const tel = telephoneTchad(d.telephone)
   if (tel === null) throw new ErreurFournisseur('Numéro non reconnu : 8 chiffres, ou +235 suivi de 8 chiffres.', 400, 'telephone')
   const nom = d.nomClient.trim()
@@ -163,8 +187,8 @@ export async function ouvrirEncaissement(
     operateur: d.operateur,
     telephone: tel,
     nomClient: nom,
-    description: 'Deribfy — abonnement d’un mois',
-    rattachement: { app: d.app, proprietaire: d.proprietaire, objet: 'abonnement', montantInscrit: p.total },
+    description: objet === 'lot' ? 'Deribfy — lot de modifications' : 'Deribfy — abonnement d’un mois',
+    rattachement: { app: d.app, proprietaire: d.proprietaire, objet, montantInscrit: p.total },
     ventilation: { prix: p.prix, frais: p.frais },
     cle: cleIdempotence(d.app, tel, d.operateur, p.total, maintenantMs),
     })
@@ -187,7 +211,7 @@ export async function ouvrirEncaissement(
  */
 
 export type IssueAvis =
-  | { readonly issue: 'enregistre' | 'deja_enregistre'; readonly app: string; readonly proprietaire: string }
+  | { readonly issue: 'enregistre' | 'deja_enregistre'; readonly app: string; readonly proprietaire: string; readonly objet: ObjetPaiement }
   /** Avis de test, vérifié de bout en bout, JAMAIS écrit : voici ce qui l'aurait été. */
   | { readonly issue: 'test_verifie'; readonly app: string; readonly serait: Readonly<Record<string, unknown>>; readonly ventilation: { readonly abonnement: number; readonly frais: number } }
   | { readonly issue: 'ignore'; readonly raison: string }
@@ -199,7 +223,7 @@ export type IssueAvis =
 export async function traiterAvis(
   avis: AvisVerifie,
   fournisseur: string,
-  o: { readonly reelPermis?: (proprietaire: string) => Promise<boolean>; readonly tarif?: () => ReturnType<typeof lireTarifMobileMoney> } = {},
+  o: { readonly reelPermis?: (proprietaire: string) => Promise<boolean>; readonly tarif?: () => ReturnType<typeof lireTarifMobileMoney>; readonly lot?: () => Promise<number | null> } = {},
 ): Promise<IssueAvis> {
   if (avis.type !== 'encaissement_reussi') return { issue: 'ignore', raison: `type ${avis.type}` }
   const e = avis.encaissement
@@ -222,14 +246,17 @@ export async function traiterAvis(
   const t = await (o.tarif ?? lireTarifMobileMoney)()
   if (!t.ok) return { issue: 'erreur', raison: `frais non réglés : ${t.manque.join(', ')}` }
   if (e.operateur === null || !operateurPropose(e.operateur)) return { issue: 'refuse', raison: `opérateur non proposé : ${String(e.operateur)}` }
-  // UN SEUL PRIX (2026-11-23) : le même attendu quel que soit l'opérateur.
-  const attendu = prixMobileMoney(t.tarif)
+  // UN SEUL PRIX (2026-11-23) : le même attendu quel que soit l'opérateur ;
+  // celui du LOT pour un lot (2026-11-24). Prix du lot illisible → erreur (redonné).
+  const net = await prixNetDe(r.objet, t.tarif, o.lot ?? lireLotXaf)
+  if (net === null) return { issue: 'erreur', raison: 'prix du lot non réglé (lot_prix_xaf)' }
+  const attendu = prixMobileMoney(t.tarif, net)
   if (!Number.isInteger(e.montant) || e.montant < attendu.total) {
     return { issue: 'refuse', raison: `montant ${String(e.montant)} < attendu ${String(attendu.total)} (${String(attendu.prix)} + ${String(attendu.frais)} de frais, ${String(e.operateur)})` }
   }
   const ecriture = {
     p_source: 'automatique', p_fournisseur: fournisseur, p_reference: e.id,
-    p_app: r.app, p_owner: r.proprietaire, p_objet: 'abonnement',
+    p_app: r.app, p_owner: r.proprietaire, p_objet: r.objet,
     p_montant: e.montant, p_devise: 'XAF', p_jusqu_au: null, p_saisi_par: fournisseur,
     // La part FRAIS (2026-11-21, colonne `app_paiements.frais`) : ce qui dépasse le prix.
     p_frais: e.montant - attendu.prix,
@@ -245,7 +272,7 @@ export async function traiterAvis(
   }
   if (res.error !== null) return { issue: 'erreur', raison: res.error.message }
   const statut = (res.data as { statut?: string } | null)?.statut
-  return { issue: statut === 'deja_enregistre' ? 'deja_enregistre' : 'enregistre', app: r.app, proprietaire: r.proprietaire }
+  return { issue: statut === 'deja_enregistre' ? 'deja_enregistre' : 'enregistre', app: r.app, proprietaire: r.proprietaire, objet: r.objet }
 }
 
 /**

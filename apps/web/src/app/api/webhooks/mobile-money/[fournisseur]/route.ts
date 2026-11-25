@@ -48,7 +48,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ fournisseur: s
   //    réponse : la publication ne compte pas dans le budget de 10 s. Un avis
   //    redonné (« déjà enregistré ») relance une publication qui aurait échoué ;
   //    une appli déjà en ligne n'est pas touchée (« deja_publiee »).
-  if (issue.issue === 'enregistre' || issue.issue === 'deja_enregistre') {
+  // Un LOT de modifications ne publie rien : l'appli est déjà abonnée (2026-11-24).
+  if ((issue.issue === 'enregistre' || issue.issue === 'deja_enregistre') && issue.objet === 'abonnement') {
     const { app, proprietaire } = issue
     after(async () => {
       const effet = await publierApresEncaissement(app, proprietaire)

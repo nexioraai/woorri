@@ -99,9 +99,11 @@ function action(n: unknown): ActionClient | null {
 function rattachement(m: unknown): Rattachement | null {
   if (m === null || typeof m !== 'object') return null
   const r = m as Record<string, unknown>
-  if (typeof r.deribfy_app !== 'string' || typeof r.deribfy_proprietaire !== 'string' || r.deribfy_objet !== 'abonnement') return null
+  if (typeof r.deribfy_app !== 'string' || typeof r.deribfy_proprietaire !== 'string') return null
+  // L'objet : un abonnement ou un lot (2026-11-24) ; tout autre mot → pas un paiement Deribfy.
+  if (r.deribfy_objet !== 'abonnement' && r.deribfy_objet !== 'lot') return null
   const inscrit = Number(r.deribfy_montant)
-  return { app: r.deribfy_app, proprietaire: r.deribfy_proprietaire, objet: 'abonnement', montantInscrit: Number.isInteger(inscrit) ? inscrit : null }
+  return { app: r.deribfy_app, proprietaire: r.deribfy_proprietaire, objet: r.deribfy_objet, montantInscrit: Number.isInteger(inscrit) ? inscrit : null }
 }
 
 /** La référence client d'une appli : posée à la demande, filtre de la liste. */

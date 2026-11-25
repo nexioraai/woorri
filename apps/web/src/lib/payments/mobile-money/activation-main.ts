@@ -37,7 +37,8 @@ export async function activerALaMain(
   const enregistrer = o.enregistrer ?? ((p) => supabaseAdmin.rpc('enregistrer_paiement', p) as unknown as Promise<{ data: unknown; error: { message: string } | null }>)
   const r = await enregistrer({
     p_source: 'manuelle', p_fournisseur: d.fournisseur, p_reference: d.reference,
-    p_app: d.app_id, p_owner: d.owner_id, p_objet: 'abonnement',
+    // L'objet RELU chez le prestataire (2026-11-24) : un lot reste un lot.
+    p_app: d.app_id, p_owner: d.owner_id, p_objet: e.rattachement?.objet ?? 'abonnement',
     p_montant: e.montant, p_devise: 'XAF', p_jusqu_au: null, p_saisi_par: `activation-main:${par}`,
     // Les frais : ce qui dépasse le prix CONNU À LA DEMANDE, jamais négatifs.
     p_frais: Math.max(0, Math.min(e.montant, e.montant - d.prix)),

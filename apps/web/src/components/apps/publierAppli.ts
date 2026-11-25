@@ -81,7 +81,16 @@ export type DemandeFenetre = {
     readonly lireAdresse: () => Promise<string | null>
     /** Pour les tests : l'intervalle de relecture (3 s par défaut). */
     readonly relectureMs?: number
+    /** Un lot de modifications (2026-11-24) : pas d'adresse à attendre, le compteur grossit. */
+    readonly objet?: 'abonnement' | 'lot'
+    /** La phrase du prix au-dessus du formulaire, si ce n'est pas un mois d'abonnement. */
+    readonly phraseDuPrix?: (montant: number) => string
   } | null
+  /**
+   * SANS ADRESSE (2026-11-24) : la fenêtre du LOT de modifications commence au
+   * Paiement (étapes Paiement › Confirmation), et ses phrases sont les siennes.
+   */
+  readonly sansAdresse?: { readonly apresPaiement: string; readonly reussite: string }
   /** Les étapes Adresse › Paiement › Confirmation en haut (« Changer l'adresse » n'en a pas). */
   readonly avecEtapes: boolean
   /** Les identifiants de l'appli, pour la Confirmation ; absent pour « Changer l'adresse ». */

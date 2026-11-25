@@ -150,12 +150,12 @@ describe('traiter un avis vérifié', () => {
     expect(etat.rpc, 'un avis de test a écrit dans le registre').toEqual([])
   })
   it('L3 · compte AVEC le mode réel : avis réel réussi → enregistrer_paiement (monerails, référence = id du prestataire)', async () => {
-    expect(await traiterAvis(avis({ test: false }), 'monerails', REEL)).toEqual({ issue: 'enregistre', app: 'a1', proprietaire: 'u1' })
+    expect(await traiterAvis(avis({ test: false }), 'monerails', REEL)).toEqual({ issue: 'enregistre', app: 'a1', proprietaire: 'u1', objet: 'abonnement' })
     expect(etat.rpc).toEqual([['enregistrer_paiement', ECRITURE]])
   })
   it('mode réel ouvert : le même avis rejoué → « déjà enregistré », rien de plus', async () => {
     etat.reponse = { data: { statut: 'deja_enregistre' }, error: null }
-    expect(await traiterAvis(avis({ test: false }), 'monerails', REEL)).toEqual({ issue: 'deja_enregistre', app: 'a1', proprietaire: 'u1' })
+    expect(await traiterAvis(avis({ test: false }), 'monerails', REEL)).toEqual({ issue: 'deja_enregistre', app: 'a1', proprietaire: 'u1', objet: 'abonnement' })
   })
   it('L3 · compte SANS le mode réel : un avis réel est REFUSÉ, rien n’est écrit ; le propriétaire vient du rattachement', async () => {
     const vus: string[] = []

@@ -28,11 +28,14 @@ export type ActionClient =
   | { readonly type: 'code'; readonly message: string | null; readonly ussd: string | null }
   | { readonly type: 'page'; readonly url: string }
 
+export type ObjetPaiement = 'abonnement' | 'lot'
+
 /** Ce que Deribfy attache à un encaissement, et retrouve dans l'avis. */
 export type Rattachement = {
   readonly app: string
   readonly proprietaire: string
-  readonly objet: 'abonnement'
+  /** Ce que paie l'encaissement : un mois d'abonnement, ou un lot de modifications (2026-11-24). */
+  readonly objet: ObjetPaiement
   /**
    * Le montant inscrit dans la demande, pour TRACE seulement (2026-11-21) :
    * jamais une preuve. À l'avis, le montant attendu est RECALCULÉ depuis les

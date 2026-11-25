@@ -44,6 +44,7 @@
  * personne publierait ce qu'elle ne regarde pas. Un seul courant, partout.
  */
 import { changerAdresse, CONFIRMER_MOT_DE_PASSE, etapeDuRetour, PHRASE_DEJA_EN_LIGNE, lancerPublication, LIBELLE_CREER_MOT_DE_PASSE, LIBELLE_MOT_DE_PASSE, lireEtatPublication, PHRASES_RETOUR, refaireMotDePasse, RELECTURE_RETOUR_MAX, RELECTURE_RETOUR_MS, type DemandeFenetre, type EtapeRetour, type EtatPublication } from '@/components/apps/publierAppli';
+import { BOUTON_AJOUTER_MODIFICATIONS, lancerAchatLot, PHRASE_LOT_ANNULE, PHRASE_LOT_RECU } from '@/components/apps/acheterLot';
 import { FenetrePublier } from '@/components/apps/FenetrePublier';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
@@ -272,6 +273,16 @@ export default function AtelierPage() {
     }
   };
   useEffect(() => {
+    // LE RETOUR DE STRIPE POUR UN LOT (2026-11-24) : la phrase, puis le compteur relu.
+    const lot = new URLSearchParams(window.location.search).get('lot');
+    if (lot === 'recu' || lot === 'annule') {
+      const t0 = window.setTimeout(() => {
+        setAbonnementAvis(lot === 'recu' ? PHRASE_LOT_RECU : PHRASE_LOT_ANNULE);
+        setAvisPublication({ texte: lot === 'recu' ? PHRASE_LOT_RECU : PHRASE_LOT_ANNULE, publierMaintenant: false });
+        if (lot === 'recu') void (async () => { for (let i = 0; i < 6; i++) { await relireCompteur(); await new Promise((ok) => setTimeout(ok, 3000)); } })();
+      }, 0);
+      return () => window.clearTimeout(t0);
+    }
     const retour = new URLSearchParams(window.location.search).get('paiement');
     // Le message part au tour suivant : pas d'état posé pendant l'effet lui-même.
     if (retour === 'annule') {
@@ -626,6 +637,16 @@ export default function AtelierPage() {
     // ── LE MOT DE PASSE NE REVIENT JAMAIS, mesuré le 2026-11-04 : la
     //    route le rend À LA CRÉATION, et republier rend `null`.
     if (issue.compte != null) setCompte({ etat: 'actif', ...issue.compte });
+  };
+
+  // ── « AJOUTER DES MODIFICATIONS » (2026-11-24) : le lot, par la MÊME fenêtre
+  //    que « Publier » (Carte bancaire / Mobile money), abonnement en cours exigé.
+  const ajouterModifications = async () => {
+    const t = await jeton();
+    if (t === null) return;
+    setAbonnementAvis(null);
+    const issue = await lancerAchatLot({ id, autorisation: `Bearer ${t}`, ouvrirFenetre: setFenetre, apresMobileMoney: relireCompteur });
+    if (issue.type === 'impossible' || issue.type === 'erreur') setAbonnementAvis(issue.message);
   };
 
   // ── « PASSER À L'ABONNEMENT » DEPUIS LA CRÉATION (2026-11-22) : on arrive
@@ -1095,6 +1116,12 @@ export default function AtelierPage() {
               <button type="button" onClick={() => { void versStripe('abonnement/portail'); }}
                 className="mt-2 w-full rounded-xl border border-white/15 px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5">
                 Gérer mon abonnement
+              </button>
+            )}
+            {compteur !== null && !compteur.exempte && compteur.actif && (
+              <button type="button" onClick={() => { void ajouterModifications(); }}
+                className="mt-2 w-full rounded-xl border border-accent/50 px-3 py-2 text-xs font-semibold text-accent transition hover:bg-accent/10">
+                {BOUTON_AJOUTER_MODIFICATIONS}
               </button>
             )}
             {abonnementAvis !== null && (

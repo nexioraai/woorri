@@ -22,11 +22,13 @@ import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { fournisseurMobileMoney } from '@/lib/payments/mobile-money/fournisseur'
-import { lireTarifMobileMoney, mobileMoneyOuvert, regimeDuCompte, ouvrirEncaissement, PHRASE_MOBILE_MONEY_FERME } from '@/lib/payments/mobile-money/encaissement'
+import { lireLotXaf, lireTarifMobileMoney, mobileMoneyOuvert, regimeDuCompte, ouvrirEncaissement, PHRASE_LOT_NON_REGLE, PHRASE_MOBILE_MONEY_FERME } from '@/lib/payments/mobile-money/encaissement'
+import { lireCompteur, PHRASE_COMPTEUR_INDISPONIBLE } from '@/lib/apps/quota'
+import { PHRASE_LOT_SANS_ABONNEMENT } from '@/lib/payments/lot-appli'
 import { PHRASE_FRAIS_NON_REGLES, operateurPropose, prixMobileMoney } from '@/lib/payments/mobile-money/frais'
 import type { RegimeMobileMoney } from '@/lib/payments/mobile-money/regime'
 import { mobileMoneyPermis } from '@/lib/payments/moyens-par-produit'
-import { ErreurFournisseur, type Encaissement, type FournisseurMobileMoney } from '@/lib/payments/mobile-money/types'
+import { ErreurFournisseur, type Encaissement, type FournisseurMobileMoney, type ObjetPaiement } from '@/lib/payments/mobile-money/types'
 
 export const runtime = 'nodejs'
 
@@ -47,7 +49,7 @@ function erreur(e: unknown, quoi: string) {
 }
 
 /** Les gardes communes : connecté, interrupteur ouvert, appli LIVRÉE de ce compte. */
-type Garde = { garde: { userId: string; email: string | null }; id: string; regime: RegimeMobileMoney; f: FournisseurMobileMoney } | { reponse: Response }
+type Garde = { garde: { userId: string; email: string | null }; id: string; objet: ObjetPaiement; regime: RegimeMobileMoney; f: FournisseurMobileMoney } | { reponse: Response }
 
 async function garder(req: Request): Promise<Garde> {
   const garde = await requireAuthenticatedUser(req)
@@ -63,8 +65,18 @@ async function garder(req: Request): Promise<Garde> {
   if ((lu.data as { statut: string }).statut !== 'livree') {
     return { reponse: NextResponse.json({ error: 'Seule une application livrée peut être abonnée.' }, { status: 409 }) }
   }
+  // ── LE LOT DE MODIFICATIONS (2026-11-24) : `&objet=lot`. Il s'ajoute à un
+  //    abonnement EN COURS — la base le refuserait sinon ; on le dit avant
+  //    d'envoyer quoi que ce soit au téléphone.
+  const objetLu = new URL(req.url).searchParams.get('objet') ?? 'abonnement'
+  if (objetLu !== 'abonnement' && objetLu !== 'lot') return { reponse: NextResponse.json({ error: 'objet inconnu' }, { status: 400 }) }
+  if (objetLu === 'lot') {
+    const c = await lireCompteur(id, garde.userId)
+    if (c === null) return { reponse: NextResponse.json({ error: PHRASE_COMPTEUR_INDISPONIBLE }, { status: 503 }) }
+    if (c.exempte || !c.actif) return { reponse: NextResponse.json({ error: PHRASE_LOT_SANS_ABONNEMENT }, { status: 409 }) }
+  }
   const regime = await regimeDuCompte(garde.email)
-  return { garde: { userId: garde.userId, email: garde.email }, id, regime, f: fournisseurMobileMoney(regime) }
+  return { garde: { userId: garde.userId, email: garde.email }, id, objet: objetLu, regime, f: fournisseurMobileMoney(regime) }
 }
 
 /** Un encaissement n'est lisible que par le compte et l'appli qui l'ont ouvert. */
@@ -95,7 +107,9 @@ export async function GET(req: Request) {
       .filter((o) => operateurPropose(o.code))
       .map((o) => ({ code: o.code, nom: o.nom, validation: o.validation }))
     if (operateurs.length === 0) return NextResponse.json({ error: PHRASE_FRAIS_NON_REGLES }, { status: 409, headers: SANS_CACHE })
-    return NextResponse.json({ montant: prixMobileMoney(t.tarif).total, devise: 'XAF', test: g.regime === 'test', operateurs }, { headers: SANS_CACHE })
+    const net = g.objet === 'lot' ? await lireLotXaf() : t.tarif.prix
+    if (net === null) return NextResponse.json({ error: PHRASE_LOT_NON_REGLE }, { status: 409, headers: SANS_CACHE })
+    return NextResponse.json({ montant: prixMobileMoney(t.tarif, net).total, devise: 'XAF', test: g.regime === 'test', operateurs }, { headers: SANS_CACHE })
   } catch (e) {
     return erreur(e, 'lecture')
   }
@@ -117,7 +131,7 @@ export async function POST(req: Request) {
     if (typeof corps.operateur !== 'string' || corps.operateur === '' || typeof corps.telephone !== 'string' || typeof corps.nom !== 'string') {
       return NextResponse.json({ error: 'opérateur, numéro et nom requis' }, { status: 400 })
     }
-    const e = await ouvrirEncaissement({ app: g.id, proprietaire: g.garde.userId, operateur: corps.operateur, telephone: corps.telephone, nomClient: corps.nom }, g.f)
+    const e = await ouvrirEncaissement({ app: g.id, proprietaire: g.garde.userId, operateur: corps.operateur, telephone: corps.telephone, nomClient: corps.nom, objet: g.objet }, g.f)
     return NextResponse.json(vue(e), { status: 201, headers: SANS_CACHE })
   } catch (e) {
     return erreur(e, 'encaissement')

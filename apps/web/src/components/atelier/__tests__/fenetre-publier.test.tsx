@@ -415,3 +415,64 @@ describe('CORRECTIONS (2026-11-24, après les captures)', () => {
     expect(bouton(racine, 'Créer mon mot de passe')).toBeDefined()
   })
 })
+
+describe('LOT DE MODIFICATIONS (2026-11-24) · la même fenêtre', () => {
+  const RESEAU_LOT = (post: Record<string, unknown>) => vi.fn(async (u: string, init?: RequestInit) => {
+    if (String(u).includes('/api/generateur/lot')) {
+      if (init?.method === 'POST') return new Response(JSON.stringify({ paiement: 'https://checkout.stripe.com/c/pay/cs_lot' }), { status: 200 })
+      return new Response(JSON.stringify({ possible: true, taille: 50, moyens: ['carte', 'mobile_money'] }), { status: 200 })
+    }
+    expect(String(u), 'le formulaire doit demander le LOT').toContain('objet=lot')
+    return new Response(JSON.stringify(init?.method === 'POST' ? post : { montant: 3500, devise: 'XAF', test: false, operateurs: [{ code: 'AIRTEL', nom: 'Airtel Money' }] }), { status: 200 })
+  })
+  const ouvrirLot = async () => {
+    const { lancerAchatLot } = await import('@/components/apps/acheterLot')
+    let d: DemandeFenetre | null = null
+    const ouvertes: string[] = []
+    const issue = lancerAchatLot({ id: 'app-1', autorisation: 'Bearer j', ouvrirFenetre: (x) => { d = x }, ouvrir: (u) => { ouvertes.push(u) } })
+    await attendre(10)
+    expect(d, 'la fenêtre ne s’est pas ouverte').not.toBeNull()
+    const m = await monter(d!)
+    return { ...m, issue, ouvertes, demande: d! }
+  }
+  it('étapes Paiement › Confirmation (pas d’adresse), deux cartes, bouton « Ajouter », aucun prix à côté', async () => {
+    vi.stubGlobal('fetch', RESEAU_LOT({}))
+    const { racine } = await ouvrirLot()
+    expect([...racine.querySelectorAll('ol[aria-label="Étapes"] li')].map((li) => li.textContent?.replace(/^\d/u, '').trim())).toEqual(['Paiement', 'Confirmation'])
+    expect(racine.querySelector('h2')?.textContent).toBe('Ajouter des modifications')
+    expect(radios(racine).map((r) => r.value)).toEqual(['carte', 'mobile_money'])
+    expect(racine.querySelector('#fenetre-publier-adresse')).toBeNull()
+    expect(boutons(racine)).toEqual(['Annuler', 'Ajouter'])
+    expect(racine.textContent).not.toMatch(/frais|FCFA|\$|deribfy\.app/iu)
+  })
+  it('carte : la page Stripe du lot s’ouvre', async () => {
+    vi.stubGlobal('fetch', RESEAU_LOT({}))
+    const { racine, ouvertes, issue } = await ouvrirLot()
+    await cliquer(racine, 'Ajouter')
+    expect(ouvertes).toEqual(['https://checkout.stripe.com/c/pay/cs_lot'])
+    expect(await issue).toEqual({ type: 'paiement' })
+  })
+  it('mobile money : « Un lot de 50 modifications : 3 500 FCFA. », puis la réussite dit que les modifications s’ajoutent', async () => {
+    vi.stubGlobal('fetch', RESEAU_LOT({ encaissement: 'e1', etat: 'reussi', montant: 3500, devise: 'XAF', test: false, action: null, echec: null }))
+    const { racine } = await ouvrirLot()
+    await choisir(racine, 'mobile_money')
+    await cliquer(racine, 'Ajouter')
+    await attendre(30)
+    expect(racine.textContent).toMatch(motifTexte('Un lot de 50 modifications : 3 500 FCFA.'))
+    expect(racine.textContent).toMatch(motifTexte('50 modifications s’ajoutent à votre compteur.'))
+    const React = await import('react')
+    const poser = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+    const [tel, nom] = [...racine.querySelectorAll('form input')] as HTMLInputElement[]
+    await React.act(async () => { poser?.call(tel, '66000001'); tel?.dispatchEvent(new Event('input', { bubbles: true })); poser?.call(nom, 'Awa'); nom?.dispatchEvent(new Event('input', { bubbles: true })) })
+    await React.act(async () => { (racine.querySelector('form') as HTMLFormElement).requestSubmit(); await new Promise((x) => setTimeout(x, 30)) })
+    expect(racine.textContent).toMatch(motifTexte('Paiement reçu : 50 modifications s’ajoutent à votre compteur.'))
+    expect(racine.textContent).not.toMatch(motifTexte('Votre application est en ligne'))
+  })
+  it('sans abonnement en cours : pas de fenêtre, la phrase', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ possible: false, raison: 'Un lot de modifications s’ajoute à un abonnement en cours.' }), { status: 200 })))
+    const { lancerAchatLot } = await import('@/components/apps/acheterLot')
+    const ouvrir = vi.fn()
+    expect(await lancerAchatLot({ id: 'app-1', autorisation: 'Bearer j', ouvrirFenetre: ouvrir })).toEqual({ type: 'impossible', message: 'Un lot de modifications s’ajoute à un abonnement en cours.' })
+    expect(ouvrir).not.toHaveBeenCalled()
+  })
+})

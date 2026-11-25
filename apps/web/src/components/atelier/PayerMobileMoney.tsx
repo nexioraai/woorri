@@ -110,6 +110,8 @@ export function PayerMobileMoney({
   enFenetre = false,
   onReussi,
   onEnvoye,
+  objet = 'abonnement',
+  phraseDuPrix = phrasePrix,
 }: {
   app: string;
   jeton: () => Promise<string | null>;
@@ -124,6 +126,10 @@ export function PayerMobileMoney({
   onReussi?: (test: boolean) => void;
   /** Une demande est partie (`true`) ou abandonnée pour un autre numéro (`false`) : la fenêtre masque alors « ‹ Moyen de paiement ». */
   onEnvoye?: (parti: boolean) => void;
+  /** Ce que l'on paie : un mois d'abonnement (défaut) ou un lot de modifications (2026-11-24). */
+  objet?: 'abonnement' | 'lot';
+  /** La phrase du prix, au-dessus du formulaire (« Un lot de 50 modifications : 3 500 FCFA. »). */
+  phraseDuPrix?: (montant: number) => string;
 }) {
   const [ouvert, setOuvert] = useState(false);
   const [offre, setOffre] = useState<Offre | null>(null);
@@ -144,7 +150,7 @@ export function PayerMobileMoney({
   const appeler = async (methode: 'GET' | 'POST', requete: string, corps?: unknown) => {
     const t = await jeton();
     if (t === null) return null;
-    const res = await fetch(`/api/generateur/mobile-money?id=${encodeURIComponent(app)}${requete}`, {
+    const res = await fetch(`/api/generateur/mobile-money?id=${encodeURIComponent(app)}${objet === 'lot' ? '&objet=lot' : ''}${requete}`, {
       method: methode,
       headers: { Authorization: `Bearer ${t}`, ...(corps === undefined ? {} : { 'Content-Type': 'application/json' }) },
       body: corps === undefined ? undefined : JSON.stringify(corps),
@@ -311,7 +317,7 @@ export function PayerMobileMoney({
       {offre === null && avis === null && vue === null && <p className="text-slate-400">Chargement…</p>}
       {offre !== null && vue === null && (
         <form onSubmit={(e) => { e.preventDefault(); void payer(); }} className={enFenetre ? 'space-y-3.5' : 'space-y-2'}>
-          <p><strong className="text-white">{phrasePrix(offre.montant)}</strong></p>
+          <p><strong className="text-white">{phraseDuPrix(offre.montant)}</strong></p>
           <label className={etiquette}>Opérateur
             <select value={operateur} onChange={(e) => setOperateur(e.target.value)} className={`${champ} mt-1`} required>
               {offre.operateurs.map((o) => <option key={o.code} value={o.code}>{o.nom}</option>)}

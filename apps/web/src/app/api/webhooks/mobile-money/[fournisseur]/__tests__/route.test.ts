@@ -28,7 +28,7 @@ vi.mock('@/lib/supabase-admin', () => ({
 }))
 vi.mock('@/lib/apps/quota', () => ({ lireReglagesTexte: async () => ({
   prix_mensuel_xaf: '12000', frais_encaissement_airtel_pct: '7', frais_encaissement_moov_pct: '5',
-  frais_reversement_pct: '3.5', frais_retrait_pct: '4', arrondi_frais_xaf: '100', mobile_money: etat.mobileMoney,
+  frais_reversement_pct: '3.5', frais_retrait_pct: '4', arrondi_frais_xaf: '100', lot_prix_xaf: '3000', mobile_money: etat.mobileMoney,
 }) }))
 import { POST } from '../route'
 
@@ -110,6 +110,15 @@ describe('webhook mobile money', () => {
     expect(etat.apres).toHaveLength(1)
     await etat.apres[0]!()
     expect(etat.publiees).toEqual([['a1', 'u1']])
+  })
+  it('LOT · l’avis réel d’un lot (3 500) est ENREGISTRÉ comme lot, et ne publie RIEN (l’appli est déjà abonnée)', async () => {
+    vi.stubEnv('MONERAILS_WEBHOOK_SECRET_LIVE', SECRET_LIVE)
+    vi.stubEnv('MONERAILS_CLE_LIVE', 'mr_live_abc')
+    etat.mobileMoney = 'tous'
+    const b = corps({ livemode: true, amount: 3500, metadata: { deribfy_app: 'a1', deribfy_proprietaire: 'u1', deribfy_objet: 'lot', deribfy_montant: '3500' } })
+    expect(await (await appel(b, signe(b, Math.floor(Date.now() / 1000), SECRET_LIVE))).json()).toEqual({ recu: true, issue: 'enregistre' })
+    expect(etat.rpc).toEqual([['enregistrer_paiement', expect.objectContaining({ p_objet: 'lot', p_montant: 3500 })]])
+    expect(etat.apres, 'un lot a lancé une publication').toEqual([])
   })
   it('un avis de TEST, refusé ou ignoré ne publie RIEN', async () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => undefined)

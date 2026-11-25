@@ -38,6 +38,7 @@ export const PHRASE_PUBLICATION_EN_COURS = 'Paiement reçu. Publication en cours
 export const PHRASE_TEST_SANS_PUBLICATION = 'Paiement de test confirmé. En mode test, l’application n’est pas publiée.';
 export const PHRASE_PUBLICATION_TARDE = 'Paiement reçu. La publication prend plus de temps que prévu : l’adresse apparaîtra dans « Mes projets ».';
 export const TITRE_EN_LIGNE = 'Votre application est en ligne';
+export const PHRASE_TEST_SANS_LOT = 'Paiement de test confirmé. En mode test, aucune modification n’est ajoutée.';
 
 /** Le sous-titre de chaque carte de paiement — aucun prix, aucun « frais », aucune marque. */
 export const SOUS_TITRE_MOYEN: Readonly<Record<MoyenPublication, string>> = {
@@ -51,7 +52,8 @@ type Confirmation =
   | { readonly etat: 'en_ligne'; readonly lien: string; readonly dejaEnLigne: boolean; readonly compte?: EtatCompteOeuvre | null }
   | { readonly etat: 'publication' }
   | { readonly etat: 'test' }
-  | { readonly etat: 'tarde' };
+  | { readonly etat: 'tarde' }
+  | { readonly etat: 'ajoute'; readonly texte: string };
 type Verif = { readonly pour: string; readonly etat: 'en_cours' | 'libre' | 'prise'; readonly message?: string };
 
 /** Relire l'adresse après un paiement mobile money : toutes les 3 s, 2 minutes au plus. */
@@ -78,7 +80,7 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
       setAdresse(demande.adresseInitiale); setErreur(null); setEnCours(false); setMoyen(demande.moyens[0] ?? null);
       setFormulaireMm(false); setPaiementParti(false); setConfirmation(null); setVerif(null); relecture.current += 1;
       // Adresse figée et rien à accepter : on commence au paiement.
-      setEtape(demande.moyens.length > 0 && !demande.adresseModifiable && demande.listes.length === 0 ? 'paiement' : 'adresse');
+      setEtape(demande.sansAdresse !== undefined || (demande.moyens.length > 0 && !demande.adresseModifiable && demande.listes.length === 0) ? 'paiement' : 'adresse');
       champ.current?.focus();
     }, 0);
     return () => { window.clearTimeout(t); };
@@ -108,13 +110,15 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
 
   if (demande === null) return null;
   const aPayer = demande.moyens.length > 0;
-  const etapes: readonly Etape[] = aPayer ? ['adresse', 'paiement', 'confirmation'] : ['adresse', 'confirmation'];
+  const etapes: readonly Etape[] = demande.sansAdresse !== undefined ? ['paiement', 'confirmation'] : aPayer ? ['adresse', 'paiement', 'confirmation'] : ['adresse', 'confirmation'];
 
   const fermer = () => { relecture.current += 1; onFermer(); };
   const annuler = () => { if (confirmation === null && !formulaireMm) demande.annuler(); fermer(); };
 
   const suivreAdresse = async (test: boolean) => {
     setEtape('confirmation');
+    // Un LOT : rien à publier, le compteur grossit à l'avis (2026-11-24).
+    if (demande.sansAdresse !== undefined) { setConfirmation({ etat: 'ajoute', texte: test ? PHRASE_TEST_SANS_LOT : demande.sansAdresse.reussite }); return; }
     if (test) { setConfirmation({ etat: 'test' }); return; }
     setConfirmation({ etat: 'publication' });
     const tour = ++relecture.current;
@@ -204,10 +208,10 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
                   ))}
                 </div>
               </fieldset>
-              <p className="mt-3 truncate text-xs text-white/45">{nom === '' ? '' : `${nom}.deribfy.app`}</p>
+              {demande.sansAdresse === undefined && <p className="mt-3 truncate text-xs text-white/45">{nom === '' ? '' : `${nom}.deribfy.app`}</p>}
               {erreur !== null && <p role="alert" className="mt-2 text-sm text-red-300">{erreur}</p>}
               <Boutons>
-                {demande.adresseModifiable || demande.listes.length > 0
+                {demande.sansAdresse === undefined && (demande.adresseModifiable || demande.listes.length > 0)
                   ? <BoutonSecondaire onClick={() => { setErreur(null); setEtape('adresse'); }}><ChevronLeft size={16} aria-hidden />Adresse</BoutonSecondaire>
                   : <BoutonSecondaire onClick={annuler}>Annuler</BoutonSecondaire>}
                 <BoutonPrincipal disabled={enCours || moyen === null} onClick={() => { void valider(); }}>
@@ -221,8 +225,9 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
             <Apparition cle="mobile-money">
               <p className="mb-4 flex items-center gap-2 text-sm font-semibold text-white"><Smartphone size={18} className="text-accent" aria-hidden />Mobile money</p>
               <PayerMobileMoney app={demande.mobileMoney.app} jeton={demande.mobileMoney.jeton} renouveler={false}
-                onPaye={demande.mobileMoney.onPaye} onReussi={(test) => { void suivreAdresse(test); }} onEnvoye={setPaiementParti} ouvertDOffice enFenetre />
-              <p className="mt-4 text-xs leading-relaxed text-white/45">{PHRASE_APRES_MOBILE_MONEY}</p>
+                onPaye={demande.mobileMoney.onPaye} onReussi={(test) => { void suivreAdresse(test); }} onEnvoye={setPaiementParti} ouvertDOffice enFenetre
+                objet={demande.mobileMoney.objet ?? 'abonnement'} {...(demande.mobileMoney.phraseDuPrix !== undefined ? { phraseDuPrix: demande.mobileMoney.phraseDuPrix } : {})} />
+              <p className="mt-4 text-xs leading-relaxed text-white/45">{demande.sansAdresse?.apresPaiement ?? PHRASE_APRES_MOBILE_MONEY}</p>
               <Boutons>
                 {!paiementParti && (
                   <BoutonSecondaire onClick={() => { setFormulaireMm(false); setErreur(null); }}><ChevronLeft size={16} aria-hidden />Moyen de paiement</BoutonSecondaire>
@@ -303,6 +308,14 @@ function EcranConfirmation({ c, compte }: { readonly c: Confirmation; readonly c
         {c.dejaEnLigne && <p className="text-xs text-white/55">Elle l’était déjà : son adresse reste la même.</p>}
         <a href={c.lien} target="_blank" rel="noreferrer noopener" className="max-w-full truncate rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-[#FFB08F] underline-offset-2 hover:underline">{c.lien}</a>
         <Identifiants lien={c.lien} initial={c.compte ?? null} compte={compte} />
+      </div>
+    );
+  }
+  if (c.etat === 'ajoute') {
+    return (
+      <div className="flex flex-col items-center gap-3 py-2 text-center" role="status">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-300/30"><Check size={32} strokeWidth={2.5} aria-hidden /></span>
+        <p className="text-base font-semibold">{c.texte}</p>
       </div>
     );
   }

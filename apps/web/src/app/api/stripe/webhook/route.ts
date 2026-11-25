@@ -6,6 +6,7 @@ import { logAnomaly } from '@/lib/anomaly';
 import { TYPE_APPLICATION, traiterFactureAppli } from '@/lib/payments/abonnement-appli';
 import { abonnementDeFacture } from '@/lib/payments/facture-stripe';
 import { publierApresPaiement } from '@/lib/payments/publier-apres-paiement';
+import { traiterSessionLot } from '@/lib/payments/lot-appli';
 import { traiterEchecAppli, traiterLitigeAppli, traiterRemboursementAppli, type ResultatCycle } from '@/lib/payments/cycle-de-vie-appli';
 
 import { supabaseAdmin as supabase, supabaseAdmin } from '@/lib/supabase-admin';
@@ -205,6 +206,21 @@ export async function POST(req: Request) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
         const obj: any = event.data.object;
+        // ── UN LOT DE MODIFICATIONS D'APPLI (2026-11-24) : paiement UNIQUE,
+        //    AVANT le chemin boutique (même mode=payment). Erreur de base →
+        //    500, Stripe renvoie ; session non payée ou mal marquée : dite.
+        if (event.type === 'checkout.session.completed' && obj?.mode === 'payment') {
+          const lot = await traiterSessionLot(obj);
+          if (lot.traitee) {
+            if (!lot.ok) {
+              await logAnomaly({ type: 'stripe_lot_application', severity: 'blocked', details: { session: obj?.id ?? null, erreur: lot.erreur } });
+              if (!/non payée|attendu USD|sans identifiant/u.test(lot.erreur)) throw new Error('lot d’application non enregistré : ' + lot.erreur);
+            } else {
+              console.log(`[stripe] lot pour l'appli ${lot.app} → ${lot.statut}`);
+            }
+            break;
+          }
+        }
         // Achat boutique (mode=payment) : fulfillment dropshipping, PAS un abonnement.
         if (event.type === 'checkout.session.completed' && obj?.mode === 'payment') {
           await handlePaidCheckout(obj);
