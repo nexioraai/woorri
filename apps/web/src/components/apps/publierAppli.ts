@@ -42,6 +42,8 @@ export type IssuePublication =
  * la route : il rend `null` quand la fenêtre peut se fermer, ou le message à
  * afficher DANS la fenêtre (format, nom déjà pris, liste changée).
  */
+export type ResultatFenetre = string | null | 'mobile_money' | { readonly lien: string; readonly dejaEnLigne: boolean }
+
 export type DemandeFenetre = {
   readonly titre: string
   readonly adresseInitiale: string
@@ -56,9 +58,27 @@ export type DemandeFenetre = {
    */
   readonly moyens: readonly MoyenPublication[]
   /** Pour le formulaire mobile money, montré DANS la fenêtre. */
-  readonly mobileMoney: { readonly app: string; readonly jeton: () => Promise<string | null>; readonly onPaye: () => Promise<unknown> } | null
-  /** `'mobile_money'` : la fenêtre reste ouverte et passe au formulaire. */
-  readonly valider: (adresse: string, moyen: MoyenPublication | null) => Promise<string | null | 'mobile_money'>
+  readonly mobileMoney: {
+    readonly app: string
+    readonly jeton: () => Promise<string | null>
+    readonly onPaye: () => Promise<unknown>
+    /** L'adresse EN LIGNE, relue après le paiement : l'avis signé publie (2026-11-24). */
+    readonly lireAdresse: () => Promise<string | null>
+    /** Pour les tests : l'intervalle de relecture (3 s par défaut). */
+    readonly relectureMs?: number
+  } | null
+  /** Les étapes Adresse › Paiement › Confirmation en haut (« Changer l'adresse » n'en a pas). */
+  readonly avecEtapes: boolean
+  /**
+   * LA VÉRIFICATION EN DIRECT de l'adresse (2026-11-24) : `null` = libre, sinon
+   * la phrase à montrer (format, déjà prise). Absente quand l'adresse est figée.
+   */
+  readonly verifier: ((adresse: string) => Promise<string | null>) | null
+  /**
+   * Ce que rend la validation : `null` → fermer ; une phrase → la montrer ;
+   * `'mobile_money'` → le formulaire ; `{ lien }` → la confirmation, avec le lien.
+   */
+  readonly valider: (adresse: string, moyen: MoyenPublication | null) => Promise<ResultatFenetre>
   readonly annuler: () => void
 }
 
@@ -141,21 +161,28 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
     return await new Promise<IssuePublication>((resolve) => {
       o.ouvrirFenetre({
         titre: TITRE_FENETRE_PUBLIER,
-        adresseInitiale: etat.nom ?? adresseProposee(o.titre ?? o.demande),
+        // L'adresse proposée vient du SERVEUR, déjà vérifiée libre (2026-11-24) ;
+        // le calcul local ne sert que si le serveur n'en dit rien (ancienne réponse).
+        adresseInitiale: etat.nom ?? etat.adresseProposee ?? adresseProposee(o.titre ?? o.demande),
         adresseModifiable: etat.nom === null,
         listes: aAccepter,
         // UN SEUL BOUTON « PUBLIER » (2026-11-24), qu'il y ait à payer ou non.
         libelleBouton: BOUTON_PUBLIER,
         moyens,
         mobileMoney: moyens.includes('mobile_money')
-          ? { app: o.id, jeton: () => Promise.resolve(sansBearer), onPaye: o.apresMobileMoney ?? (() => Promise.resolve()) }
+          ? { app: o.id, jeton: () => Promise.resolve(sansBearer), onPaye: o.apresMobileMoney ?? (() => Promise.resolve()), lireAdresse: () => adresseEnLigne(o.id, o.autorisation) }
           : null,
+        avecEtapes: true,
+        verifier: etat.nom === null ? (adresse) => verifierAdresseEnDirect(o.id, adresse, o.autorisation) : null,
         valider: async (adresse, moyen) => {
           try {
             const r = await envoyer(etat.nom ?? adresse, aAccepter.length > 0, moyens.length === 0 ? null : (moyen ?? moyens[0] ?? null))
             if (r.type === 'dans_la_fenetre') return r.message
             resolve(r)
-            return r.type === 'mobile_money' ? 'mobile_money' : null
+            if (r.type === 'mobile_money') return 'mobile_money'
+            // Publiée (payée, ou déjà en ligne) : la fenêtre montre la confirmation et le lien.
+            if (r.type === 'publiee') return { lien: r.lien, dejaEnLigne: r.dejaEnLigne }
+            return null
           } catch {
             return PHRASE_PUBLICATION_ECHOUEE
           }
@@ -168,12 +195,29 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
   }
 }
 
+/**
+ * LA VÉRIFICATION EN DIRECT (GET /api/generateur/publier/nom) : `null` = libre,
+ * sinon la phrase. Un réseau muet ne bloque rien : la route tranche au clic.
+ */
+export async function verifierAdresseEnDirect(id: string, adresse: string, autorisation: string): Promise<string | null> {
+  try {
+    const res = await fetch(`/api/generateur/publier/nom?id=${encodeURIComponent(id)}&sous=${encodeURIComponent(adresse)}`, { headers: { Authorization: autorisation } })
+    if (!res.ok) return null
+    const d = (await res.json()) as { libre?: boolean; message?: string }
+    return d.libre === false ? (d.message ?? 'Cette adresse n’est pas disponible.') : null
+  } catch {
+    return null
+  }
+}
+
 /** Ce que « Publier » va faire, et où en est l'appli (GET /api/generateur/publier/etat). */
 export type EtatPublication = {
   readonly action: ActionPublier
   /** Les moyens de paiement ouverts pour ce compte (2026-11-24). */
   readonly moyens: readonly MoyenPublication[]
   readonly nom: string | null
+  /** Sans nom enregistré : une adresse LIBRE proposée par le serveur, ou `null` (2026-11-24). */
+  readonly adresseProposee: string | null
   readonly adresse: string | null
   readonly nomModifiable: boolean
   readonly publicationAuto: 'echec' | null
@@ -191,6 +235,7 @@ export async function lireEtatPublication(id: string, autorisation: string): Pro
       action: d.action,
       moyens: (Array.isArray(d.moyens) ? d.moyens : []).filter((m): m is MoyenPublication => m === 'carte' || m === 'mobile_money'),
       nom: typeof d.nom === 'string' && d.nom !== '' ? d.nom : null,
+      adresseProposee: typeof d.adresseProposee === 'string' ? d.adresseProposee : null,
       adresse: typeof d.adresse === 'string' && d.adresse !== '' ? d.adresse : null,
       nomModifiable: d.nomModifiable === true,
       publicationAuto: d.publicationAuto === 'echec' ? 'echec' : null,
@@ -260,6 +305,8 @@ export async function changerAdresse(o: {
       libelleBouton: BOUTON_ENREGISTRER_ADRESSE,
       moyens: [],
       mobileMoney: null,
+      avecEtapes: false,
+      verifier: (adresse) => verifierAdresseEnDirect(o.id, adresse, o.autorisation),
       valider: async (adresse) => {
         if (adresse === '') return 'Choisissez une adresse.'
         try {

@@ -15,6 +15,7 @@
  * du prestataire, puis relit le compteur — c'est l'avis signé qui active.
  */
 import { useEffect, useRef, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import type { ActionClient, EtatEncaissement, Operateur } from '@/lib/payments/mobile-money/types';
 
 /** Ce que le serveur propose : UN montant, des opérateurs sans prix propre. */
@@ -70,6 +71,20 @@ function ecrireAttente(app: string, v: EnAttente | null): void {
   } catch { /* stockage indisponible : le suivi vit seulement dans la page */ }
 }
 
+/** Le titre de l'écran d'attente, dans la fenêtre « Publier » (2026-11-24). */
+export const TITRE_ATTENTE = 'Validez le paiement sur votre téléphone';
+
+/**
+ * Sous le titre de l'attente, la phrase SANS le titre répété (« Validez le
+ * paiement… : saisissez… » → « Saisissez… ») — mesuré à la capture du 2026-11-24.
+ */
+export function sansTitreAttente(phrase: string): string {
+  const prefixe = `${TITRE_ATTENTE} : `;
+  if (!phrase.startsWith(prefixe)) return phrase;
+  const reste = phrase.slice(prefixe.length);
+  return reste.charAt(0).toUpperCase() + reste.slice(1);
+}
+
 /** « Un mois d'abonnement : 14 000 FCFA. » — un seul montant, rien d'autre. */
 export function phrasePrix(montant: number): string {
   return `Un mois d’abonnement : ${fcfa(montant)}.`;
@@ -89,6 +104,8 @@ export function PayerMobileMoney({
   renouveler,
   onPaye,
   ouvertDOffice = false,
+  enFenetre = false,
+  onReussi,
 }: {
   app: string;
   jeton: () => Promise<string | null>;
@@ -97,6 +114,10 @@ export function PayerMobileMoney({
   onPaye: () => Promise<unknown>;
   /** Dans la fenêtre « Publier » (2026-11-24) : le formulaire s'ouvre seul, sans bouton intermédiaire. */
   ouvertDOffice?: boolean;
+  /** Dans la fenêtre « Publier » (2026-11-24) : grands champs, écran d'attente animé, sans en-tête propre. */
+  enFenetre?: boolean;
+  /** Appelé UNE fois quand le paiement aboutit (`test` : un paiement de test n'active rien). */
+  onReussi?: (test: boolean) => void;
 }) {
   const [ouvert, setOuvert] = useState(false);
   const [offre, setOffre] = useState<Offre | null>(null);
@@ -139,6 +160,13 @@ export function PayerMobileMoney({
     setOffre({ montant, test: r.d.test !== false, operateurs: ops });
     if (ops.length > 0) setOperateur(ops[0]!.code);
   };
+  // LA RÉUSSITE SE DIT UNE FOIS à qui l'attend (la fenêtre passe à la confirmation).
+  const reussiDit = useRef(false);
+  useEffect(() => {
+    if (vue?.etat !== 'reussi' || reussiDit.current || onReussi === undefined) return;
+    reussiDit.current = true;
+    onReussi(vue.test);
+  }, [vue, onReussi]);
   // Ouvert d'office : une seule fois, au tour suivant (pas d'état posé pendant l'effet).
   const ouvertUneFois = useRef(false);
   useEffect(() => {
@@ -247,44 +275,64 @@ export function PayerMobileMoney({
   }
 
   const choisi = offre?.operateurs.find((o) => o.code === operateur) ?? null;
-  const champ = 'w-full rounded-lg border border-white/15 bg-white/[0.03] px-2.5 py-1.5 text-xs text-white placeholder:text-slate-500';
+  const champ = enFenetre
+    ? 'w-full rounded-xl border border-white/15 bg-white/[0.04] px-3.5 py-3 text-base text-white placeholder:text-white/35 outline-none transition focus:border-accent/70 sm:text-sm'
+    : 'w-full rounded-lg border border-white/15 bg-white/[0.03] px-2.5 py-1.5 text-xs text-white placeholder:text-slate-500';
+  const enTest = vue?.test ?? offre?.test ?? true;
+  const etiquette = enFenetre ? 'block text-xs font-medium text-white/60' : 'block';
   return (
-    <div className="mt-2 rounded-xl border border-white/15 p-3 text-xs text-slate-200" aria-live="polite">
-      <p className="mb-2 flex items-center justify-between font-semibold text-white">
-        {libelle}
-        {(vue?.test ?? offre?.test ?? true) && <span className="rounded border border-amber-300/50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">mode test</span>}
-      </p>
+    <div className={enFenetre ? 'text-sm text-white/80' : 'mt-2 rounded-xl border border-white/15 p-3 text-xs text-slate-200'} aria-live="polite">
+      {!enFenetre && (
+        <p className="mb-2 flex items-center justify-between font-semibold text-white">
+          {libelle}
+          {enTest && <span className="rounded border border-amber-300/50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">mode test</span>}
+        </p>
+      )}
+      {enFenetre && enTest && (
+        <p className="mb-3 inline-flex rounded-md border border-amber-300/50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-200">mode test</p>
+      )}
+      {enFenetre && vue !== null && !FINAUX.has(vue.etat) && (
+        <div className="mb-4 flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-6 text-center">
+          <span className="relative flex h-14 w-14 items-center justify-center">
+            <span className="absolute inset-0 rounded-full bg-accent/20 motion-safe:animate-ping" aria-hidden />
+            <Loader2 size={28} className="relative text-accent motion-safe:animate-spin" aria-hidden />
+          </span>
+          <p className="text-base font-semibold text-white">{TITRE_ATTENTE}</p>
+        </div>
+      )}
       {offre === null && avis === null && vue === null && <p className="text-slate-400">Chargement…</p>}
       {offre !== null && vue === null && (
-        <form onSubmit={(e) => { e.preventDefault(); void payer(); }} className="space-y-2">
+        <form onSubmit={(e) => { e.preventDefault(); void payer(); }} className={enFenetre ? 'space-y-3.5' : 'space-y-2'}>
           <p><strong className="text-white">{phrasePrix(offre.montant)}</strong></p>
-          <label className="block">Opérateur
+          <label className={etiquette}>Opérateur
             <select value={operateur} onChange={(e) => setOperateur(e.target.value)} className={`${champ} mt-1`} required>
               {offre.operateurs.map((o) => <option key={o.code} value={o.code}>{o.nom}</option>)}
             </select>
           </label>
-          <label className="block">Numéro mobile money
+          <label className={etiquette}>Numéro mobile money
             <input value={telephone} onChange={(e) => setTelephone(e.target.value)} type="tel" autoComplete="tel" placeholder="+235 66 00 00 00" className={`${champ} mt-1`} required />
           </label>
-          <label className="block">Nom du titulaire
+          <label className={etiquette}>Nom du titulaire
             <input value={nom} onChange={(e) => setNom(e.target.value)} autoComplete="name" className={`${champ} mt-1`} required minLength={2} maxLength={80} />
           </label>
           <button type="submit" disabled={envoi || choisi === null}
-            className="w-full rounded-lg bg-[#FA5D1E] px-3 py-2 font-semibold text-white disabled:opacity-50">
+            className={enFenetre
+              ? 'w-full rounded-xl bg-accent px-4 py-3.5 text-base font-semibold text-white shadow-[0_8px_30px_-10px_rgba(250,93,30,0.7)] transition hover:bg-accent/90 disabled:opacity-50 sm:text-sm'
+              : 'w-full rounded-lg bg-[#FA5D1E] px-3 py-2 font-semibold text-white disabled:opacity-50'}>
             {envoi ? 'Envoi…' : `Payer ${fcfa(offre.montant)}`}
           </button>
         </form>
       )}
       {vue !== null && (
         <div className="space-y-2">
-          <p role="status">{phraseEtat(vue)}</p>
+          <p role="status">{enFenetre ? sansTitreAttente(phraseEtat(vue)) : phraseEtat(vue)}</p>
           {!FINAUX.has(vue.etat) && (
             <>
               <p className="text-slate-400">
                 {phraseAttente(minutes)}
                 {minutes >= 10 ? ' Sans réponse de l’opérateur : la demande peut encore aboutir si vous la validez, sinon changez de numéro.' : ''}
               </p>
-              <button type="button" onClick={() => { void changerDeNumero(); }} className="w-full rounded-lg border border-white/15 px-3 py-1.5">
+              <button type="button" onClick={() => { void changerDeNumero(); }} className={enFenetre ? 'w-full rounded-xl bg-white/[0.07] px-4 py-3 text-sm font-semibold text-white/85 transition hover:bg-white/[0.12]' : 'w-full rounded-lg border border-white/15 px-3 py-1.5'}>
                 Changer de numéro
               </button>
               {minutes < 10 && <p className="text-slate-400">{PHRASE_UNE_DEMANDE}</p>}

@@ -1,21 +1,23 @@
 /**
- * LA FENÊTRE « PUBLIER » (décision du propriétaire, 2026-11-22), RENDUE.
+ * LA FENÊTRE « PUBLIER » (décision du propriétaire, 2026-11-22 ; refonte
+ * visuelle le 2026-11-24), RENDUE. Ce test la monte dans un DOM et la
+ * manipule comme une personne : étapes, adresse vérifiée en direct, cartes de
+ * paiement, formulaire mobile money, attente, confirmation.
  *
- * Elle remplace deux boîtes natives du navigateur, dont une au texte jugé
- * incompréhensible (« clé de lecture… page publiée… Publier quand même ? »).
- * Ce test la monte dans un DOM et la manipule comme une personne.
- *
- * Ce qu'il NE PEUT PAS voir : le rendu à l'œil (couleurs, tenue à 390 px) —
- * ça se regarde à l'écran.
+ * Ce qu'il NE PEUT PAS voir : le rendu à l'œil (couleurs, tenue à 390 px,
+ * transitions) — ça se regarde à l'écran (captures du 2026-11-24).
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 import type { DemandeFenetre } from '@/components/apps/publierAppli'
+import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
 
 beforeAll(() => { GlobalRegistrator.register({ url: 'http://localhost/' }) })
 afterAll(() => { GlobalRegistrator.unregister() })
-beforeEach(() => { document.body.innerHTML = '' })
+// Un paiement « en attente » survit au rechargement (stockage du navigateur) : chaque test repart sans.
+beforeEach(() => { document.body.innerHTML = ''; vi.unstubAllGlobals(); window.localStorage.clear() })
 
+const attendre = async (ms = 5) => { const React = await import('react'); await React.act(async () => { await new Promise((r) => setTimeout(r, ms)) }) }
 async function monter(demande: DemandeFenetre, onFermer = vi.fn()): Promise<{ racine: HTMLElement; onFermer: ReturnType<typeof vi.fn> }> {
   const React = await import('react')
   const { createRoot } = await import('react-dom/client')
@@ -23,33 +25,43 @@ async function monter(demande: DemandeFenetre, onFermer = vi.fn()): Promise<{ ra
   const racine = document.createElement('div')
   document.body.appendChild(racine)
   await React.act(async () => { createRoot(racine).render(React.createElement(FenetrePublier, { demande, onFermer })) })
-  await React.act(async () => { await new Promise((r) => setTimeout(r, 5)) })
+  await attendre(20)
   return { racine, onFermer }
 }
 const demande = (d: Partial<DemandeFenetre> = {}): DemandeFenetre => ({
   titre: 'Publier votre application', adresseInitiale: 'gestion-de-stock', adresseModifiable: true, listes: [],
-  libelleBouton: 'Publier', moyens: [], mobileMoney: null, valider: vi.fn(async () => null), annuler: vi.fn(), ...d,
+  libelleBouton: 'Publier', moyens: [], mobileMoney: null, avecEtapes: true, verifier: null,
+  valider: vi.fn(async () => null), annuler: vi.fn(), ...d,
 })
 const boutons = (r: HTMLElement) => [...r.querySelectorAll('button')].map((b) => b.textContent?.trim())
+const bouton = (r: HTMLElement, texte: string) => [...r.querySelectorAll('button')].find((x) => x.textContent?.trim() === texte)
 const cliquer = async (r: HTMLElement, texte: string) => {
   const React = await import('react')
-  const b = [...r.querySelectorAll('button')].find((x) => x.textContent?.trim() === texte)
-  expect(b, `bouton « ${texte} » absent`).toBeDefined()
+  const b = bouton(r, texte)
+  expect(b, `bouton « ${texte} » absent (là : ${boutons(r).join(' | ')})`).toBeDefined()
   await React.act(async () => { b?.dispatchEvent(new MouseEvent('click', { bubbles: true })); await new Promise((x) => setTimeout(x, 5)) })
 }
 const taper = async (r: HTMLElement, valeur: string) => {
   const React = await import('react')
-  const champ = r.querySelector('input') as HTMLInputElement
+  const champ = r.querySelector('#fenetre-publier-adresse') as HTMLInputElement
   const poser = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
   await React.act(async () => { poser?.call(champ, valeur); champ.dispatchEvent(new Event('input', { bubbles: true })) })
 }
+const radios = (r: HTMLElement) => [...r.querySelectorAll('input[type="radio"]')] as HTMLInputElement[]
+const choisir = async (r: HTMLElement, valeur: string) => {
+  const React = await import('react')
+  const x = radios(r).find((b) => b.value === valeur)
+  expect(x, `choix « ${valeur} » absent`).toBeDefined()
+  await React.act(async () => { x?.click() })
+}
+const DEUX = ['carte', 'mobile_money'] as const
 
 describe('la fenêtre « Publier »', () => {
-  it('le titre, l’adresse déjà remplie suivie de « .deribfy.app », et les deux boutons', async () => {
+  it('le titre, l’adresse déjà remplie suivie de « .deribfy.app », et deux boutons', async () => {
     const { racine } = await monter(demande())
     expect(racine.querySelector('[role="dialog"]')).not.toBeNull()
     expect(racine.querySelector('h2')?.textContent).toBe('Publier votre application')
-    expect((racine.querySelector('input') as HTMLInputElement).value).toBe('gestion-de-stock')
+    expect((racine.querySelector('#fenetre-publier-adresse') as HTMLInputElement).value).toBe('gestion-de-stock')
     expect(racine.textContent).toContain('.deribfy.app')
     expect(boutons(racine)).toEqual(['Annuler', 'Publier'])
   })
@@ -60,8 +72,6 @@ describe('la fenêtre « Publier »', () => {
   })
 
   it('une liste publique : UNE phrase simple par liste, sans aucun mot technique', async () => {
-    // 2026-11-23 : la phrase dit EXACTEMENT les informations visibles, les
-    // lignes conditionnées, et une liste qui n'accorde rien n'est pas promise.
     const { racine } = await monter(demande({ listes: [
       { nom: 'Produits', champs: ['nom', 'quantité', 'seuil d’alerte'] },
       { nom: 'Annonces', champs: ['titre'], seulement: '« masqué » vaut non' },
@@ -75,7 +85,7 @@ describe('la fenêtre « Publier »', () => {
     expect(texte, 'un mot technique est revenu').not.toMatch(/clé de lecture|page servie|page publiée|téléchargeable|PAR TOUT LE MONDE|quand même/u)
   })
 
-  it('« Continuer » valide l’adresse saisie ; un refus du nom s’affiche DANS la fenêtre, qui reste ouverte', async () => {
+  it('rien à payer : « Publier » valide l’adresse ; un refus du nom s’affiche DANS la fenêtre, qui reste ouverte', async () => {
     const valider = vi.fn(async (a: string) => (a === 'pris' ? '« pris » est deja pris par une autre application.' : null))
     const { racine, onFermer } = await monter(demande({ valider }))
     await taper(racine, '  Pris ')
@@ -90,11 +100,10 @@ describe('la fenêtre « Publier »', () => {
   })
 
   it('un format refusé se dit tout de suite, et le bouton ne part pas', async () => {
-    const d = demande()
-    const { racine } = await monter(d)
+    const { racine } = await monter(demande())
     await taper(racine, 'A')
     expect(racine.textContent).toContain('Minuscules, chiffres et tirets')
-    expect([...racine.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Publier')?.disabled).toBe(true)
+    expect(bouton(racine, 'Publier')?.disabled).toBe(true)
   })
 
   it('« Annuler » ferme sans rien valider', async () => {
@@ -106,68 +115,205 @@ describe('la fenêtre « Publier »', () => {
     expect(onFermer).toHaveBeenCalledTimes(1)
   })
 
-  it('nom déjà enregistré : l’adresse est montrée, non modifiable ; appli payée : « Publier »', async () => {
-    const { racine } = await monter(demande({ adresseInitiale: 'gestion-stock', adresseModifiable: false, libelleBouton: 'Publier' }))
-    expect((racine.querySelector('input') as HTMLInputElement).readOnly).toBe(true)
+  it('nom déjà enregistré : l’adresse est montrée, non modifiable', async () => {
+    const { racine } = await monter(demande({ adresseInitiale: 'gestion-stock', adresseModifiable: false }))
+    expect((racine.querySelector('#fenetre-publier-adresse') as HTMLInputElement).readOnly).toBe(true)
     expect(boutons(racine)).toEqual(['Annuler', 'Publier'])
   })
+})
 
-  // ── LE MOYEN DE PAIEMENT (2026-11-24) ──────────────────────────────────────
-  const radios = (r: HTMLElement) => [...r.querySelectorAll('input[type="radio"]')] as HTMLInputElement[]
-  const choisir = async (r: HTMLElement, valeur: string) => {
-    const React = await import('react')
-    const x = radios(r).find((b) => b.value === valeur)
-    expect(x, `choix « ${valeur} » absent`).toBeDefined()
-    await React.act(async () => { x?.click() })
-  }
-
-  it('deux moyens : « Carte bancaire » et « Mobile money (Airtel / Moov) », la carte cochée, UN bouton « Publier », aucun prix ni « frais »', async () => {
-    const { racine } = await monter(demande({ moyens: ['carte', 'mobile_money'] }))
-    expect(radios(racine).map((b) => [b.value, b.checked])).toEqual([['carte', true], ['mobile_money', false]])
-    const texte = racine.textContent ?? ''
-    expect(texte).toContain('Carte bancaire')
-    expect(texte).toContain('Mobile money (Airtel / Moov)')
-    expect(boutons(racine)).toEqual(['Annuler', 'Publier'])
-    expect(texte).not.toMatch(/frais|%|FCFA|\$|[0-9]{4}/iu)
+describe('REFONTE (2026-11-24) · les étapes', () => {
+  const etapes = (r: HTMLElement) => [...r.querySelectorAll('ol[aria-label="Étapes"] li')].map((li) => [li.textContent?.replace(/^\d/u, '').trim(), li.getAttribute('aria-current')])
+  it('à payer : Adresse › Paiement › Confirmation, la première est l’étape en cours', async () => {
+    const { racine } = await monter(demande({ moyens: DEUX }))
+    expect(etapes(racine)).toEqual([['Adresse', 'step'], ['Paiement', null], ['Confirmation', null]])
   })
-
-  it('un seul moyen, ou rien à payer : pas de choix affiché', async () => {
-    const un = await monter(demande({ moyens: ['carte'] }))
-    expect(radios(un.racine)).toEqual([])
+  it('rien à payer : Adresse › Confirmation ; « Changer l’adresse » : aucune étape', async () => {
+    const un = await monter(demande())
+    expect(etapes(un.racine).map((e) => e[0])).toEqual(['Adresse', 'Confirmation'])
     document.body.innerHTML = ''
-    const aucun = await monter(demande({ moyens: [] }))
-    expect(radios(aucun.racine)).toEqual([])
+    const deux = await monter(demande({ avecEtapes: false }))
+    expect(etapes(deux.racine)).toEqual([])
   })
+  it('« Continuer » passe au Paiement (l’étape avance), « ‹ Adresse » revient', async () => {
+    const { racine } = await monter(demande({ moyens: DEUX }))
+    await cliquer(racine, 'Continuer')
+    expect(etapes(racine)).toEqual([['Adresse', null], ['Paiement', 'step'], ['Confirmation', null]])
+    await cliquer(racine, 'Adresse')
+    expect(etapes(racine)[0]).toEqual(['Adresse', 'step'])
+  })
+  it('adresse figée et rien à accepter : on commence au Paiement', async () => {
+    const { racine } = await monter(demande({ moyens: DEUX, adresseModifiable: false }))
+    expect(etapes(racine)[1]).toEqual(['Paiement', 'step'])
+  })
+})
 
+describe('REFONTE · l’adresse vérifiée en direct', () => {
+  it('déjà prise : la phrase claire, la bordure rouge, « Continuer » bloqué ; libre : « Adresse disponible »', async () => {
+    const verifier = vi.fn(async (a: string) => (a === 'gestion-pharmacie' ? '« gestion-pharmacie » est déjà prise par une autre application. Choisissez-en une autre.' : null))
+    const { racine } = await monter(demande({ moyens: DEUX, verifier }))
+    await taper(racine, 'gestion-pharmacie')
+    expect(bouton(racine, 'Continuer')?.disabled, 'part pendant la vérification').toBe(true)
+    await attendre(450)
+    expect(verifier).toHaveBeenLastCalledWith('gestion-pharmacie')
+    expect(racine.querySelector('#fenetre-publier-verif')?.textContent).toBe('« gestion-pharmacie » est déjà prise par une autre application. Choisissez-en une autre.')
+    expect((racine.querySelector('#fenetre-publier-adresse') as HTMLInputElement).getAttribute('aria-invalid')).toBe('true')
+    expect(bouton(racine, 'Continuer')?.disabled).toBe(true)
+    await taper(racine, 'ma-pharmacie')
+    await attendre(450)
+    expect(racine.querySelector('#fenetre-publier-verif')?.textContent).toBe('Adresse disponible')
+    expect(bouton(racine, 'Continuer')?.disabled).toBe(false)
+  })
+  it('déjà prise : la touche Entrée ne passe pas au Paiement non plus', async () => {
+    const verifier = vi.fn(async () => 'déjà prise')
+    const { racine } = await monter(demande({ moyens: DEUX, verifier }))
+    await taper(racine, 'gestion-pharmacie')
+    await attendre(450)
+    const React = await import('react')
+    const champ = racine.querySelector('#fenetre-publier-adresse') as HTMLInputElement
+    await React.act(async () => { champ.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })) })
+    await attendre(10)
+    expect(racine.querySelector('[role="radiogroup"]'), 'passé au paiement malgré l’adresse prise').toBeNull()
+  })
+  it('une saisie dépassée ne gagne pas : seule la dernière adresse tapée est jugée', async () => {
+    const verifier = vi.fn(async (_a: string) => null)
+    const { racine } = await monter(demande({ moyens: DEUX, verifier }))
+    await taper(racine, 'aaa')
+    await taper(racine, 'aaab')
+    await taper(racine, 'aaabc')
+    await attendre(450)
+    expect(verifier.mock.calls.map((c) => c[0])).toEqual(['aaabc'])
+  })
+  it('adresse figée : aucune vérification', async () => {
+    const verifier = vi.fn(async () => null)
+    await monter(demande({ adresseModifiable: false, verifier }))
+    await attendre(450)
+    expect(verifier).not.toHaveBeenCalled()
+  })
+})
+
+describe('REFONTE · le paiement', () => {
+  const auPaiement = async (d: Partial<DemandeFenetre> = {}) => {
+    const m = await monter(demande({ moyens: DEUX, ...d }))
+    await cliquer(m.racine, 'Continuer')
+    return m
+  }
+  it('deux grandes cartes : « Carte bancaire » et « Mobile money » (Airtel ou Moov), la carte choisie, UN bouton « Publier », aucun prix ni « frais »', async () => {
+    const { racine } = await auPaiement()
+    expect(radios(racine).map((b) => [b.value, b.checked])).toEqual([['carte', true], ['mobile_money', false]])
+    const titres = [...racine.querySelectorAll('[role="radiogroup"] label')].map((l) => l.textContent)
+    expect(titres).toEqual(['Carte bancairePaiement sécurisé en ligne', 'Mobile moneyAirtel ou Moov'])
+    expect(boutons(racine)).toEqual(['Adresse', 'Publier'])
+    expect(racine.textContent).not.toMatch(/frais|%|FCFA|\$|[0-9]{4}|Visa|Mastercard|Orange/iu)
+    expect(racine.querySelectorAll('img').length, 'une image de marque').toBe(0)
+  })
+  it('la carte choisie est mise en valeur, l’autre non', async () => {
+    const { racine } = await auPaiement()
+    await choisir(racine, 'mobile_money')
+    const [carte, mm] = [...racine.querySelectorAll('[role="radiogroup"] label')]
+    expect(mm?.className).toContain('border-accent')
+    expect(carte?.className).not.toMatch(motifTexte('border-accent '))
+  })
   it('le moyen coché part avec « Publier » : carte par défaut, mobile money une fois choisi', async () => {
     const valider = vi.fn(async () => null)
-    const { racine } = await monter(demande({ moyens: ['carte', 'mobile_money'], valider }))
+    const { racine } = await auPaiement({ valider })
     await cliquer(racine, 'Publier')
     expect(valider).toHaveBeenLastCalledWith('gestion-de-stock', 'carte')
     document.body.innerHTML = ''
     const v2 = vi.fn(async () => null)
-    const deux = await monter(demande({ moyens: ['carte', 'mobile_money'], valider: v2 }))
+    const deux = await auPaiement({ valider: v2 })
     await choisir(deux.racine, 'mobile_money')
     await cliquer(deux.racine, 'Publier')
     expect(v2).toHaveBeenLastCalledWith('gestion-de-stock', 'mobile_money')
   })
-
-  it('mobile money accepté par la route : la fenêtre RESTE ouverte et montre le formulaire (opérateur, numéro), sans « frais »', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ montant: 14000, devise: 'XAF', test: false, operateurs: [{ code: 'AIRTEL', nom: 'Airtel Money' }, { code: 'MOOV', nom: 'Moov Money' }] }), { status: 200 })))
-    const valider = vi.fn(async () => 'mobile_money' as const)
-    const mobileMoney = { app: 'app-1', jeton: async () => 'j', onPaye: async () => undefined }
-    const { racine, onFermer } = await monter(demande({ moyens: ['carte', 'mobile_money'], mobileMoney, valider }))
-    await choisir(racine, 'mobile_money')
+  it('un refus du nom au paiement ramène à l’Adresse, avec la phrase', async () => {
+    const valider = vi.fn(async () => '« gestion-de-stock » est deja pris par une autre application.')
+    const { racine } = await auPaiement({ valider })
     await cliquer(racine, 'Publier')
+    expect(racine.querySelector('#fenetre-publier-adresse')).not.toBeNull()
+    expect(racine.querySelector('[role="alert"]')?.textContent).toMatch(motifTexte('deja pris'))
+  })
+})
+
+describe('REFONTE · mobile money : formulaire, attente, réussite', () => {
+  const OFFRE = { montant: 14000, devise: 'XAF', test: false, operateurs: [{ code: 'AIRTEL', nom: 'Airtel Money' }, { code: 'MOOV', nom: 'Moov Money' }] }
+  const reseau = (post: Record<string, unknown>) => vi.fn(async (_u: string, init?: RequestInit) => new Response(JSON.stringify(init?.method === 'POST' ? post : OFFRE), { status: 200 }))
+  const remplir = async (r: HTMLElement) => {
     const React = await import('react')
-    await React.act(async () => { await new Promise((r) => setTimeout(r, 20)) })
+    const poser = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+    const [tel, nom] = [...r.querySelectorAll('form input')] as HTMLInputElement[]
+    await React.act(async () => {
+      poser?.call(tel, '66000001'); tel?.dispatchEvent(new Event('input', { bubbles: true }))
+      poser?.call(nom, 'Awa Mahamat'); nom?.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await React.act(async () => { (r.querySelector('form') as HTMLFormElement).requestSubmit(); await new Promise((x) => setTimeout(x, 20)) })
+  }
+  const auFormulaire = async (lireAdresse = vi.fn(async () => null as string | null)) => {
+    const valider = vi.fn(async () => 'mobile_money' as const)
+    const m = await monter(demande({ moyens: DEUX, valider, mobileMoney: { app: 'app-1', jeton: async () => 'j', onPaye: async () => undefined, lireAdresse, relectureMs: 40 } }))
+    await cliquer(m.racine, 'Continuer')
+    await choisir(m.racine, 'mobile_money')
+    await cliquer(m.racine, 'Publier')
+    await attendre(30)
+    return m
+  }
+  it('mobile money accepté : la fenêtre RESTE ouverte et montre le formulaire (opérateur, numéro), sans « frais »', async () => {
+    vi.stubGlobal('fetch', reseau({}))
+    const { racine, onFermer } = await auFormulaire()
     expect(onFermer).not.toHaveBeenCalled()
     const texte = racine.textContent ?? ''
-    expect(texte).toContain('Airtel Money')
-    expect(texte).toContain('Numéro mobile money')
-    expect(texte).toContain('se publie seule')
+    expect(texte).toMatch(motifTexte('Airtel Money'))
+    expect(texte).toMatch(motifTexte('Numéro mobile money'))
+    expect(texte).toMatch(motifTexte('se publie seule'))
     expect(texte).not.toMatch(/frais|%/iu)
     expect(racine.querySelector('input[type="radio"]'), 'le choix reste affiché').toBeNull()
-    vi.unstubAllGlobals()
+  })
+  it('après « Payer » : l’écran d’attente « Validez le paiement sur votre téléphone », avec un indicateur animé', async () => {
+    vi.stubGlobal('fetch', reseau({ encaissement: 'e1', etat: 'en_attente', montant: 14000, devise: 'XAF', test: false, action: null, echec: null }))
+    const { racine } = await auFormulaire()
+    await remplir(racine)
+    expect(racine.textContent).toMatch(motifTexte('Validez le paiement sur votre téléphone'))
+    expect(racine.querySelector('.motion-safe\\:animate-spin'), 'indicateur animé absent').not.toBeNull()
+    expect(racine.querySelector('form'), 'le formulaire reste affiché pendant l’attente').toBeNull()
+    // Le titre une seule fois, la consigne dessous (capture du 2026-11-24 : le titre était répété).
+    expect((racine.textContent ?? '').split('Validez le paiement sur votre téléphone').length - 1).toBe(1)
+    expect(racine.textContent).toMatch(motifTexte('Saisissez votre code secret dans le message qui s’affiche.'))
+  })
+  it('paiement réussi : Confirmation, « Publication en cours… », puis le lien de l’appli et « Ouvrir »', async () => {
+    vi.stubGlobal('fetch', reseau({ encaissement: 'e1', etat: 'reussi', montant: 14000, devise: 'XAF', test: false, action: null, echec: null }))
+    let lien: string | null = null
+    const lireAdresse = vi.fn(async () => lien)
+    const { racine } = await auFormulaire(lireAdresse)
+    await remplir(racine)
+    await attendre(30)
+    expect(racine.textContent).toMatch(motifTexte('Paiement reçu. Publication en cours…'))
+    expect([...racine.querySelectorAll('ol[aria-label="Étapes"] li')].map((li) => li.getAttribute('aria-current'))).toEqual([null, null, 'step'])
+    lien = 'https://ma-pharmacie.deribfy.app'
+    await attendre(120)
+    expect(racine.textContent).toMatch(motifTexte('Votre application est en ligne'))
+    const ouvrir = [...racine.querySelectorAll('a')].find((a) => a.textContent?.trim() === 'Ouvrir')
+    expect(ouvrir?.getAttribute('href')).toBe('https://ma-pharmacie.deribfy.app')
+    expect(ouvrir?.getAttribute('target')).toBe('_blank')
+  })
+  it('paiement de TEST réussi : la Confirmation le dit, sans promettre de publication', async () => {
+    vi.stubGlobal('fetch', reseau({ encaissement: 'e1', etat: 'reussi', montant: 14000, devise: 'XAF', test: true, action: null, echec: null }))
+    const lireAdresse = vi.fn(async () => null)
+    const { racine } = await auFormulaire(lireAdresse)
+    await remplir(racine)
+    await attendre(30)
+    expect(racine.textContent).toMatch(motifTexte('En mode test, l’application n’est pas publiée.'))
+    expect(lireAdresse).not.toHaveBeenCalled()
+  })
+})
+
+describe('REFONTE · la confirmation d’une publication sans paiement à faire', () => {
+  it('« Publier » rend le lien : Confirmation, le lien, « Ouvrir » ; déjà en ligne, elle le dit', async () => {
+    const valider = vi.fn(async () => ({ lien: 'https://atitta.deribfy.app', dejaEnLigne: true }))
+    const { racine, onFermer } = await monter(demande({ valider, adresseModifiable: false }))
+    await cliquer(racine, 'Publier')
+    expect(onFermer).not.toHaveBeenCalled()
+    expect(racine.textContent).toMatch(motifTexte('Votre application est en ligne'))
+    expect(racine.textContent).toMatch(motifTexte('Elle l’était déjà'))
+    expect([...racine.querySelectorAll('a')].find((a) => a.textContent?.trim() === 'Ouvrir')?.getAttribute('href')).toBe('https://atitta.deribfy.app')
   })
 })

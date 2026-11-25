@@ -115,6 +115,9 @@ vi.mock('@/lib/supabase-admin', async () => {
             }
             // La liste de « Mes projets » (`.limit(50)`) rend un tableau.
             if (f[f.length - 1]?.[0] === 'limit') return { data: [{ ...etat.appli }], error: null }
+            // Une AUTRE appli demandée par son identifiant : elle n'est pas à ce compte.
+            const id = dernier(f, 'id')
+            if (id !== undefined && id !== etat.appli.id) return { data: null, error: null }
             return { data: { ...etat.appli }, error: null }
           },
         },
@@ -152,7 +155,8 @@ import { GET as COMPTE } from '@/app/api/generateur/compte/route'
 import { POST as SUPPRIMER } from '@/app/api/generateur/supprimer/route'
 import { GET as MES_APPLICATIONS } from '@/app/api/generateur/mes-applications/route'
 import { PHRASE_NOM_FIGE } from '@/lib/apps/nom-enregistre'
-import { POST as CHANGER_NOM } from '@/app/api/generateur/publier/nom/route'
+import { GET as VERIFIER_NOM, POST as CHANGER_NOM } from '@/app/api/generateur/publier/nom/route'
+import { PHRASE_ADRESSE_FORMAT } from '@/lib/apps/adresse-libre'
 import { POST as COMPTE_POST } from '@/app/api/generateur/compte/route'
 
 const SRC = join(__dirname, '..', '..', '..')
@@ -173,7 +177,7 @@ const reseau = async (url: string | URL | Request, init?: RequestInit): Promise<
   const req = new Request(`https://www.deribfy.com${u}`, init)
   if (u.startsWith('/api/generateur/publier/etat')) return ETAT(req)
   if (u.startsWith('/api/generateur/publier?')) return PUBLIER(req)
-  if (u.startsWith('/api/generateur/publier/nom')) return CHANGER_NOM(req)
+  if (u.startsWith('/api/generateur/publier/nom')) return req.method === 'GET' ? VERIFIER_NOM(req) : CHANGER_NOM(req)
   if (u.startsWith('/api/generateur/compte') && req.method === 'POST') return COMPTE_POST(req)
   throw new Error(`appel inattendu : ${u}`)
 }
@@ -183,6 +187,7 @@ const reseau = async (url: string | URL | Request, init?: RequestInit): Promise<
 // montré, et ce qu'elle a affiché comme refus, est noté.
 const fenetres: DemandeFenetre[] = []
 const erreursFenetre: string[] = []
+const resultatsFenetre: unknown[] = []
 const questions: string[] = []
 const fenetre = (d: DemandeFenetre): void => {
   fenetres.push(d)
@@ -190,7 +195,8 @@ const fenetre = (d: DemandeFenetre): void => {
   void (async () => {
     if (reponseAuNom === null) { d.annuler(); return }
     const e = await d.valider(reponseAuNom, moyenChoisi)
-    if (e !== null && e !== 'mobile_money') { erreursFenetre.push(e); d.annuler() }
+    resultatsFenetre.push(e)
+    if (typeof e === 'string' && e !== 'mobile_money') { erreursFenetre.push(e); d.annuler() }
   })()
 }
 const ouvertes: string[] = []
@@ -775,5 +781,72 @@ describe('A1 · B · « tous » pour la carte (2026-11-24)', () => {
     expect(PAGES['Mes projets']).toMatch(motifTexte('deja: issue.dejaEnLigne'))
     expect(PAGES['Mes projets']).toMatch(motifTexte('{lienPublic?.id === a.id && lienPublic.deja === true && ('))
     expect(PAGES['Mes projets']).toMatch(motifTexte('{PHRASE_DEJA_EN_LIGNE}'))
+  })
+})
+
+
+describe('ADRESSE · jamais une adresse prise proposée ni acceptée (2026-11-24)', () => {
+  const lireEtat = async () => (await (await ETAT(new Request('https://www.deribfy.com/api/generateur/publier/etat?id=app-stock', { headers: { Authorization: 'Bearer x' } }))).json()) as { adresseProposee: string | null }
+  const verifier = async (sous: string, id = 'app-stock') => {
+    const r = await VERIFIER_NOM(new Request(`https://www.deribfy.com/api/generateur/publier/nom?id=${id}&sous=${encodeURIComponent(sous)}`, { headers: { Authorization: 'Bearer x' } }))
+    return { status: r.status, d: (await r.json()) as Record<string, unknown> }
+  }
+  it('le défaut mesuré : « Gestion pharmacie », `gestion-pharmacie` tenue par une AUTRE appli → le serveur propose `gestion-pharmacie-2`', async () => {
+    etat.appli.nom = 'Gestion pharmacie'
+    etat.autre = { id: 'autre-app', publication_slug: 'gestion-pharmacie' }
+    expect((await lireEtat()).adresseProposee).toBe('gestion-pharmacie-2')
+    // Et la fenêtre la montre telle quelle, sans le calcul local.
+    reponseAuNom = null
+    await clic('Mes projets')
+    expect(fenetres[0]?.adresseInitiale).toBe('gestion-pharmacie-2')
+  })
+  it('libre : le nom lui-même ; nom déjà enregistré : rien de proposé (le sien fait foi)', async () => {
+    etat.appli.nom = 'Gestion pharmacie'
+    expect((await lireEtat()).adresseProposee).toBe('gestion-pharmacie')
+    etat.appli.publication_slug = 'mon-nom'
+    expect((await lireEtat()).adresseProposee).toBeNull()
+  })
+  it('la vérification en direct : prise → la phrase claire ; libre → libre ; format → la règle ; rien n’est écrit', async () => {
+    etat.autre = { id: 'autre-app', publication_slug: 'gestion-pharmacie' }
+    expect(await verifier('gestion-pharmacie')).toEqual({ status: 200, d: { libre: false, raison: 'prise_appli', message: '« gestion-pharmacie » est déjà prise par une autre application. Choisissez-en une autre.' } })
+    expect(await verifier('ma-pharmacie')).toEqual({ status: 200, d: { libre: true } })
+    expect(await verifier('A')).toEqual({ status: 200, d: { libre: false, raison: 'format', message: PHRASE_ADRESSE_FORMAT } })
+    expect(etat.appli.publication_slug).toBeNull()
+  })
+  it('la vérification ne lit que SES applis : une autre → 404', async () => {
+    expect((await verifier('x-y-z', 'inconnue')).status).toBe(404)
+  })
+  it('et jamais acceptée : valider une adresse prise reste refusé par la route, rien n’est écrit ni payé', async () => {
+    etat.autre = { id: 'autre-app', publication_slug: 'gestion-pharmacie' }
+    reponseAuNom = 'gestion-pharmacie'
+    expect(await clic('atelier')).toEqual({ type: 'annulee' })
+    expect(erreursFenetre[0]).toMatch(motifTexte('deja pris'))
+    expect(etat.appli.publication_slug).toBeNull()
+    expect(etat.sessions).toEqual([])
+  })
+  it('la fenêtre reçoit la vérification en direct quand l’adresse est libre de choix, pas quand elle est figée', async () => {
+    reponseAuNom = null
+    await clic('atelier')
+    expect(typeof fenetres[0]?.verifier).toBe('function')
+    expect(await fenetres[0]?.verifier?.('autre-libre')).toBeNull()
+    etat.autre = { id: 'autre-app', publication_slug: 'deja-la' }
+    expect(await fenetres[0]?.verifier?.('deja-la')).toMatch(motifTexte('déjà prise'))
+    etat.appli.publication_slug = 'fige'
+    fenetres.length = 0
+    await clic('atelier')
+    expect(fenetres[0]?.verifier ?? null).toBeNull()
+  })
+})
+
+
+describe('REFONTE · la validation rend la confirmation à la fenêtre (2026-11-24)', () => {
+  it('appli payée, adresse à choisir : la fenêtre reçoit le LIEN (elle montre « Ouvrir »), pas un simple « fermer »', async () => {
+    etat.paye = true
+    resultatsFenetre.length = 0
+    expect(await clic('atelier')).toMatchObject({ type: 'publiee', dejaEnLigne: false })
+    expect(resultatsFenetre).toHaveLength(1)
+    expect(resultatsFenetre[0]).toMatchObject({ dejaEnLigne: false })
+    expect(String((resultatsFenetre[0] as { lien: string }).lien)).toMatch(/gestion-stock/u)
+    etat.paye = false
   })
 })

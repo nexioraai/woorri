@@ -17,9 +17,27 @@ import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { refusDuNom } from '@/lib/apps/publier-oeuvre'
+import { verifierAdresse } from '@/lib/apps/adresse-libre'
 import { nomModifiable, jamaisPubliee, PHRASE_NOM_FIGE, PHRASE_SANS_NOM } from '@/lib/apps/nom-enregistre'
 
 export const runtime = 'nodejs'
+
+/**
+ * LA VÉRIFICATION EN DIRECT (2026-11-24) : `GET ?id=&sous=` → `{ libre }` ou
+ * `{ libre: false, raison, message }`. Lit seulement, n'écrit rien : la même
+ * règle que « Publier » (`refusDuNom`), ses propres phrases. Son appli seulement.
+ */
+export async function GET(req: Request) {
+  const garde = await requireAuthenticatedUser(req)
+  if (!garde.ok) return garde.response
+  const params = new URL(req.url).searchParams
+  const id = params.get('id') ?? ''
+  const sous = params.get('sous')?.toLowerCase().trim() ?? ''
+  if (id === '') return NextResponse.json({ error: 'id requis' }, { status: 400 })
+  const lu = await supabaseAdmin.from(TABLE_GENERATIONS).select('id').eq('id', id).eq('owner_id', garde.userId).maybeSingle()
+  if (lu.error !== null || lu.data === null) return NextResponse.json({ error: 'application inconnue' }, { status: 404 })
+  return NextResponse.json(await verifierAdresse(id, sous), { headers: { 'Cache-Control': 'no-store' } })
+}
 
 export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)

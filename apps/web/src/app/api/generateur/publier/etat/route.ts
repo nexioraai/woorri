@@ -23,6 +23,7 @@ import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { adressePubliee } from '@/lib/apps/sous-domaine'
 import { decisionEtMoyens, PHRASE_DECISION_ILLISIBLE } from '@/lib/apps/decision-publication'
 import { nomModifiable } from '@/lib/apps/nom-enregistre'
+import { adresseLibreProposee } from '@/lib/apps/adresse-libre'
 import { listesPubliques } from '@/lib/apps/contenu-public'
 import { accordCouvre, accordGarde } from '@/lib/apps/accord-stripe'
 import { lecturePubliqueDe, nomTable, type EntiteDeclaree } from '@/lib/apps/entites-declarees'
@@ -41,7 +42,7 @@ export async function GET(req: Request) {
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('publication_slug, publication_jeton, publie_le, document, sections_acquises')
+    .select('nom, demande, publication_slug, publication_jeton, publie_le, document, sections_acquises')
     .eq('id', id)
     .eq('owner_id', garde.userId)
     .maybeSingle()
@@ -50,7 +51,7 @@ export async function GET(req: Request) {
   const decision = await decisionEtMoyens(id, garde.userId, garde.email)
   if (decision === null) return NextResponse.json({ error: PHRASE_DECISION_ILLISIBLE }, { status: 503 })
   const { action, moyens } = decision
-  const l = lu.data as { publication_slug: string | null; publication_jeton: string | null; publie_le: string | null; document: unknown; sections_acquises: unknown }
+  const l = lu.data as { nom?: string | null; demande?: string | null; publication_slug: string | null; publication_jeton: string | null; publie_le: string | null; document: unknown; sections_acquises: unknown }
   // LES LISTES QUE TOUT LE MONDE POURRA LIRE, en mots simples, et l'accord
   // déjà donné pour CETTE liste : la fenêtre ne la remontre pas pour rien.
   const entites = ((l.document as { entites?: readonly EntiteDeclaree[] } | null)?.entites ?? [])
@@ -75,6 +76,8 @@ export async function GET(req: Request) {
       action,
       moyens,
       nom: typeof l.publication_slug === 'string' && l.publication_slug !== '' ? l.publication_slug : null,
+      // Sans nom enregistré : la première adresse LIBRE tirée du nom (2026-11-24) — jamais une adresse prise.
+      adresseProposee: typeof l.publication_slug === 'string' && l.publication_slug !== '' ? null : await adresseLibreProposee(id, l.nom ?? l.demande ?? ''),
       adresse: adressePubliee(l.publication_slug, l.publication_jeton),
       nomModifiable: nomModifiable(l),
       publicationAuto,
