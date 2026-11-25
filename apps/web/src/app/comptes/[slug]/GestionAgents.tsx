@@ -24,6 +24,8 @@ export default function GestionAgents({ slug }: { slug: string }) {
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState<{ ok: boolean; texte: string } | null>(null)
   const [envoi, setEnvoi] = useState(false)
+  const [porte, setPorte] = useState<string | null>(null)
+  const [copie, setCopie] = useState(false)
   const api = `/api/sites/${encodeURIComponent(slug)}/agents`
 
   const appel = useCallback(async (methode: string, corps?: unknown) => {
@@ -41,6 +43,7 @@ export default function GestionAgents({ slug }: { slug: string }) {
     if (!ok) return
     setOuvert(d.ouvert !== false)
     setAgents(d.agents ?? [])
+    setPorte(typeof d.connexionAgent === 'string' ? d.connexionAgent : null)
   }, [appel])
 
   useEffect(() => {
@@ -55,8 +58,8 @@ export default function GestionAgents({ slug }: { slug: string }) {
       const { ok, d } = await appel('POST', { nom, email })
       if (!ok) { setMessage({ ok: false, texte: typeof d.error === 'string' ? d.error : 'Refusé.' }); return }
       setMessage({ ok: true, texte: d.nouvelAcces
-        ? `${nom} est agent DDM. Son accès est créé : sur le site, page « Se connecter » puis « Connexion agent », il choisit « Mot de passe oublié » avec ${email} pour définir son mot de passe (10 caractères minimum, avec majuscule, minuscule, chiffre et signe).`
-        : `${nom} est agent DDM. Il se connecte sur le site avec son mot de passe habituel.` })
+        ? `${nom} est agent DDM. Son accès est créé : transmettez-lui l’adresse de connexion des agents ci-dessous ; il y choisit « Mot de passe oublié » avec ${email} pour définir son mot de passe (10 caractères minimum, avec majuscule, minuscule, chiffre et signe).`
+        : `${nom} est agent DDM. Il se connecte à l’adresse de connexion des agents ci-dessous, avec son mot de passe habituel.` })
       setNom(''); setEmail('')
       await relire()
     } finally { setEnvoi(false) }
@@ -79,6 +82,18 @@ export default function GestionAgents({ slug }: { slug: string }) {
           {envoi ? 'Envoi…' : 'Nommer agent DDM'}
         </button>
       </form>
+      {/* La porte des agents n'a plus de lien sur le site public (2026-11-25) :
+          c'est ICI que le propriétaire trouve l'adresse à leur transmettre. */}
+      {porte && (
+        <p style={{ fontSize: 14, margin: '0 0 12px', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ opacity: 0.65 }}>Adresse de connexion des agents (à leur transmettre, elle n’apparaît pas sur le site) :</span>
+          <code style={{ padding: '3px 8px', borderRadius: 7, background: 'rgba(255,255,255,0.08)' }}>{porte}</code>
+          <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(porte); setCopie(true); setTimeout(() => setCopie(false), 1800) } catch { /* rien */ } }}
+            style={{ padding: '4px 10px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: '#ededed', cursor: 'pointer', fontSize: 13 }}>
+            {copie ? 'Copiée' : 'Copier'}
+          </button>
+        </p>
+      )}
       {message && <p role={message.ok ? 'status' : 'alert'} style={{ color: message.ok ? '#4ade80' : '#f87171', fontSize: 14, lineHeight: 1.5 }}>{message.texte}</p>}
       {agents && agents.length === 0 && <p style={{ opacity: 0.55 }}>Aucun agent pour l’instant.</p>}
       {agents && agents.length > 0 && (

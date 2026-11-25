@@ -47,6 +47,11 @@ describe('« DDM » n’apparaît sur aucun écran du site', () => {
     })
   }
 
+  it('🔴 la page de connexion publique ne montre aucun lien vers la porte des agents (2026-11-25)', () => {
+    const page = lire('app/sites/[slug]/acces/PageAcces.tsx')
+    expect(page).not.toMatch(/href=\{`[^`]*pour=agent/)
+  })
+
   it('🔴 l’API du client ne renvoie pas l’auteur des réponses de la Centrale', () => {
     const route = lire('app/api/sites/[slug]/mes-messages/route.ts')
     expect(route).toMatch(/VU_MESSAGE_CLIENT/)

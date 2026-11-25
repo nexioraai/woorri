@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { journaliser } from '@/lib/audit/journaliser'
+import { adresseDuSite } from '@/lib/sites/adresse-site'
 
 // ============================================================================
 // LES AGENTS DE LA DIVISION DDM — nommés par le propriétaire (CPA, 2026-11-19).
@@ -45,7 +46,11 @@ export async function GET(req: Request, { params }: Params) {
     if (/service/.test(error.message)) return NextResponse.json({ agents: [], ouvert: false })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
-  return NextResponse.json({ agents: data ?? [], ouvert: true })
+  // L'ADRESSE DE LA PORTE DES AGENTS : elle n'est plus affichée sur le site
+  // public (CPA, 2026-11-25), le propriétaire la transmet à ses agents.
+  const s = garde.site as { slug?: string; custom_domain?: string | null }
+  const racine = s.custom_domain ? `https://${s.custom_domain}` : await adresseDuSite(slug).catch(() => null)
+  return NextResponse.json({ agents: data ?? [], ouvert: true, connexionAgent: racine ? `${racine}/connexion?pour=agent` : null })
 }
 
 export async function POST(req: Request, { params }: Params) {

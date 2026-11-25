@@ -178,8 +178,10 @@ export default async function PageAcces({ ecran, params, searchParams }: { ecran
             <Link href={`${base}/inscription${suite}`} style={lien}>{mots.connexion.creer}</Link>
             {' · '}
             <Link href={`${base}/mot-de-passe-oublie`} style={lien}>{mots.connexion.oublie}</Link>
-            <br />
-            <Link href={`${base}/connexion?pour=agent`} style={{ ...lien, fontWeight: 500, opacity: 0.8 }}>{mots.connexion.agentLien}</Link>
+            {/* CPA, 2026-11-25 — AUCUN LIEN VERS LA PORTE DES AGENTS ici : le
+                public n'a pas à la voir. Les agents reçoivent l'adresse
+                directe (`/connexion?pour=agent`) depuis le tableau de bord de
+                la Centrale, au moment où ils sont nommés. */}
           </>)}
           {agent && (<>
             <Link href={`${base}/mot-de-passe-oublie`} style={lien}>{mots.connexion.oublie}</Link>
