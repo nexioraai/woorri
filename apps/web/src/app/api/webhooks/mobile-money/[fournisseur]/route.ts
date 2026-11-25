@@ -49,7 +49,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ fournisseur: s
   //    redonné (« déjà enregistré ») relance une publication qui aurait échoué ;
   //    une appli déjà en ligne n'est pas touchée (« deja_publiee »).
   // Un LOT de modifications ne publie rien : l'appli est déjà abonnée (2026-11-24).
-  if ((issue.issue === 'enregistre' || issue.issue === 'deja_enregistre') && issue.objet === 'abonnement') {
+  // Un SITE se met en ligne dans la base même (enregistrer_paiement_site) : rien à publier ici.
+  if ((issue.issue === 'enregistre' || issue.issue === 'deja_enregistre') && 'app' in issue && issue.objet === 'abonnement') {
     const { app, proprietaire } = issue
     after(async () => {
       const effet = await publierApresEncaissement(app, proprietaire)

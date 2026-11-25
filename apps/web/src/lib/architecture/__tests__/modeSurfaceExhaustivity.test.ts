@@ -422,7 +422,10 @@ describe('ÉTAPE B — NIVEAU 2 : tout décideur est déclaré dans un domaine',
     // 2026-11-19 -- 16 : le prix Stripe d'un site suit son mode
     // (`payments/prix-abonnement` et la route `checkout` qui le facture) ;
     // avant, un seul prix pour trois plans.
-    expect(d('site-mode-decision-surfaces').ownedFiles).toHaveLength(16)
+    // 2026-11-25 -- 19 : le mobile money d'un site derive du mode son prix
+    // net et son admission (`payments/site-mobile-money`, `encaissement`, et
+    // la route `sites/[slug]/mobile-money`), lot L5.
+    expect(d('site-mode-decision-surfaces').ownedFiles).toHaveLength(19)
     // M2-247 -- 6 : l'editeur de page (Navbar) lit le mode pour proposer ou
     // non le choix des produits d'une page. Un site vitrine n'a pas de
     // catalogue a y poser. Choix d'affichage, aucune regle de vente.

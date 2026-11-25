@@ -117,6 +117,7 @@ export function PayerMobileMoney({
   onEnvoye,
   objet = 'abonnement',
   phraseDuPrix = phrasePrix,
+  adresseApi,
 }: {
   app: string;
   jeton: () => Promise<string | null>;
@@ -135,6 +136,8 @@ export function PayerMobileMoney({
   objet?: 'abonnement' | 'lot';
   /** La phrase du prix, au-dessus du formulaire (« Un lot de 50 modifications : 3 500 FCFA. »). */
   phraseDuPrix?: (montant: number) => string;
+  /** La route à appeler, déjà munie de son `?` (un SITE, 2026-11-25) ; par défaut celle des applis. */
+  adresseApi?: string;
 }) {
   const [ouvert, setOuvert] = useState(false);
   const [offre, setOffre] = useState<Offre | null>(null);
@@ -163,7 +166,8 @@ export function PayerMobileMoney({
     const arret = new AbortController();
     const minuteur = window.setTimeout(() => { arret.abort(); }, DELAI_APPEL_MS);
     try {
-      const res = await fetch(`/api/generateur/mobile-money?id=${encodeURIComponent(app)}${objet === 'lot' ? '&objet=lot' : ''}${requete}`, {
+      const base = adresseApi ?? `/api/generateur/mobile-money?id=${encodeURIComponent(app)}${objet === 'lot' ? '&objet=lot' : ''}`;
+    const res = await fetch(`${base}${requete}`, {
         method: methode,
         headers: { Authorization: `Bearer ${t}`, ...(corps === undefined ? {} : { 'Content-Type': 'application/json' }) },
         body: corps === undefined ? undefined : JSON.stringify(corps),

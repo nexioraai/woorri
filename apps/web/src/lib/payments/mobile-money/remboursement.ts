@@ -20,11 +20,14 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { registreDemandes, type RegistreDemandes } from './demandes'
 
 /** La forme d'une référence de paiement sortant (la même que la base). */
+export const PHRASE_REMBOURSEMENT_SITE = 'Le remboursement d’un paiement de SITE n’est pas encore inscrit par Deribfy : rien n’est écrit.'
+
 export const FORME_PAIEMENT_SORTANT = /^[A-Za-z0-9_:-]{4,100}$/u
 const PAYEES: ReadonlySet<string> = new Set(['reussie', 'activee_main'])
 
 export type IssueRemboursement =
-  | { readonly ok: true; readonly effet: 'annule' | 'deja_annule'; readonly derniere: boolean }
+  /** `objet` (2026-11-25) : un mois d'abonnement, ou un LOT — retiré du compteur, l'abonnement intact. */
+  | { readonly ok: true; readonly effet: 'annule' | 'deja_annule'; readonly derniere: boolean; readonly objet: 'abonnement' | 'lot' }
   | { readonly ok: false; readonly status: number; readonly erreur: string }
 
 type Annuler = (p: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>
@@ -36,6 +39,8 @@ export async function rembourserALaMain(
   const d = await (o.registre ?? registreDemandes).lire(e.id)
   if (d === null) return { ok: false, status: 404, erreur: 'Demande inconnue.' }
   if (d.test !== false || d.reference === null) return { ok: false, status: 409, erreur: 'Un paiement de test ne se rembourse pas : il n’y a pas d’argent derrière.' }
+  // UN SITE (2026-11-25) : son remboursement n'est pas encore inscrit par Deribfy — on le dit, rien n'est écrit.
+  if (d.site_id) return { ok: false, status: 409, erreur: PHRASE_REMBOURSEMENT_SITE }
   if (!PAYEES.has(d.etat)) return { ok: false, status: 409, erreur: `Seul un paiement reçu se rembourse (celui-ci : ${d.etat}).` }
   const sortant = e.paiementSortant.trim()
   if (!FORME_PAIEMENT_SORTANT.test(sortant)) return { ok: false, status: 400, erreur: 'Indiquez la référence du paiement sortant fait dans MoneRails.' }
@@ -45,8 +50,8 @@ export async function rembourserALaMain(
   const annuler: Annuler = o.annuler ?? ((p) => supabaseAdmin.rpc('annuler_paiement_mobile_money', p) as unknown as ReturnType<Annuler>)
   const r = await annuler({ p_fournisseur: d.fournisseur, p_reference: d.reference, p_payout: sortant, p_montant: e.montant, p_par: e.par })
   if (r.error !== null) return { ok: false, status: 500, erreur: `Le registre a refusé : ${r.error.message}` }
-  const v = (r.data ?? {}) as { statut?: string; derniere?: boolean }
+  const v = (r.data ?? {}) as { statut?: string; derniere?: boolean; objet?: string }
   if (v.statut === 'paiement_inconnu') return { ok: false, status: 409, erreur: 'Aucun paiement enregistré pour cette demande : rien n’est annulé.' }
   if (v.statut !== 'annule' && v.statut !== 'deja_annule') return { ok: false, status: 500, erreur: `Réponse inattendue du registre : ${String(v.statut)}` }
-  return { ok: true, effet: v.statut, derniere: v.derniere === true }
+  return { ok: true, effet: v.statut, derniere: v.derniere === true, objet: v.objet === 'lot' ? 'lot' : 'abonnement' }
 }

@@ -21,7 +21,10 @@ export type DemandeEnBase = {
   readonly id: string
   readonly cree_le: string
   readonly fournisseur: string
-  readonly app_id: string
+  /** L'appli — `null` pour une demande de SITE (2026-11-25). */
+  readonly app_id: string | null
+  /** Le site (mobile_money_demandes_sites.sql) — absent avant ce fichier. */
+  readonly site_id?: string | null
   readonly owner_id: string
   readonly operateur: string
   readonly telephone_masque: string
@@ -53,12 +56,13 @@ export type NoteAvis = {
   readonly raison: string | null
   readonly test: boolean
   /** Pour une demande que la table ne connaît pas (avis arrivé seul). */
-  readonly connu?: { readonly app: string; readonly proprietaire: string; readonly operateur: string; readonly montant: number }
+  readonly connu?: { readonly app: string | null; readonly site?: string | null; readonly proprietaire: string; readonly operateur: string; readonly montant: number }
 }
 
 export interface RegistreDemandes {
   /** `telephone` : le numéro ENTIER — le registre le masque lui-même avant d'écrire. */
-  ouvrir(o: { fournisseur: string; app: string; proprietaire: string; operateur: string; telephone: string; montant: number; prix: number; frais: number; attenteS: number }): Promise<Ouverture>
+  /** `app` OU `site` (2026-11-25) : la demande d'un site prend le verrou du SITE. */
+  ouvrir(o: { fournisseur: string; app: string; site?: string; proprietaire: string; operateur: string; telephone: string; montant: number; prix: number; frais: number; attenteS: number }): Promise<Ouverture>
   noterReference(id: string, reference: string, test: boolean): Promise<void>
   /** Ferme une demande qui n'a pas abouti à un encaissement (le prestataire a refusé, etc.). */
   abandonner(id: string, raison: string): Promise<void>
@@ -103,11 +107,12 @@ const lever = (quoi: string, e: { message: string } | null): void => {
 
 export const registreDemandes: RegistreDemandes = {
   async ouvrir(o) {
-    const r = await supabaseAdmin.rpc('mm_ouvrir_demande', {
-      p_fournisseur: o.fournisseur, p_app: o.app, p_owner: o.proprietaire, p_operateur: o.operateur,
+    const site = o.site !== undefined && o.site !== ''
+    const r = await supabaseAdmin.rpc(site ? 'mm_ouvrir_demande_site' : 'mm_ouvrir_demande', {
+      p_fournisseur: o.fournisseur, ...(site ? { p_site: o.site } : { p_app: o.app }), p_owner: o.proprietaire, p_operateur: o.operateur,
       p_telephone_masque: masquePourEcrire(o.telephone), p_montant: o.montant, p_prix: o.prix, p_frais: o.frais, p_attente_s: o.attenteS,
     })
-    lever('mm_ouvrir_demande', r.error)
+    lever(site ? 'mm_ouvrir_demande_site' : 'mm_ouvrir_demande', r.error)
     const d = r.data as { statut: string; id: string; cree_le?: string }
     return d.statut === 'ouverte' ? { issue: 'ouverte', id: d.id } : { issue: 'deja_ouverte', id: d.id, creeLe: d.cree_le ?? null }
   },
@@ -128,7 +133,7 @@ export const registreDemandes: RegistreDemandes = {
     // UN AVIS SANS DEMANDE CONNUE (antérieure à cette table) : on l'inscrit FERMÉ,
     // pour que l'admin le voie, sans jamais prendre le verrou d'une appli.
     const ins = await supabaseAdmin.from(TABLE_DEMANDES).insert({
-      fournisseur: n.fournisseur, app_id: n.connu.app, owner_id: n.connu.proprietaire, operateur: n.connu.operateur,
+      fournisseur: n.fournisseur, app_id: n.connu.app, ...(n.connu.site ? { site_id: n.connu.site } : {}), owner_id: n.connu.proprietaire, operateur: n.connu.operateur,
       telephone_masque: '••••••', montant: n.connu.montant, prix: n.connu.montant, frais: 0, reference: n.reference, ...champs, ferme_le: maintenant,
     })
     lever('noterAvis (inscription)', ins.error)

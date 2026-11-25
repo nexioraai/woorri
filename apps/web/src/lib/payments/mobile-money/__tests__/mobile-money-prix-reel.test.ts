@@ -166,12 +166,20 @@ describe('③ le remboursement : il écrit, il n’envoie RIEN', () => {
 
   it('une demande payée, réelle : la ligne « annulation » est demandée avec la référence du paiement sortant et le nom', async () => {
     const annuler = annulerOk()
-    expect(await rembourserALaMain(E, { registre: registre(demande()), annuler })).toEqual({ ok: true, effet: 'annule', derniere: true })
+    expect(await rembourserALaMain(E, { registre: registre(demande()), annuler })).toEqual({ ok: true, effet: 'annule', derniere: true, objet: 'abonnement' })
     expect(annuler.mock.calls[0]?.[0]).toEqual({ p_fournisseur: 'monerails', p_reference: 'col_1', p_payout: 'po_123abc', p_montant: 14000, p_par: 'issayamiyoussouf@gmail.com' })
     // Une demande activée à la main se rembourse aussi.
     expect((await rembourserALaMain(E, { registre: registre(demande({ etat: 'activee_main' })), annuler })).ok).toBe(true)
     // Le même remboursement redemandé : « déjà annulé », sans erreur.
-    expect(await rembourserALaMain(E, { registre: registre(demande()), annuler: annulerOk('deja_annule', false) })).toEqual({ ok: true, effet: 'deja_annule', derniere: false })
+    expect(await rembourserALaMain(E, { registre: registre(demande()), annuler: annulerOk('deja_annule', false) })).toEqual({ ok: true, effet: 'deja_annule', derniere: false, objet: 'abonnement' })
+  })
+  it('UN LOT (2026-11-25) : le même geste ; la base dit « lot », l’écran dit « lot retiré du compteur, abonnement intact »', async () => {
+    const annuler = vi.fn(async (_p: Record<string, unknown>) => ({ data: { statut: 'annule', derniere: false, objet: 'lot' }, error: null }))
+    expect(await rembourserALaMain({ ...E, montant: 3500 }, { registre: registre(demande({ montant: 3500, prix: 3000, frais: 500 })), annuler })).toEqual({ ok: true, effet: 'annule', derniere: false, objet: 'lot' })
+    expect(annuler.mock.calls[0]?.[0]).toMatchObject({ p_reference: 'col_1', p_montant: 3500 })
+    const page = lire('src/app/admin/mobile-money/page.tsx')
+    expect(page).toMatch(motifTexte("${d.objet === 'lot' ? ', lot retiré du compteur, abonnement intact' : ''}"))
+    expect(lire('src/app/api/admin/mobile-money/rembourser/route.ts')).toMatch(motifTexte('objet: r.objet'))
   })
   it('jamais un TEST, jamais une demande non payée, jamais sans référence de paiement sortant, jamais au-delà du montant', async () => {
     const annuler = annulerOk()

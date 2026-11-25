@@ -172,7 +172,8 @@ export default function ParametresPage() {
   );
 
   const statusLabel = (status: string | null) => {
-    if (status === 'active' || status === 'complete') return { text: t('settings.planActive'), color: 'text-emerald-400' };
+    // Payé en mobile money (lot L5, 2026-11-25) : un abonnement actif, comme par carte.
+    if (status === 'active' || status === 'complete' || status === 'mobile_money') return { text: t('settings.planActive'), color: 'text-emerald-400' };
     if (status === 'canceled') return { text: t('settings.planCanceled'), color: 'text-red-400' };
     return { text: t('settings.planFree'), color: 'text-white/40' };
   };

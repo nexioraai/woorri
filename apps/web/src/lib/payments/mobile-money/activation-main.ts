@@ -24,7 +24,7 @@ export type IssueActivation =
 export async function activerALaMain(
   id: string,
   par: string,
-  o: { readonly registre?: RegistreDemandes; readonly fournisseur?: FournisseurMobileMoney; readonly enregistrer?: (p: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }> } = {},
+  o: { readonly registre?: RegistreDemandes; readonly fournisseur?: FournisseurMobileMoney; readonly enregistrer?: (p: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>; readonly enregistrerSite?: (p: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }> } = {},
 ): Promise<IssueActivation> {
   const registre = o.registre ?? registreDemandes
   const d = await registre.lire(id)
@@ -34,6 +34,18 @@ export async function activerALaMain(
   // Une demande réelle se relit avec la clé LIVE (lot L3).
   const e = await (o.fournisseur ?? fournisseurMobileMoney('reel')).lire(d.reference)
   if (e.etat !== 'reussi' || e.test) return { ok: false, status: 409, erreur: `Le prestataire ne confirme pas ce paiement (état : ${e.etat}${e.test ? ', test' : ''}).` }
+  const frais = Math.max(0, Math.min(e.montant, e.montant - d.prix))
+  // UN SITE (2026-11-25) : par la fonction des sites — en ligne, échéance repoussée.
+  if (d.site_id) {
+    const enregistrerSite = o.enregistrerSite ?? ((p) => supabaseAdmin.rpc('enregistrer_paiement_site', p) as unknown as Promise<{ data: unknown; error: { message: string } | null }>)
+    const rs = await enregistrerSite({
+      p_source: 'manuelle', p_fournisseur: d.fournisseur, p_reference: d.reference, p_site: d.site_id, p_owner: d.owner_id,
+      p_montant: e.montant, p_devise: 'XAF', p_saisi_par: `activation-main:${par}`, p_frais: frais,
+    })
+    if (rs.error !== null) return { ok: false, status: 500, erreur: `Le registre a refusé : ${rs.error.message}` }
+    await registre.marquerActivee(id, par)
+    return { ok: true, statut: (rs.data as { statut?: string } | null)?.statut ?? 'enregistre' }
+  }
   const enregistrer = o.enregistrer ?? ((p) => supabaseAdmin.rpc('enregistrer_paiement', p) as unknown as Promise<{ data: unknown; error: { message: string } | null }>)
   const r = await enregistrer({
     p_source: 'manuelle', p_fournisseur: d.fournisseur, p_reference: d.reference,
@@ -41,7 +53,7 @@ export async function activerALaMain(
     p_app: d.app_id, p_owner: d.owner_id, p_objet: e.rattachement?.objet ?? 'abonnement',
     p_montant: e.montant, p_devise: 'XAF', p_jusqu_au: null, p_saisi_par: `activation-main:${par}`,
     // Les frais : ce qui dépasse le prix CONNU À LA DEMANDE, jamais négatifs.
-    p_frais: Math.max(0, Math.min(e.montant, e.montant - d.prix)),
+    p_frais: frais,
   })
   if (r.error !== null) return { ok: false, status: 500, erreur: `Le registre a refusé : ${r.error.message}` }
   await registre.marquerActivee(id, par)

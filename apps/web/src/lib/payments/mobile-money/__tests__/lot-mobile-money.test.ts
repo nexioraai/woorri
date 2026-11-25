@@ -26,7 +26,7 @@ import type { AvisVerifie, Encaissement, FournisseurMobileMoney } from '../types
 
 beforeEach(() => { etat.rpc = []; etat.reglages = { ...REGLAGES } })
 
-const ENC: Encaissement = { id: 'c-lot', etat: 'reussi', montant: 3500, devise: 'XAF', operateur: 'AIRTEL', test: false, action: null, rattachement: { app: 'a1', proprietaire: 'u1', objet: 'lot', montantInscrit: 3500 }, echec: null }
+const ENC: Encaissement = { id: 'c-lot', etat: 'reussi', montant: 3500, devise: 'XAF', operateur: 'AIRTEL', test: false, action: null, rattachement: { app: 'a1', site: null, proprietaire: 'u1', objet: 'lot', montantInscrit: 3500 }, echec: null }
 const avis = (e: Partial<Encaissement> = {}): AvisVerifie => ({ id: 'evt', type: 'encaissement_reussi', encaissement: { ...ENC, ...e } })
 const faux = (): FournisseurMobileMoney & { demandes: Record<string, unknown>[] } => {
   const demandes: Record<string, unknown>[] = []

@@ -117,9 +117,9 @@ export function demandeEnCours(liste: readonly EncaissementOuvert[], maintenantM
   return null
 }
 
-export function phraseDemandeEnCours(resteMs: number): string {
+export function phraseDemandeEnCours(resteMs: number, cible: 'app' | 'site' = 'app'): string {
   const min = Math.max(1, Math.ceil(resteMs / 60_000))
-  return `Un paiement est déjà en cours pour cette application : validez-le sur votre téléphone, ou attendez ${String(min)} min avant d’en demander un autre.`
+  return `Un paiement est déjà en cours pour ${cible === 'site' ? 'ce site' : 'cette application'} : validez-le sur votre téléphone, ou attendez ${String(min)} min avant d’en demander un autre.`
 }
 
 export const PHRASE_VERIFICATION_IMPOSSIBLE = 'Impossible de vérifier qu’aucun paiement n’est déjà en cours. Aucun montant n’est demandé : réessayez dans un instant.'
@@ -134,18 +134,42 @@ export type DemandePaiement = {
   readonly objet?: ObjetPaiement
 }
 
+/** UN SITE (lot L5, 2026-11-25) : un mois d'abonnement, au prix NET de son type. */
+export type DemandePaiementSite = Omit<DemandePaiement, 'app' | 'objet'> & { readonly site: string; readonly prixNet: number }
+
+export async function ouvrirEncaissementSite(
+  d: DemandePaiementSite,
+  f: FournisseurMobileMoney = fournisseurMobileMoney(),
+  maintenantMs: number = Date.now(),
+  registre: RegistreDemandes = registreDemandes,
+): Promise<Encaissement> {
+  return ouvrirPour({ ...d, app: '', objet: 'abonnement' }, { site: d.site, prixNet: d.prixNet }, f, maintenantMs, registre)
+}
+
 export async function ouvrirEncaissement(
   d: DemandePaiement,
   f: FournisseurMobileMoney = fournisseurMobileMoney(),
   maintenantMs: number = Date.now(),
   registre: RegistreDemandes = registreDemandes,
 ): Promise<Encaissement> {
+  return ouvrirPour(d, null, f, maintenantMs, registre)
+}
+
+async function ouvrirPour(
+  d: DemandePaiement,
+  site: { readonly site: string; readonly prixNet: number } | null,
+  f: FournisseurMobileMoney,
+  maintenantMs: number,
+  registre: RegistreDemandes,
+): Promise<Encaissement> {
+  const cible: 'app' | 'site' = site === null ? 'app' : 'site'
+  const idCible = site === null ? d.app : site.site
   // UN SEUL PRIX (2026-11-23), le même pour tout opérateur, lu MAINTENANT.
   const t = await lireTarifMobileMoney()
   if (!t.ok) throw new ErreurFournisseur(PHRASE_FRAIS_NON_REGLES, 409, 'tarif_non_regle')
   if (!operateurPropose(d.operateur)) throw new ErreurFournisseur('Choisissez Airtel Money ou Moov Money.', 400, 'operateur_inconnu')
   const objet: ObjetPaiement = d.objet ?? 'abonnement'
-  const net = await prixNetDe(objet, t.tarif, lireLotXaf)
+  const net = site !== null ? site.prixNet : await prixNetDe(objet, t.tarif, lireLotXaf)
   if (net === null) throw new ErreurFournisseur(PHRASE_LOT_NON_REGLE, 409, 'lot_non_regle')
   const p = prixMobileMoney(t.tarif, net)
   const tel = telephoneTchad(d.telephone)
@@ -159,7 +183,7 @@ export async function ouvrirEncaissement(
   let verrou: Awaited<ReturnType<RegistreDemandes['ouvrir']>>
   try {
     verrou = await registre.ouvrir({
-      fournisseur: f.nom, app: d.app, proprietaire: d.proprietaire, operateur: d.operateur,
+      fournisseur: f.nom, app: d.app, ...(site !== null ? { site: site.site } : {}), proprietaire: d.proprietaire, operateur: d.operateur,
       // Le NUMÉRO ENTIER va au registre, qui le MASQUE lui-même avant d'écrire (2026-11-23).
       telephone: tel, montant: p.total, prix: p.prix, frais: p.frais, attenteS: ATTENTE_MAX_MS / 1000,
     })
@@ -168,18 +192,18 @@ export async function ouvrirEncaissement(
   }
   if (verrou.issue === 'deja_ouverte') {
     const age = verrou.creeLe === null ? 0 : maintenantMs - Date.parse(verrou.creeLe)
-    throw new ErreurFournisseur(phraseDemandeEnCours(ATTENTE_MAX_MS - Math.max(0, age)), 409, 'paiement_en_cours', { demande: verrou.id })
+    throw new ErreurFournisseur(phraseDemandeEnCours(ATTENTE_MAX_MS - Math.max(0, age), cible), 409, 'paiement_en_cours', { demande: verrou.id })
   }
   const idDemande = verrou.id
   // ② ET LA LISTE DU PRESTATAIRE, gardée en second rempart : une demande
   // ouverte AVANT cette table n'y figure pas.
   try {
     let ouverts: EncaissementOuvert[]
-    try { ouverts = await f.encaissementsDe(d.app) } catch (e) {
+    try { ouverts = await f.encaissementsDe(idCible, cible) } catch (e) {
       throw new ErreurFournisseur(PHRASE_VERIFICATION_IMPOSSIBLE, 503, 'verification_en_cours', e instanceof ErreurFournisseur ? { status: e.status, code: e.code, brut: e.brut } : String(e))
     }
     const enCours = demandeEnCours(ouverts, maintenantMs)
-    if (enCours !== null) throw new ErreurFournisseur(phraseDemandeEnCours(enCours.resteMs), 409, 'paiement_en_cours', { encaissement: enCours.id })
+    if (enCours !== null) throw new ErreurFournisseur(phraseDemandeEnCours(enCours.resteMs, cible), 409, 'paiement_en_cours', { encaissement: enCours.id })
     const e = await f.encaisser({
     montant: p.total,
     devise: 'XAF',
@@ -187,10 +211,11 @@ export async function ouvrirEncaissement(
     operateur: d.operateur,
     telephone: tel,
     nomClient: nom,
-    description: objet === 'lot' ? 'Deribfy — lot de modifications' : 'Deribfy — abonnement d’un mois',
-    rattachement: { app: d.app, proprietaire: d.proprietaire, objet, montantInscrit: p.total },
+    description: site !== null ? 'Deribfy — abonnement d’un site' : objet === 'lot' ? 'Deribfy — lot de modifications' : 'Deribfy — abonnement d’un mois',
+    rattachement: { app: site === null ? d.app : null, site: site === null ? null : site.site, proprietaire: d.proprietaire, objet, montantInscrit: p.total },
     ventilation: { prix: p.prix, frais: p.frais },
-    cle: cleIdempotence(d.app, tel, d.operateur, p.total, maintenantMs),
+    // La clé d'une appli ne change pas (comme avant) ; celle d'un site porte « site: ».
+    cle: cleIdempotence(site === null ? d.app : `site:${site.site}`, tel, d.operateur, p.total, maintenantMs),
     })
     await registre.noterReference(idDemande, e.id, e.test)
     return e
@@ -214,6 +239,9 @@ export type IssueAvis =
   | { readonly issue: 'enregistre' | 'deja_enregistre'; readonly app: string; readonly proprietaire: string; readonly objet: ObjetPaiement }
   /** Avis de test, vérifié de bout en bout, JAMAIS écrit : voici ce qui l'aurait été. */
   | { readonly issue: 'test_verifie'; readonly app: string; readonly serait: Readonly<Record<string, unknown>>; readonly ventilation: { readonly abonnement: number; readonly frais: number } }
+  /** UN SITE (lot L5, 2026-11-25) : enregistré — en ligne, échéance repoussée — ou vérifié en test. */
+  | { readonly issue: 'enregistre' | 'deja_enregistre'; readonly site: string; readonly proprietaire: string; readonly objet: 'abonnement' }
+  | { readonly issue: 'test_verifie'; readonly site: string; readonly serait: Readonly<Record<string, unknown>>; readonly ventilation: { readonly abonnement: number; readonly frais: number } }
   | { readonly issue: 'ignore'; readonly raison: string }
   /** Signé mais incohérent (montant, devise) : rien n'est écrit, et on le dit fort. */
   | { readonly issue: 'refuse'; readonly raison: string }
@@ -223,7 +251,7 @@ export type IssueAvis =
 export async function traiterAvis(
   avis: AvisVerifie,
   fournisseur: string,
-  o: { readonly reelPermis?: (proprietaire: string) => Promise<boolean>; readonly tarif?: () => ReturnType<typeof lireTarifMobileMoney>; readonly lot?: () => Promise<number | null> } = {},
+  o: { readonly reelPermis?: (proprietaire: string) => Promise<boolean>; readonly tarif?: () => ReturnType<typeof lireTarifMobileMoney>; readonly lot?: () => Promise<number | null>; readonly prixSite?: (site: string) => Promise<number | null> } = {},
 ): Promise<IssueAvis> {
   if (avis.type !== 'encaissement_reussi') return { issue: 'ignore', raison: `type ${avis.type}` }
   const e = avis.encaissement
@@ -246,8 +274,14 @@ export async function traiterAvis(
   const t = await (o.tarif ?? lireTarifMobileMoney)()
   if (!t.ok) return { issue: 'erreur', raison: `frais non réglés : ${t.manque.join(', ')}` }
   if (e.operateur === null || !operateurPropose(e.operateur)) return { issue: 'refuse', raison: `opérateur non proposé : ${String(e.operateur)}` }
+  // ── UN SITE (lot L5, 2026-11-25) : le prix NET de SON type (Vitrine,
+  //    Boutique), relu maintenant ; jamais le dropshipping. Écrit par
+  //    `enregistrer_paiement_site`, qui met le site en ligne et repousse son échéance.
+  if (r.site !== null) return traiterAvisSite(e, r.site, r.proprietaire, fournisseur, t.tarif, o.prixSite ?? prixNetDuSite)
   // UN SEUL PRIX (2026-11-23) : le même attendu quel que soit l'opérateur ;
   // celui du LOT pour un lot (2026-11-24). Prix du lot illisible → erreur (redonné).
+  if (r.app === null) return { issue: 'refuse', raison: 'encaissement sans appli ni site' }
+  const app = r.app
   const net = await prixNetDe(r.objet, t.tarif, o.lot ?? lireLotXaf)
   if (net === null) return { issue: 'erreur', raison: 'prix du lot non réglé (lot_prix_xaf)' }
   const attendu = prixMobileMoney(t.tarif, net)
@@ -256,23 +290,61 @@ export async function traiterAvis(
   }
   const ecriture = {
     p_source: 'automatique', p_fournisseur: fournisseur, p_reference: e.id,
-    p_app: r.app, p_owner: r.proprietaire, p_objet: r.objet,
+    p_app: app, p_owner: r.proprietaire, p_objet: r.objet,
     p_montant: e.montant, p_devise: 'XAF', p_jusqu_au: null, p_saisi_par: fournisseur,
     // La part FRAIS (2026-11-21, colonne `app_paiements.frais`) : ce qui dépasse le prix.
     p_frais: e.montant - attendu.prix,
   } as const
   // OPTION A (2026-11-21) : un avis de TEST, vérifié de bout en bout, n'écrit
   // RIEN — il dit seulement ce qu'il aurait écrit.
-  if (e.test) return { issue: 'test_verifie', app: r.app, serait: ecriture, ventilation: { abonnement: attendu.prix, frais: ecriture.p_frais } }
+  if (e.test) return { issue: 'test_verifie', app, serait: ecriture, ventilation: { abonnement: attendu.prix, frais: ecriture.p_frais } }
   const res = await supabaseAdmin.rpc('enregistrer_paiement', ecriture)
   // L'appli n'existe pas, ou pas pour ce compte : refus DÉFINITIF (redonner
   // l'avis 8 fois n'y changerait rien), donc alerte et activation à la main.
   if (res.error !== null && res.error.message.includes('PAIEMENT_APPLI_ETRANGERE')) {
-    return { issue: 'refuse', raison: `appli introuvable pour ce compte (${r.app})` }
+    return { issue: 'refuse', raison: `appli introuvable pour ce compte (${app})` }
   }
   if (res.error !== null) return { issue: 'erreur', raison: res.error.message }
   const statut = (res.data as { statut?: string } | null)?.statut
-  return { issue: statut === 'deja_enregistre' ? 'deja_enregistre' : 'enregistre', app: r.app, proprietaire: r.proprietaire, objet: r.objet }
+  return { issue: statut === 'deja_enregistre' ? 'deja_enregistre' : 'enregistre', app, proprietaire: r.proprietaire, objet: r.objet }
+}
+
+/** Le prix NET d'un site, selon son type ; `null` si inconnu, dropshipping, ou prix non réglé. */
+export async function prixNetDuSite(site: string): Promise<number | null> {
+  const lu = await supabaseAdmin.from('sites').select('mode').eq('id', site).maybeSingle()
+  if (lu.error !== null || lu.data === null) return null
+  return prixNetSitePourMode((lu.data as { mode: unknown }).mode)
+}
+
+/** Le prix NET d'un type de site (réglages `prix_site_vitrine_xaf`, `prix_site_boutique_xaf`). Dropshipping : `null`. */
+export async function prixNetSitePourMode(mode: unknown): Promise<number | null> {
+  const cle = mode === 1 ? 'prix_site_vitrine_xaf' : mode === 2 ? 'prix_site_boutique_xaf' : null
+  if (cle === null) return null
+  const v = await lireReglagesTexte([cle])
+  const n = Number((v?.[cle] ?? '').trim())
+  return Number.isInteger(n) && n > 0 ? n : null
+}
+
+async function traiterAvisSite(e: Encaissement, site: string, proprietaire: string, fournisseur: string, tarif: Tarif, prixSite: (site: string) => Promise<number | null>): Promise<IssueAvis> {
+  const net = await prixSite(site)
+  if (net === null) return { issue: 'refuse', raison: `site introuvable, dropshipping ou prix non réglé (${site})` }
+  const attendu = prixMobileMoney(tarif, net)
+  if (!Number.isInteger(e.montant) || e.montant < attendu.total) {
+    return { issue: 'refuse', raison: `montant ${String(e.montant)} < attendu ${String(attendu.total)} (${String(attendu.prix)} + ${String(attendu.frais)} de frais, ${String(e.operateur)})` }
+  }
+  const ecriture = {
+    p_source: 'automatique', p_fournisseur: fournisseur, p_reference: e.id, p_site: site, p_owner: proprietaire,
+    p_montant: e.montant, p_devise: 'XAF', p_saisi_par: fournisseur, p_frais: e.montant - attendu.prix,
+  } as const
+  if (e.test) return { issue: 'test_verifie', site, serait: ecriture, ventilation: { abonnement: attendu.prix, frais: ecriture.p_frais } }
+  const res = await supabaseAdmin.rpc('enregistrer_paiement_site', ecriture)
+  // Refus DÉFINITIFS (le redonner n'y changerait rien) : alerte et activation à la main.
+  if (res.error !== null && /PAIEMENT_SITE_(ETRANGER|INCONNU|DROPSHIPPING|ARCHIVE)/u.test(res.error.message)) {
+    return { issue: 'refuse', raison: `site refusé : ${res.error.message}` }
+  }
+  if (res.error !== null) return { issue: 'erreur', raison: res.error.message }
+  const statut = (res.data as { statut?: string } | null)?.statut
+  return { issue: statut === 'deja_enregistre' ? 'deja_enregistre' : 'enregistre', site, proprietaire, objet: 'abonnement' }
 }
 
 /**
@@ -302,12 +374,12 @@ export async function traiterEtNoterAvis(
   if (etat !== null) {
     await (o.registre ?? registreDemandes).noterAvis({
       fournisseur, reference: e.id, etat, decision: issue.issue, raison, test: e.test,
-      ...(e.rattachement === null ? {} : { connu: { app: e.rattachement.app, proprietaire: e.rattachement.proprietaire, operateur: e.operateur ?? '?', montant: e.montant } }),
+      ...(e.rattachement === null ? {} : { connu: { app: e.rattachement.app, site: e.rattachement.site, proprietaire: e.rattachement.proprietaire, operateur: e.operateur ?? '?', montant: e.montant } }),
     }).catch((x: unknown) => { console.error('[mobile-money] journal non écrit', e.id, x instanceof Error ? x.message : x) })
   }
   if (issue.issue === 'refuse' && e.etat === 'reussi') {
     await (o.alerte ?? alerter)({
-      sujet: 'oeuvre', sujetId: e.rattachement?.app ?? null, etape: 'paiement',
+      sujet: e.rattachement?.site != null ? 'boutique' : 'oeuvre', sujetId: e.rattachement?.app ?? e.rattachement?.site ?? null, etape: 'paiement',
       motif: `Paiement mobile money REÇU mais non activé : ${issue.raison}`,
       detail: `${fournisseur} ${e.id} · ${String(e.montant)} ${e.devise} · ${e.test ? 'TEST' : 'RÉEL'} — à activer à la main dans /admin/mobile-money si le paiement est bon.`,
     }).catch(() => undefined)

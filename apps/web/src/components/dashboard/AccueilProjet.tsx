@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { useTranslation } from '@/lib/translations'
 import { computeAiScore } from '@/app/lib/aiScore'
 import { prochainesActions, compterFiches, type ActionProjet } from '@/lib/dashboard/prochainesActions'
+import { phraseRappel } from './rappelSite'
 
 // ============================================================================
 // L'ACCUEIL DU PROJET (maquette validée par le propriétaire, 2026-11-12).
@@ -42,11 +43,18 @@ type Props = {
   offresRecues?: number
   onPublier: () => void
   onAdresseApp: () => void
+  /**
+   * L'ÉCHÉANCE D'UN SITE PAYÉ EN MOBILE MONEY (lot L5, 2026-11-25) — au
+   * propriétaire seul : 3 jours avant, puis après. `undefined` : pas payé ainsi.
+   */
+  echeance?: { readonly payeJusquAu: string; readonly rappel: 'bientot' | 'echu' | null }
+  onRenouveler?: () => void
 }
+
 
 const carte = 'rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 md:p-6'
 
-export default function AccueilProjet({ site, comptesEnAttente, offresRecues, onPublier, onAdresseApp }: Props) {
+export default function AccueilProjet({ site, comptesEnAttente, offresRecues, onPublier, onAdresseApp, echeance, onRenouveler }: Props) {
   const { t } = useTranslation()
   const [lien, setLien] = useState<string | null>(null)
   const [pages, setPages] = useState<{ blocs?: unknown; publie?: boolean }[] | null>(null)
@@ -128,6 +136,19 @@ export default function AccueilProjet({ site, comptesEnAttente, offresRecues, on
               {site.published ? t('projet.enLigne') : t('projet.horsLigne')}
             </span>
           </div>
+          {echeance !== undefined && (
+            <p className="text-sm text-white/60" data-echeance>
+              Payé jusqu’au {new Date(echeance.payeJusquAu).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+          )}
+          {echeance !== undefined && phraseRappel(echeance) !== null && (
+            <div role="status" data-rappel className={`flex flex-wrap items-center gap-3 rounded-xl border px-3.5 py-2.5 text-sm ${echeance.rappel === 'echu' ? 'border-amber-400/40 bg-amber-400/10 text-amber-100' : 'border-white/15 bg-white/[0.04] text-white/80'}`}>
+              <span className="min-w-0 flex-1">{phraseRappel(echeance)}</span>
+              {onRenouveler !== undefined && (
+                <button type="button" onClick={onRenouveler} className="shrink-0 rounded-lg bg-accent px-3 py-1.5 text-[13px] font-semibold text-white hover:bg-accent/90">Renouveler</button>
+              )}
+            </div>
+          )}
           {adressePublique && (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/70">
               <span className="truncate">{adressePublique.replace(/^https?:\/\//, '')}</span>

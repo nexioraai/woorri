@@ -14,8 +14,12 @@ vi.mock('@/lib/alertes', () => ({ alerter: async () => 'alerte' }))
 // `after` (2026-11-24) : hors d'une vraie requête, on garde le travail pour le lancer à la main.
 vi.mock('next/server', async (origine) => ({ ...(await origine<typeof import('next/server')>()), after: (f: () => Promise<void>) => { etat.apres.push(f) } }))
 vi.mock('@/lib/payments/mobile-money/publication', () => ({ publierApresEncaissement: async (app: string, proprietaire: string) => { etat.publiees.push([app, proprietaire]); return 'publiee' } }))
-vi.mock('@/lib/supabase-admin', () => ({
+vi.mock('@/lib/supabase-admin', async () => {
+  const { creerFrom, journalVierge } = await import('@/lib/testing/postgrest')
+  return {
   supabaseAdmin: {
+    // Le type d'un site (lot L5) : une Vitrine — par le harnais FIDÈLE (projection, filtres).
+    from: creerFrom({ sites: { reponse: { data: { mode: 1 }, error: null } } }, journalVierge()),
     // Le courriel du propriétaire, relu par son identifiant (jamais pris dans l'avis).
     auth: { admin: { getUserById: async (id: string) => ({ data: { user: id === 'u1' ? { email: 'abbas@x.com' } : null } }) } },
     rpc: async (n: string, p: { p_reference: string }) => {
@@ -25,10 +29,11 @@ vi.mock('@/lib/supabase-admin', () => ({
       return { data: { statut: vu ? 'deja_enregistre' : 'enregistre' }, error: null }
     },
   },
-}))
+  }
+})
 vi.mock('@/lib/apps/quota', () => ({ lireReglagesTexte: async () => ({
   prix_mensuel_xaf: '12000', frais_encaissement_airtel_pct: '7', frais_encaissement_moov_pct: '5',
-  frais_reversement_pct: '3.5', frais_retrait_pct: '4', arrondi_frais_xaf: '100', lot_prix_xaf: '3000', mobile_money: etat.mobileMoney,
+  frais_reversement_pct: '3.5', frais_retrait_pct: '4', arrondi_frais_xaf: '100', lot_prix_xaf: '3000', prix_site_vitrine_xaf: '6000', prix_site_boutique_xaf: '9000', mobile_money: etat.mobileMoney,
 }) }))
 import { POST } from '../route'
 
@@ -119,6 +124,15 @@ describe('webhook mobile money', () => {
     expect(await (await appel(b, signe(b, Math.floor(Date.now() / 1000), SECRET_LIVE))).json()).toEqual({ recu: true, issue: 'enregistre' })
     expect(etat.rpc).toEqual([['enregistrer_paiement', expect.objectContaining({ p_objet: 'lot', p_montant: 3500 })]])
     expect(etat.apres, 'un lot a lancé une publication').toEqual([])
+  })
+  it('SITE · l’avis réel d’un site (7 000) est ENREGISTRÉ par la fonction des sites, et le webhook ne publie AUCUNE appli', async () => {
+    vi.stubEnv('MONERAILS_WEBHOOK_SECRET_LIVE', SECRET_LIVE)
+    vi.stubEnv('MONERAILS_CLE_LIVE', 'mr_live_abc')
+    etat.mobileMoney = 'tous'
+    const b = corps({ livemode: true, amount: 7000, metadata: { deribfy_site: 's1', deribfy_proprietaire: 'u1', deribfy_objet: 'abonnement', deribfy_montant: '7000' } })
+    expect(await (await appel(b, signe(b, Math.floor(Date.now() / 1000), SECRET_LIVE))).json()).toEqual({ recu: true, issue: 'enregistre' })
+    expect(etat.rpc).toEqual([['enregistrer_paiement_site', expect.objectContaining({ p_site: 's1', p_montant: 7000 })]])
+    expect(etat.apres, 'un site a lancé une publication d’appli').toEqual([])
   })
   it('un avis de TEST, refusé ou ignoré ne publie RIEN', async () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => undefined)

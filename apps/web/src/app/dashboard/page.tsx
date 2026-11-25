@@ -2,6 +2,7 @@
 import { ADRESSE_GESTION } from '@/lib/apps/entites-declarees';
 import { adresseEnLigne, changerAdresse, CONFIRMER_MOT_DE_PASSE, lancerPublication, PHRASE_DEJA_EN_LIGNE, LIBELLE_MOT_DE_PASSE, refaireMotDePasse, type DemandeFenetre } from '@/components/apps/publierAppli';
 import { FenetrePublier } from '@/components/apps/FenetrePublier';
+import { lancerPublicationSite, lireEtatSite } from '@/components/apps/publierSite';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -79,6 +80,8 @@ export default function DashboardPage() {
   const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
   const [sites, setSites] = useState<any[]>([]);
+  // L'échéance des sites payés en mobile money (lot L5, 2026-11-25), lue à part : au propriétaire seul.
+  const [echeances, setEcheances] = useState<Record<string, { payeJusquAu: string; rappel: 'bientot' | 'echu' | null }>>({});
   // ── LES APPLICATIONS N'APPARAISSAIENT NULLE PART, JAMAIS.
   //
   // DEFAUT MESURE LE 2026-10-30 : douze routes d'API lisaient la table des
@@ -495,6 +498,16 @@ export default function DashboardPage() {
           .order('created_at', { ascending: false })
           .then(({ data: sitesData }) => {
             setSites(sitesData || []);
+            // L'échéance des sites payés en mobile money : une lecture par site concerné, au propriétaire seul.
+            void (async () => {
+              const { data: { session: ses } } = await supabase.auth.getSession();
+              if (!ses) return;
+              const enMm = ((sitesData || []) as { slug: string; subscription_status?: string | null }[]).filter((x) => x.subscription_status === 'mobile_money');
+              const lus = await Promise.all(enMm.map(async (x) => [x.slug, await lireEtatSite(x.slug, `Bearer ${ses.access_token}`)] as const));
+              const m: Record<string, { payeJusquAu: string; rappel: 'bientot' | 'echu' | null }> = {};
+              for (const [slug, e] of lus) if (e !== null && e.payeJusquAu !== null) m[slug] = { payeJusquAu: e.payeJusquAu, rappel: e.rappel };
+              setEcheances(m);
+            })();
             setLoading(false);
 
             // ── LES DEMANDES EN ATTENTE, POUR LES SEULS SITES QUI OUVRENT
@@ -600,30 +613,25 @@ export default function DashboardPage() {
     router.push('/login');
   };
 
-  const handlePublish = async (slug: string, current: boolean) => {
-    // Déjà en ligne : gestion de l'abonnement à venir (étape suivante)
-    if (current) return;
-    // Pas encore publié : passage par Stripe Checkout
+  // ── « PUBLIER » UN SITE (lot L5, 2026-11-25) : la MÊME fenêtre que les
+  //    applis — « Carte bancaire » (Stripe, comme avant) ou « Mobile money ».
+  //    Carte seule (Dropshipping) : droit à Stripe, comme avant. Déjà en ligne :
+  //    rien, sauf « Renouveler » pour un site payé en mobile money.
+  const handlePublish = async (slug: string, current: boolean, renouveler = false) => {
+    if (current && !renouveler) return;
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
     if (!token) { router.push('/login'); return; }
-    const res = await fetch('/api/checkout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+    const autorisation = `Bearer ${token}`;
+    const issue = await lancerPublicationSite({
+      slug, autorisation, ouvrirFenetre: setFenetre,
+      apresMobileMoney: async () => {
+        const e = await lireEtatSite(slug, autorisation);
+        if (e !== null && e.enLigne) setSites((liste) => liste.map((x) => (x.slug === slug ? { ...x, published: true, subscription_status: 'mobile_money' } : x)));
+        if (e !== null && e.payeJusquAu !== null) setEcheances((m) => ({ ...m, [slug]: { payeJusquAu: e.payeJusquAu as string, rappel: e.rappel } }));
       },
-      body: JSON.stringify({ slug }),
     });
-    const data = await res.json();
-    if (data.url) {
-      // `assign` plutot qu'une affectation : la regle d'immutabilite refuse
-        // l'ecriture sur `location.href`, et `assign` dit la meme chose en
-        // nommant le geste — on NAVIGUE, on ne modifie pas un objet.
-        window.location.assign(data.url);
-    } else {
-      alert(data.error || t('dashboard.paymentError'));
-    }
+    if (issue.type === 'erreur') alert(issue.message);
   };
 
   if (loading) return (
@@ -683,6 +691,8 @@ export default function DashboardPage() {
                   comptesEnAttente={site.ouvre_des_comptes === true ? demandesEnAttente[site.slug] : undefined}
                   offresRecues={site.publishes_tenders === true ? offresEnAttente[site.slug] : undefined}
                   onPublier={() => { void handlePublish(site.slug, site.published); }}
+                  echeance={echeances[site.slug]}
+                  onRenouveler={() => { void handlePublish(site.slug, site.published, true); }}
                   onAdresseApp={() => { void adresseSite(site); }} />
               );
             })()}

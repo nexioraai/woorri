@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 type Demande = {
-  id: string; cree_le: string; app_id: string; operateur: string; telephone_masque: string;
+  id: string; cree_le: string; app_id: string | null; site_id?: string | null; operateur: string; telephone_masque: string;
   montant: number; prix: number; frais: number; reference: string | null; test: boolean | null;
   etat: string; avis_recu_le: string | null; decision: string | null; raison: string | null;
   active_par: string | null; active_le: string | null;
@@ -30,6 +30,8 @@ const COULEUR: Record<string, string> = {
   refusee: 'text-red-300', abandonnee: 'text-slate-500', activee_main: 'text-amber-300', remboursee: 'text-violet-300',
 };
 /** Une demande payée, réelle : elle peut être remboursée. */
+/** Ce que paie la demande : une appli ou un SITE (2026-11-25). */
+const cibleDe = (x: Pick<Demande, 'app_id' | 'site_id'>) => (x.site_id ? `le site ${x.site_id.slice(0, 8)}` : `l’appli ${(x.app_id ?? '').slice(0, 8)}`);
 const remboursable = (x: Pick<Demande, 'etat' | 'test'>) => (x.etat === 'reussie' || x.etat === 'activee_main') && x.test === false;
 const date = (iso: string | null) => (iso === null ? '—' : new Date(iso).toLocaleString('fr-FR'));
 
@@ -57,7 +59,7 @@ export default function MobileMoneyAdminPage() {
   }, [version]);
 
   const activer = async (x: Demande) => {
-    if (!window.confirm(`Activer ce paiement de ${String(x.montant)} FCFA pour l’appli ${x.app_id.slice(0, 8)} ? Le registre gardera votre nom.`)) return;
+    if (!window.confirm(`Activer ce paiement de ${String(x.montant)} FCFA pour ${cibleDe(x)} ? Le registre gardera votre nom.`)) return;
     const t = await jeton();
     if (t === null) return;
     const r = await fetch('/api/admin/mobile-money/activer', {
@@ -74,15 +76,15 @@ export default function MobileMoneyAdminPage() {
     const saisi = window.prompt(`Montant renvoyé, en FCFA (au plus ${String(x.montant)}) :`, String(x.montant));
     if (saisi === null) return;
     const montant = Number(saisi.replace(/\s/gu, ''));
-    if (!window.confirm(`Inscrire le remboursement de ${String(montant)} FCFA (${sortant.trim()}) ? Si c’est le dernier paiement, l’appli ${x.app_id.slice(0, 8)} est dépubliée.`)) return;
+    if (!window.confirm(`Inscrire le remboursement de ${String(montant)} FCFA (${sortant.trim()}) ? Un lot est retiré du compteur ; si c’est le dernier mois payé, ${cibleDe(x)} est dépubliée.`)) return;
     const t = await jeton();
     if (t === null) return;
     const r = await fetch('/api/admin/mobile-money/rembourser', {
       method: 'POST', headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: x.id, paiementSortant: sortant.trim(), montant }),
     });
-    const d = (await r.json().catch(() => ({}))) as { effet?: string; derniere?: boolean; error?: string };
-    setMessage(r.ok ? `Remboursement inscrit (${d.effet ?? 'annule'}${d.derniere === true ? ', appli dépubliée' : ''}).` : d.error ?? 'Remboursement non inscrit.');
+    const d = (await r.json().catch(() => ({}))) as { effet?: string; derniere?: boolean; objet?: string; error?: string };
+    setMessage(r.ok ? `Remboursement inscrit (${d.effet ?? 'annule'}${d.objet === 'lot' ? ', lot retiré du compteur, abonnement intact' : ''}${d.derniere === true ? ', appli dépubliée' : ''}).` : d.error ?? 'Remboursement non inscrit.');
     setVersion((v) => v + 1);
   };
 
@@ -106,7 +108,7 @@ export default function MobileMoneyAdminPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <span className={`font-semibold ${COULEUR[x.etat] ?? ''}`}>{x.etat}</span>
                 <span>{String(x.montant)} FCFA <span className="text-slate-400">({String(x.prix)} + {String(x.frais)} de frais)</span></span>
-                <span className="text-slate-400">{x.operateur} · {x.telephone_masque} · appli {x.app_id.slice(0, 8)}</span>
+                <span className="text-slate-400">{x.operateur} · {x.telephone_masque} · {cibleDe(x)}</span>
                 {x.test === true && <span className="rounded bg-sky-500/20 px-2 text-xs text-sky-200">test</span>}
                 {x.etat === 'refusee' && x.test === false && (
                   <button type="button" onClick={() => { void activer(x); }} className="ml-auto rounded-lg bg-[#FA5D1E] px-3 py-1 text-xs font-semibold">Activer ce paiement</button>

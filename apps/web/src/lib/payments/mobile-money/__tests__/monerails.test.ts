@@ -49,7 +49,7 @@ describe('verifierAvis lit le secret de l’environnement et traduit l’avis', 
   it('avis réussi → encaissement normalisé, rattaché', () => {
     const a = monerails.verifierAvis(CORPS, new Headers({ 'Monerail-Signature': `t=${String(T)},v1=${signer(T, CORPS)}` }), T)
     expect(a?.type).toBe('encaissement_reussi')
-    expect(a?.encaissement).toMatchObject({ id: 'c1', etat: 'reussi', montant: 12000, devise: 'XAF', test: true, rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 12000 } })
+    expect(a?.encaissement).toMatchObject({ id: 'c1', etat: 'reussi', montant: 12000, devise: 'XAF', test: true, rattachement: { app: 'a1', site: null, proprietaire: 'u1', objet: 'abonnement', montantInscrit: 12000 } })
     expect(a?.encaissement?.operateur, 'pas d’opérateur dans cet avis').toBeNull()
   })
   it('l’opérateur de la collecte est lu (le montant attendu se recalcule avec lui)', () => {
@@ -118,12 +118,24 @@ describe('LA CLÉ DU MODE (lot L3) : test = mr_test_, réel = mr_live_, jamais l
     await expect(monerails.lire('c1')).rejects.toBeInstanceOf(ErreurFournisseur)
     expect(appels).toEqual([])
   })
+  it('UN SITE (lot L5) : la collecte porte `deribfy_site` (jamais `deribfy_app`) et la référence client `site:`', async () => {
+    vi.stubEnv('MONERAILS_CLE_TEST', 'mr_test_abc')
+    vi.stubGlobal('fetch', vi.fn(async (...a: unknown[]) => { appels.push(a); return new Response(JSON.stringify({ id: 'c8', object: 'collection', status: 'pending', amount: 7000, currency: 'XAF', livemode: false }), { status: 201 }) }))
+    await monerails.encaisser({
+      montant: 7000, devise: 'XAF', pays: 'TD', operateur: 'AIRTEL', telephone: '23500000001', nomClient: 'Essai',
+      description: 'Deribfy', rattachement: { app: null, site: 's1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 7000 }, ventilation: { prix: 6000, frais: 1000 }, cle: 'k2',
+    })
+    const corps = JSON.parse(String((appels[0] as [string, RequestInit])[1].body)) as { client_reference: string; metadata: Record<string, string> }
+    expect(corps.client_reference).toBe('site:s1')
+    expect(corps.metadata.deribfy_site).toBe('s1')
+    expect(corps.metadata).not.toHaveProperty('deribfy_app')
+  })
   it('clé de test : la collecte part avec TD, XAF, le montant, le rattachement et une clé d’idempotence', async () => {
     vi.stubEnv('MONERAILS_CLE_TEST', 'mr_test_abc')
     vi.stubGlobal('fetch', vi.fn(async (...a: unknown[]) => { appels.push(a); return new Response(JSON.stringify({ id: 'c9', object: 'collection', status: 'pending', amount: 12000, currency: 'XAF', livemode: false }), { status: 201 }) }))
     const e = await monerails.encaisser({
       montant: 13400, devise: 'XAF', pays: 'TD', operateur: 'AIRTEL', telephone: '23500000001', nomClient: 'Essai',
-      description: 'Deribfy', rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 13400 }, ventilation: { prix: 12000, frais: 1400 }, cle: 'k1',
+      description: 'Deribfy', rattachement: { app: 'a1', site: null, proprietaire: 'u1', objet: 'abonnement', montantInscrit: 13400 }, ventilation: { prix: 12000, frais: 1400 }, cle: 'k1',
     })
     expect(e.id).toBe('c9')
     const [url, init] = appels[0] as [string, RequestInit]
@@ -150,7 +162,7 @@ describe('LA CLÉ DU MODE (lot L3) : test = mr_test_, réel = mr_live_, jamais l
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
     await monerails.encaisser({
       montant: 13400, devise: 'XAF', pays: 'TD', operateur: 'AIRTEL', telephone: '23500000001', nomClient: 'Essai',
-      description: 'Deribfy', rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 13400 }, ventilation: { prix: 12000, frais: 1400 }, cle: 'k1',
+      description: 'Deribfy', rattachement: { app: 'a1', site: null, proprietaire: 'u1', objet: 'abonnement', montantInscrit: 13400 }, ventilation: { prix: 12000, frais: 1400 }, cle: 'k1',
     })
     await monerails.autoriser('c9', '1234')
     await monerails.lire('c9')

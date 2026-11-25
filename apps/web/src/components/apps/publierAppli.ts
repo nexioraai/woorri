@@ -85,7 +85,11 @@ export type DemandeFenetre = {
     readonly objet?: 'abonnement' | 'lot'
     /** La phrase du prix au-dessus du formulaire, si ce n'est pas un mois d'abonnement. */
     readonly phraseDuPrix?: (montant: number) => string
+    /** La route du mobile money, munie de son `?` — celle d'un SITE (2026-11-25). */
+    readonly adresseApi?: string
   } | null
+  /** Les mots d'un SITE (2026-11-25) : « Adresse de votre site », « Votre site est en ligne »… */
+  readonly libelles?: { readonly adresse: string; readonly apresMobileMoney: string; readonly enLigne: string; readonly testSansPublication: string }
   /**
    * SANS ADRESSE (2026-11-24) : la fenêtre du LOT de modifications commence au
    * Paiement (étapes Paiement › Confirmation), et ses phrases sont les siennes.

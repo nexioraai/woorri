@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const montant = typeof corps.montant === 'number' ? corps.montant : Number.NaN
   try {
     const r = await rembourserALaMain({ id, par: garde.email ?? garde.userId, paiementSortant, montant })
-    return r.ok ? NextResponse.json({ ok: true, effet: r.effet, derniere: r.derniere }) : NextResponse.json({ error: r.erreur }, { status: r.status })
+    return r.ok ? NextResponse.json({ ok: true, effet: r.effet, derniere: r.derniere, objet: r.objet }) : NextResponse.json({ error: r.erreur }, { status: r.status })
   } catch (e) {
     return NextResponse.json({ error: 'Remboursement non inscrit.', motif: e instanceof Error ? e.message : String(e) }, { status: 502 })
   }

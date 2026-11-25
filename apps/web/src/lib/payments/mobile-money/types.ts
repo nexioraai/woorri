@@ -32,7 +32,10 @@ export type ObjetPaiement = 'abonnement' | 'lot'
 
 /** Ce que Deribfy attache à un encaissement, et retrouve dans l'avis. */
 export type Rattachement = {
-  readonly app: string
+  /** L'appli payée — ou `null` pour un SITE (2026-11-25) : exactement l'un des deux. */
+  readonly app: string | null
+  /** Le site payé (lot L5, 2026-11-25) — ou `null` pour une appli. */
+  readonly site: string | null
   readonly proprietaire: string
   /** Ce que paie l'encaissement : un mois d'abonnement, ou un lot de modifications (2026-11-24). */
   readonly objet: ObjetPaiement
@@ -108,7 +111,8 @@ export interface FournisseurMobileMoney {
   encaisser(demande: DemandeEncaissement): Promise<Encaissement>
   lire(id: string): Promise<Encaissement>
   /** Les encaissements demandés pour CETTE appli, les plus récents d'abord. */
-  encaissementsDe(app: string): Promise<EncaissementOuvert[]>
+  /** Les encaissements d'une appli, ou d'un SITE (`type = 'site'`, 2026-11-25). */
+  encaissementsDe(id: string, type?: 'app' | 'site'): Promise<EncaissementOuvert[]>
   /** Envoie le code à usage unique saisi par le client. */
   autoriser(id: string, code: string): Promise<Encaissement>
   /** Vérifie un avis (corps BRUT, en-têtes) ; `null` = signature refusée. */

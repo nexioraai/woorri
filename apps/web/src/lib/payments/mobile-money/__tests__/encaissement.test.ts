@@ -23,7 +23,7 @@ vi.mock('@/lib/payments/interrupteur', () => ({ interrupteurOuvert: async () => 
 import { ATTENTE_MAX_MS, cleIdempotence, demandeEnCours, ouvrirEncaissement, phraseDemandeEnCours, telephoneTchad, traiterAvis } from '../encaissement'
 import type { AvisVerifie, Encaissement, EncaissementOuvert, FournisseurMobileMoney } from '../types'
 
-const ENC: Encaissement = { id: 'c1', etat: 'reussi', montant: 14000, devise: 'XAF', operateur: 'AIRTEL', test: true, action: null, rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 14000 }, echec: null }
+const ENC: Encaissement = { id: 'c1', etat: 'reussi', montant: 14000, devise: 'XAF', operateur: 'AIRTEL', test: true, action: null, rattachement: { app: 'a1', site: null, proprietaire: 'u1', objet: 'abonnement', montantInscrit: 14000 }, echec: null }
 const avis = (e: Partial<Encaissement> = {}, type: AvisVerifie['type'] = 'encaissement_reussi'): AvisVerifie => ({ id: 'evt', type, encaissement: { ...ENC, ...e } })
 
 beforeEach(() => { etat.rpc = []; etat.reponse = { data: { statut: 'enregistre' }, error: null }; etat.reglages = { ...REGLAGES } })
@@ -172,10 +172,10 @@ describe('traiter un avis vérifié', () => {
   })
   it('FRAIS · le montant attendu est RECALCULÉ : les métadonnées de la demande ne prouvent rien', async () => {
     // Une demande inscrite à 12 000 (sans frais), payée 12 000 : refusée.
-    const r = await traiterAvis(avis({ montant: 12000, rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 12000 } }), 'monerails')
+    const r = await traiterAvis(avis({ montant: 12000, rattachement: { app: 'a1', site: null, proprietaire: 'u1', objet: 'abonnement', montantInscrit: 12000 } }), 'monerails')
     expect(r).toEqual({ issue: 'refuse', raison: 'montant 12000 < attendu 14000 (12000 + 2000 de frais, AIRTEL)' })
     // Sans aucun montant inscrit, 14 000 passe : seul le recalcul compte.
-    expect((await traiterAvis(avis({ rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: null } }), 'monerails')).issue).toBe('test_verifie')
+    expect((await traiterAvis(avis({ rattachement: { app: 'a1', site: null, proprietaire: 'u1', objet: 'abonnement', montantInscrit: null } }), 'monerails')).issue).toBe('test_verifie')
   })
   it('UN SEUL PRIX · le même attendu pour tout opérateur : Moov 14 000 passe, Moov 13 999 est refusé, Airtel 13 100 aussi ; sans opérateur ou ORANGE, refusé', async () => {
     expect((await traiterAvis(avis({ operateur: 'MOOV', montant: 14000 }), 'monerails')).issue).toBe('test_verifie')

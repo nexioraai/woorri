@@ -570,6 +570,13 @@ export const DOMAIN_REGISTRY: DomainDefinition[] = [
       // transitifs est a son plafond : on declare, on ne l'elargit pas).
       'src/lib/payments/prix-abonnement.ts',
       'src/app/api/checkout/route.ts',
+      // 2026-11-25 -- TROIS ENTREES AJOUTEES, MEME MECANISME (lot L5). Le
+      // mobile money d'un site derive du mode son PRIX NET (Vitrine, Boutique)
+      // et son ADMISSION (jamais le Dropshipping) : ce sont des decisions sur
+      // le mode, donc elles se declarent ici, avec la route qui le lit.
+      'src/lib/payments/site-mobile-money.ts',
+      'src/lib/payments/mobile-money/encaissement.ts',
+      'src/app/api/sites/[slug]/mobile-money/route.ts',
     ],
     forbiddenPatterns: SITE_MODE_ACQUISITION_RULES,
     ignoreLinePattern: IGNORE_COMMENT_LINES,

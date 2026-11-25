@@ -20,14 +20,14 @@ vi.mock('@/lib/payments/interrupteur', () => ({ interrupteurOuvert: async () => 
 vi.mock('@/lib/alertes', () => ({ alerter: async () => 'alerte' }))
 import { cleIdempotence, ouvrirEncaissement, traiterEtNoterAvis } from '../encaissement'
 import { cleConfirmation, monerails } from '../monerails'
-import { masquePourEcrire, masquer, type DemandeEnBase, type NoteAvis, type RegistreDemandes } from '../demandes'
+import { masquePourEcrire, masquer, registreDemandes, type DemandeEnBase, type NoteAvis, type RegistreDemandes } from '../demandes'
 import { dansLeBudget } from '../budget-avis'
 import { rattraper, RATTRAPAGE_MAX_MS } from '../rattrapage'
 import { activerALaMain } from '../activation-main'
 import type { AvisVerifie, Encaissement, FournisseurMobileMoney } from '../types'
 import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
 
-const ENC: Encaissement = { id: 'col_1', etat: 'reussi', montant: 14000, devise: 'XAF', operateur: 'AIRTEL', test: true, action: null, rattachement: { app: 'a1', proprietaire: 'u1', objet: 'abonnement', montantInscrit: 14000 }, echec: null }
+const ENC: Encaissement = { id: 'col_1', etat: 'reussi', montant: 14000, devise: 'XAF', operateur: 'AIRTEL', test: true, action: null, rattachement: { app: 'a1', site: null, proprietaire: 'u1', objet: 'abonnement', montantInscrit: 14000 }, echec: null }
 const MAINTENANT = Date.parse('2026-11-23T12:00:00Z')
 
 /** Un registre en mémoire, avec le verrou « une ouverte par appli » de l'index unique. */
@@ -218,5 +218,19 @@ describe('L2 · « Activer ce paiement », fondateur seul', () => {
     }
     expect(lire('src/app/api/cron/mobile-money/route.ts')).toMatch(motifTexte("req.headers.get('authorization') !== 'Bearer ' + secret"))
     expect(lire('vercel.json')).toMatch(motifTexte('"path": "/api/cron/mobile-money"'))
+  })
+})
+
+
+describe('le registre : le verrou d’un SITE (lot L5, 2026-11-25)', () => {
+  it('une demande de site prend `mm_ouvrir_demande_site` (p_site) ; une appli garde `mm_ouvrir_demande` (p_app)', async () => {
+    etat.reponse = { data: { statut: 'ouverte', id: 'd9' }, error: null }
+    const commun = { fournisseur: 'monerails', proprietaire: 'u1', operateur: 'AIRTEL', telephone: '23566000001', montant: 7000, prix: 6000, frais: 1000, attenteS: 600 }
+    expect(await registreDemandes.ouvrir({ ...commun, app: '', site: 's1' })).toEqual({ issue: 'ouverte', id: 'd9' })
+    expect(await registreDemandes.ouvrir({ ...commun, app: 'a1' })).toEqual({ issue: 'ouverte', id: 'd9' })
+    expect(etat.rpc.map(([n, p]) => [n, p.p_site ?? null, p.p_app ?? null])).toEqual([
+      ['mm_ouvrir_demande_site', 's1', null],
+      ['mm_ouvrir_demande', null, 'a1'],
+    ])
   })
 })

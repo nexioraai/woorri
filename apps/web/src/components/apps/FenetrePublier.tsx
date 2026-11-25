@@ -165,7 +165,7 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
 
           {etape === 'adresse' && (
             <Apparition cle="adresse">
-              <label htmlFor="fenetre-publier-adresse" className="block text-xs font-medium text-white/60">Adresse de votre application</label>
+              <label htmlFor="fenetre-publier-adresse" className="block text-xs font-medium text-white/60">{demande.libelles?.adresse ?? 'Adresse de votre application'}</label>
               <div className={`mt-1.5 flex items-center rounded-2xl border bg-white/[0.04] transition focus-within:bg-white/[0.06] ${adressePrise || !formatOk ? 'border-red-400/60' : verifActuelle?.etat === 'libre' ? 'border-emerald-400/50' : 'border-white/15 focus-within:border-accent/60'}`}>
                 <input id="fenetre-publier-adresse" ref={champ} value={adresse} readOnly={!demande.adresseModifiable}
                   onChange={(e) => { setAdresse(e.target.value); setErreur(null); }}
@@ -226,8 +226,9 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
               <p className="mb-4 flex items-center gap-2 text-sm font-semibold text-white"><Smartphone size={18} className="text-accent" aria-hidden />Mobile money</p>
               <PayerMobileMoney app={demande.mobileMoney.app} jeton={demande.mobileMoney.jeton} renouveler={false}
                 onPaye={demande.mobileMoney.onPaye} onReussi={(test) => { void suivreAdresse(test); }} onEnvoye={setPaiementParti} ouvertDOffice enFenetre
-                objet={demande.mobileMoney.objet ?? 'abonnement'} {...(demande.mobileMoney.phraseDuPrix !== undefined ? { phraseDuPrix: demande.mobileMoney.phraseDuPrix } : {})} />
-              <p className="mt-4 text-xs leading-relaxed text-white/45">{demande.sansAdresse?.apresPaiement ?? PHRASE_APRES_MOBILE_MONEY}</p>
+                objet={demande.mobileMoney.objet ?? 'abonnement'} {...(demande.mobileMoney.phraseDuPrix !== undefined ? { phraseDuPrix: demande.mobileMoney.phraseDuPrix } : {})}
+                {...(demande.mobileMoney.adresseApi !== undefined ? { adresseApi: demande.mobileMoney.adresseApi } : {})} />
+              <p className="mt-4 text-xs leading-relaxed text-white/45">{demande.sansAdresse?.apresPaiement ?? demande.libelles?.apresMobileMoney ?? PHRASE_APRES_MOBILE_MONEY}</p>
               <Boutons>
                 {!paiementParti && (
                   <BoutonSecondaire onClick={() => { setFormulaireMm(false); setErreur(null); }}><ChevronLeft size={16} aria-hidden />Moyen de paiement</BoutonSecondaire>
@@ -239,7 +240,7 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
 
           {etape === 'confirmation' && confirmation !== null && (
             <Apparition cle="confirmation">
-              <EcranConfirmation c={confirmation} compte={demande.compte} />
+              <EcranConfirmation c={confirmation} compte={demande.compte} titreEnLigne={demande.libelles?.enLigne ?? TITRE_EN_LIGNE} phraseTest={demande.libelles?.testSansPublication ?? PHRASE_TEST_SANS_PUBLICATION} />
               <Boutons>
                 <BoutonSecondaire onClick={fermer}>Fermer</BoutonSecondaire>
                 {confirmation.etat === 'en_ligne' && (
@@ -299,12 +300,12 @@ function CarteMoyen({ moyen, choisi, onChoisir }: { readonly moyen: MoyenPublica
   );
 }
 
-function EcranConfirmation({ c, compte }: { readonly c: Confirmation; readonly compte: CompteFenetre | null }) {
+function EcranConfirmation({ c, compte, titreEnLigne, phraseTest }: { readonly c: Confirmation; readonly compte: CompteFenetre | null; readonly titreEnLigne: string; readonly phraseTest: string }) {
   if (c.etat === 'en_ligne') {
     return (
       <div className="flex flex-col items-center gap-3 py-2 text-center">
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-300/30"><Check size={32} strokeWidth={2.5} aria-hidden /></span>
-        <p className="text-lg font-semibold">{TITRE_EN_LIGNE}</p>
+        <p className="text-lg font-semibold">{titreEnLigne}</p>
         {c.dejaEnLigne && <p className="text-xs text-white/55">Elle l’était déjà : son adresse reste la même.</p>}
         <a href={c.lien} target="_blank" rel="noreferrer noopener" className="max-w-full truncate rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-[#FFB08F] underline-offset-2 hover:underline">{c.lien}</a>
         <Identifiants lien={c.lien} initial={c.compte ?? null} compte={compte} />
@@ -319,7 +320,7 @@ function EcranConfirmation({ c, compte }: { readonly c: Confirmation; readonly c
       </div>
     );
   }
-  const texte = c.etat === 'publication' ? PHRASE_PUBLICATION_EN_COURS : c.etat === 'test' ? PHRASE_TEST_SANS_PUBLICATION : PHRASE_PUBLICATION_TARDE;
+  const texte = c.etat === 'publication' ? PHRASE_PUBLICATION_EN_COURS : c.etat === 'test' ? phraseTest : PHRASE_PUBLICATION_TARDE;
   return (
     <div className="flex flex-col items-center gap-3 py-4 text-center" role="status">
       {c.etat === 'publication'
