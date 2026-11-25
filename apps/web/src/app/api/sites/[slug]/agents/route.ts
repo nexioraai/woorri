@@ -89,7 +89,7 @@ export async function POST(req: Request, { params }: Params) {
     ? supabaseAdmin.from('site_comptes').update({ service: 'ddm', nom, maj_le: new Date().toISOString() }).eq('id', d.id).eq('site_id', siteId)
     : supabaseAdmin.from('site_comptes').insert({
         site_id: siteId, user_id: userId, email, role: 'agent', service: 'ddm', nom,
-        organisation: 'Centrale — Division DDM',
+        organisation: 'Centrale — Service clients',
       })
   const { data: agent, error } = await ecriture.select(COLS).single()
   if (error) {

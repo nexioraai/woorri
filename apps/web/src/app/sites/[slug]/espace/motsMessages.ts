@@ -9,28 +9,28 @@ export type MotsMessages = {
 }
 
 const FR: MotsMessages = {
-  titre: 'Messages', phrase: 'Échangez directement avec la Division DDM de la Centrale.',
+  titre: 'Messages', phrase: 'Échangez directement avec la Centrale.',
   fil: { vide: 'Aucun message pour l’instant. Écrivez le premier !', placeholder: 'Écrire un message…', envoyer: 'Envoyer', ferme: 'La messagerie n’est pas encore ouverte sur ce site.', moi: 'Vous', eux: 'Centrale', lu: 'lu' },
   clients: { titre: 'Clients', phrase: 'Tous les clients de la Centrale : leurs messages, leurs commandes, leur compte.', recherche: 'Rechercher un client…', tous: 'Tous', sante: 'Structures sanitaires', ong: 'ONG', aucun: 'Aucun client ne correspond.', choisir: 'Choisissez un client pour voir vos échanges.',
-    onglets: { messages: 'Messages', commandes: 'Commandes', infos: 'Infos' }, suspendre: 'Suspendre le compte', reactiver: 'Réactiver le compte', actif: 'Actif', suspendu: 'Suspendu', inscritLe: 'Inscrit le', pasDeCommande: 'Aucune commande.', filCentrale: 'DDM', santeUn: 'Structure sanitaire' },
+    onglets: { messages: 'Messages', commandes: 'Commandes', infos: 'Infos' }, suspendre: 'Suspendre le compte', reactiver: 'Réactiver le compte', actif: 'Actif', suspendu: 'Suspendu', inscritLe: 'Inscrit le', pasDeCommande: 'Aucune commande.', filCentrale: 'Centrale', santeUn: 'Structure sanitaire' },
 }
 const EN: MotsMessages = {
-  titre: 'Messages', phrase: 'Talk directly with the Centrale’s DDM division.',
+  titre: 'Messages', phrase: 'Talk directly with the Centrale.',
   fil: { vide: 'No message yet. Write the first one!', placeholder: 'Write a message…', envoyer: 'Send', ferme: 'Messaging is not open on this site yet.', moi: 'You', eux: 'Centrale', lu: 'read' },
   clients: { titre: 'Clients', phrase: 'All the Centrale’s clients: their messages, orders and account.', recherche: 'Search a client…', tous: 'All', sante: 'Health facilities', ong: 'NGOs', aucun: 'No matching client.', choisir: 'Choose a client to see your conversation.',
-    onglets: { messages: 'Messages', commandes: 'Orders', infos: 'Details' }, suspendre: 'Suspend account', reactiver: 'Reactivate account', actif: 'Active', suspendu: 'Suspended', inscritLe: 'Registered on', pasDeCommande: 'No order.', filCentrale: 'DDM', santeUn: 'Health facility' },
+    onglets: { messages: 'Messages', commandes: 'Orders', infos: 'Details' }, suspendre: 'Suspend account', reactiver: 'Reactivate account', actif: 'Active', suspendu: 'Suspended', inscritLe: 'Registered on', pasDeCommande: 'No order.', filCentrale: 'Centrale', santeUn: 'Health facility' },
 }
 const AR: MotsMessages = {
-  titre: 'الرسائل', phrase: 'تواصل مباشرة مع قسم DDM في المركز.',
+  titre: 'الرسائل', phrase: 'تواصل مباشرة مع المركز.',
   fil: { vide: 'لا رسائل بعد. اكتب الرسالة الأولى!', placeholder: 'اكتب رسالة…', envoyer: 'إرسال', ferme: 'المراسلة غير مفتوحة بعد على هذا الموقع.', moi: 'أنت', eux: 'المركز', lu: 'مقروءة' },
   clients: { titre: 'العملاء', phrase: 'كل عملاء المركز: رسائلهم وطلبياتهم وحساباتهم.', recherche: 'ابحث عن عميل…', tous: 'الكل', sante: 'المنشآت الصحية', ong: 'المنظمات', aucun: 'لا يوجد عميل مطابق.', choisir: 'اختر عميلاً لرؤية المراسلات.',
-    onglets: { messages: 'الرسائل', commandes: 'الطلبيات', infos: 'المعلومات' }, suspendre: 'تعليق الحساب', reactiver: 'إعادة تفعيل الحساب', actif: 'نشط', suspendu: 'معلّق', inscritLe: 'مسجّل منذ', pasDeCommande: 'لا طلبيات.', filCentrale: 'DDM', santeUn: 'منشأة صحية' },
+    onglets: { messages: 'الرسائل', commandes: 'الطلبيات', infos: 'المعلومات' }, suspendre: 'تعليق الحساب', reactiver: 'إعادة تفعيل الحساب', actif: 'نشط', suspendu: 'معلّق', inscritLe: 'مسجّل منذ', pasDeCommande: 'لا طلبيات.', filCentrale: 'المركز', santeUn: 'منشأة صحية' },
 }
 const ES: MotsMessages = {
-  titre: 'Mensajes', phrase: 'Hable directamente con la división DDM de la Central.',
+  titre: 'Mensajes', phrase: 'Hable directamente con la Central.',
   fil: { vide: 'Todavía no hay mensajes. ¡Escriba el primero!', placeholder: 'Escribir un mensaje…', envoyer: 'Enviar', ferme: 'La mensajería aún no está abierta en este sitio.', moi: 'Usted', eux: 'Central', lu: 'leído' },
   clients: { titre: 'Clientes', phrase: 'Todos los clientes de la Central: sus mensajes, pedidos y cuenta.', recherche: 'Buscar un cliente…', tous: 'Todos', sante: 'Centros sanitarios', ong: 'ONG', aucun: 'Ningún cliente coincide.', choisir: 'Elija un cliente para ver sus intercambios.',
-    onglets: { messages: 'Mensajes', commandes: 'Pedidos', infos: 'Datos' }, suspendre: 'Suspender la cuenta', reactiver: 'Reactivar la cuenta', actif: 'Activa', suspendu: 'Suspendida', inscritLe: 'Registrado el', pasDeCommande: 'Ningún pedido.', filCentrale: 'DDM', santeUn: 'Centro sanitario' },
+    onglets: { messages: 'Mensajes', commandes: 'Pedidos', infos: 'Datos' }, suspendre: 'Suspender la cuenta', reactiver: 'Reactivar la cuenta', actif: 'Activa', suspendu: 'Suspendida', inscritLe: 'Registrado el', pasDeCommande: 'Ningún pedido.', filCentrale: 'Central', santeUn: 'Centro sanitario' },
 }
 
 export function motsMessages(lang: string | null | undefined): MotsMessages {

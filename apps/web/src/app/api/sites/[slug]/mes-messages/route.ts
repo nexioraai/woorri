@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireSiteCompte } from '@/lib/auth/require-site-compte'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { tableAbsente } from '@/lib/commandes/commandes'
-import { lireTexte, VU_MESSAGE } from '@/lib/commandes/messages'
+import { lireTexte, VU_MESSAGE_CLIENT } from '@/lib/commandes/messages'
 
 // ============================================================================
 // MES MESSAGES — le fil du CLIENT avec la Division DDM (CPA, 2026-11-19).
@@ -27,7 +27,7 @@ export async function GET(req: Request, { params }: Params) {
     return NextResponse.json({ nonLus: (data ?? []).length, ouvert: true })
   }
 
-  const { data, error } = await supabaseAdmin.from('messages_clients').select(VU_MESSAGE)
+  const { data, error } = await supabaseAdmin.from('messages_clients').select(VU_MESSAGE_CLIENT)
     .eq('site_id', garde.site.id).eq('compte_id', garde.compte.id)
     .order('cree_le', { ascending: true }).limit(500)
   if (error) {
@@ -54,7 +54,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const { data, error } = await supabaseAdmin.from('messages_clients')
     .insert({ site_id: garde.site.id, compte_id: garde.compte.id, de: 'client', auteur: garde.compte.email, texte: t.texte })
-    .select(VU_MESSAGE).single()
+    .select(VU_MESSAGE_CLIENT).single()
   if (error) {
     if (tableAbsente(error)) return NextResponse.json({ error: 'La messagerie n’est pas encore ouverte.' }, { status: 503 })
     return NextResponse.json({ error: error.message }, { status: 500 })

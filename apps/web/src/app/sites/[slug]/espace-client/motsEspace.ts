@@ -23,7 +23,7 @@ const FR: MotsEspace = {
   role: 'Qualité', deconnexion: 'Se déconnecter',
   erreur: 'Service momentanément indisponible. Réessayez plus tard.',
   suivreDemande: 'Suivre une demande par sa référence',
-  mesCommandes: 'Mes commandes', agentDdm: 'Agent de la Centrale — Division DDM', tableauDeBord: 'Tableau de bord', passerCommande: 'Passer une commande', navPrincipal: 'Principal', navGestion: 'Division DDM', navFournisseur: 'Fournisseur', navEchanges: 'Échanges', navCompte: 'Mon compte', compteActif: 'Compte actif', membreDepuis: 'Membre depuis le', bonjour: 'Bonjour', accesRapides: 'Accès rapides', vueEnsemble: 'Vue d’ensemble de votre espace.', ong: 'ONG ou association', gestionCommandes: 'Commandes', comptesClients: 'Clients', messages: 'Messages', mesDemandes: 'Mes demandes', mesReclamations: 'Mes réclamations', mesDocuments: 'Mes documents', monDossier: 'Mon dossier', maPrequalification: 'Ma préqualification', mesConsultations: 'Mes consultations', monProfil: 'Mon profil',
+  mesCommandes: 'Mes commandes', agentDdm: 'Agent de la Centrale', tableauDeBord: 'Tableau de bord', passerCommande: 'Passer une commande', navPrincipal: 'Principal', navGestion: 'Service clients', navFournisseur: 'Fournisseur', navEchanges: 'Échanges', navCompte: 'Mon compte', compteActif: 'Compte actif', membreDepuis: 'Membre depuis le', bonjour: 'Bonjour', accesRapides: 'Accès rapides', vueEnsemble: 'Vue d’ensemble de votre espace.', ong: 'ONG ou association', gestionCommandes: 'Commandes', comptesClients: 'Clients', messages: 'Messages', mesDemandes: 'Mes demandes', mesReclamations: 'Mes réclamations', mesDocuments: 'Mes documents', monDossier: 'Mon dossier', maPrequalification: 'Ma préqualification', mesConsultations: 'Mes consultations', monProfil: 'Mon profil',
 }
 
 const EN: MotsEspace = {
@@ -39,7 +39,7 @@ const EN: MotsEspace = {
   role: 'Capacity', deconnexion: 'Sign out',
   erreur: 'Service temporarily unavailable. Try again later.',
   suivreDemande: 'Track a request by its reference',
-  mesCommandes: 'My orders', agentDdm: 'Centrale staff — DDM division', tableauDeBord: 'Dashboard', passerCommande: 'Place an order', navPrincipal: 'Main', navGestion: 'DDM division', navFournisseur: 'Supplier', navEchanges: 'Exchanges', navCompte: 'My account', compteActif: 'Active account', membreDepuis: 'Member since', bonjour: 'Hello', accesRapides: 'Quick access', vueEnsemble: 'An overview of your space.', ong: 'NGO or association', gestionCommandes: 'Orders', comptesClients: 'Clients', messages: 'Messages', mesDemandes: 'My requests', mesReclamations: 'My complaints', mesDocuments: 'My documents', monDossier: 'My file', maPrequalification: 'My prequalification', mesConsultations: 'My consultations', monProfil: 'My profile',
+  mesCommandes: 'My orders', agentDdm: 'Centrale staff', tableauDeBord: 'Dashboard', passerCommande: 'Place an order', navPrincipal: 'Main', navGestion: 'Client service', navFournisseur: 'Supplier', navEchanges: 'Exchanges', navCompte: 'My account', compteActif: 'Active account', membreDepuis: 'Member since', bonjour: 'Hello', accesRapides: 'Quick access', vueEnsemble: 'An overview of your space.', ong: 'NGO or association', gestionCommandes: 'Orders', comptesClients: 'Clients', messages: 'Messages', mesDemandes: 'My requests', mesReclamations: 'My complaints', mesDocuments: 'My documents', monDossier: 'My file', maPrequalification: 'My prequalification', mesConsultations: 'My consultations', monProfil: 'My profile',
 }
 
 const AR: MotsEspace = {
@@ -55,7 +55,7 @@ const AR: MotsEspace = {
   role: 'الصفة', deconnexion: 'تسجيل الخروج',
   erreur: 'الخدمة غير متاحة مؤقتاً. حاول لاحقاً.',
   suivreDemande: 'تتبّع طلباً بمرجعه',
-  mesCommandes: 'طلبياتي', agentDdm: 'موظف المركز — قسم DDM', tableauDeBord: 'لوحة القيادة', passerCommande: 'تقديم طلبية', navPrincipal: 'الرئيسية', navGestion: 'قسم DDM', navFournisseur: 'المورّد', navEchanges: 'المراسلات', navCompte: 'حسابي', compteActif: 'حساب نشط', membreDepuis: 'عضو منذ', bonjour: 'مرحباً', accesRapides: 'وصول سريع', vueEnsemble: 'نظرة عامة على فضائك.', ong: 'منظمة غير حكومية أو جمعية', gestionCommandes: 'الطلبيات', comptesClients: 'العملاء', messages: 'الرسائل', mesDemandes: 'طلباتي', mesReclamations: 'شكاواي', mesDocuments: 'مستنداتي', monDossier: 'ملف اعتمادي', maPrequalification: 'تأهيلي المسبق', mesConsultations: 'استشاراتي', monProfil: 'ملفي',
+  mesCommandes: 'طلبياتي', agentDdm: 'موظف المركز', tableauDeBord: 'لوحة القيادة', passerCommande: 'تقديم طلبية', navPrincipal: 'الرئيسية', navGestion: 'خدمة العملاء', navFournisseur: 'المورّد', navEchanges: 'المراسلات', navCompte: 'حسابي', compteActif: 'حساب نشط', membreDepuis: 'عضو منذ', bonjour: 'مرحباً', accesRapides: 'وصول سريع', vueEnsemble: 'نظرة عامة على فضائك.', ong: 'منظمة غير حكومية أو جمعية', gestionCommandes: 'الطلبيات', comptesClients: 'العملاء', messages: 'الرسائل', mesDemandes: 'طلباتي', mesReclamations: 'شكاواي', mesDocuments: 'مستنداتي', monDossier: 'ملف اعتمادي', maPrequalification: 'تأهيلي المسبق', mesConsultations: 'استشاراتي', monProfil: 'ملفي',
 }
 
 const ES: MotsEspace = {
@@ -71,7 +71,7 @@ const ES: MotsEspace = {
   role: 'Calidad', deconnexion: 'Cerrar sesión',
   erreur: 'Servicio no disponible momentáneamente. Inténtelo más tarde.',
   suivreDemande: 'Seguir una solicitud por su referencia',
-  mesCommandes: 'Mis pedidos', agentDdm: 'Personal de la Central — División DDM', tableauDeBord: 'Panel', passerCommande: 'Realizar un pedido', navPrincipal: 'Principal', navGestion: 'División DDM', navFournisseur: 'Proveedor', navEchanges: 'Intercambios', navCompte: 'Mi cuenta', compteActif: 'Cuenta activa', membreDepuis: 'Miembro desde el', bonjour: 'Hola', accesRapides: 'Accesos rápidos', vueEnsemble: 'Resumen de su espacio.', ong: 'ONG o asociación', gestionCommandes: 'Pedidos', comptesClients: 'Clientes', messages: 'Mensajes', mesDemandes: 'Mis solicitudes', mesReclamations: 'Mis reclamaciones', mesDocuments: 'Mis documentos', monDossier: 'Mi expediente', maPrequalification: 'Mi homologación previa', mesConsultations: 'Mis consultas', monProfil: 'Mi perfil',
+  mesCommandes: 'Mis pedidos', agentDdm: 'Personal de la Central', tableauDeBord: 'Panel', passerCommande: 'Realizar un pedido', navPrincipal: 'Principal', navGestion: 'Atención al cliente', navFournisseur: 'Proveedor', navEchanges: 'Intercambios', navCompte: 'Mi cuenta', compteActif: 'Cuenta activa', membreDepuis: 'Miembro desde el', bonjour: 'Hola', accesRapides: 'Accesos rápidos', vueEnsemble: 'Resumen de su espacio.', ong: 'ONG o asociación', gestionCommandes: 'Pedidos', comptesClients: 'Clientes', messages: 'Mensajes', mesDemandes: 'Mis solicitudes', mesReclamations: 'Mis reclamaciones', mesDocuments: 'Mis documentos', monDossier: 'Mi expediente', maPrequalification: 'Mi homologación previa', mesConsultations: 'Mis consultas', monProfil: 'Mi perfil',
 }
 
 const PAR_LANGUE: Record<string, MotsEspace> = { fr: FR, en: EN, ar: AR, es: ES }

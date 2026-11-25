@@ -16,6 +16,10 @@ export function lireTexte(brut: unknown): { texte: string } | { erreur: string }
 }
 
 export const VU_MESSAGE = 'id,de,auteur,texte,cree_le,lu_le'
+/** CE QUE LE CLIENT REÇOIT : sans `auteur`. L'auteur côté Centrale est
+ *  l'adresse de l'agent qui a répondu ; le client parle à « la Centrale »,
+ *  jamais à une personne ni à un service nommé (CPA, 2026-11-25). */
+export const VU_MESSAGE_CLIENT = 'id,de,texte,cree_le,lu_le'
 
 /** Résume les fils pour la liste de la DDM : dernier message et non-lus (venus du client). */
 export function resumerFils(ms: { compte_id: string; de: string; texte: string; cree_le: string; lu_le: string | null }[]) {
