@@ -42,7 +42,22 @@ export type IssuePublication =
  * la route : il rend `null` quand la fenêtre peut se fermer, ou le message à
  * afficher DANS la fenêtre (format, nom déjà pris, liste changée).
  */
-export type ResultatFenetre = string | null | 'mobile_money' | { readonly lien: string; readonly dejaEnLigne: boolean }
+export type ResultatFenetre = string | null | 'mobile_money' | {
+  readonly lien: string
+  readonly dejaEnLigne: boolean
+  /** Le compte de l'appli, mot de passe compris s'il vient d'être créé (première publication). */
+  readonly compte?: { readonly adresse?: string; readonly motDePasse?: string | null } | null
+}
+
+/**
+ * LES IDENTIFIANTS DE CONNEXION À L'APPLI, dans la Confirmation (2026-11-24) —
+ * comme « Mes projets » : l'adresse de connexion, et « Créer mon mot de passe »
+ * quand personne ne l'a vu (publication faite au paiement, par l'avis).
+ */
+export type CompteFenetre = {
+  readonly lire: () => Promise<{ readonly etat: string; readonly adresse?: string } | null>
+  readonly creerMotDePasse: () => Promise<IssueMotDePasse>
+}
 
 export type DemandeFenetre = {
   readonly titre: string
@@ -69,6 +84,8 @@ export type DemandeFenetre = {
   } | null
   /** Les étapes Adresse › Paiement › Confirmation en haut (« Changer l'adresse » n'en a pas). */
   readonly avecEtapes: boolean
+  /** Les identifiants de l'appli, pour la Confirmation ; absent pour « Changer l'adresse ». */
+  readonly compte: CompteFenetre | null
   /**
    * LA VÉRIFICATION EN DIRECT de l'adresse (2026-11-24) : `null` = libre, sinon
    * la phrase à montrer (format, déjà prise). Absente quand l'adresse est figée.
@@ -173,6 +190,10 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
           ? { app: o.id, jeton: () => Promise.resolve(sansBearer), onPaye: o.apresMobileMoney ?? (() => Promise.resolve()), lireAdresse: () => adresseEnLigne(o.id, o.autorisation) }
           : null,
         avecEtapes: true,
+        compte: {
+          lire: () => lireCompte(o.id, o.autorisation),
+          creerMotDePasse: () => refaireMotDePasse(o.id, o.autorisation),
+        },
         verifier: etat.nom === null ? (adresse) => verifierAdresseEnDirect(o.id, adresse, o.autorisation) : null,
         valider: async (adresse, moyen) => {
           try {
@@ -181,7 +202,7 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
             resolve(r)
             if (r.type === 'mobile_money') return 'mobile_money'
             // Publiée (payée, ou déjà en ligne) : la fenêtre montre la confirmation et le lien.
-            if (r.type === 'publiee') return { lien: r.lien, dejaEnLigne: r.dejaEnLigne }
+            if (r.type === 'publiee') return { lien: r.lien, dejaEnLigne: r.dejaEnLigne, compte: r.compte }
             return null
           } catch {
             return PHRASE_PUBLICATION_ECHOUEE
@@ -192,6 +213,18 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
     })
   } catch {
     return { type: 'erreur', message: PHRASE_PUBLICATION_ECHOUEE }
+  }
+}
+
+/** L'état du compte de l'appli (GET /api/generateur/compte) ; `null` si la route ne répond pas. */
+export async function lireCompte(id: string, autorisation: string): Promise<{ etat: string; adresse?: string } | null> {
+  try {
+    const res = await fetch(`/api/generateur/compte?id=${encodeURIComponent(id)}`, { headers: { Authorization: autorisation } })
+    if (!res.ok) return null
+    const d = (await res.json()) as { etat?: unknown; adresse?: unknown }
+    return typeof d.etat === 'string' ? { etat: d.etat, ...(typeof d.adresse === 'string' ? { adresse: d.adresse } : {}) } : null
+  } catch {
+    return null
   }
 }
 
@@ -306,6 +339,7 @@ export async function changerAdresse(o: {
       moyens: [],
       mobileMoney: null,
       avecEtapes: false,
+      compte: null,
       verifier: (adresse) => verifierAdresseEnDirect(o.id, adresse, o.autorisation),
       valider: async (adresse) => {
         if (adresse === '') return 'Choisissez une adresse.'

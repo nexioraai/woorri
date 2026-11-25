@@ -62,7 +62,7 @@ describe('payer par mobile money — l’écran', () => {
     expect(racine.textContent).not.toMatch(/A payment request/u)
     // DOUBLE PAIEMENT : avant 10 minutes, l'écran dit qu'une autre demande ne partira pas.
     expect(racine.textContent).toMatch(motifTexte(PHRASE_UNE_DEMANDE))
-    expect(PHRASE_UNE_DEMANDE).toBe('Une seule demande à la fois : tant que celle-ci n’a ni abouti ni échoué, une nouvelle ne peut partir qu’après 10 minutes.')
+    expect(PHRASE_UNE_DEMANDE).toBe('Pas reçu de message ? Vous pourrez réessayer dans 10 minutes.')
     const changer = [...racine.querySelectorAll('button')].find((b) => b.textContent === 'Changer de numéro') as HTMLButtonElement
     expect(changer).toBeTruthy()
     await React.act(async () => { changer.click() })

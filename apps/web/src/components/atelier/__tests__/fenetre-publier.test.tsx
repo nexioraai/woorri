@@ -30,7 +30,7 @@ async function monter(demande: DemandeFenetre, onFermer = vi.fn()): Promise<{ ra
 }
 const demande = (d: Partial<DemandeFenetre> = {}): DemandeFenetre => ({
   titre: 'Publier votre application', adresseInitiale: 'gestion-de-stock', adresseModifiable: true, listes: [],
-  libelleBouton: 'Publier', moyens: [], mobileMoney: null, avecEtapes: true, verifier: null,
+  libelleBouton: 'Publier', moyens: [], mobileMoney: null, avecEtapes: true, compte: null, verifier: null,
   valider: vi.fn(async () => null), annuler: vi.fn(), ...d,
 })
 const boutons = (r: HTMLElement) => [...r.querySelectorAll('button')].map((b) => b.textContent?.trim())
@@ -264,7 +264,8 @@ describe('REFONTE · mobile money : formulaire, attente, réussite', () => {
     const texte = racine.textContent ?? ''
     expect(texte).toMatch(motifTexte('Airtel Money'))
     expect(texte).toMatch(motifTexte('Numéro mobile money'))
-    expect(texte).toMatch(motifTexte('se publie seule'))
+    expect(texte).toMatch(motifTexte('Dès que vous validez le paiement sur votre téléphone, votre application est publiée.'))
+    expect(texte).not.toMatch(motifTexte('se publie seule'))
     expect(texte).not.toMatch(/frais|%/iu)
     expect(racine.querySelector('input[type="radio"]'), 'le choix reste affiché').toBeNull()
   })
@@ -315,5 +316,102 @@ describe('REFONTE · la confirmation d’une publication sans paiement à faire'
     expect(racine.textContent).toMatch(motifTexte('Votre application est en ligne'))
     expect(racine.textContent).toMatch(motifTexte('Elle l’était déjà'))
     expect([...racine.querySelectorAll('a')].find((a) => a.textContent?.trim() === 'Ouvrir')?.getAttribute('href')).toBe('https://atitta.deribfy.app')
+  })
+})
+
+
+describe('CORRECTIONS (2026-11-24, après les captures)', () => {
+  const OFFRE = { montant: 14000, devise: 'XAF', test: false, operateurs: [{ code: 'AIRTEL', nom: 'Airtel Money' }] }
+  const reseau = (post: Record<string, unknown>) => vi.fn(async (_u: string, init?: RequestInit) => new Response(JSON.stringify(init?.method === 'POST' ? post : OFFRE), { status: 200 }))
+  const auFormulaire = async () => {
+    const valider = vi.fn(async () => 'mobile_money' as const)
+    const m = await monter(demande({ moyens: DEUX, valider, mobileMoney: { app: 'app-1', jeton: async () => 'j', onPaye: async () => undefined, lireAdresse: async () => null, relectureMs: 40 } }))
+    await cliquer(m.racine, 'Continuer')
+    await choisir(m.racine, 'mobile_money')
+    await cliquer(m.racine, 'Publier')
+    await attendre(30)
+    return m
+  }
+  it('l’attente dit « Pas reçu de message ? Vous pourrez réessayer dans 10 minutes. »', async () => {
+    vi.stubGlobal('fetch', reseau({ encaissement: 'e1', etat: 'en_attente', montant: 14000, devise: 'XAF', test: false, action: null, echec: null }))
+    const { racine } = await auFormulaire()
+    const React = await import('react')
+    const poser = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+    const [tel, nom] = [...racine.querySelectorAll('form input')] as HTMLInputElement[]
+    await React.act(async () => { poser?.call(tel, '66000001'); tel?.dispatchEvent(new Event('input', { bubbles: true })); poser?.call(nom, 'Awa'); nom?.dispatchEvent(new Event('input', { bubbles: true })) })
+    await React.act(async () => { (racine.querySelector('form') as HTMLFormElement).requestSubmit(); await new Promise((x) => setTimeout(x, 20)) })
+    expect(racine.textContent).toMatch(motifTexte('Pas reçu de message ? Vous pourrez réessayer dans 10 minutes.'))
+    expect(racine.textContent).not.toMatch(motifTexte('Une seule demande à la fois'))
+    // Demande partie : plus de retour au choix du moyen.
+    expect(bouton(racine, 'Moyen de paiement'), 'retour possible pendant l’attente').toBeUndefined()
+  })
+  it('« ‹ Moyen de paiement » ramène aux deux cartes (avant tout envoi)', async () => {
+    vi.stubGlobal('fetch', reseau({}))
+    const { racine } = await auFormulaire()
+    expect(bouton(racine, 'Moyen de paiement')).toBeDefined()
+    await cliquer(racine, 'Moyen de paiement')
+    expect(radios(racine).map((r) => r.value)).toEqual(['carte', 'mobile_money'])
+  })
+  it('le numéro : « +235 » fixe devant, on tape les huit chiffres', async () => {
+    vi.stubGlobal('fetch', reseau({}))
+    const { racine } = await auFormulaire()
+    const tel = racine.querySelector('input[type="tel"]') as HTMLInputElement
+    expect(tel.placeholder).toBe('66 00 00 00')
+    expect(tel.previousElementSibling?.textContent).toBe('+235')
+  })
+
+  const avecCompte = (lire: CompteLu, creer = vi.fn(async () => ({ ok: true as const, adresse: 'admin@ma-pharmacie.deribfy.app', motDePasse: 'Mdp-Neuf-42' }))) =>
+    ({ lire: vi.fn(async () => lire), creerMotDePasse: creer })
+  type CompteLu = { etat: string; adresse?: string } | null
+  it('IDENTIFIANTS · publication qui rend le mot de passe : la Confirmation le montre, avec où les retrouver', async () => {
+    const valider = vi.fn(async () => ({ lien: 'https://ma-pharmacie.deribfy.app', dejaEnLigne: false, compte: { adresse: 'admin@ma-pharmacie.deribfy.app', motDePasse: 'Mdp-Une-Fois-7' } }))
+    const { racine } = await monter(demande({ valider, adresseModifiable: false, compte: avecCompte({ etat: 'actif', adresse: 'x' }) }))
+    await cliquer(racine, 'Publier')
+    await attendre(20)
+    const bloc = racine.querySelector('[data-identifiants]')
+    expect(bloc?.textContent).toMatch(motifTexte('Vos identifiants de connexion à l’application'))
+    expect(bloc?.textContent).toContain('admin@ma-pharmacie.deribfy.app')
+    expect(bloc?.textContent).toContain('Mdp-Une-Fois-7')
+    expect(bloc?.textContent).toMatch(motifTexte('Vous les retrouverez à tout moment dans « Mes projets »'))
+    expect(bouton(racine, 'Créer mon mot de passe'), 'déjà montré : pas de bouton').toBeUndefined()
+  })
+  it('IDENTIFIANTS · publiée par le paiement (aucun mot de passe vu) : l’adresse de connexion, puis « Créer mon mot de passe » le montre', async () => {
+    const compte = avecCompte({ etat: 'actif', adresse: 'admin@ma-pharmacie.deribfy.app' })
+    const valider = vi.fn(async () => ({ lien: 'https://ma-pharmacie.deribfy.app', dejaEnLigne: true, compte: null }))
+    const { racine } = await monter(demande({ valider, adresseModifiable: false, compte }))
+    await cliquer(racine, 'Publier')
+    await attendre(20)
+    expect(compte.lire).toHaveBeenCalledTimes(1)
+    expect(racine.querySelector('[data-identifiants]')?.textContent).toContain('admin@ma-pharmacie.deribfy.app')
+    await cliquer(racine, 'Créer mon mot de passe')
+    await attendre(20)
+    expect(compte.creerMotDePasse).toHaveBeenCalledTimes(1)
+    expect(racine.querySelector('[data-identifiants]')?.textContent).toContain('Mdp-Neuf-42')
+  })
+  it('IDENTIFIANTS · appli sans données : aucun compte, aucun bloc', async () => {
+    const valider = vi.fn(async () => ({ lien: 'https://ma-vitrine.deribfy.app', dejaEnLigne: false, compte: null }))
+    const { racine } = await monter(demande({ valider, adresseModifiable: false, compte: avecCompte({ etat: 'sans-donnees' }) }))
+    await cliquer(racine, 'Publier')
+    await attendre(20)
+    expect(racine.querySelector('[data-identifiants]')).toBeNull()
+  })
+  it('IDENTIFIANTS · aussi après un paiement MOBILE MONEY : la Confirmation relit le compte', async () => {
+    vi.stubGlobal('fetch', reseau({ encaissement: 'e1', etat: 'reussi', montant: 14000, devise: 'XAF', test: false, action: null, echec: null }))
+    const compte = avecCompte({ etat: 'actif', adresse: 'admin@ma-pharmacie.deribfy.app' })
+    const valider = vi.fn(async () => 'mobile_money' as const)
+    const { racine } = await monter(demande({ moyens: DEUX, valider, compte, mobileMoney: { app: 'app-1', jeton: async () => 'j', onPaye: async () => undefined, lireAdresse: async () => 'https://ma-pharmacie.deribfy.app', relectureMs: 40 } }))
+    await cliquer(racine, 'Continuer')
+    await choisir(racine, 'mobile_money')
+    await cliquer(racine, 'Publier')
+    await attendre(30)
+    const React = await import('react')
+    const poser = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+    const [tel, nom] = [...racine.querySelectorAll('form input')] as HTMLInputElement[]
+    await React.act(async () => { poser?.call(tel, '66000001'); tel?.dispatchEvent(new Event('input', { bubbles: true })); poser?.call(nom, 'Awa'); nom?.dispatchEvent(new Event('input', { bubbles: true })) })
+    await React.act(async () => { (racine.querySelector('form') as HTMLFormElement).requestSubmit(); await new Promise((x) => setTimeout(x, 20)) })
+    await attendre(80)
+    expect(racine.textContent).toMatch(motifTexte('Votre application est en ligne'))
+    expect(racine.querySelector('[data-identifiants]')?.textContent).toContain('admin@ma-pharmacie.deribfy.app')
+    expect(bouton(racine, 'Créer mon mot de passe')).toBeDefined()
   })
 })

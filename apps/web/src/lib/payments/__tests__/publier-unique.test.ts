@@ -846,6 +846,9 @@ describe('REFONTE · la validation rend la confirmation à la fenêtre (2026-11-
     expect(await clic('atelier')).toMatchObject({ type: 'publiee', dejaEnLigne: false })
     expect(resultatsFenetre).toHaveLength(1)
     expect(resultatsFenetre[0]).toMatchObject({ dejaEnLigne: false })
+    expect(resultatsFenetre[0], 'le compte doit voyager jusqu’à la Confirmation').toHaveProperty('compte')
+    expect(typeof fenetres[0]?.compte?.lire).toBe('function')
+    expect(typeof fenetres[0]?.compte?.creerMotDePasse).toBe('function')
     expect(String((resultatsFenetre[0] as { lien: string }).lien)).toMatch(/gestion-stock/u)
     etat.paye = false
   })

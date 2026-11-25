@@ -23,12 +23,16 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, ChevronLeft, CreditCard, ExternalLink, Loader2, Smartphone } from 'lucide-react';
 import { nomValide } from '@/lib/apps/sous-domaine';
 import { phraseListePublique, PHRASE_SI_VOUS_NE_VOULEZ_PAS } from '@/lib/apps/contenu-public';
-import type { DemandeFenetre } from '@/components/apps/publierAppli';
+import type { CompteFenetre, DemandeFenetre } from '@/components/apps/publierAppli';
+import { IdentifiantsOeuvre, type EtatCompteOeuvre } from '@/components/apps/IdentifiantsOeuvre';
+import { LIBELLE_CREER_MOT_DE_PASSE } from '@/components/apps/publierAppli';
 import { LIBELLE_MOYEN, type MoyenPublication } from '@/lib/apps/compteur-phrases';
 import { PayerMobileMoney } from '@/components/atelier/PayerMobileMoney';
 
 export const PHRASE_FORMAT_NOM = 'Minuscules, chiffres et tirets, de 3 à 40 signes.';
-export const PHRASE_APRES_MOBILE_MONEY = 'Le paiement validé sur votre téléphone, l’application se publie seule à cette adresse.';
+export const PHRASE_APRES_MOBILE_MONEY = 'Dès que vous validez le paiement sur votre téléphone, votre application est publiée.';
+export const PHRASE_OU_RETROUVER = 'Vous les retrouverez à tout moment dans « Mes projets », bouton « Créer / refaire mon mot de passe ».';
+export const TITRE_IDENTIFIANTS = 'Vos identifiants de connexion à l’application';
 export const PHRASE_ADRESSE_LIBRE = 'Adresse disponible';
 export const PHRASE_PUBLICATION_EN_COURS = 'Paiement reçu. Publication en cours…';
 export const PHRASE_TEST_SANS_PUBLICATION = 'Paiement de test confirmé. En mode test, l’application n’est pas publiée.';
@@ -44,7 +48,7 @@ const TITRE_MOYEN: Readonly<Record<MoyenPublication, string>> = { carte: LIBELLE
 
 type Etape = 'adresse' | 'paiement' | 'confirmation';
 type Confirmation =
-  | { readonly etat: 'en_ligne'; readonly lien: string; readonly dejaEnLigne: boolean }
+  | { readonly etat: 'en_ligne'; readonly lien: string; readonly dejaEnLigne: boolean; readonly compte?: EtatCompteOeuvre | null }
   | { readonly etat: 'publication' }
   | { readonly etat: 'test' }
   | { readonly etat: 'tarde' };
@@ -61,6 +65,7 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
   const [moyen, setMoyen] = useState<MoyenPublication | null>(null);
   const [etape, setEtape] = useState<Etape>('adresse');
   const [formulaireMm, setFormulaireMm] = useState(false);
+  const [paiementParti, setPaiementParti] = useState(false);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [verif, setVerif] = useState<Verif | null>(null);
   const champ = useRef<HTMLInputElement | null>(null);
@@ -71,7 +76,7 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
     // Au tour suivant : pas d'état posé pendant l'effet lui-même.
     const t = window.setTimeout(() => {
       setAdresse(demande.adresseInitiale); setErreur(null); setEnCours(false); setMoyen(demande.moyens[0] ?? null);
-      setFormulaireMm(false); setConfirmation(null); setVerif(null); relecture.current += 1;
+      setFormulaireMm(false); setPaiementParti(false); setConfirmation(null); setVerif(null); relecture.current += 1;
       // Adresse figée et rien à accepter : on commence au paiement.
       setEtape(demande.moyens.length > 0 && !demande.adresseModifiable && demande.listes.length === 0 ? 'paiement' : 'adresse');
       champ.current?.focus();
@@ -130,7 +135,7 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
     setEnCours(false);
     if (r === null) { fermer(); return; }
     if (r === 'mobile_money') { setFormulaireMm(true); return; }
-    if (typeof r === 'object') { setConfirmation({ etat: 'en_ligne', lien: r.lien, dejaEnLigne: r.dejaEnLigne }); setEtape('confirmation'); return; }
+    if (typeof r === 'object') { setConfirmation({ etat: 'en_ligne', lien: r.lien, dejaEnLigne: r.dejaEnLigne, compte: r.compte ?? null }); setEtape('confirmation'); return; }
     // Un refus du NOM ramène à l'adresse, là où il se corrige.
     setErreur(r);
     if (demande.adresseModifiable && etape === 'paiement' && /adresse|nom|pris/iu.test(r)) setEtape('adresse');
@@ -216,15 +221,20 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
             <Apparition cle="mobile-money">
               <p className="mb-4 flex items-center gap-2 text-sm font-semibold text-white"><Smartphone size={18} className="text-accent" aria-hidden />Mobile money</p>
               <PayerMobileMoney app={demande.mobileMoney.app} jeton={demande.mobileMoney.jeton} renouveler={false}
-                onPaye={demande.mobileMoney.onPaye} onReussi={(test) => { void suivreAdresse(test); }} ouvertDOffice enFenetre />
+                onPaye={demande.mobileMoney.onPaye} onReussi={(test) => { void suivreAdresse(test); }} onEnvoye={setPaiementParti} ouvertDOffice enFenetre />
               <p className="mt-4 text-xs leading-relaxed text-white/45">{PHRASE_APRES_MOBILE_MONEY}</p>
-              <Boutons><BoutonSecondaire onClick={fermer}>Fermer</BoutonSecondaire></Boutons>
+              <Boutons>
+                {!paiementParti && (
+                  <BoutonSecondaire onClick={() => { setFormulaireMm(false); setErreur(null); }}><ChevronLeft size={16} aria-hidden />Moyen de paiement</BoutonSecondaire>
+                )}
+                <BoutonSecondaire onClick={fermer}>Fermer</BoutonSecondaire>
+              </Boutons>
             </Apparition>
           )}
 
           {etape === 'confirmation' && confirmation !== null && (
             <Apparition cle="confirmation">
-              <EcranConfirmation c={confirmation} />
+              <EcranConfirmation c={confirmation} compte={demande.compte} />
               <Boutons>
                 <BoutonSecondaire onClick={fermer}>Fermer</BoutonSecondaire>
                 {confirmation.etat === 'en_ligne' && (
@@ -284,7 +294,7 @@ function CarteMoyen({ moyen, choisi, onChoisir }: { readonly moyen: MoyenPublica
   );
 }
 
-function EcranConfirmation({ c }: { readonly c: Confirmation }) {
+function EcranConfirmation({ c, compte }: { readonly c: Confirmation; readonly compte: CompteFenetre | null }) {
   if (c.etat === 'en_ligne') {
     return (
       <div className="flex flex-col items-center gap-3 py-2 text-center">
@@ -292,6 +302,7 @@ function EcranConfirmation({ c }: { readonly c: Confirmation }) {
         <p className="text-lg font-semibold">{TITRE_EN_LIGNE}</p>
         {c.dejaEnLigne && <p className="text-xs text-white/55">Elle l’était déjà : son adresse reste la même.</p>}
         <a href={c.lien} target="_blank" rel="noreferrer noopener" className="max-w-full truncate rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-[#FFB08F] underline-offset-2 hover:underline">{c.lien}</a>
+        <Identifiants lien={c.lien} initial={c.compte ?? null} compte={compte} />
       </div>
     );
   }
@@ -302,6 +313,55 @@ function EcranConfirmation({ c }: { readonly c: Confirmation }) {
         ? <Loader2 size={32} className="text-accent motion-safe:animate-spin" aria-hidden />
         : <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.06] text-white/70"><Check size={26} aria-hidden /></span>}
       <p className="text-sm text-white/80">{texte}</p>
+    </div>
+  );
+}
+
+/**
+ * LES IDENTIFIANTS DE L'APPLI, dans la Confirmation (2026-11-24) — comme « Mes
+ * projets ». Mot de passe rendu par la publication : montré tel quel, une fois.
+ * Sinon (publication faite par l'avis du paiement, ou déjà en ligne) : le
+ * compte est relu ; une appli AVEC données montre son adresse de connexion et
+ * « Créer mon mot de passe ». Sans données : rien — il n'y a pas de compte.
+ */
+function Identifiants({ lien, initial, compte }: { readonly lien: string; readonly initial: EtatCompteOeuvre | null; readonly compte: CompteFenetre | null }) {
+  const [lu, setLu] = useState<EtatCompteOeuvre | null>(initial);
+  const [actif, setActif] = useState(initial !== null && (initial.adresse ?? '') !== '');
+  const [creation, setCreation] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+  useEffect(() => {
+    if (initial !== null || compte === null) return;
+    let vivant = true;
+    void compte.lire().then((c) => {
+      if (!vivant || c === null || c.etat !== 'actif') return;
+      setActif(true);
+      setLu({ adresse: c.adresse, motDePasse: null });
+    });
+    return () => { vivant = false; };
+  }, [initial, compte]);
+  if (!actif || lu === null) return null;
+  const creer = async () => {
+    if (compte === null) return;
+    setCreation(true);
+    setErreur(null);
+    const r = await compte.creerMotDePasse();
+    setCreation(false);
+    if (r.ok) setLu({ adresse: r.adresse ?? lu.adresse, motDePasse: r.motDePasse });
+    else setErreur(r.message);
+  };
+  const sansMotDePasse = (lu.motDePasse ?? null) === null;
+  return (
+    <div className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left" data-identifiants>
+      <p className="text-sm font-semibold text-white">{TITRE_IDENTIFIANTS}</p>
+      <div className="mt-2"><IdentifiantsOeuvre compte={lu} lien={lien} /></div>
+      {sansMotDePasse && compte !== null && (
+        <button type="button" disabled={creation} onClick={() => { void creer(); }}
+          className="mt-3 w-full rounded-xl bg-white/[0.08] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.14] disabled:opacity-50">
+          {creation ? 'Création…' : LIBELLE_CREER_MOT_DE_PASSE}
+        </button>
+      )}
+      {erreur !== null && <p role="alert" className="mt-2 text-xs text-red-300">{erreur}</p>}
+      <p className="mt-3 text-[11px] leading-relaxed text-white/45">{PHRASE_OU_RETROUVER}</p>
     </div>
   );
 }

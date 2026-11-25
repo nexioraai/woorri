@@ -71,6 +71,9 @@ function ecrireAttente(app: string, v: EnAttente | null): void {
   } catch { /* stockage indisponible : le suivi vit seulement dans la page */ }
 }
 
+/** L'indicatif fixe affiché devant le numéro, dans la fenêtre (Tchad). */
+export const INDICATIF = '+235';
+
 /** Le titre de l'écran d'attente, dans la fenêtre « Publier » (2026-11-24). */
 export const TITRE_ATTENTE = 'Validez le paiement sur votre téléphone';
 
@@ -91,7 +94,7 @@ export function phrasePrix(montant: number): string {
 }
 
 /** Une seule demande ouverte par appli (2026-11-21) : le serveur refuse la suivante avant 10 minutes. */
-export const PHRASE_UNE_DEMANDE = 'Une seule demande à la fois : tant que celle-ci n’a ni abouti ni échoué, une nouvelle ne peut partir qu’après 10 minutes.'
+export const PHRASE_UNE_DEMANDE = 'Pas reçu de message ? Vous pourrez réessayer dans 10 minutes.';
 
 /** « en attente depuis 7 min » — la durée vient de l'heure de la demande, jamais d'un délai inventé. */
 export function phraseAttente(minutes: number): string {
@@ -106,6 +109,7 @@ export function PayerMobileMoney({
   ouvertDOffice = false,
   enFenetre = false,
   onReussi,
+  onEnvoye,
 }: {
   app: string;
   jeton: () => Promise<string | null>;
@@ -118,6 +122,8 @@ export function PayerMobileMoney({
   enFenetre?: boolean;
   /** Appelé UNE fois quand le paiement aboutit (`test` : un paiement de test n'active rien). */
   onReussi?: (test: boolean) => void;
+  /** Une demande est partie (`true`) ou abandonnée pour un autre numéro (`false`) : la fenêtre masque alors « ‹ Moyen de paiement ». */
+  onEnvoye?: (parti: boolean) => void;
 }) {
   const [ouvert, setOuvert] = useState(false);
   const [offre, setOffre] = useState<Offre | null>(null);
@@ -160,6 +166,8 @@ export function PayerMobileMoney({
     setOffre({ montant, test: r.d.test !== false, operateurs: ops });
     if (ops.length > 0) setOperateur(ops[0]!.code);
   };
+  // UNE DEMANDE EN COURS SE DIT à la fenêtre : on ne revient pas au choix du moyen pendant l'attente.
+  useEffect(() => { onEnvoye?.(vue !== null); }, [vue, onEnvoye]);
   // LA RÉUSSITE SE DIT UNE FOIS à qui l'attend (la fenêtre passe à la confirmation).
   const reussiDit = useRef(false);
   useEffect(() => {
@@ -310,7 +318,17 @@ export function PayerMobileMoney({
             </select>
           </label>
           <label className={etiquette}>Numéro mobile money
-            <input value={telephone} onChange={(e) => setTelephone(e.target.value)} type="tel" autoComplete="tel" placeholder="+235 66 00 00 00" className={`${champ} mt-1`} required />
+            {enFenetre ? (
+              // « +235 » FIXE devant (2026-11-24) : on tape les 8 chiffres ; le serveur ajoute l'indicatif.
+              <span className="mt-1.5 flex items-center rounded-xl border border-white/15 bg-white/[0.04] transition focus-within:border-accent/70">
+                <span className="select-none border-r border-white/10 py-3 pl-3.5 pr-3 text-base text-white/60 sm:text-sm" aria-hidden>{INDICATIF}</span>
+                <input value={telephone} onChange={(e) => setTelephone(e.target.value)} type="tel" autoComplete="tel-national"
+                  placeholder="66 00 00 00" aria-label={`Numéro mobile money, après ${INDICATIF}`}
+                  className="min-w-0 flex-1 bg-transparent px-3 py-3 text-base text-white outline-none placeholder:text-white/35 sm:text-sm" required />
+              </span>
+            ) : (
+              <input value={telephone} onChange={(e) => setTelephone(e.target.value)} type="tel" autoComplete="tel" placeholder="+235 66 00 00 00" className={`${champ} mt-1`} required />
+            )}
           </label>
           <label className={etiquette}>Nom du titulaire
             <input value={nom} onChange={(e) => setNom(e.target.value)} autoComplete="name" className={`${champ} mt-1`} required minLength={2} maxLength={80} />
