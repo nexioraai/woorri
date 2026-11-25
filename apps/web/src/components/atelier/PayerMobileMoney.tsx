@@ -71,6 +71,11 @@ function ecrireAttente(app: string, v: EnAttente | null): void {
   } catch { /* stockage indisponible : le suivi vit seulement dans la page */ }
 }
 
+/** Au-delà, l'appel est abandonné et l'écran le dit (2026-11-25). */
+export const DELAI_APPEL_MS = 20_000;
+export const PHRASE_SANS_REPONSE = 'Le paiement mobile money ne répond pas. Vérifiez votre connexion, puis réessayez.';
+export const LIBELLE_REESSAYER = 'Réessayer';
+
 /** L'indicatif fixe affiché devant le numéro, dans la fenêtre (Tchad). */
 export const INDICATIF = '+235';
 
@@ -147,16 +152,30 @@ export function PayerMobileMoney({
   const [attente, setAttente] = useState<EnAttente | null>(() => (typeof window === 'undefined' ? null : lireAttente(app)));
   const [minutes, setMinutes] = useState(0);
 
+  // ── UN APPEL QUI NE RÉPOND PAS SE DIT (défaut mesuré en production le
+  //    2026-11-25) : un `fetch` rejeté (réseau coupé, requête annulée) n'était
+  //    rattrapé nulle part, et l'écran restait sur « Chargement… » POUR
+  //    TOUJOURS. Désormais : un délai maximal, et tout échec devient une phrase
+  //    avec « Réessayer ».
   const appeler = async (methode: 'GET' | 'POST', requete: string, corps?: unknown) => {
     const t = await jeton();
     if (t === null) return null;
-    const res = await fetch(`/api/generateur/mobile-money?id=${encodeURIComponent(app)}${objet === 'lot' ? '&objet=lot' : ''}${requete}`, {
-      method: methode,
-      headers: { Authorization: `Bearer ${t}`, ...(corps === undefined ? {} : { 'Content-Type': 'application/json' }) },
-      body: corps === undefined ? undefined : JSON.stringify(corps),
-    });
-    const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-    return { ok: res.ok, d };
+    const arret = new AbortController();
+    const minuteur = window.setTimeout(() => { arret.abort(); }, DELAI_APPEL_MS);
+    try {
+      const res = await fetch(`/api/generateur/mobile-money?id=${encodeURIComponent(app)}${objet === 'lot' ? '&objet=lot' : ''}${requete}`, {
+        method: methode,
+        headers: { Authorization: `Bearer ${t}`, ...(corps === undefined ? {} : { 'Content-Type': 'application/json' }) },
+        body: corps === undefined ? undefined : JSON.stringify(corps),
+        signal: arret.signal,
+      });
+      const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      return { ok: res.ok, d };
+    } catch {
+      return { ok: false, d: { error: PHRASE_SANS_REPONSE } as Record<string, unknown> };
+    } finally {
+      window.clearTimeout(minuteur);
+    }
   };
 
   const ouvrir = async () => {
@@ -292,7 +311,9 @@ export function PayerMobileMoney({
   const champ = enFenetre
     ? 'w-full rounded-xl border border-white/15 bg-white/[0.04] px-3.5 py-3 text-base text-white placeholder:text-white/35 outline-none transition focus:border-accent/70 sm:text-sm'
     : 'w-full rounded-lg border border-white/15 bg-white/[0.03] px-2.5 py-1.5 text-xs text-white placeholder:text-slate-500';
-  const enTest = vue?.test ?? offre?.test ?? true;
+  // « MODE TEST » seulement quand le SERVEUR l'a dit (2026-11-25) : pendant le
+  // chargement, on ne sait rien — l'afficher par défaut trompait tout le monde.
+  const enTest = (vue?.test ?? offre?.test ?? null) === true;
   const etiquette = enFenetre ? 'block text-xs font-medium text-white/60' : 'block';
   return (
     <div className={enFenetre ? 'text-sm text-white/80' : 'mt-2 rounded-xl border border-white/15 p-3 text-xs text-slate-200'} aria-live="polite">
@@ -374,6 +395,12 @@ export function PayerMobileMoney({
         </div>
       )}
       {avis !== null && <p role="alert" className="mt-2 text-amber-200/90">{avis}</p>}
+      {avis !== null && offre === null && vue === null && (
+        <button type="button" onClick={() => { void ouvrir(); }}
+          className={enFenetre ? 'mt-3 w-full rounded-xl bg-white/[0.08] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.14]' : 'mt-2 w-full rounded-lg border border-white/15 px-3 py-1.5'}>
+          {LIBELLE_REESSAYER}
+        </button>
+      )}
     </div>
   );
 }

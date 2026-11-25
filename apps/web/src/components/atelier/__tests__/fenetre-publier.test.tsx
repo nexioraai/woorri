@@ -476,3 +476,69 @@ describe('LOT DE MODIFICATIONS (2026-11-24) · la même fenêtre', () => {
     expect(ouvrir).not.toHaveBeenCalled()
   })
 })
+
+describe('DÉFAUT DU 2026-11-25 · « MODE TEST » et « Chargement… » sans fin', () => {
+  const auFormulaire = async () => {
+    const valider = vi.fn(async () => 'mobile_money' as const)
+    const m = await monter(demande({ moyens: DEUX, valider, mobileMoney: { app: 'app-1', jeton: async () => 'j', onPaye: async () => undefined, lireAdresse: async () => null, relectureMs: 40 } }))
+    await cliquer(m.racine, 'Continuer')
+    await choisir(m.racine, 'mobile_money')
+    await cliquer(m.racine, 'Publier')
+    return m
+  }
+  it('pendant le chargement : AUCUN « MODE TEST » (le serveur n’a encore rien dit)', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => undefined)))
+    const { racine } = await auFormulaire()
+    await attendre(30)
+    expect(racine.textContent).toMatch(motifTexte('Chargement…'))
+    expect(racine.textContent, '« MODE TEST » affiché avant toute réponse').not.toMatch(/mode test/iu)
+  })
+  it('compte en RÉEL (réponse test: false) : le formulaire, sans « MODE TEST »', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ montant: 14000, devise: 'XAF', test: false, operateurs: [{ code: 'AIRTEL', nom: 'Airtel Money' }] }), { status: 200 })))
+    const { racine } = await auFormulaire()
+    await attendre(30)
+    expect(racine.textContent).toMatch(motifTexte('Numéro mobile money'))
+    expect(racine.textContent).not.toMatch(/mode test/iu)
+  })
+  it('compte en TEST (réponse test: true) : le badge, comme avant', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ montant: 14000, devise: 'XAF', test: true, operateurs: [{ code: 'AIRTEL', nom: 'Airtel Money' }] }), { status: 200 })))
+    const { racine } = await auFormulaire()
+    await attendre(30)
+    expect(racine.textContent).toMatch(/mode test/iu)
+  })
+  it('requête rejetée (réseau coupé) : plus de « Chargement… » sans fin — la phrase, et « Réessayer » qui relance', async () => {
+    let fois = 0
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      fois += 1
+      if (fois === 1) throw new TypeError('Load failed')
+      return new Response(JSON.stringify({ montant: 14000, devise: 'XAF', test: false, operateurs: [{ code: 'AIRTEL', nom: 'Airtel Money' }] }), { status: 200 })
+    }))
+    const { racine } = await auFormulaire()
+    await attendre(30)
+    expect(racine.textContent).not.toMatch(motifTexte('Chargement…'))
+    expect(racine.textContent).toMatch(motifTexte('Le paiement mobile money ne répond pas. Vérifiez votre connexion, puis réessayez.'))
+    await cliquer(racine, 'Réessayer')
+    await attendre(30)
+    expect(racine.textContent).toMatch(motifTexte('Numéro mobile money'))
+  })
+  it('requête qui ne répond jamais : abandonnée après le délai, la phrase et « Réessayer »', async () => {
+    const mod = await import('@/components/atelier/PayerMobileMoney')
+    expect(mod.DELAI_APPEL_MS).toBe(20_000)
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      vi.stubGlobal('fetch', vi.fn((_u: string, init?: RequestInit) => new Promise<Response>((_ok, ko) => { init?.signal?.addEventListener('abort', () => { ko(new DOMException('aborted', 'AbortError')) }) })))
+      const React = await import('react')
+      const { createRoot } = await import('react-dom/client')
+      const racine = document.createElement('div')
+      document.body.appendChild(racine)
+      await React.act(async () => { createRoot(racine).render(React.createElement(mod.PayerMobileMoney, { app: 'a9', jeton: async () => 't', renouveler: false, onPaye: async () => null, ouvertDOffice: true, enFenetre: true })) })
+      await React.act(async () => { await vi.advanceTimersByTimeAsync(10) })
+      expect(racine.textContent).toMatch(motifTexte('Chargement…'))
+      await React.act(async () => { await vi.advanceTimersByTimeAsync(20_000) })
+      expect(racine.textContent).not.toMatch(motifTexte('Chargement…'))
+      expect(racine.textContent).toMatch(motifTexte('Réessayer'))
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
