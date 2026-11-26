@@ -109,8 +109,11 @@ export default function InstitutionTheme({ site, host = null, actualites = [], p
         {/* ── QUI NOUS SOMMES : la présentation et la mission de la génération. */}
         {(site.about || site.mission) && (
           <section id="a-propos" className="max-w-7xl mx-auto px-5 sm:px-8 pt-24 grid gap-10 lg:grid-cols-2">
-            <h2 className="text-4xl sm:text-6xl">{site.mission ? site.mission : 'Qui sommes-nous'}</h2>
-            {site.about && <p className="text-lg sm:text-xl leading-relaxed text-neutral-700">{site.about}</p>}
+            <h2 className="text-4xl sm:text-6xl">{site.mission ? 'Notre mission' : 'Qui sommes-nous'}</h2>
+            <div className="space-y-5">
+              {site.mission && <p className="text-xl sm:text-2xl font-bold leading-snug" style={{ color: couleur }}>{site.mission}</p>}
+              {site.about && <p className="text-lg sm:text-xl leading-relaxed text-neutral-700">{site.about}</p>}
+            </div>
           </section>
         )}
 

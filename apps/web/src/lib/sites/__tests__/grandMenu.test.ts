@@ -40,6 +40,16 @@ describe('le grand menu', () => {
     await React.act(async () => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })) })
     expect(racine.querySelector('[data-panneau]')).toBeNull()
   })
+  it('survol PUIS clic : le panneau reste ouvert (défaut vu sur la capture du 2026-11-26) ; un 2e clic le referme', async () => {
+    const { React, racine } = await monter()
+    const bouton = racine.querySelector('[aria-controls="panneau-qui-sommes-nous"]') as HTMLButtonElement
+    await React.act(async () => { bouton.parentElement!.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })) })
+    expect(racine.querySelector('[data-panneau]'), 'le survol ouvre').not.toBeNull()
+    await React.act(async () => { bouton.click() })
+    expect(racine.querySelector('[data-panneau]'), 'le clic après le survol garde ouvert').not.toBeNull()
+    await React.act(async () => { bouton.click() })
+    expect(racine.querySelector('[data-panneau]'), 'un second clic referme').toBeNull()
+  })
   it('une rubrique sans sous-page est un simple lien', async () => {
     const { racine } = await monter()
     expect(racine.querySelector('a[href="https://m.deribfy.app/documents"]')).not.toBeNull()
@@ -53,5 +63,8 @@ describe('le grand menu', () => {
     expect(menu.getAttribute('aria-modal')).toBe('true')
     expect(menu.textContent).toMatch(/Missions/u)
     expect(document.body.style.overflow).toBe('hidden')
+    // Rendu au niveau du <body>, HORS de l'en-tête (dont le flou enfermerait un `fixed`).
+    expect(menu.parentElement).toBe(document.body)
+    expect(racine.contains(menu)).toBe(false)
   })
 })

@@ -84,12 +84,14 @@ export function couleurDemandee(texte: string | null | undefined): string | null
   return null
 }
 
-/** Les phrases du bandeau défilant : courtes (≤ 90 signes), tirées de la mission et de la présentation, 5 au plus. */
+/** Les phrases du bandeau défilant : 3 mots et 20 à 90 signes au moins, tirées de la mission et de la présentation, 5 au plus. */
 export function phrasesBandeau(...sources: (string | null | undefined)[]): string[] {
   const phrases = sources
     .flatMap((s) => (s ?? '').split(/(?<=[.!?])\s+|\s*[;•\n]\s*/u))
     .map((p) => p.trim().replace(/[.!?]+$/u, ''))
-    .filter((p) => p.length >= 12 && p.length <= 90)
+    // UNE PHRASE QUI SE TIENT SEULE : au moins 3 mots et 20 signes (« Il n'existe pas »,
+    // isolée dans un bandeau, ne veut rien dire), au plus 90 signes.
+    .filter((p) => p.length >= 20 && p.length <= 90 && p.split(/\s+/u).length >= 3)
   return [...new Set(phrases)].slice(0, 5)
 }
 

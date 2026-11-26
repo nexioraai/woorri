@@ -55,6 +55,12 @@ describe('③ le bandeau', () => {
     expect(phrasesBandeau('Garantir l’accès de tous aux soins. Former les agents de santé ; Lutter contre les épidémies.', 'Garantir l’accès de tous aux soins.'))
       .toEqual(['Garantir l’accès de tous aux soins', 'Former les agents de santé', 'Lutter contre les épidémies'])
     expect(phrasesBandeau('Court.', 'x'.repeat(120))).toEqual([])
+    // Une phrase isolée sans sens (constat du propriétaire sur le site fictif, 2026-11-26).
+    expect(phrasesBandeau("Le Ministère de l'Exemple est une institution fictive. Il n'existe pas.")).toEqual(["Le Ministère de l'Exemple est une institution fictive"])
+    expect(phrasesBandeau('Servir chaque citoyen. Former les agents publics.')).toEqual(['Servir chaque citoyen', 'Former les agents publics'])
+    expect(phrasesBandeau('Former trois agents.')).toEqual([])
+    // Deux mots, même longs, ne font pas une phrase de bandeau.
+    expect(phrasesBandeau('Coordination interministérielle.')).toEqual([])
   })
 })
 
@@ -97,6 +103,8 @@ describe('⑤ le rendu', () => {
     expect(h).toMatch(motifTexte('Former les agents de santé'))
     expect(h).toMatch(/<h1\sclass="[^"]*text-\[2\.6rem\][^"]*lg:text-8xl/u)
     expect(h).not.toMatch(/Sous-pages\s*:/u)
+    // La mission n'est pas un TITRE (capture du 2026-11-26) : un titre court, la mission en texte.
+    expect(h).toMatch(/<h2[^>]*>Notre\smission<\/h2>/u)
   })
   it('visiteur : AUCUN chiffre « À compléter », aucun contact inventé', () => {
     const h = rendre({ proprietaire: false })

@@ -5,6 +5,7 @@
 // menu en plein écran (jamais un menu sur deux lignes). Échap ferme ; le
 // mouvement respecte `prefers-reduced-motion`.
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { RubriqueInstitution } from './types'
 
 export default function GrandMenu({ rubriques, base, contact, couleur }: {
@@ -14,6 +15,9 @@ export default function GrandMenu({ rubriques, base, contact, couleur }: {
   couleur: string
 }) {
   const [ouverte, setOuverte] = useState<string | null>(null)
+  // Ouvert par un CLIC (et non par le survol) : un second clic le referme. Ouvert par le survol,
+  // le clic qui suit le GARDE ouvert (sinon le survol l'ouvre et le clic le referme aussitôt).
+  const [parClic, setParClic] = useState(false)
   const [mobile, setMobile] = useState(false)
   useEffect(() => {
     const echap = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOuverte(null); setMobile(false) } }
@@ -28,10 +32,10 @@ export default function GrandMenu({ rubriques, base, contact, couleur }: {
     <>
       <nav aria-label="Menu principal" className="hidden lg:flex items-stretch gap-1 h-full" onMouseLeave={() => setOuverte(null)} data-grand-menu="">
         {rubriques.map((x) => (
-          <div key={x.chemin} className="flex items-stretch" onMouseEnter={() => setOuverte(x.enfants.length > 0 ? x.chemin : null)}>
+          <div key={x.chemin} className="flex items-stretch" onMouseEnter={() => { setOuverte(x.enfants.length > 0 ? x.chemin : null); setParClic(false) }}>
             {x.enfants.length > 0 ? (
               <button type="button" aria-expanded={ouverte === x.chemin} aria-controls={`panneau-${x.chemin}`}
-                onClick={() => setOuverte(ouverte === x.chemin ? null : x.chemin)} onFocus={() => setOuverte(x.chemin)}
+                onClick={() => { setOuverte(ouverte === x.chemin && parClic ? null : x.chemin); setParClic(true) }} onFocus={() => setOuverte(x.chemin)}
                 className="px-4 text-[15px] font-bold tracking-tight transition-colors"
                 style={{ boxShadow: ouverte === x.chemin ? `inset 0 -4px 0 ${x.couleur}` : 'none' }}>
                 {x.titre}<span aria-hidden="true" className="ml-1.5 text-xs opacity-60">▾</span>
@@ -71,8 +75,10 @@ export default function GrandMenu({ rubriques, base, contact, couleur }: {
         onClick={() => setMobile(!mobile)} data-bouton-menu="">
         <span aria-hidden="true">{mobile ? '✕' : '☰'}</span>
       </button>
-      {mobile && (
-        <div className="lg:hidden fixed inset-0 z-[80] overflow-y-auto bg-white" role="dialog" aria-modal="true" aria-label="Menu" data-menu-mobile="">
+      {/* LE MENU PLEIN ÉCRAN EST RENDU AU NIVEAU DU <body> : l'en-tête porte un `backdrop-blur`,
+          qui ENFERME tout enfant `fixed` dans sa hauteur (80 px) — vu sur la capture du 2026-11-26. */}
+      {mobile && typeof document !== 'undefined' && createPortal(
+        <div className="lg:hidden fixed inset-0 z-[200] overflow-y-auto bg-white" role="dialog" aria-modal="true" aria-label="Menu" data-menu-mobile="">
           <div className="flex justify-end p-4">
             <button type="button" onClick={() => setMobile(false)} className="w-12 h-12 rounded-full text-white text-2xl" style={{ backgroundColor: couleur }} aria-label="Fermer le menu">✕</button>
           </div>
@@ -89,7 +95,8 @@ export default function GrandMenu({ rubriques, base, contact, couleur }: {
             ))}
             <li><a href={contact} className="block rounded-2xl p-5 text-2xl font-black text-white" style={{ backgroundColor: '#111' }}>Contact</a></li>
           </ul>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   )
