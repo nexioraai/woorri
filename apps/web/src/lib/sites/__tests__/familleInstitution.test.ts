@@ -61,6 +61,21 @@ describe('① la règle', () => {
   })
 })
 
+describe('①bis les phrases du propriétaire (2026-11-26)', () => {
+  const PHRASES = [
+    "Site institutionnel de la Maison Nationale de la Femme du Tchad, établissement public à caractère administratif à N'Djamena",
+    "Site de la Centrale pharmaceutique d'achats, établissement public",
+    "Site d'un établissement public à caractère administratif",
+  ]
+  it('institution, famille agence publique, secteur du générateur, type Google', () => {
+    for (const t of PHRASES) {
+      expect(familleInstitution(t), t).toBe('agence_publique')
+      expect(detectSector(t), t).toBe('institution')
+      expect(/"@type":"([A-Za-z]+)"/u.exec(renderToStaticMarkup(createElement(JsonLd, { site: { slug: 's', name: 'N', type: t } as never, url: 'https://s.deribfy.app' })))?.[1], t).toBe('GovernmentOrganization')
+    }
+  })
+})
+
 describe('② le générateur', () => {
   it('les deux demandes du diagnostic sont des institutions ; les commerces restent des commerces', () => {
     expect(detectSector("site institutionnel d'un ministère au Tchad")).toBe('institution')
