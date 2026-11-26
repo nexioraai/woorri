@@ -76,7 +76,7 @@ export async function fetchOwnedSite<T = Record<string, unknown>>(
 // cassee des l'execution du GRANT DB restreint -- ce n'est pas une
 // amelioration d'hygiene, c'est un correctif de regression fonctionnelle
 // immediate.
-const SITE_FORBIDDEN_CLIENT_FIELDS = [
+export const SITE_FORBIDDEN_CLIENT_FIELDS = [
   // Sous-mode / identite / financier -- CRIT-1 original.
   'dropship_type',
   'mode',
@@ -98,6 +98,12 @@ const SITE_FORBIDDEN_CLIENT_FIELDS = [
   // Entitlement/abonnement -- auto-elevation potentielle, meme famille que
   // dropship_type.
   'subscription_status',
+  // PUBLICATION (2026-11-26) -- seul le SERVEUR publie ou depublie (paiement
+  // recu, carte, mobile money, administrateur). Le droit `UPDATE (published)`
+  // est retire a `authenticated` en base (sites_publication_serveur.sql) :
+  // sans ce retrait ici, le round-trip Navbar ({...site}) ferait echouer la
+  // sauvegarde ENTIERE des que ce SQL est applique.
+  'published',
   // Domaine personnalise -- un flux dedie et deja valide existe
   // (/api/domains/*, contrainte UNIQUE deja prouvee en production) ; ce
   // chemin generique le contournerait.
