@@ -202,7 +202,7 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
             <Apparition cle="paiement">
               <fieldset>
                 <legend className="text-xs font-medium text-white/60">Moyen de paiement</legend>
-                <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup">
+                <div className={`mt-2 grid grid-cols-1 gap-3 ${demande.moyens.length > 1 ? 'sm:grid-cols-2' : ''}`} role="radiogroup" data-moyens={demande.moyens.length}>
                   {demande.moyens.map((m) => (
                     <CarteMoyen key={m} moyen={m} choisi={moyen === m} onChoisir={() => { setMoyen(m); setErreur(null); }} />
                   ))}
@@ -229,7 +229,7 @@ export function FenetrePublier({ demande, onFermer }: { readonly demande: Demand
                 objet={demande.mobileMoney.objet ?? 'abonnement'} {...(demande.mobileMoney.phraseDuPrix !== undefined ? { phraseDuPrix: demande.mobileMoney.phraseDuPrix } : {})}
                 {...(demande.mobileMoney.adresseApi !== undefined ? { adresseApi: demande.mobileMoney.adresseApi } : {})} />
               <p className="mt-4 text-xs leading-relaxed text-white/45">{demande.sansAdresse?.apresPaiement ?? demande.libelles?.apresMobileMoney ?? PHRASE_APRES_MOBILE_MONEY}</p>
-              <Boutons>
+              <Boutons ordre="naturel">
                 {!paiementParti && (
                   <BoutonSecondaire onClick={() => { setFormulaireMm(false); setErreur(null); }}><ChevronLeft size={16} aria-hidden />Moyen de paiement</BoutonSecondaire>
                 )}
@@ -394,8 +394,12 @@ function Apparition({ cle, children }: { readonly cle: string; readonly children
   );
 }
 
-function Boutons({ children }: { readonly children: ReactNode }) {
-  return <div className="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:gap-3">{children}</div>;
+/** Sur téléphone, les boutons s'empilent. Par défaut, le PREMIER écrit va en
+ *  bas (l'action principale, écrite en dernier, monte en haut). `naturel` :
+ *  l'ordre écrit, de haut en bas — le formulaire mobile money met
+ *  « ‹ Moyen de paiement » au-dessus et « Fermer » en dernier (2026-11-26). */
+function Boutons({ children, ordre = 'inverse' }: { readonly children: ReactNode; readonly ordre?: 'inverse' | 'naturel' }) {
+  return <div data-ordre={ordre} className={`mt-6 flex ${ordre === 'naturel' ? 'flex-col' : 'flex-col-reverse'} gap-2.5 sm:flex-row sm:gap-3`}>{children}</div>;
 }
 
 function BoutonSecondaire({ onClick, children }: { readonly onClick: () => void; readonly children: ReactNode }) {

@@ -257,6 +257,28 @@ describe('REFONTE · mobile money : formulaire, attente, réussite', () => {
     await attendre(30)
     return m
   }
+  it('UN SEUL MOYEN : sa carte prend toute la largeur ; DEUX : deux colonnes (2026-11-26)', async () => {
+    const grille = (r: HTMLElement) => r.querySelector('[role="radiogroup"]') as HTMLElement
+    const un = await monter(demande({ moyens: ['mobile_money'], adresseModifiable: false }))
+    expect(grille(un.racine).dataset.moyens).toBe('1')
+    expect(grille(un.racine).className).not.toContain('sm:grid-cols-2')
+    expect(grille(un.racine).className).toContain('grid-cols-1')
+    const deux = await monter(demande({ moyens: DEUX, adresseModifiable: false }))
+    expect(grille(deux.racine).className).toContain('sm:grid-cols-2')
+  })
+  it('FORMULAIRE MOBILE MONEY, sur téléphone : « ‹ Moyen de paiement » au-dessus, « Fermer » en dernier ; les autres pieds gardent leur ordre (2026-11-26)', async () => {
+    vi.stubGlobal('fetch', reseau({}))
+    const { racine } = await auFormulaire()
+    const pied = [...racine.querySelectorAll('[data-ordre]')].at(-1) as HTMLElement
+    expect(pied.dataset.ordre).toBe('naturel')
+    expect(pied.className.split(' ')).toContain('flex-col')
+    expect(pied.className).not.toContain('flex-col-reverse')
+    expect([...pied.querySelectorAll('button')].map((b) => b.textContent?.trim())).toEqual(['Moyen de paiement', 'Fermer'])
+    const autre = await monter(demande({ moyens: DEUX, adresseModifiable: false }))
+    const piedPaiement = autre.racine.querySelector('[data-ordre]') as HTMLElement
+    expect(piedPaiement.dataset.ordre).toBe('inverse')
+    expect(piedPaiement.className).toContain('flex-col-reverse')
+  })
   it('mobile money accepté : la fenêtre RESTE ouverte et montre le formulaire (opérateur, numéro), sans « frais »', async () => {
     vi.stubGlobal('fetch', reseau({}))
     const { racine, onFermer } = await auFormulaire()
