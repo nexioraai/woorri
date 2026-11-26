@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
+import { cpa } from '@/lib/sites/__tests__/institutionCpa'
 import { renderToStaticMarkup } from 'react-dom/server'
 
 vi.mock('@/lib/supabase', () => ({ supabase: { auth: { getSession: async () => ({ data: { session: null } }) } } }))
@@ -17,7 +18,7 @@ describe('CadreEspace', () => {
 
   it('au premier rendu : la barre latérale (squelette), le titre et la page', () => {
     const h = renderToStaticMarkup(
-      <CadreEspace slug="cpa" base="https://cpa.test" accent="#003670" lang="fr" actif="mes-commandes" titre="Mes commandes">
+      <CadreEspace slug="cpa" base="https://cpa.test" accent="#003670" lang="fr" inst={cpa('fr')} actif="mes-commandes" titre="Mes commandes">
         <p>contenu de la page</p>
       </CadreEspace>,
     )

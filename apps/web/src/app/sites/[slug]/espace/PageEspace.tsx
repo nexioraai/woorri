@@ -9,6 +9,8 @@ import BlocsDePage from '../pages/BlocsDePage'
 import { ouvreDesComptes } from '../acces/ouvreDesComptes'
 import { motsEspace } from '../espace-client/motsEspace'
 import CadreEspace from './CadreEspace'
+import { lireInstitution } from '@/lib/sites/lireInstitution'
+import type { Institution } from '@/lib/sites/institution'
 
 // ============================================================================
 // LOT 11 — LE GABARIT DES PAGES D'ESPACE.
@@ -52,7 +54,7 @@ export async function siteDeLEspace(slug: string): Promise<SitePublic | null> {
 
 export async function metadonneesEspace(
   chemin: string,
-  titre: (lang: string | null) => string,
+  titre: (lang: string | null, inst: Institution) => string,
   { params }: PropsEspace,
 ): Promise<Metadata> {
   const { slug } = await params
@@ -60,7 +62,7 @@ export async function metadonneesEspace(
   if (!s) return {}
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
   return {
-    title: `${titre(s.lang)} — ${s.name}`,
+    title: `${titre(s.lang, await lireInstitution(s.id, s.lang))} — ${s.name}`,
     alternates: { canonical: `${base}/${chemin}` },
     // UNE PAGE D'ESPACE NE S'INDEXE PAS : elle ne montre rien de public, et
     // l'indexer invite à y entrer au hasard.
@@ -72,9 +74,10 @@ export default async function PageEspace({
   chemin, titre, phrase, params, rendu,
 }: {
   chemin: string
-  titre: (lang: string | null) => string
-  phrase?: (lang: string | null) => string
-  rendu: (ctx: { slug: string; base: string; accent: string; lang: string | null }) => React.ReactNode
+  titre: (lang: string | null, inst: Institution) => string
+  phrase?: (lang: string | null, inst: Institution) => string
+  /** `inst` (2026-11-26) : le nom de l'institution du site, pour les mots des espaces. */
+  rendu: (ctx: { slug: string; base: string; accent: string; lang: string | null; inst: Institution }) => React.ReactNode
 } & PropsEspace) {
   const supabase = await lecteurDuSite()
   const { slug } = await params
@@ -86,6 +89,7 @@ export default async function PageEspace({
 
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
   const accent = s.primary_color || '#1e4d8c'
+  const inst = await lireInstitution(s.id, s.lang)
 
   const { data: declaree } = await supabase
     .from('site_pages_public')
@@ -101,15 +105,15 @@ export default async function PageEspace({
       <main>
         {/* LE TABLEAU DE BORD (CPA, 2026-11-19) : barre latérale, identité, puis
             la page. Sans compte actif, la page se rend sans cadre, comme avant. */}
-        <CadreEspace slug={s.slug} base={base} accent={accent} lang={s.lang} actif={chemin} nomSite={s.name}
-          titre={titre(s.lang)} phrase={phrase?.(s.lang)}
-          retour={{ href: `${base}/espace-client`, libelle: '← ' + motsEspace(s.lang).titre }}>
+        <CadreEspace slug={s.slug} base={base} accent={accent} lang={s.lang} inst={inst} actif={chemin} nomSite={s.name}
+          titre={titre(s.lang, inst)} phrase={phrase?.(s.lang, inst)}
+          retour={{ href: `${base}/espace-client`, libelle: '← ' + motsEspace(s.lang, inst).titre }}>
           {textes.length > 0 && (
             <div style={{ marginBottom: 28 }}>
               <BlocsDePage blocs={textes} base={base} primary={accent} lang={s.lang} />
             </div>
           )}
-          {rendu({ slug: s.slug, base, accent, lang: s.lang })}
+          {rendu({ slug: s.slug, base, accent, lang: s.lang, inst })}
         </CadreEspace>
       </main>
     </div>

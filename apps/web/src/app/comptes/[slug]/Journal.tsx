@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import type { Institution } from '@/lib/sites/institution'
 
 // LOT 14.3 — LE JOURNAL D'AUDIT, LU PAR LA CENTRALE. Qui a fait quoi, quand.
 // Immuable en base : cet écran ne propose aucune action, il n'y en a aucune.
@@ -16,7 +17,7 @@ const LIBELLE: Record<string, string> = {
   'demande.etat': 'a changé l’état de la demande', 'demande.repondre': 'a répondu à la demande',
 }
 
-export default function Journal({ slug }: { slug: string }) {
+export default function Journal({ slug, inst }: { slug: string; inst: Institution }) {
   const [entrees, setEntrees] = useState<Entree[] | null>(null)
 
   useEffect(() => {
@@ -36,7 +37,7 @@ export default function Journal({ slug }: { slug: string }) {
     <section style={{ marginTop: 44 }}>
       <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 6px' }}>Journal d’audit</h2>
       <p style={{ fontSize: 14, opacity: 0.65, margin: '0 0 14px' }}>
-        Chaque geste qui engage la Centrale, avec son auteur et son heure. Personne ne peut modifier ni effacer une entrée.
+        Chaque geste qui engage {inst.la}, avec son auteur et son heure. Personne ne peut modifier ni effacer une entrée.
       </p>
       {entrees && entrees.length === 0 && <p style={{ opacity: 0.55 }}>Aucune entrée.</p>}
       <ol style={{ padding: 0, margin: 0 }}>

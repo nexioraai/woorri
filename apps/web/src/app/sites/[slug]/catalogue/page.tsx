@@ -1,4 +1,5 @@
 import { ogDePage } from '../themes/metadonneesDuSite'
+import { lireInstitution } from '@/lib/sites/lireInstitution'
 import { pageWeb } from '../themes/filDAriane'
 import JsonLdScript from '../themes/JsonLdScript'
 import { lireSite } from '../themes/lireSite'
@@ -82,6 +83,7 @@ export default async function CataloguePage({ params, searchParams }: Props) {
   const supabase = await lecteurDuSite()
   const { slug } = await params
   const s = await fetchSiteCatalogue(slug)
+  const inst = s ? await lireInstitution(s.id, s.lang) : null
   if (!s) notFound()
 
   const sp = (await searchParams) ?? {}
@@ -266,7 +268,7 @@ export default async function CataloguePage({ params, searchParams }: Props) {
             <h1 style={{ fontSize: 'clamp(26px, 6vw, 36px)', fontWeight: 700, margin: '0 0 10px' }}>Catalogue</h1>
             {/* UNE SECTION VIDE INFORME, ELLE NE DÉCORE PAS. */}
             <p style={{ padding: '18px 20px', borderRadius: 12, background: '#f7f7f8', fontSize: 16, color: '#5b5b5b' }}>
-              Le catalogue n’est pas encore publié. Il paraîtra sur cette page dès que la Centrale l’aura mis en ligne.
+              Le catalogue n’est pas encore publié. Il paraîtra sur cette page dès que {inst?.la ?? 'l’établissement'} l’aura mis en ligne.
             </p>
           </>
         ) : (

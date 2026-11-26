@@ -1,3 +1,4 @@
+import type { Institution } from '@/lib/sites/institution'
 import PageEspace, { metadonneesEspace, siteDeLEspace, type PropsEspace } from '../espace/PageEspace'
 import MaPrequalification from '../espace/MaPrequalification'
 import { motsPrequalification } from '../espace/motsPrequalification'
@@ -8,8 +9,8 @@ import { lirePiecesDuSite } from '../espace/lirePiecesDuSite'
 //
 // LE COMPTE N'EST PAS DÉSIGNÉ : la route le déduit du jeton. C'est ce qui
 // garantit qu'un fournisseur ne voit pas la qualification d'un autre.
-const titre = (lang: string | null) => motsPrequalification(lang).titre
-const phrase = (lang: string | null) => motsPrequalification(lang).phrase
+const titre = (lang: string | null, inst: Institution) => motsPrequalification(lang, inst).titre
+const phrase = (lang: string | null, inst: Institution) => motsPrequalification(lang, inst).phrase
 
 export const generateMetadata = (p: PropsEspace) => metadonneesEspace('ma-prequalification', titre, p)
 
@@ -20,9 +21,9 @@ export default async function Page(p: PropsEspace) {
 
   return PageEspace({
     chemin: 'ma-prequalification', titre, phrase, ...p,
-    rendu: ({ slug: sl, base, accent, lang }) => (
+    rendu: ({ slug: sl, base, accent, lang, inst }) => (
       <MaPrequalification slug={sl} base={base} pieces={pieces}
-        primary={accent} mots={motsPrequalification(lang)} />
+        primary={accent} mots={motsPrequalification(lang, inst)} />
     ),
   })
 }

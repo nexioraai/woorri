@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { lireInstitution } from '@/lib/sites/lireInstitution'
 import { retourValable } from './retour'
 import Link from 'next/link'
 import { headers } from 'next/headers'
@@ -63,7 +64,7 @@ export async function metadonneesAcces(ecran: EcranAcces, { params }: PropsAcces
   const s = await siteDe(slug)
   if (!s) return {}
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
-  const m = motsAcces(s.lang)[ecran === 'oubli' ? 'oubli' : ecran]
+  const m = motsAcces(s.lang, await lireInstitution(s.id, s.lang))[ecran === 'oubli' ? 'oubli' : ecran]
   return {
     title: `${m.titre} — ${s.name}`,
     description: m.phrase,
@@ -84,7 +85,7 @@ export default async function PageAcces({ ecran, params, searchParams }: { ecran
 
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
   const accent = s.primary_color || '#1e4d8c'
-  const mots = motsAcces(s.lang)
+  const mots = motsAcces(s.lang, await lireInstitution(s.id, s.lang))
   const m = mots[ecran]
 
   const { data: declaree } = await supabase

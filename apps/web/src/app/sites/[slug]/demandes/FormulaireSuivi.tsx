@@ -19,9 +19,11 @@ type Reponse =
   | { trouve: false; message: string }
 
 export default function FormulaireSuivi({
-  primary, libelles,
+  primary, libelles, exemple,
 }: {
   primary: string
+  /** L'exemple de référence, au sigle DU SITE (« CPA-2026-XXXXXX » pour la CPA) — 2026-11-26. */
+  exemple: string
   libelles: {
     reference: string; email: string; chercher: string; cherche: string
     etat: string; deposee: string; majLe: string
@@ -73,7 +75,7 @@ export default function FormulaireSuivi({
             value={reference}
             onChange={(e) => setReference(e.target.value)}
             required
-            placeholder="CPA-2026-XXXXXX"
+            placeholder={exemple}
             style={{
               width: '100%', padding: '11px 13px', borderRadius: 10,
               border: '1px solid #d8d8dc', fontFamily: 'ui-monospace, monospace',

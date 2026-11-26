@@ -105,6 +105,10 @@ export const SITE_FORBIDDEN_CLIENT_FIELDS = [
   // sans ce retrait ici, le round-trip Navbar ({...site}) ferait echouer la
   // sauvegarde ENTIERE des que ce SQL est applique.
   'published',
+  // DÉSIGNATION (2026-11-26) -- « la Centrale », « le Ministère »… posée par le
+  // serveur (sites_designation.sql) ; aucun droit d'écriture du navigateur
+  // sur cette colonne : la renvoyer ferait refuser la sauvegarde ENTIÈRE.
+  'designation',
   // Domaine personnalise -- un flux dedie et deja valide existe
   // (/api/domains/*, contrainte UNIQUE deja prouvee en production) ; ce
   // chemin generique le contournerait.

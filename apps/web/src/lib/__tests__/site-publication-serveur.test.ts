@@ -38,6 +38,8 @@ describe('le navigateur ne publie plus un site', () => {
 
   it('`published` est dans la liste des champs interdits au navigateur', () => {
     expect(SITE_FORBIDDEN_CLIENT_FIELDS).toContain('published')
+    // 2026-11-26 : la désignation de l'institution, même raison (aucun GRANT UPDATE).
+    expect(SITE_FORBIDDEN_CLIENT_FIELDS).toContain('designation')
   })
 
   it('le SQL retire le droit au navigateur, et la vérification le mesure', () => {

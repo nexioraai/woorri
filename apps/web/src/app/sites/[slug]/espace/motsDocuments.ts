@@ -1,4 +1,5 @@
 import type { MotsDocuments } from './DocumentsDuCompte'
+import { accorder, type Institution } from '@/lib/sites/institution'
 
 // ============================================================================
 // LOT 12.1 — LES MOTS DU DOSSIER, DANS LES QUATRE LANGUES.
@@ -10,11 +11,11 @@ import type { MotsDocuments } from './DocumentsDuCompte'
 
 const FR: MotsDocuments & { titre: string; phrase: string } = {
   titre: 'Mes documents',
-  phrase: 'Les pièces que la Centrale vous a adressées, et celles que vous lui avez remises.',
+  phrase: 'Les pièces que {{la}} vous a adressées, et celles que vous lui avez remises.',
   chargement: 'Chargement…',
   refus: 'Votre compte doit être actif pour consulter vos documents.',
   vide: 'Aucun document pour l’instant.',
-  recus: 'Reçus de la Centrale', remis: 'Remis à la Centrale',
+  recus: 'Reçus {{de}}', remis: 'Remis {{a}}',
   deposer: 'Déposer une pièce', depot: 'Dépôt en cours…',
   telecharger: 'Télécharger', retirer: 'Retirer',
   retireLe: 'retiré le', depuis: 'déposé le',
@@ -24,10 +25,10 @@ const FR: MotsDocuments & { titre: string; phrase: string } = {
 
 const EN: MotsDocuments & { titre: string; phrase: string } = {
   titre: 'My documents',
-  phrase: 'The files the Centrale sent you, and those you handed over.',
+  phrase: 'The files {{the}} sent you, and those you handed over.',
   chargement: 'Loading…', refus: 'Your account must be active to view your documents.',
   vide: 'No document yet.',
-  recus: 'Received from the Centrale', remis: 'Handed to the Centrale',
+  recus: 'Received from {{the}}', remis: 'Handed to {{the}}',
   deposer: 'Upload a file', depot: 'Uploading…',
   telecharger: 'Download', retirer: 'Withdraw',
   retireLe: 'withdrawn on', depuis: 'filed on',
@@ -37,10 +38,10 @@ const EN: MotsDocuments & { titre: string; phrase: string } = {
 
 const AR: MotsDocuments & { titre: string; phrase: string } = {
   titre: 'مستنداتي',
-  phrase: 'الوثائق التي أرسلتها إليك المركزية، وتلك التي سلّمتها إليها.',
+  phrase: 'الوثائق التي أرسلتها إليك {{al}}، وتلك التي سلّمتها إليها.',
   chargement: 'جارٍ التحميل…', refus: 'يجب أن يكون حسابك نشطاً للاطلاع على مستنداتك.',
   vide: 'لا يوجد مستند حتى الآن.',
-  recus: 'واردة من المركزية', remis: 'مسلّمة إلى المركزية',
+  recus: 'واردة من {{al}}', remis: 'مسلّمة إلى {{al}}',
   deposer: 'إيداع وثيقة', depot: 'جارٍ الإيداع…',
   telecharger: 'تنزيل', retirer: 'سحب',
   retireLe: 'سُحبت في', depuis: 'أُودعت في',
@@ -50,10 +51,10 @@ const AR: MotsDocuments & { titre: string; phrase: string } = {
 
 const ES: MotsDocuments & { titre: string; phrase: string } = {
   titre: 'Mis documentos',
-  phrase: 'Los documentos que la Central le ha enviado, y los que usted le ha entregado.',
+  phrase: 'Los documentos que {{la}} le ha enviado, y los que usted le ha entregado.',
   chargement: 'Cargando…', refus: 'Su cuenta debe estar activa para consultar sus documentos.',
   vide: 'Ningún documento por ahora.',
-  recus: 'Recibidos de la Central', remis: 'Entregados a la Central',
+  recus: 'Recibidos {{de}}', remis: 'Entregados {{a}}',
   deposer: 'Subir un documento', depot: 'Subiendo…',
   telecharger: 'Descargar', retirer: 'Retirar',
   retireLe: 'retirado el', depuis: 'presentado el',
@@ -63,9 +64,18 @@ const ES: MotsDocuments & { titre: string; phrase: string } = {
 
 const PAR_LANGUE: Record<string, MotsDocuments & { titre: string; phrase: string }> = { fr: FR, en: EN, ar: AR, es: ES }
 
-export function motsDocuments(lang: string | null | undefined) {
+function motsDocumentsBrut(lang: string | null | undefined) {
   return PAR_LANGUE[(lang ?? 'fr').slice(0, 2).toLowerCase()] ?? FR
 }
 
 /** Exportée pour que le cliquet énumère au lieu de supposer. */
 export const LANGUES_DOCUMENTS = Object.keys(PAR_LANGUE)
+
+/**
+ * Les mots, avec le nom de l'institution DU SITE (lot 2 « textes neutres »,
+ * 2026-11-26) : les jetons {{la}}, {{de}}… deviennent « la Centrale » pour la
+ * CPA, la désignation du site ailleurs. Voir `@/lib/sites/institution`.
+ */
+export function motsDocuments(lang: string | null | undefined, inst: Institution): ReturnType<typeof motsDocumentsBrut> {
+  return accorder(motsDocumentsBrut(lang), inst)
+}

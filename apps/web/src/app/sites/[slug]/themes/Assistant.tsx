@@ -30,27 +30,9 @@ type Lien = { chemin: string; titre: string }
 type Tour = { role: 'user' | 'assistant'; content: string; liens?: Lien[]; local?: boolean }
 const MAX = 10
 
-/** Les sujets, et leur réponse écrite d'avance. */
-const SUJETS: { label: string; reponse: string; liens: Lien[] }[] = [
-  { label: 'Appels d’offres',
-    reponse: 'Tous les appels d’offres publiés sont sur cette page, avec leur date limite de remise et leur portée (nationale, internationale ou ouverte à tous).',
-    liens: [{ chemin: '/appels-offres', titre: 'Voir les appels d’offres' }, { chemin: '/appels-offres/comment-repondre', titre: 'Comment répondre' }] },
-  { label: 'Devenir fournisseur',
-    reponse: 'Les conditions et les pièces demandées pour devenir fournisseur sont détaillées ici, ainsi que la marche à suivre pour vous enregistrer.',
-    liens: [{ chemin: '/fournisseurs/enregistrement', titre: 'Devenir fournisseur' }, { chemin: '/fournisseurs/conditions', titre: 'Conditions d’achat' }] },
-  { label: 'Créer un compte',
-    reponse: 'Remplissez le formulaire d’inscription : nom, organisation, téléphone, adresse électronique et mot de passe. Votre compte est créé tout de suite, sans attente.',
-    liens: [{ chemin: '/inscription', titre: 'Créer un compte' }, { chemin: '/connexion', titre: 'Se connecter' }] },
-  { label: 'Actualités',
-    reponse: 'Les communiqués, l’agenda et les dernières nouvelles de la Centrale sont publiés ici.',
-    liens: [{ chemin: '/actualites/communiques', titre: 'Communiqués' }, { chemin: '/actualites/evenements', titre: 'Agenda' }, { chemin: '/blog', titre: 'Actualités' }] },
-  { label: 'Recrutement',
-    reponse: 'Pour une candidature ou une question sur le recrutement, écrivez-nous depuis la page Contact.',
-    liens: [{ chemin: '/#contact', titre: 'Nous écrire' }] },
-  { label: 'Contact',
-    reponse: 'Les coordonnées de la Centrale et le formulaire de contact sont sur la page d’accueil. Pour les achats, la direction des achats a sa propre page.',
-    liens: [{ chemin: '/#contact', titre: 'Contacter la Centrale' }, { chemin: '/fournisseurs/contact', titre: 'Direction des achats' }] },
-]
+/** Sans sujets reçus : aucun bouton. Les sujets par défaut sont TIRÉS DU SITE,
+ *  côté serveur (`sujetsParDefaut`, 2026-11-26) — plus jamais ceux de la CPA. */
+const SUJETS: { label: string; reponse: string; liens: Lien[] }[] = []
 
 /**
  * Seules les adresses que le SERVEUR a reconnues deviennent des liens : le

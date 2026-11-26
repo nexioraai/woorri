@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { lireInstitution } from '@/lib/sites/lireInstitution'
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { ouvreDesComptes } from '@/app/sites/[slug]/acces/ouvreDesComptes'
@@ -255,7 +256,7 @@ export async function PATCH(req: Request, { params }: Params) {
 
   if (ligne.etat === 'suspendu') {
     return NextResponse.json({
-      error: 'Votre compte est suspendu : écrivez à la Centrale pour toute modification.',
+      error: `Votre compte est suspendu : écrivez ${(await lireInstitution(site.id, 'fr')).a} pour toute modification.`,
     }, { status: 409 })
   }
 
@@ -314,7 +315,7 @@ export async function DELETE(req: Request, { params }: Params) {
     .from('offres').select('id', { count: 'exact', head: true }).eq('compte_id', compte.id)
   if ((offres ?? 0) > 0) {
     return NextResponse.json({
-      error: 'Vous avez déposé une offre : votre compte doit rester, pour la trace du marché. Écrivez à la Centrale.',
+      error: `Vous avez déposé une offre : votre compte doit rester, pour la trace du marché. Écrivez ${(await lireInstitution(site.id, 'fr')).a}.`,
     }, { status: 409 })
   }
 

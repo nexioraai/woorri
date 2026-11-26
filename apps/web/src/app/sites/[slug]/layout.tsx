@@ -8,6 +8,8 @@ import PiedLegal from './themes/PiedLegal'
 import { lirePagesLegales } from './themes/pagesLegales'
 import { CHEMIN_ASSISTANT, textesDepuisPage, type TextesAssistant } from './themes/textesAssistant'
 import { ECRANS_DU_COMPTE } from '@/lib/assistant/liens'
+import { sujetsParDefaut } from './themes/sujetsAssistant'
+import { lireInstitution } from '@/lib/sites/lireInstitution'
 import { lireBlocs } from './pages/blocs'
 import { headers } from 'next/headers'
 import { resolveSiteBaseUrl } from './themes/shared'
@@ -99,8 +101,8 @@ export default async function SiteLayout({
   // ce qui importe ce gabarit quand la clé manque.
   const { supabaseAdmin } = await import('@/lib/supabase-admin')
   const { data: reglage } = await supabaseAdmin
-    .from('sites').select('assistant_actif,slug,custom_domain').eq('slug', slug).maybeSingle()
-  const r = reglage as { assistant_actif?: boolean; slug: string; custom_domain: string | null } | null
+    .from('sites').select('assistant_actif,slug,custom_domain,publishes_tenders,ouvre_des_comptes').eq('slug', slug).maybeSingle()
+  const r = reglage as { assistant_actif?: boolean; slug: string; custom_domain: string | null; publishes_tenders?: boolean; ouvre_des_comptes?: boolean } | null
   const assistant = r?.assistant_actif === true
   const base = r ? resolveSiteBaseUrl(r as never, (await headers()).get('host')) : ''
 
@@ -123,6 +125,15 @@ export default async function SiteLayout({
     ])
     const pa = pageA as { titre?: string | null; chapeau?: string | null; blocs?: unknown } | null
     textesAssistant = textesDepuisPage(pa ? { titre: pa.titre, chapeau: pa.chapeau, blocs: lireBlocs(pa.blocs) } : null, connus)
+    // SANS BOUTONS ÉCRITS PAR LE SITE : les sujets tirés de CE site (2026-11-26).
+    if (textesAssistant.sujets === undefined) {
+      textesAssistant = { ...textesAssistant, sujets: sujetsParDefaut({
+        inst: await lireInstitution(site?.id ?? '', site?.lang),
+        appelsOffres: r.publishes_tenders === true,
+        comptes: r.ouvre_des_comptes === true,
+        connus,
+      }) }
+    }
   }
 
   return (

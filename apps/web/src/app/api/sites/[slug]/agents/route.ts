@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { lireInstitution } from '@/lib/sites/lireInstitution'
 import { randomBytes } from 'node:crypto'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { supabaseAdmin } from '@/lib/supabase-admin'
@@ -94,7 +95,7 @@ export async function POST(req: Request, { params }: Params) {
     ? supabaseAdmin.from('site_comptes').update({ service: 'ddm', nom, maj_le: new Date().toISOString() }).eq('id', d.id).eq('site_id', siteId)
     : supabaseAdmin.from('site_comptes').insert({
         site_id: siteId, user_id: userId, email, role: 'agent', service: 'ddm', nom,
-        organisation: 'Centrale — Service clients',
+        organisation: `${(await lireInstitution(siteId, 'fr')).nu} — Service clients`,
       })
   const { data: agent, error } = await ecriture.select(COLS).single()
   if (error) {

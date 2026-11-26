@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
+import { cpa } from '@/lib/sites/__tests__/institutionCpa'
 import { renderToStaticMarkup } from 'react-dom/server'
 import SuiviCommande, { etapeAtteinte } from '../SuiviCommande'
 import { motsCommandes } from '../motsCommandes'
 
 // LE SUIVI D'UNE COMMANDE (CPA, 2026-11-19) : reçue → en cours → validée →
 // livrée. Une commande annulée le DIT, sans frise trompeuse.
-const m = motsCommandes('fr')
+const m = motsCommandes('fr', cpa('fr'))
 const rendre = (etat: string) => renderToStaticMarkup(<SuiviCommande etat={etat} libelles={m.etapes} accent="#003670" annulee={m.annulee} />)
 
 describe('SuiviCommande', () => {

@@ -1,3 +1,4 @@
+import { accorder, type Institution } from '@/lib/sites/institution'
 // ============================================================================
 // LES MOTS DES COMMANDES (CPA, 2026-11-19), dans les quatre langues de
 // l'espace. Les ÉTATS se disent du point de vue du client : « Reçue » veut
@@ -27,7 +28,7 @@ export type MotsCommandes = {
 
 const FR: MotsCommandes = {
   titre: 'Mes commandes',
-  phrase: 'Passez un bon de commande à la Centrale et suivez où il en est. Aucun paiement en ligne : la Centrale traite chaque commande et vous répond ici.',
+  phrase: 'Passez un bon de commande {{a}} et suivez où il en est. Aucun paiement en ligne : {{la}} traite chaque commande et vous répond ici.',
   chargement: 'Chargement…',
   refus: 'Les commandes sont réservées aux structures sanitaires dont le compte est actif. Connectez-vous depuis votre espace client.',
   pasOuvert: 'Les commandes ne sont pas encore ouvertes sur ce site.',
@@ -37,17 +38,17 @@ const FR: MotsCommandes = {
   envoyer: 'Envoyer la commande', envoi: 'Envoi…', envoyee: 'Commande envoyée. Référence :',
   suggestions: 'Choisissez dans le catalogue ou écrivez le nom du produit.',
   mesCommandes: 'Mes commandes passées', vide: 'Vous n’avez encore passé aucune commande.',
-  passeeLe: 'Passée le', majLe: 'mise à jour le', reponse: 'Réponse de la Centrale',
-  etats: { recue: 'Reçue par la Centrale', en_cours: 'En cours de traitement', validee: 'Validée', livree: 'Livrée', annulee: 'Annulée' },
+  passeeLe: 'Passée le', majLe: 'mise à jour le', reponse: 'Réponse {{de}}',
+  etats: { recue: 'Reçue par {{la}}', en_cours: 'En cours de traitement', validee: 'Validée', livree: 'Livrée', annulee: 'Annulée' },
   etapes: { recue: 'Reçue', en_cours: 'En cours', validee: 'Validée', livree: 'Livrée' },
-  annulee: 'Commande annulée par la Centrale.',
+  annulee: 'Commande annulée par {{la}}.',
   tableau: { titre: 'Mon tableau de bord', enCours: 'Commandes en cours', livrees: 'Commandes livrées', total: 'Commandes passées', dernieres: 'Mes dernières commandes', passer: 'Passer une commande', toutes: 'Voir toutes mes commandes', aucune: 'Vous n’avez encore passé aucune commande. Commencez par votre premier bon de commande.' },
   tdb: { unites: 'Unités commandées', aTraiter: 'À traiter', clients: 'Clients', total6: 'Sur 6 mois', ceMois: 'Commandes du mois', moisPrecedent: 'Mois précédent', lignes: 'produits commandés ce mois', evolution: 'Évolution des commandes', evolutionSous: 'Nombre de commandes par mois', parMois: 'Unités par mois', parMoisSous: 'Quantités commandées', statuts: 'Répartition des statuts', auTotal: 'au total', produits: 'Produits les plus commandés', produitsSous: 'Quantités cumulées', topClients: 'Clients les plus actifs', topClientsSous: 'Nombre de commandes', recentes: 'Commandes récentes', voirTout: 'Tout voir', traiter: 'Traiter les commandes', videProduits: 'Aucun produit commandé pour l’instant.', videClients: 'Aucun client n’a encore commandé.', commandesMois: 'commandes ce mois', toutes: 'Toutes les commandes', videGraphique: 'Vos commandes apparaîtront ici.' },
 }
 
 const EN: MotsCommandes = {
   titre: 'My orders',
-  phrase: 'Send a purchase order to the Centrale and follow its progress. No online payment: the Centrale processes each order and answers you here.',
+  phrase: 'Send a purchase order to {{the}} and follow its progress. No online payment: {{the}} processes each order and answers you here.',
   chargement: 'Loading…',
   refus: 'Orders are reserved for health facilities with an active account. Sign in from your client area.',
   pasOuvert: 'Orders are not open on this site yet.',
@@ -57,10 +58,10 @@ const EN: MotsCommandes = {
   envoyer: 'Send the order', envoi: 'Sending…', envoyee: 'Order sent. Reference:',
   suggestions: 'Pick from the catalogue or type the product name.',
   mesCommandes: 'My past orders', vide: 'You have not placed any order yet.',
-  passeeLe: 'Placed on', majLe: 'updated on', reponse: 'Answer from the Centrale',
-  etats: { recue: 'Received by the Centrale', en_cours: 'Being processed', validee: 'Approved', livree: 'Delivered', annulee: 'Cancelled' },
+  passeeLe: 'Placed on', majLe: 'updated on', reponse: 'Answer from {{the}}',
+  etats: { recue: 'Received by {{the}}', en_cours: 'Being processed', validee: 'Approved', livree: 'Delivered', annulee: 'Cancelled' },
   etapes: { recue: 'Received', en_cours: 'Processing', validee: 'Approved', livree: 'Delivered' },
-  annulee: 'Order cancelled by the Centrale.',
+  annulee: 'Order cancelled by {{the}}.',
   tableau: { titre: 'My dashboard', enCours: 'Orders in progress', livrees: 'Delivered orders', total: 'Orders placed', dernieres: 'My latest orders', passer: 'Place an order', toutes: 'See all my orders', aucune: 'You have not placed any order yet. Start with your first purchase order.' },
   tdb: { unites: 'Units ordered', aTraiter: 'To process', clients: 'Clients', total6: 'Last 6 months', ceMois: 'Orders this month', moisPrecedent: 'Previous month', lignes: 'products ordered this month', evolution: 'Orders over time', evolutionSous: 'Orders per month', parMois: 'Units per month', parMoisSous: 'Quantities ordered', statuts: 'Status breakdown', auTotal: 'in total', produits: 'Most ordered products', produitsSous: 'Total quantities', topClients: 'Most active clients', topClientsSous: 'Number of orders', recentes: 'Recent orders', voirTout: 'See all', traiter: 'Process orders', videProduits: 'No product ordered yet.', videClients: 'No client has ordered yet.', commandesMois: 'orders this month', toutes: 'All orders', videGraphique: 'Your orders will appear here.' },
 }
@@ -87,7 +88,7 @@ const AR: MotsCommandes = {
 
 const ES: MotsCommandes = {
   titre: 'Mis pedidos',
-  phrase: 'Envíe una orden de compra a la Central y siga su estado. Sin pago en línea: la Central tramita cada pedido y le responde aquí.',
+  phrase: 'Envíe una orden de compra {{a}} y siga su estado. Sin pago en línea: {{la}} tramita cada pedido y le responde aquí.',
   chargement: 'Cargando…',
   refus: 'Los pedidos están reservados a los establecimientos sanitarios con cuenta activa. Inicie sesión desde su espacio de cliente.',
   pasOuvert: 'Los pedidos aún no están abiertos en este sitio.',
@@ -97,15 +98,24 @@ const ES: MotsCommandes = {
   envoyer: 'Enviar el pedido', envoi: 'Enviando…', envoyee: 'Pedido enviado. Referencia:',
   suggestions: 'Elija en el catálogo o escriba el nombre del producto.',
   mesCommandes: 'Mis pedidos anteriores', vide: 'Todavía no ha realizado ningún pedido.',
-  passeeLe: 'Realizado el', majLe: 'actualizado el', reponse: 'Respuesta de la Central',
-  etats: { recue: 'Recibido por la Central', en_cours: 'En tramitación', validee: 'Validado', livree: 'Entregado', annulee: 'Anulado' },
+  passeeLe: 'Realizado el', majLe: 'actualizado el', reponse: 'Respuesta {{de}}',
+  etats: { recue: 'Recibido por {{la}}', en_cours: 'En tramitación', validee: 'Validado', livree: 'Entregado', annulee: 'Anulado' },
   etapes: { recue: 'Recibido', en_cours: 'En curso', validee: 'Validado', livree: 'Entregado' },
-  annulee: 'Pedido anulado por la Central.',
+  annulee: 'Pedido anulado por {{la}}.',
   tableau: { titre: 'Mi panel', enCours: 'Pedidos en curso', livrees: 'Pedidos entregados', total: 'Pedidos realizados', dernieres: 'Mis últimos pedidos', passer: 'Realizar un pedido', toutes: 'Ver todos mis pedidos', aucune: 'Todavía no ha realizado ningún pedido. Empiece por su primera orden de compra.' },
   tdb: { unites: 'Unidades pedidas', aTraiter: 'Por tramitar', clients: 'Clientes', total6: 'En 6 meses', ceMois: 'Pedidos del mes', moisPrecedent: 'Mes anterior', lignes: 'productos pedidos este mes', evolution: 'Evolución de los pedidos', evolutionSous: 'Pedidos por mes', parMois: 'Unidades por mes', parMoisSous: 'Cantidades pedidas', statuts: 'Distribución de estados', auTotal: 'en total', produits: 'Productos más pedidos', produitsSous: 'Cantidades acumuladas', topClients: 'Clientes más activos', topClientsSous: 'Número de pedidos', recentes: 'Pedidos recientes', voirTout: 'Ver todo', traiter: 'Tramitar los pedidos', videProduits: 'Ningún producto pedido todavía.', videClients: 'Ningún cliente ha pedido todavía.', commandesMois: 'pedidos este mes', toutes: 'Todos los pedidos', videGraphique: 'Sus pedidos aparecerán aquí.' },
 }
 
-export function motsCommandes(lang: string | null | undefined): MotsCommandes {
+function motsCommandesBrut(lang: string | null | undefined): MotsCommandes {
   const l = (lang ?? 'fr').slice(0, 2).toLowerCase()
   return l === 'en' ? EN : l === 'ar' ? AR : l === 'es' ? ES : FR
+}
+
+/**
+ * Les mots, avec le nom de l'institution DU SITE (lot 2 « textes neutres »,
+ * 2026-11-26) : les jetons {{la}}, {{de}}… deviennent « la Centrale » pour la
+ * CPA, la désignation du site ailleurs. Voir `@/lib/sites/institution`.
+ */
+export function motsCommandes(lang: string | null | undefined, inst: Institution): ReturnType<typeof motsCommandesBrut> {
+  return accorder(motsCommandesBrut(lang), inst)
 }

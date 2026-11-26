@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
+import { accorder, institution } from '@/lib/sites/institution'
 import { creerFrom, journalVierge } from '@/lib/testing/postgrest'
 
 // ============================================================
@@ -38,6 +40,12 @@ vi.mock('@supabase/supabase-js', () => ({
   }),
 }))
 
+// L'institution du site (2026-11-26) : réglable par test — CPA par défaut.
+let designation: string | null = 'la Centrale'
+vi.mock('@/lib/sites/lireInstitution', async () => {
+  const { institution } = await import('@/lib/sites/institution')
+  return { lireInstitution: async () => institution('fr', designation) }
+})
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: {
     from: (t: string) => {
@@ -180,10 +188,24 @@ describe('ce qu’il répond est une liste FERMÉE', () => {
   it('🔴 les consignes nomment les quatre sujets et la phrase de refus', async () => {
     await poser()
     const sys = String((appels[0] as { system: string }).system)
-    expect(sys).toContain(HORS_SUJET)
+    expect(sys).toContain(accorder(HORS_SUJET, institution('fr', 'la Centrale')))
     for (const sujet of ['appels d\'offres', 'créer un compte', 'devenir fournisseur', 'contacter la Centrale']) {
       expect(sys, sujet).toContain(sujet)
     }
+  })
+
+  it('🔴 un autre site : son nom à lui, jamais « la Centrale » (textes neutres, 2026-11-26)', async () => {
+    designation = 'le Ministère de la Santé'
+    try {
+      await poser()
+      const sys = String((appels.at(-1) as { system: string }).system)
+      expect(sys).toMatch(motifTexte('contacter le Ministère de la Santé'))
+      // Les phrases ÉCRITES PAR LE CODE ne nomment plus la Centrale (les extraits de pages du harnais, eux, la citent).
+      for (const phrase of ['contacter la Centrale', 'sans rapport avec la Centrale', 'Contacter la Centrale et sa direction', 'Coordonnées publiées de la Centrale']) {
+        expect(sys, phrase).not.toContain(phrase)
+      }
+      expect(sys).toMatch(motifTexte('sans rapport avec le Ministère de la Santé'))
+    } finally { designation = 'la Centrale' }
   })
 
   it('🔴 le refus renvoie vers le contact, il ne laisse pas sans issue', () => {

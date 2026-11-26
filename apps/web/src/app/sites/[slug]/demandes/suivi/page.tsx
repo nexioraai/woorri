@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { exempleDeReference } from '@/lib/sites/institution'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
@@ -101,7 +102,7 @@ export default async function SuiviPage({ params }: Props) {
           </div>
         )}
 
-        <FormulaireSuivi primary={accent} libelles={L.fr} />
+        <FormulaireSuivi primary={accent} libelles={L.fr} exemple={exempleDeReference(s.name)} />
       </main>
     </div>
   )

@@ -24,7 +24,7 @@ type Avis = {
 const ETAT = { preparation: 'En préparation', ouvert: 'Ouvert aux offres', attribue: 'Attribué' }
 const PORTEE = { national: 'National', international: 'International', tous: 'Ouvert à tous' }
 const CHAMPS: [keyof Avis, string, 'texte' | 'long' | 'date'][] = [
-  ['objet', 'Objet — ce que la Centrale achète', 'texte'],
+  ['objet', 'Objet — ce que vous achetez', 'texte'],
   ['description', 'Description détaillée du besoin', 'long'],
   ['remise_le', 'Date limite de remise', 'date'],
   ['ouverture_plis', 'Ouverture des plis', 'date'],
@@ -93,7 +93,7 @@ export default function GestionAvis({ slug }: { slug: string }) {
         e.preventDefault()
         if (await envoyer('POST', nouveau)) setNouveau({ reference: '', objet: '' })
       }} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr auto', gap: 8, marginBottom: 20 }}>
-        <input placeholder="Référence (ex. 004/AONO/CPA/2026)" value={nouveau.reference} style={champ}
+        <input placeholder="Référence (ex. 004/AONO/2026)" value={nouveau.reference} style={champ}
           onChange={(e) => setNouveau({ ...nouveau, reference: e.target.value })} />
         <input placeholder="Objet du marché" value={nouveau.objet} style={champ}
           onChange={(e) => setNouveau({ ...nouveau, objet: e.target.value })} />

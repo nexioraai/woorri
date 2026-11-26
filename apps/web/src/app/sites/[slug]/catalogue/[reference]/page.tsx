@@ -1,4 +1,5 @@
 import { ogDePage } from '../../themes/metadonneesDuSite'
+import { lireInstitution } from '@/lib/sites/lireInstitution'
 import { lireSite } from '../../themes/lireSite'
 import { generateMetadata as metadonneesPageDeclaree } from '../../[...rest]/page'
 import type { Metadata } from 'next'
@@ -66,6 +67,7 @@ export default async function FicheProduitPage({ params }: Props) {
   if (!s) notFound()
 
   const ref = decodeURIComponent(reference)
+  const inst = await lireInstitution(s.id, s.lang)
   const p = await fetchFicheProduit(s.id, ref)
 
   // ── CE SEGMENT CAPTURE AUSSI LES SOUS-PAGES DECLAREES.
@@ -194,7 +196,7 @@ export default async function FicheProduitPage({ params }: Props) {
                   <div key={k} style={{ display: 'contents' }}><dt>{k}</dt><dd>{v}</dd></div>
                 ))}
               </dl>
-              <p className="note"><ShieldCheck size={14} aria-hidden style={{ verticalAlign: '-2px' }} /> Produit contrôlé par la Centrale avant sa mise à disposition.{majLe ? ` Fiche mise à jour le ${majLe}.` : ''}</p>
+              <p className="note"><ShieldCheck size={14} aria-hidden style={{ verticalAlign: '-2px' }} /> Produit contrôlé par {inst.la} avant sa mise à disposition.{majLe ? ` Fiche mise à jour le ${majLe}.` : ''}</p>
             </section>
 
             {variantes.length > 0 && (
@@ -227,7 +229,7 @@ export default async function FicheProduitPage({ params }: Props) {
           <aside aria-label="Commander">
             <BoiteCommande slug={s.slug} base={base} denomination={[p.denomination, p.dosage].filter(Boolean).join(' ')} reference={p.reference}
               unite={uniteVue} accent={accent} commandable={commandable(dispo)}
-              indisponible="Ce produit est momentanément indisponible. Écrivez à la Centrale depuis votre espace pour connaître la date de retour." />
+              indisponible={`Ce produit est momentanément indisponible. Écrivez ${inst.a} depuis votre espace pour connaître la date de retour.`} />
             <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6, marginTop: 14 }}>
               Pas encore de compte ? <Link href={`${base}/devenir-client`} style={{ color: accent, fontWeight: 600 }}>Devenir client</Link>
             </p>

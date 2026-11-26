@@ -1,4 +1,5 @@
 import type { MotsEchanges } from './MesEchanges'
+import { accorder, type Institution } from '@/lib/sites/institution'
 
 // ============================================================================
 // LOT 11 — LES MOTS DES ÉCHANGES, DANS LES QUATRE LANGUES.
@@ -24,7 +25,7 @@ const commun = (etats: Record<string, string>, t: Omit<MotsEchanges, 'etats'>): 
 
 const FR: Jeu = {
   titreDemandes: 'Mes demandes', titreReclamations: 'Mes réclamations',
-  phraseDemandes: 'Les messages que vous avez adressés à la Centrale, et où ils en sont.',
+  phraseDemandes: 'Les messages que vous avez adressés {{a}}, et où ils en sont.',
   phraseReclamations: 'Les réclamations que vous avez déposées, et leur suivi.',
   demandes: commun(ETATS_FR, {
     chargement: 'Chargement…',
@@ -46,7 +47,7 @@ const FR: Jeu = {
 
 const EN: Jeu = {
   titreDemandes: 'My requests', titreReclamations: 'My complaints',
-  phraseDemandes: 'The messages you sent to the Centrale, and where they stand.',
+  phraseDemandes: 'The messages you sent to {{the}}, and where they stand.',
   phraseReclamations: 'The complaints you filed, and how they are progressing.',
   demandes: commun(ETATS_EN, {
     chargement: 'Loading…', refus: 'Your account must be active to view your exchanges.',
@@ -64,7 +65,7 @@ const EN: Jeu = {
 
 const AR: Jeu = {
   titreDemandes: 'طلباتي', titreReclamations: 'شكاواي',
-  phraseDemandes: 'الرسائل التي وجّهتها إلى المركزية، وأين وصلت.',
+  phraseDemandes: 'الرسائل التي وجّهتها إلى {{al}}، وأين وصلت.',
   phraseReclamations: 'الشكاوى التي قدّمتها، ومسار متابعتها.',
   demandes: commun(ETATS_AR, {
     chargement: 'جارٍ التحميل…', refus: 'يجب أن يكون حسابك نشطاً للاطلاع على مراسلاتك.',
@@ -82,7 +83,7 @@ const AR: Jeu = {
 
 const ES: Jeu = {
   titreDemandes: 'Mis solicitudes', titreReclamations: 'Mis reclamaciones',
-  phraseDemandes: 'Los mensajes que ha dirigido a la Central, y en qué punto están.',
+  phraseDemandes: 'Los mensajes que ha dirigido {{a}}, y en qué punto están.',
   phraseReclamations: 'Las reclamaciones que ha presentado, y su seguimiento.',
   demandes: commun(ETATS_ES, {
     chargement: 'Cargando…', refus: 'Su cuenta debe estar activa para consultar sus intercambios.',
@@ -100,9 +101,18 @@ const ES: Jeu = {
 
 const PAR_LANGUE: Record<string, Jeu> = { fr: FR, en: EN, ar: AR, es: ES }
 
-export function motsEchanges(lang: string | null | undefined): Jeu {
+function motsEchangesBrut(lang: string | null | undefined): Jeu {
   return PAR_LANGUE[(lang ?? 'fr').slice(0, 2).toLowerCase()] ?? FR
 }
 
 /** Exportée pour que le cliquet énumère au lieu de supposer. */
 export const LANGUES_ECHANGES = Object.keys(PAR_LANGUE)
+
+/**
+ * Les mots, avec le nom de l'institution DU SITE (lot 2 « textes neutres »,
+ * 2026-11-26) : les jetons {{la}}, {{de}}… deviennent « la Centrale » pour la
+ * CPA, la désignation du site ailleurs. Voir `@/lib/sites/institution`.
+ */
+export function motsEchanges(lang: string | null | undefined, inst: Institution): ReturnType<typeof motsEchangesBrut> {
+  return accorder(motsEchangesBrut(lang), inst)
+}

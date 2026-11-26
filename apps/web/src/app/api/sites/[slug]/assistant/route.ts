@@ -1,4 +1,6 @@
 import 'server-only'
+import { lireInstitution } from '@/lib/sites/lireInstitution'
+import { accorder } from '@/lib/sites/institution'
 import { NextResponse } from 'next/server'
 import { createHmac } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
@@ -49,7 +51,7 @@ export const PAGES_PERMISES = [
 ] as const
 
 export const HORS_SUJET =
-  'Je réponds seulement aux questions sur les appels d’offres, la création d’un compte, les conditions pour devenir fournisseur et les moyens de contacter la Centrale. Pour toute autre question, écrivez-nous depuis la page Contact.'
+  'Je réponds seulement aux questions sur les appels d’offres, la création d’un compte, les conditions pour devenir fournisseur et les moyens de contacter {{la}}. Pour toute autre question, écrivez-nous depuis la page Contact.'
 
 /**
  * LES LIENS DONNÉS AU VISITEUR — seulement vers des adresses CONNUES.
@@ -112,6 +114,9 @@ export async function POST(req: Request, { params }: Params) {
   const s = site as { id: string; name: string; assistant_actif?: boolean } | null
   // RIEN NE PART SANS INTERRUPTEUR — et le refus ne dit pas pourquoi.
   if (!s || s.assistant_actif !== true) return NextResponse.json({ error: 'Indisponible.' }, { status: 404 })
+  // Le nom de l'institution DU SITE (2026-11-26) : « la Centrale » pour la CPA, le sien ailleurs.
+  const inst = await lireInstitution(s.id, 'fr')
+  const horsSujet = accorder(HORS_SUJET, inst)
 
   const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'inconnue'
   const ipHache = empreinte(ip)
@@ -163,8 +168,8 @@ export async function POST(req: Request, { params }: Params) {
     { chemin: '/inscription', titre: 'Créer un compte sur le site',
       texte: 'Pour créer un compte : ouvrir /inscription et remplir un seul formulaire — nom complet, organisation, fournisseur ou structure sanitaire, téléphone, adresse électronique et mot de passe. Le compte est créé immédiatement, sans courriel de confirmation ni attente ; on est connecté directement. Ensuite on se connecte sur /connexion. Il faut un compte pour déposer une offre.' },
     // COMMENT CONTACTER LA CENTRALE — les coordonnées PUBLIÉES, et elles seules.
-    { chemin: '/#contact', titre: 'Contacter la Centrale et sa direction',
-      texte: `Coordonnées publiées de la Centrale : ${texteDe((coord as { contact?: unknown } | null)?.contact ?? {})}. Le formulaire de contact est sur la page d’accueil.` },
+    { chemin: '/#contact', titre: `Contacter ${inst.la} et sa direction`,
+      texte: `Coordonnées publiées ${inst.de} : ${texteDe((coord as { contact?: unknown } | null)?.contact ?? {})}. Le formulaire de contact est sur la page d’accueil.` },
   ]
   const choisis = choisir(fragments, question)
   const contexte = choisis.map((f) => `### ${f.titre}\nAdresse : ${f.chemin}\n${f.texte}`).join('\n\n')
@@ -174,8 +179,8 @@ Tu ne réponds QU'À CES SUJETS, et à aucun autre :
 1. les appels d'offres : s'il y en a en cours ou non, leur objet, leur date limite de remise, leur portée (nationale, internationale, ouverte à tous) ;
 2. comment créer un compte sur le site ;
 3. les conditions et les pièces pour devenir fournisseur et pour répondre à un appel d'offres ;
-4. comment contacter la Centrale ou sa direction.
-Pour TOUTE autre question — y compris sur l'histoire, l'organisation, le personnel, les prix, les stocks, les produits, les décisions internes, ou tout sujet sans rapport avec la Centrale — réponds exactement : « ${HORS_SUJET} »
+4. comment contacter ${inst.la} ou sa direction.
+Pour TOUTE autre question — y compris sur l'histoire, l'organisation, le personnel, les prix, les stocks, les produits, les décisions internes, ou tout sujet sans rapport avec ${inst.la} — réponds exactement : « ${horsSujet} »
 Tu réponds UNIQUEMENT à partir des extraits du site fournis ci-dessous.
 - Si la réponse n'est pas dans les extraits, réponds exactement : « Je ne trouve pas cette information sur le site. » puis propose la page Contact (adresse : /#contact). N'invente jamais une date, un montant, une pièce ou un nom.
 - Termine toujours par le lien utile, sous la forme : « Voici le lien : /adresse » (par exemple « Voici le lien : /inscription » pour créer un compte). N'emploie que les adresses écrites dans les extraits.

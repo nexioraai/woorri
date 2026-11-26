@@ -1,3 +1,4 @@
+import type { Institution } from '@/lib/sites/institution'
 import PageEspace, { metadonneesEspace, siteDeLEspace, type PropsEspace } from '../espace/PageEspace'
 import MonDossier from '../espace/MonDossier'
 import { motsDossier } from '../espace/motsDossier'
@@ -15,8 +16,8 @@ import { lirePiecesDuSite } from '../espace/lirePiecesDuSite'
 // paramètre ferait de cette page une porte vers le dossier d'autrui.
 // ============================================================================
 
-const titre = (lang: string | null) => motsDossier(lang).titre
-const phrase = (lang: string | null) => motsDossier(lang).phrase
+const titre = (lang: string | null, inst: Institution) => motsDossier(lang, inst).titre
+const phrase = (lang: string | null, inst: Institution) => motsDossier(lang, inst).phrase
 
 export const generateMetadata = (p: PropsEspace) => metadonneesEspace('mon-dossier', titre, p)
 
@@ -29,8 +30,8 @@ export default async function Page(p: PropsEspace) {
 
   return PageEspace({
     chemin: 'mon-dossier', titre, phrase, ...p,
-    rendu: ({ slug: sl, accent, lang }) => (
-      <MonDossier slug={sl} pieces={pieces} primary={accent} mots={motsDossier(lang)} />
+    rendu: ({ slug: sl, accent, lang, inst }) => (
+      <MonDossier slug={sl} pieces={pieces} primary={accent} mots={motsDossier(lang, inst)} />
     ),
   })
 }

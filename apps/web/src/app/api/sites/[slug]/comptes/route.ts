@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { requireSiteCompte, type RoleSite } from '@/lib/auth/require-site-compte'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { lireInstitution } from '@/lib/sites/lireInstitution'
 import { journaliser } from '@/lib/audit/journaliser'
 
 // ============================================================
@@ -52,7 +53,8 @@ export async function GET(req: Request, { params }: Params) {
       .eq('site_id', proprietaire.site.id)
       .order('cree_le', { ascending: false })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ comptes: data ?? [] })
+    // Le nom de l'institution (2026-11-26) : les mots du tableau de bord du propriétaire.
+    return NextResponse.json({ comptes: data ?? [], institution: await lireInstitution(proprietaire.site.id, 'fr') })
   }
 
   // PAS PROPRIETAIRE : peut-etre titulaire. Il ne voit que LUI.

@@ -1,3 +1,4 @@
+import type { Institution } from '@/lib/sites/institution'
 import PageEspace, { metadonneesEspace, type PropsEspace } from '../espace/PageEspace'
 import MesConsultations, { type AvisOuvert } from '../espace/MesConsultations'
 import { motsConsultations } from '../espace/motsConsultations'
@@ -5,8 +6,8 @@ import { fetchAvisIndex } from '../appels-offres/fetchAvis'
 
 // LOT 12.4 — les avis viennent de la VUE PUBLIQUE, par le lecteur existant :
 // cet écran ne rouvre pas une seconde porte vers `appels_offres`.
-const titre = (lang: string | null) => motsConsultations(lang).titre
-const phrase = (lang: string | null) => motsConsultations(lang).phrase
+const titre = (lang: string | null, inst: Institution) => motsConsultations(lang, inst).titre
+const phrase = (lang: string | null, inst: Institution) => motsConsultations(lang, inst).phrase
 
 export const generateMetadata = (p: PropsEspace) => metadonneesEspace('mes-consultations', titre, p)
 
@@ -16,8 +17,8 @@ export default async function Page(p: PropsEspace) {
   const avis = (index?.avis ?? []) as unknown as AvisOuvert[]
   return PageEspace({
     chemin: 'mes-consultations', titre, phrase, ...p,
-    rendu: ({ slug: sl, base, accent, lang }) => (
-      <MesConsultations slug={sl} base={base} avis={avis} primary={accent} mots={motsConsultations(lang)} />
+    rendu: ({ slug: sl, base, accent, lang, inst }) => (
+      <MesConsultations slug={sl} base={base} avis={avis} primary={accent} mots={motsConsultations(lang, inst)} />
     ),
   })
 }

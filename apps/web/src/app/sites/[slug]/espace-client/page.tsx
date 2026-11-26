@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { lireInstitution } from '@/lib/sites/lireInstitution'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { lecteurDuSite } from '@/lib/lecteurDuSite'
@@ -31,7 +32,8 @@ export async function generateMetadata({ params }: PropsAcces): Promise<Metadata
   const s = await siteDe(slug)
   if (!s) return {}
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
-  const m = motsEspace(s.lang)
+  const inst = await lireInstitution(s.id, s.lang)
+  const m = motsEspace(s.lang, inst)
   return {
     title: `${m.titre} — ${s.name}`,
     alternates: { canonical: `${base}/espace-client` },
@@ -50,7 +52,8 @@ export default async function Page({ params }: PropsAcces) {
 
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
   const accent = s.primary_color || '#1e4d8c'
-  const m = motsEspace(s.lang)
+  const inst = await lireInstitution(s.id, s.lang)
+  const m = motsEspace(s.lang, inst)
 
   const { data: declaree } = await supabase
     .from('site_pages_public')
@@ -65,14 +68,14 @@ export default async function Page({ params }: PropsAcces) {
       <HtmlLang lang={s.lang ?? 'fr'} />
       <main>
         {/* LE TABLEAU DE BORD (CPA, 2026-11-19) — voir CadreEspace. */}
-        <CadreEspace slug={s.slug} base={base} accent={accent} lang={s.lang} actif="espace-client" nomSite={s.name}
-          titre={m.tableauDeBord} phrase={m.vueEnsemble} retour={{ href: base, libelle: motsAcces(s.lang).accueil }}>
+        <CadreEspace slug={s.slug} base={base} accent={accent} lang={s.lang} inst={inst} actif="espace-client" nomSite={s.name}
+          titre={m.tableauDeBord} phrase={m.vueEnsemble} retour={{ href: base, libelle: motsAcces(s.lang, inst).accueil }}>
           {textes.length > 0 && (
             <div style={{ marginBottom: 28 }}>
               <BlocsDePage blocs={textes} base={base} primary={accent} lang={s.lang} />
             </div>
           )}
-          <EspaceClient slug={s.slug} base={base} primary={accent} mots={m} motsCmd={motsCommandes(s.lang)} lang={s.lang} />
+          <EspaceClient slug={s.slug} base={base} primary={accent} mots={m} motsCmd={motsCommandes(s.lang, inst)} lang={s.lang} />
         </CadreEspace>
       </main>
     </div>

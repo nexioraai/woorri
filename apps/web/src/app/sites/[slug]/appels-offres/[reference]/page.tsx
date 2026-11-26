@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { lireInstitution } from '@/lib/sites/lireInstitution'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
@@ -341,7 +342,7 @@ export default async function AvisPage({ params }: Props) {
             etatAvis={avis.etat}
             remiseLe={avis.remise_le}
             primary={accent}
-            mots={motsPostuler(site.lang)}
+            mots={motsPostuler(site.lang, await lireInstitution(site.id, site.lang))}
           />
         )}
       </main>

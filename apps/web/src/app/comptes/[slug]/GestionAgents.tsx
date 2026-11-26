@@ -58,8 +58,8 @@ export default function GestionAgents({ slug }: { slug: string }) {
       const { ok, d } = await appel('POST', { nom, email })
       if (!ok) { setMessage({ ok: false, texte: typeof d.error === 'string' ? d.error : 'Refusé.' }); return }
       setMessage({ ok: true, texte: d.nouvelAcces
-        ? `${nom} est agent DDM. Son accès est créé : transmettez-lui l’adresse de connexion des agents ci-dessous ; il y choisit « Mot de passe oublié » avec ${email} pour définir son mot de passe (10 caractères minimum, avec majuscule, minuscule, chiffre et signe).`
-        : `${nom} est agent DDM. Il se connecte à l’adresse de connexion des agents ci-dessous, avec son mot de passe habituel.` })
+        ? `${nom} est agent. Son accès est créé : transmettez-lui l’adresse de connexion des agents ci-dessous ; il y choisit « Mot de passe oublié » avec ${email} pour définir son mot de passe (10 caractères minimum, avec majuscule, minuscule, chiffre et signe).`
+        : `${nom} est agent. Il se connecte à l’adresse de connexion des agents ci-dessous, avec son mot de passe habituel.` })
       setNom(''); setEmail('')
       await relire()
     } finally { setEnvoi(false) }
@@ -71,15 +71,15 @@ export default function GestionAgents({ slug }: { slug: string }) {
 
   return (
     <section style={{ marginTop: 44 }}>
-      <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 6px' }}>Agents de la division DDM</h2>
+      <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 6px' }}>Agents du service client</h2>
       <p style={{ fontSize: 14, opacity: 0.65, margin: '0 0 14px' }}>
-        L’espace client est géré par la DDM. Ses agents traitent les commandes et les comptes clients depuis leur espace sur le site.
+        Les agents traitent les commandes et les comptes clients depuis leur espace sur le site.
       </p>
       <form onSubmit={nommer} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
         <input required minLength={2} value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom de l’agent" aria-label="Nom de l’agent" style={champ} />
         <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Adresse électronique" aria-label="Adresse électronique de l’agent" style={champ} />
         <button type="submit" disabled={envoi} style={{ padding: '9px 16px', borderRadius: 999, border: 'none', background: '#FA5D1E', color: '#1A0A03', fontWeight: 700, cursor: 'pointer', opacity: envoi ? 0.7 : 1 }}>
-          {envoi ? 'Envoi…' : 'Nommer agent DDM'}
+          {envoi ? 'Envoi…' : 'Nommer un agent'}
         </button>
       </form>
       {/* La porte des agents n'a plus de lien sur le site public (2026-11-25) :
@@ -101,7 +101,7 @@ export default function GestionAgents({ slug }: { slug: string }) {
           {agents.map((a) => (
             <li key={a.id} style={{ listStyle: 'none', padding: '10px 14px', marginBottom: 8, borderRadius: 12,
               border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.03)', fontSize: 14 }}>
-              <strong>{a.nom ?? a.email}</strong> · {a.email} · {a.service === 'ddm' ? 'DDM' : 'sans service'} ·{' '}
+              <strong>{a.nom ?? a.email}</strong> · {a.email} · {a.service === 'ddm' ? 'service client' : 'sans service'} ·{' '}
               <span style={{ color: a.etat === 'actif' ? '#4ade80' : '#f87171' }}>{a.etat === 'actif' ? 'actif' : a.etat}</span>
             </li>
           ))}

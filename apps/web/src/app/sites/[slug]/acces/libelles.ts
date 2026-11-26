@@ -1,4 +1,5 @@
 import type { LibellesAcces, ChampsInscription } from './FormulaireAcces'
+import { accorder, type Institution } from '@/lib/sites/institution'
 
 // ============================================================================
 // LOT 11 — LES MOTS DES ÉCRANS D'ACCÈS, EN UN SEUL ENDROIT.
@@ -35,7 +36,7 @@ const FR: MotsAcces = {
     titre: 'Se connecter',
     phrase: 'Entrez avec l’adresse électronique que vous avez enregistrée.',
     pasDeCompte: 'Pas encore de compte ?', creer: 'Créer un compte',
-    agentTitre: 'Connexion agent', agentPhrase: 'Réservé au personnel de la Centrale. Utilisez l’adresse enregistrée par la Centrale.', agentLien: 'Vous êtes agent de la Centrale ? Connexion agent', clientLien: 'Vous êtes client ou fournisseur ? Connexion habituelle',
+    agentTitre: 'Connexion agent', agentPhrase: 'Réservé au personnel {{de}}. Utilisez l’adresse enregistrée par {{la}}.', agentLien: 'Vous êtes agent {{de}} ? Connexion agent', clientLien: 'Vous êtes client ou fournisseur ? Connexion habituelle',
     oublie: 'Mot de passe oublié',
     libelles: {
       courriel: 'Adresse électronique', motDePasse: 'Mot de passe',
@@ -78,7 +79,7 @@ const EN: MotsAcces = {
   connexion: {
     titre: 'Sign in', phrase: 'Sign in with the address you registered.',
     pasDeCompte: 'No access yet?', creer: 'Create access', oublie: 'Forgotten password',
-    agentTitre: 'Staff sign-in', agentPhrase: 'Reserved for Centrale staff. Use the address registered by the Centrale.', agentLien: 'Centrale staff? Staff sign-in', clientLien: 'Client or supplier? Usual sign-in',
+    agentTitre: 'Staff sign-in', agentPhrase: 'Reserved for {{nu}} staff. Use the address registered by {{the}}.', agentLien: '{{nu}} staff? Staff sign-in', clientLien: 'Client or supplier? Usual sign-in',
     libelles: { courriel: 'Email address', motDePasse: 'Password', envoyer: 'Sign in', envoi: 'Signing in…', succes: 'You are signed in.', refus: REFUS_EN, minimum: 'Eight characters minimum.' },
   },
   inscription: {
@@ -126,7 +127,7 @@ const ES: MotsAcces = {
   connexion: {
     titre: 'Iniciar sesión', phrase: 'Entre con la dirección que registró.',
     pasDeCompte: '¿Aún no tiene acceso?', creer: 'Crear acceso', oublie: 'Contraseña olvidada',
-    agentTitre: 'Acceso del personal', agentPhrase: 'Reservado al personal de la Central. Use la dirección registrada por la Central.', agentLien: '¿Es personal de la Central? Acceso del personal', clientLien: '¿Cliente o proveedor? Acceso habitual',
+    agentTitre: 'Acceso del personal', agentPhrase: 'Reservado al personal {{de}}. Use la dirección registrada por {{la}}.', agentLien: '¿Es personal {{de}}? Acceso del personal', clientLien: '¿Cliente o proveedor? Acceso habitual',
     libelles: { courriel: 'Dirección electrónica', motDePasse: 'Contraseña', envoyer: 'Iniciar sesión', envoi: 'Entrando…', succes: 'Ha iniciado sesión.', refus: REFUS_ES, minimum: 'Ocho caracteres como mínimo.' },
   },
   inscription: {
@@ -147,9 +148,18 @@ const ES: MotsAcces = {
 const PAR_LANGUE: Record<string, MotsAcces> = { fr: FR, en: EN, ar: AR, es: ES }
 
 /** Les mots d'une langue. Le français est le repli — c'est la langue du site. */
-export function motsAcces(lang: string | null | undefined): MotsAcces {
+function motsAccesBrut(lang: string | null | undefined): MotsAcces {
   return PAR_LANGUE[(lang ?? 'fr').slice(0, 2).toLowerCase()] ?? FR
 }
 
 /** Les langues servies. Exportée pour que le cliquet énumère au lieu de supposer. */
 export const LANGUES_ACCES = Object.keys(PAR_LANGUE)
+
+/**
+ * Les mots, avec le nom de l'institution DU SITE (lot 2 « textes neutres »,
+ * 2026-11-26) : les jetons {{la}}, {{de}}… deviennent « la Centrale » pour la
+ * CPA, la désignation du site ailleurs. Voir `@/lib/sites/institution`.
+ */
+export function motsAcces(lang: string | null | undefined, inst: Institution): ReturnType<typeof motsAccesBrut> {
+  return accorder(motsAccesBrut(lang), inst)
+}

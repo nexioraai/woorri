@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import { institution, type Institution } from '@/lib/sites/institution'
 import { use } from 'react'
 import { supabase } from '@/lib/supabase'
 import GestionDemandes from './GestionDemandes'
@@ -52,7 +53,8 @@ type Compte = {
   maj_le: string
 }
 
-const ROLE = { fournisseur: 'Fournisseur', structure: 'Structure sanitaire', agent: 'Agent de la Centrale' }
+/** Le rôle affiché ; « agent » porte le nom de l'institution du site (2026-11-26). */
+const ROLE = (inst: Institution) => ({ fournisseur: 'Fournisseur', structure: 'Structure sanitaire', agent: `Agent ${inst.de}` })
 const ETAT = { en_attente: 'En attente', actif: 'Actif', suspendu: 'Suspendu' }
 // LOT 12.3 — LE VERDICT, QUI N'EST PAS L'ÉTAT.
 //
@@ -73,6 +75,7 @@ const TEINTE = { en_attente: '#b45309', actif: '#16794a', suspendu: '#9b1c1c' }
 export default function ComptesDuSite({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const [comptes, setComptes] = useState<Compte[] | null>(null)
+  const [inst, setInst] = useState<Institution>(() => institution('fr', null))
   const [erreur, setErreur] = useState<string | null>(null)
   const [occupe, setOccupe] = useState<string | null>(null)
   // QUEL DOSSIER EST OUVERT. Un seul à la fois : afficher les dossiers de
@@ -96,6 +99,7 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
     const d = await r.json()
     if (!encoreLa()) return
     setComptes((d.comptes ?? []) as Compte[])
+    if (d.institution && typeof d.institution === 'object') setInst(d.institution as Institution)
     setErreur(null)
   }, [slug, jeton])
 
@@ -153,7 +157,7 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
           <p style={{ margin: '4px 0 0', fontSize: 13.5, opacity: 0.6 }}>
             <a href={`mailto:${c.email}`} style={{ color: 'inherit' }}>{c.email}</a>
             {c.telephone ? <> · <a href={`tel:${c.telephone.replace(/[^+0-9]/g, '')}`} style={{ color: 'inherit' }}>{c.telephone}</a></> : ''}
-            {' · '}{ROLE[c.role]}
+            {' · '}{ROLE(inst)[c.role]}
             {c.reference ? ` · ${c.reference}` : ''}
             {` · inscrit le ${c.cree_le.slice(0, 10)}`}
           </p>
@@ -217,7 +221,7 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
 
       {dossier === c.id && (
         <div style={{ marginTop: 14, padding: 14, borderRadius: 12, background: '#ffffff', color: '#111111' }}>
-          <DocumentsDuCompte slug={slug} compte={c.id} primary="#1F6B4A" mots={motsDocuments('fr')} />
+          <DocumentsDuCompte slug={slug} compte={c.id} primary="#1F6B4A" mots={motsDocuments('fr', inst)} />
         </div>
       )}
     </li>
@@ -269,7 +273,7 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
       <GestionCommandes slug={slug} />
       <GestionAgents slug={slug} />
       <GestionDemandes slug={slug} />
-      <Journal slug={slug} />
+      <Journal slug={slug} inst={inst} />
     </main>
   )
 }

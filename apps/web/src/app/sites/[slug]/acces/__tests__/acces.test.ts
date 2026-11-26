@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
+import { cpa } from '@/lib/sites/__tests__/institutionCpa'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -42,7 +43,7 @@ describe('les quatre langues, partout', () => {
     // Deux champs sont vides À DESSEIN : l'écran « mot de passe oublié »
     // ne demande pas de mot de passe. Tout le reste doit être écrit.
     for (const l of LANGUES_ACCES) {
-      const m = motsAcces(l)
+      const m = motsAcces(l, cpa(l))
       for (const ecran of ['connexion', 'inscription', 'oubli'] as const) {
         const b = m[ecran]
         expect(b.titre.length, `${l}.${ecran}.titre`).toBeGreaterThan(0)
@@ -57,15 +58,15 @@ describe('les quatre langues, partout', () => {
 
   it('🔴 aucun mot de l’espace ne manque, dans aucune langue', () => {
     for (const l of LANGUES_ESPACE) {
-      for (const [k, v] of Object.entries(motsEspace(l))) {
+      for (const [k, v] of Object.entries(motsEspace(l, cpa(l)))) {
         expect(String(v).length, `${l}.${k}`).toBeGreaterThan(0)
       }
     }
   })
 
   it('🔴 une langue inconnue retombe sur le français, jamais sur du vide', () => {
-    expect(motsAcces('zz').connexion.titre).toBe(motsAcces('fr').connexion.titre)
-    expect(motsEspace(null).titre).toBe(motsEspace('fr').titre)
+    expect(motsAcces('zz', cpa('zz')).connexion.titre).toBe(motsAcces('fr', cpa('fr')).connexion.titre)
+    expect(motsEspace(null, cpa(null)).titre).toBe(motsEspace('fr', cpa('fr')).titre)
   })
 })
 
@@ -73,7 +74,7 @@ describe('le refus n’apprend rien', () => {
   it('🔴 connexion et inscription refusent avec le MÊME mot', () => {
     // Distinguer apprendrait qu'une adresse est déjà enregistrée.
     for (const l of LANGUES_ACCES) {
-      const m = motsAcces(l)
+      const m = motsAcces(l, cpa(l))
       expect(m.connexion.libelles.refus, l).toBe(m.inscription.libelles.refus)
     }
   })
@@ -81,8 +82,8 @@ describe('le refus n’apprend rien', () => {
   it('🔴 « mot de passe oublié » répond AU CONDITIONNEL', () => {
     // Le message doit valoir pour une adresse connue comme pour une adresse
     // inventée. S'il affirmait l'envoi, il confirmerait l'existence.
-    expect(motsAcces('fr').oubli.libelles.succes).toMatch(/\bSi\b/)
-    expect(motsAcces('en').oubli.libelles.succes).toMatch(/\bIf\b/)
+    expect(motsAcces('fr', cpa('fr')).oubli.libelles.succes).toMatch(/\bSi\b/)
+    expect(motsAcces('en', cpa('en')).oubli.libelles.succes).toMatch(/\bIf\b/)
   })
 
   it('🔴 et le code NE REGARDE PAS la réponse de la réinitialisation', () => {
@@ -169,7 +170,7 @@ describe('LOT 19 — une structure sanitaire ne voit pas les écrans du fourniss
   // raccourcis). On teste ce qu'elle REND pour chaque rôle, plus le texte.
   it('🔴 dossier, préqualification et consultations sont sous la condition « fournisseur »', () => {
     const chemins = (role: 'structure' | 'fournisseur' | 'agent') =>
-      navigationEspace({ role, gestion: false }, motsEspace('fr')).flatMap((g) => g.entrees.map((e) => e.chemin))
+      navigationEspace({ role, gestion: false }, motsEspace('fr', cpa('fr'))).flatMap((g) => g.entrees.map((e) => e.chemin))
     for (const c of ['mon-dossier', 'ma-prequalification', 'mes-consultations']) {
       expect(chemins('fournisseur'), c).toContain(c)
       expect(chemins('structure'), c).not.toContain(c)
@@ -179,7 +180,7 @@ describe('LOT 19 — une structure sanitaire ne voit pas les écrans du fourniss
 
   it('🔴 seul un client commande ; seul un agent DDM gère', () => {
     const chemins = (role: 'structure' | 'fournisseur' | 'agent', gestion = false) =>
-      navigationEspace({ role, gestion }, motsEspace('fr')).flatMap((g) => g.entrees.map((e) => e.chemin))
+      navigationEspace({ role, gestion }, motsEspace('fr', cpa('fr'))).flatMap((g) => g.entrees.map((e) => e.chemin))
     expect(chemins('structure')).toContain('mes-commandes')
     expect(chemins('fournisseur')).not.toContain('mes-commandes')
     expect(chemins('structure')).not.toContain('gestion-commandes')

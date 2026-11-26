@@ -1,3 +1,4 @@
+import type { Institution } from '@/lib/sites/institution'
 import PageEspace, { metadonneesEspace, type PropsEspace } from '../espace/PageEspace'
 import DocumentsDuCompte from '../espace/DocumentsDuCompte'
 import { motsDocuments } from '../espace/motsDocuments'
@@ -7,16 +8,16 @@ import { motsDocuments } from '../espace/motsDocuments'
 //
 // LE COMPTE N'EST PAS DÉSIGNÉ ICI : la route le déduit du jeton. Le passer
 // en paramètre ferait de cette page une porte vers le dossier d'autrui.
-const titre = (lang: string | null) => motsDocuments(lang).titre
-const phrase = (lang: string | null) => motsDocuments(lang).phrase
+const titre = (lang: string | null, inst: Institution) => motsDocuments(lang, inst).titre
+const phrase = (lang: string | null, inst: Institution) => motsDocuments(lang, inst).phrase
 
 export const generateMetadata = (p: PropsEspace) => metadonneesEspace('mes-documents', titre, p)
 
 export default function Page(p: PropsEspace) {
   return PageEspace({
     chemin: 'mes-documents', titre, phrase, ...p,
-    rendu: ({ slug, accent, lang }) => (
-      <DocumentsDuCompte slug={slug} primary={accent} mots={motsDocuments(lang)} />
+    rendu: ({ slug, accent, lang, inst }) => (
+      <DocumentsDuCompte slug={slug} primary={accent} mots={motsDocuments(lang, inst)} />
     ),
   })
 }

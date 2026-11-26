@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { LogOut } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { motsEspace } from '../espace-client/motsEspace'
+import type { Institution } from '@/lib/sites/institution'
 import { navigationEspace, estActif, ICONES } from './navigationEspace'
 import { lireAvecJeton } from './lectureEspace'
 
@@ -34,9 +35,11 @@ export function initiales(nom: string | null | undefined, repli: string | null |
 }
 
 export default function CadreEspace({
-  slug, base, accent, lang, actif, titre, phrase, retour, nomSite, children,
+  slug, base, accent, lang, inst, actif, titre, phrase, retour, nomSite, children,
 }: {
   slug: string; base: string; accent: string; lang: string | null
+  /** Le nom de l'institution du site (2026-11-26) — plain object, sérialisable. */
+  inst: Institution
   /** Le chemin de la page, pour marquer l'entrée active. */
   actif: string
   titre: string
@@ -47,7 +50,7 @@ export default function CadreEspace({
   nomSite?: string
   children: React.ReactNode
 }) {
-  const mots = motsEspace(lang)
+  const mots = motsEspace(lang, inst)
   const [etat, setEtat] = useState<'charge' | 'sans' | 'pret'>('charge')
   const [compte, setCompte] = useState<Compte | null>(null)
   const [gestion, setGestion] = useState(false)

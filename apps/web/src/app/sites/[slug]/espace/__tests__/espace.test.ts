@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
+import { cpa } from '@/lib/sites/__tests__/institutionCpa'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -40,13 +41,13 @@ describe('les quatre langues, partout', () => {
 
   it('🔴 aucun mot ne manque dans aucune langue', () => {
     for (const l of LANGUES_ECHANGES) {
-      for (const jeu of [motsEchanges(l).demandes, motsEchanges(l).reclamations]) {
+      for (const jeu of [motsEchanges(l, cpa(l)).demandes, motsEchanges(l, cpa(l)).reclamations]) {
         for (const [k, v] of Object.entries(jeu)) {
           if (k === 'etats') continue
           expect(String(v).length, `échanges.${l}.${k}`).toBeGreaterThan(0)
         }
       }
-      for (const [k, v] of Object.entries(motsProfil(l))) {
+      for (const [k, v] of Object.entries(motsProfil(l, cpa(l)))) {
         if (k === 'roles' || k === 'etats') continue
         expect(String(v).length, `profil.${l}.${k}`).toBeGreaterThan(0)
       }
@@ -58,14 +59,14 @@ describe('les quatre langues, partout', () => {
     // pharmacien.
     for (const l of LANGUES_ECHANGES) {
       for (const etat of ['recu', 'en_cours', 'repondu', 'clos']) {
-        expect(motsEchanges(l).demandes.etats[etat], `${l}.${etat}`).toBeTruthy()
+        expect(motsEchanges(l, cpa(l)).demandes.etats[etat], `${l}.${etat}`).toBeTruthy()
       }
     }
   })
 
   it('🔴 une langue inconnue retombe sur le français, jamais sur du vide', () => {
-    expect(motsProfil('zz').titre).toBe(motsProfil('fr').titre)
-    expect(motsEchanges(null).titreDemandes).toBe(motsEchanges('fr').titreDemandes)
+    expect(motsProfil('zz', cpa('zz')).titre).toBe(motsProfil('fr', cpa('fr')).titre)
+    expect(motsEchanges(null, cpa(null)).titreDemandes).toBe(motsEchanges('fr', cpa('fr')).titreDemandes)
   })
 })
 
@@ -92,7 +93,7 @@ describe('aucune page n’est inatteignable', () => {
     // du tableau de bord ET raccourcis de l'accueil). On teste ce qu'elle
     // REND, tous rôles confondus : chaque page doit être atteinte par l'un.
     const chemins = (['structure', 'fournisseur', 'agent'] as const)
-      .flatMap((role) => navigationEspace({ role, gestion: role === 'agent' }, motsEspace('fr')))
+      .flatMap((role) => navigationEspace({ role, gestion: role === 'agent' }, motsEspace('fr', cpa('fr'))))
       .flatMap((g) => g.entrees.map((e) => e.chemin))
     for (const p of PAGES) {
       expect(chemins, `rien ne mène à /${p}`).toContain(p)
@@ -103,7 +104,7 @@ describe('aucune page n’est inatteignable', () => {
 
   it('🔴 et leurs libellés existent dans les quatre langues', () => {
     for (const l of LANGUES_ESPACE) {
-      const m = motsEspace(l)
+      const m = motsEspace(l, cpa(l))
       for (const k of ['mesDemandes', 'mesReclamations', 'mesDocuments', 'monDossier', 'maPrequalification', 'mesConsultations', 'monProfil'] as const) {
         expect(String(m[k]).length, `${l}.${k}`).toBeGreaterThan(0)
       }
@@ -116,7 +117,7 @@ describe('la page dit ce qu’elle ne peut pas montrer', () => {
     // `messages.email` est l'adresse SAISIE dans le formulaire. Sans cette
     // phrase, quelqu'un croit sa demande perdue et la refait.
     for (const l of LANGUES_ECHANGES) {
-      expect(motsEchanges(l).demandes.autreAdresse, l).toContain('{adresse}')
+      expect(motsEchanges(l, cpa(l)).demandes.autreAdresse, l).toContain('{adresse}')
     }
   })
 
@@ -124,7 +125,7 @@ describe('la page dit ce qu’elle ne peut pas montrer', () => {
     // Mesuré le 2026-11-09 : les 37 messages existants précèdent le lot 8
     // qui a posé les références.
     for (const l of LANGUES_ECHANGES) {
-      expect(motsEchanges(l).demandes.sansReference.length, l).toBeGreaterThan(0)
+      expect(motsEchanges(l, cpa(l)).demandes.sansReference.length, l).toBeGreaterThan(0)
     }
   })
 })
