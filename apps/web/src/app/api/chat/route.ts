@@ -1,6 +1,8 @@
 import 'server-only'
 import { semerInstitution } from '@/lib/sites/semerInstitution'
-import { designationValable, institutionAvantCommerce } from '@/lib/sites/familleInstitution'
+import { designationValable, familleInstitution, institutionAvantCommerce } from '@/lib/sites/familleInstitution'
+import { couleurDemandee, photoAfricaine } from '@/lib/sites/institutionVisuel'
+import { RECHERCHE_PHOTOS } from '@/lib/sites/squeletteInstitution'
 import { NextResponse, after } from 'next/server';
 import { indicatifDuPays, corrigerIndicatif } from '@/lib/telephone';
 import { sansQuota } from '@/lib/admin-emails';
@@ -205,6 +207,8 @@ function getCurrency(location: string): string {
 export interface PhotoPexels {
   readonly standard: string;
   readonly pleineLargeur: string;
+  /** La description Pexels (lot 4b) : sert à garder un contexte AFRICAIN pour une institution. */
+  readonly alt?: string;
 }
 
 async function fetchPexelsPhotos(query: string, color?: string): Promise<PhotoPexels[]> {
@@ -226,6 +230,7 @@ async function fetchPexelsPhotos(query: string, color?: string): Promise<PhotoPe
         // toute la largeur. On retombe sur `original` puis `large` — jamais
         // sur rien, sinon le hero disparaîtrait au lieu d'être flou.
         pleineLargeur: p.src?.large2x || p.src?.original || p.src?.large || '',
+        alt: typeof p.alt === 'string' ? p.alt : '',
       }))
       .filter((p: PhotoPexels) => p.standard !== '');
   } catch (e) {
@@ -1027,7 +1032,17 @@ Return ONLY valid JSON, no markdown:
     // elle occupe tout l'écran, et 940 px y sont visiblement flous.
     const heroQuery = (parsed.heroImageQuery || pexelsQuery).trim();
     const heroPhotos = await fetchPexelsPhotos(heroQuery, parsed.primaryColor);
-    const heroImage = pioche.choisir(heroPhotos, true) || pioche.choisir(galleryPhotos, true);
+    // LOT 4b — UNE INSTITUTION : la photo d'accueil au contexte AFRICAIN vérifié
+    // (recherches de sa famille, filtre `photoAfricaine`) ; sinon la photo d'avant.
+    let heroInstitution: string | null = null;
+    if (sector === 'institution') {
+      const famille = familleInstitution(message) ?? familleInstitution(parsed.type) ?? 'agence_publique';
+      for (const q of RECHERCHE_PHOTOS[famille].presentation) {
+        const p = (await fetchPexelsPhotos(q)).find((x) => photoAfricaine(x.alt));
+        if (p) { heroInstitution = p.pleineLargeur || p.standard; break; }
+      }
+    }
+    const heroImage = heroInstitution || pioche.choisir(heroPhotos, true) || pioche.choisir(galleryPhotos, true);
     const gallery = galleryPhotos.map((p) => p.standard);
     // Source unique du mode final, calculee une seule fois et reutilisee
     // partout ci-dessous (pages, hidden_sections, mode, products) -- voir
@@ -1127,7 +1142,9 @@ Return ONLY valid JSON, no markdown:
       type: parsed.type,
       // LOT 3 — la désignation d'une institution (« le Ministère »…), seulement si elle est valable.
       ...(sector === 'institution' && designationValable(parsed.designation) !== null ? { designation: designationValable(parsed.designation) } : {}),
-      primary_color: parsed.primaryColor,
+      // LOT 4b — le thème des institutions, et la couleur NOMMÉE par le client (« rose vif »…) respectée.
+      ...(sector === 'institution' ? { theme: 'institution' } : {}),
+      primary_color: (sector === 'institution' ? couleurDemandee(message) : null) ?? parsed.primaryColor,
       hero_title: parsed.heroTitle,
       hero_subtitle: parsed.heroSubtitle,
       hero_image: heroImage,
@@ -1190,7 +1207,7 @@ Return ONLY valid JSON, no markdown:
     // pas le site déjà créé : il est journalisé.
     if (sector === 'institution') {
       try {
-        const semis = await semerInstitution({ slug, demande: message, genere: parsed as never, photos: (q) => fetchPexelsImages(q, parsed.primaryColor) });
+        const semis = await semerInstitution({ slug, demande: message, genere: { ...parsed, primaryColor: couleurDemandee(message) ?? parsed.primaryColor } as never, photos: async (q) => (await fetchPexelsPhotos(q)).map((p) => ({ url: p.standard, alt: p.alt ?? '' })) });
         console.log('[Generation] Institution semée :', semis.famille, '| pages :', semis.pages, '| logo :', semis.logo, semis.erreurs.length ? `| erreurs : ${semis.erreurs.join(' ; ')}` : '');
       } catch (e) {
         console.error('[Generation] semis institution en échec :', e);

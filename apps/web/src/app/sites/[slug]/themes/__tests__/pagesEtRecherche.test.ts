@@ -39,6 +39,13 @@ const lire = (f: string) =>
     .replace(/^[ \t]*\/\/.*$/gmu, '')
 
 const VITRINES = ['EditorialTheme.tsx', 'NoirTheme.tsx', 'VifTheme.tsx', 'AuroraTheme.tsx']
+/**
+ * PAS UNE VITRINE (2026-11-26, lot 4b) : le thème des institutions générées.
+ * Une institution est TOUJOURS en mode 1 (forcé par la génération) et n'a
+ * aucun produit : il n'a pas de pages de produits à montrer. Nommé ici, et
+ * non caché derrière un autre nom de fichier.
+ */
+const NON_VITRINES = ['InstitutionTheme.tsx']
 const BOUTIQUES = [
   'EditorialShopSection.tsx',
   'VifShopSection.tsx',
@@ -69,7 +76,7 @@ describe('une page ajoutée APPARAÎT', () => {
 
   it('AUCUNE vitrine n’échappe à la liste', () => {
     const vitrines = readdirSync(THEMES).filter((f) => /^[A-Z]\w+Theme\.tsx$/u.test(f))
-    expect(vitrines.sort()).toEqual([...VITRINES].sort())
+    expect(vitrines.sort()).toEqual([...VITRINES, ...NON_VITRINES].sort())
   })
 })
 

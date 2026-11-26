@@ -14,6 +14,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { designationValable, familleInstitution, type FamilleInstitution } from './familleInstitution'
 import { institution, sigleDuSite } from './institution'
 import { missionsDe, RECHERCHE_PHOTOS, squeletteInstitution, svgLogoProvisoire } from './squeletteInstitution'
+import { CHIFFRES_PAR_FAMILLE, phrasesBandeau, photoAfricaine } from './institutionVisuel'
 
 export type GenerationInstitution = {
   name?: unknown; type?: unknown; lang?: unknown; designation?: unknown
@@ -31,7 +32,7 @@ type Dependances = {
 const texte = (v: unknown): string | null => (typeof v === 'string' && v.trim() !== '' ? v : null)
 
 export async function semerInstitution(
-  o: { slug: string; demande: string; genere: GenerationInstitution; photos: (recherche: string) => Promise<string[]> },
+  o: { slug: string; demande: string; genere: GenerationInstitution; photos: (recherche: string) => Promise<{ url: string; alt: string }[]> },
   d: Dependances = { admin: supabaseAdmin, versPng: (svg) => sharp(Buffer.from(svg)).png().toBuffer(), maintenant: Date.now },
 ): Promise<CompteRenduSemis> {
   const famille = familleInstitution(o.demande) ?? familleInstitution(texte(o.genere.type)) ?? 'agence_publique'
@@ -40,18 +41,28 @@ export async function semerInstitution(
   const s = site as { id: string; logo_url: string | null } | null
   if (eSite !== null || s === null) { rendu.erreurs.push(`site introuvable : ${eSite?.message ?? o.slug}`); return rendu }
 
-  // DEUX PHOTOS DIFFÉRENTES, choisies pour la famille.
+  // DEUX PHOTOS DIFFÉRENTES, AU CONTEXTE AFRICAIN VÉRIFIÉ (lot 4b) : la première
+  // recherche qui en donne une l'emporte ; aucune : pas de photo plutôt qu'un décor d'ailleurs.
   const q = RECHERCHE_PHOTOS[famille]
-  const [a, b] = await Promise.all([o.photos(q.presentation).catch(() => []), o.photos(q.activite).catch(() => [])])
-  const presentation = a[0] ?? null
-  const activite = b.find((u) => u !== presentation) ?? null
+  const premiere = async (recherches: readonly string[], exclue: string | null): Promise<string | null> => {
+    for (const r of recherches) {
+      const trouvee = (await o.photos(r).catch(() => [])).find((p) => photoAfricaine(p.alt) && p.url !== exclue)
+      if (trouvee) return trouvee.url
+    }
+    return null
+  }
+  const presentation = await premiere(q.presentation, null)
+  const activite = await premiere(q.activite, presentation)
 
   const pages = squeletteInstitution({
     famille,
     inst: institution(texte(o.genere.lang), designationValable(o.genere.designation)),
     about: texte(o.genere.about), mission: texte(o.genere.mission),
-    missions: missionsDe(o.genere.sections),
+    missions: missionsDe(o.genere.sections, 'missions'),
+    services: missionsDe(o.genere.sections, 'services'),
     photos: { presentation, activite },
+    bandeau: phrasesBandeau(texte(o.genere.mission), texte(o.genere.about)),
+    chiffres: CHIFFRES_PAR_FAMILLE[famille],
   })
   const { error: ePages } = await d.admin.from('site_pages').insert(pages.map((p) => ({ ...p, site_id: s.id })))
   if (ePages !== null) rendu.erreurs.push(`pages : ${ePages.message}`)

@@ -67,6 +67,20 @@ describe('① pages et sous-pages', () => {
   })
 })
 
+describe('①bis deux pages ne répètent jamais les mêmes lignes (lot 4b)', () => {
+  it('Missions = la 1re section ; la page de la famille = les sections suivantes ; aucune ligne commune', () => {
+    const sections = [{ items: [{ title: 'Politique de santé', description: 'Orientations.' }] }, { items: [{ title: 'Vaccination', description: 'Campagnes.' }, { title: 'Politique de santé', description: 'doublon' }] }]
+    const p = squeletteInstitution({ famille: 'ministere', inst: institution('fr', null), about: '', mission: '', missions: missionsDe(sections, 'missions'), services: missionsDe(sections, 'services'), photos: { presentation: null, activite: null } })
+    const lignes = (c: string) => p.find((x) => x.chemin === c)!.blocs.filter((b) => b.type === 'liste').flatMap((b) => b.items as string[])
+    expect(lignes('qui-sommes-nous/missions')).toEqual(['Politique de santé — Orientations.'])
+    expect(lignes('nos-services')).toEqual(['Vaccination — Campagnes.'])
+  })
+  it('une seule section générée : la page de la famille n’a PAS de liste (pas de doublon), seulement « À compléter »', () => {
+    const p = pagesDe('ministere')
+    expect(p.find((x) => x.chemin === 'nos-services')!.blocs.filter((b) => b.type === 'liste')).toEqual([])
+  })
+})
+
 describe('② rien d’inventé', () => {
   for (const f of FAMILLES) {
     it(`${f} : aucun chiffre, téléphone, courriel, adresse ; « À compléter » là où rien ne peut être su`, () => {
@@ -97,7 +111,9 @@ describe('③ photos et logo', () => {
   it('des photos de lieux et de gens, par famille — jamais un bureau', () => {
     for (const f of FAMILLES) {
       expect(JSON.stringify(RECHERCHE_PHOTOS[f]), f).not.toMatch(/office|desk|laptop|business/iu)
-      expect(RECHERCHE_PHOTOS[f].presentation).not.toBe(RECHERCHE_PHOTOS[f].activite)
+      // LOT 4b : chaque recherche nomme l'Afrique ou un pays africain (contexte sahélien).
+      for (const q of [...RECHERCHE_PHOTOS[f].presentation, ...RECHERCHE_PHOTOS[f].activite]) expect(q, `${f} : ${q}`).toMatch(/africa|african|sahel|nigeria|lagos|chad/iu)
+      expect(RECHERCHE_PHOTOS[f].presentation[0]).not.toBe(RECHERCHE_PHOTOS[f].activite[0])
     }
     const p = pagesDe('hopital')
     expect(p.find((x) => x.chemin === 'qui-sommes-nous')?.blocs[0]).toMatchObject({ type: 'image', url: 'https://images.pexels.com/a.jpg' })
@@ -122,7 +138,8 @@ describe('④ le semeur', () => {
       getPublicUrl: (chemin: string) => ({ data: { publicUrl: `https://cdn.test/${chemin}` } }),
     }) },
   })
-  const appel = (site: unknown, j: JournalPostgrest, televerse: string[], photos = async (q: string) => [`https://images.pexels.com/${q.length}.jpg`]) =>
+  const AFRICAINE = (url: string) => ({ url, alt: 'A nurse checks a patient in a clinic in Lagos, Nigeria.' })
+  const appel = (site: unknown, j: JournalPostgrest, televerse: string[], photos = async (q: string) => [AFRICAINE(`https://images.pexels.com/${q.length}.jpg`)]) =>
     semerInstitution(
       { slug: 'ministere-sante', demande: 'site du ministère de la Santé publique', genere: { name: 'Ministère de la Santé Publique', primaryColor: '#0a7f5a', designation: 'le Ministère', ...GENERE }, photos },
       { admin: faux(site, j, televerse) as never, versPng: async () => Buffer.from('png'), maintenant: () => 1 },
@@ -130,9 +147,10 @@ describe('④ le semeur', () => {
   it('écrit les 9 pages du site, et un logo provisoire au sigle quand il n’y en a pas', async () => {
     const j = journalVierge(); const tv: string[] = []
     const r = await appel({ id: 's1', logo_url: null }, j, tv)
-    expect(r).toMatchObject({ pages: 9, logo: true, famille: 'ministere', erreurs: [] })
+    expect(r).toMatchObject({ pages: 11, logo: true, famille: 'ministere', erreurs: [] })
     const ecrites = (j.ecritures.site_pages[0] as { charge: { site_id: string; chemin: string }[] }).charge
-    expect(ecrites).toHaveLength(9)
+    expect(ecrites).toHaveLength(11)
+    expect(ecrites.map((p) => p.chemin)).toEqual(expect.arrayContaining(['accueil-bandeau', 'accueil-chiffres']))
     expect(ecrites.every((p) => p.site_id === 's1')).toBe(true)
     expect(tv).toEqual(['ministere-sante/logo-provisoire-1.png'])
     expect(j.ecritures.sites).toContainEqual({ op: 'update', charge: { logo_url: 'https://cdn.test/ministere-sante/logo-provisoire-1.png' } })
@@ -147,10 +165,40 @@ describe('④ le semeur', () => {
   })
   it('deux photos DIFFÉRENTES, même quand Pexels rend la même liste aux deux recherches', async () => {
     const j = journalVierge(); const tv: string[] = []
-    await appel({ id: 's1', logo_url: null }, j, tv, async () => ['https://images.pexels.com/1.jpg', 'https://images.pexels.com/2.jpg'])
+    await appel({ id: 's1', logo_url: null }, j, tv, async () => [AFRICAINE('https://images.pexels.com/1.jpg'), AFRICAINE('https://images.pexels.com/2.jpg')])
     const ecrites = (j.ecritures.site_pages[0] as { charge: { blocs: { type: string; url?: string }[] }[] }).charge
     const urls = ecrites.flatMap((p) => p.blocs.filter((b) => b.type === 'image').map((b) => b.url))
     expect(urls).toEqual(['https://images.pexels.com/1.jpg', 'https://images.pexels.com/2.jpg'])
+  })
+  it('LOT 4b : le semeur passe les services (2e section) à la page de la famille, sans les missions', async () => {
+    const j = journalVierge(); const tv: string[] = []
+    await semerInstitution(
+      { slug: 'm', demande: 'site du ministère de la Santé', genere: { name: 'Ministère', designation: 'le Ministère', sections: [{ items: [{ title: 'Politique', description: 'Orientations.' }] }, { items: [{ title: 'Vaccination', description: 'Campagnes.' }] }] }, photos: async () => [] },
+      { admin: faux({ id: 's1', logo_url: 'x' }, j, tv) as never, versPng: async () => Buffer.from('png'), maintenant: () => 1 },
+    )
+    const ecrites = (j.ecritures.site_pages[0] as { charge: { chemin: string; blocs: { type: string; items?: string[] }[] }[] }).charge
+    expect(ecrites.find((p) => p.chemin === 'nos-services')!.blocs.find((b) => b.type === 'liste')?.items).toEqual(['Vaccination — Campagnes.'])
+  })
+  it('LOT 4b : une photo au décor non africain (ou sans description) n’est JAMAIS posée', async () => {
+    const j = journalVierge(); const tv: string[] = []
+    await appel({ id: 's1', logo_url: null }, j, tv, async () => [
+      { url: 'https://images.pexels.com/usa.jpg', alt: 'African American nurse in a hospital in Chicago, USA' },
+      { url: 'https://images.pexels.com/x.jpg', alt: '' },
+      { url: 'https://images.pexels.com/papua.jpg', alt: 'Indonesian women in Papua attending a class' },
+    ])
+    const ecrites = (j.ecritures.site_pages[0] as { charge: { blocs: { type: string }[] }[] }).charge
+    expect(ecrites.some((p) => p.blocs.some((b) => b.type === 'image'))).toBe(false)
+  })
+  it('LOT 4b : le bandeau reprend la mission ; les chiffres clés sont des CASES « À compléter », jamais des valeurs', async () => {
+    const j = journalVierge(); const tv: string[] = []
+    await appel({ id: 's1', logo_url: null }, j, tv)
+    const ecrites = (j.ecritures.site_pages[0] as { charge: { chemin: string; publie: boolean; menu: boolean; blocs: { type: string; items?: unknown[] }[] }[] }).charge
+    const bandeau = ecrites.find((p) => p.chemin === 'accueil-bandeau')!
+    expect(bandeau).toMatchObject({ publie: false, menu: false })
+    expect((bandeau.blocs[0].items as string[]).includes('Garantir l’accès de tous aux soins')).toBe(true)
+    const chiffres = ecrites.find((p) => p.chemin === 'accueil-chiffres')!
+    expect(chiffres).toMatchObject({ publie: false, menu: false })
+    expect((chiffres.blocs[0].items as { valeur: string }[]).every((x) => x.valeur === 'À compléter')).toBe(true)
   })
   it('site introuvable : rien n’est écrit, l’erreur est rendue', async () => {
     const j = journalVierge(); const tv: string[] = []
@@ -162,7 +210,7 @@ describe('④ le semeur', () => {
   it('des photos en panne : les pages naissent quand même, sans image', async () => {
     const j = journalVierge(); const tv: string[] = []
     const r = await appel({ id: 's1', logo_url: null }, j, tv, async () => { throw new Error('Pexels') })
-    expect(r.pages).toBe(9)
+    expect(r.pages).toBe(11)
     const ecrites = (j.ecritures.site_pages[0] as { charge: { blocs: { type: string }[] }[] }).charge
     expect(ecrites.some((p) => p.blocs.some((b) => b.type === 'image'))).toBe(false)
   })
@@ -171,7 +219,7 @@ describe('④ le semeur', () => {
 describe('⑤ branché, et tout modifiable', () => {
   it('la génération sème une institution — et seulement elle', () => {
     const r = lire('src/app/api/chat/route.ts')
-    expect(r).toMatch(motifTexte("if (sector === 'institution') {\n      try {\n        const semis = await semerInstitution({ slug, demande: message, genere: parsed as never, photos: (q) => fetchPexelsImages(q, parsed.primaryColor) });"))
+    expect(r).toMatch(motifTexte("if (sector === 'institution') {\n      try {\n        const semis = await semerInstitution({ slug, demande: message, genere: { ...parsed, primaryColor: couleurDemandee(message) ?? parsed.primaryColor } as never, photos: async (q) => (await fetchPexelsPhotos(q)).map((p) => ({ url: p.standard, alt: p.alt ?? '' })) });"))
   })
   it('le client modifie tout depuis le tableau de bord : pages (titre, intro, blocs, menu), logo, actualités', () => {
     expect(lire('src/app/api/sites/[slug]/pages/route.ts')).toMatch(motifTexte("const CHAMPS = ['chemin', 'parent', 'titre', 'chapeau', 'corps', 'ordre', 'menu', 'publie', 'blocs'] as const"))

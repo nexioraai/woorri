@@ -133,6 +133,18 @@ describe('les quatre vitrines montrent l’enseigne par le MÊME composant', () 
       .replace(/^[ \t]*\/\/.*$/gmu, '')
 
   const VITRINES = ['EditorialTheme.tsx', 'NoirTheme.tsx', 'VifTheme.tsx', 'AuroraTheme.tsx']
+  /**
+   * LE THÈME DES INSTITUTIONS (lot 4b, 2026-11-26) monte l'enseigne par son
+   * CADRE, partagé avec les pages intérieures : on vérifie les DEUX maillons.
+   */
+  const PAR_LE_CADRE = { 'InstitutionTheme.tsx': 'institution/CadreInstitution.tsx' } as const
+
+  it('le thème des institutions passe le logo à son cadre, qui monte `EnseigneDuSite` avec lui', () => {
+    expect(lire('InstitutionTheme.tsx').includes('logo={site.logo_url}'), 'InstitutionTheme : le cadre ne reçoit pas le logo').toBe(true)
+    const cadre = lire(PAR_LE_CADRE['InstitutionTheme.tsx'])
+    expect(cadre.includes('<EnseigneDuSite'), 'CadreInstitution : n’affiche pas l’enseigne partagée').toBe(true)
+    expect(cadre.includes('logo={logo}'), 'CadreInstitution : monte l’enseigne SANS le logo').toBe(true)
+  })
 
   it('chacune monte `EnseigneDuSite` et lui passe le logo', () => {
     // Quatre copies d'un même en-tête finissent par diverger : c'est
@@ -149,9 +161,9 @@ describe('les quatre vitrines montrent l’enseigne par le MÊME composant', () 
     // Le vrai risque est le thème qu'on ajoutera demain à partir d'une copie.
     const vitrines = readdirSync(THEMES).filter((f) => /^[A-Z]\w+Theme\.tsx$/u.test(f))
     for (const f of vitrines) {
-      expect(VITRINES.includes(f), `${f} est une vitrine non déclarée — ajoutez-la et montez-y l’enseigne`).toBe(true)
+      expect(VITRINES.includes(f) || f in PAR_LE_CADRE, `${f} est une vitrine non déclarée — ajoutez-la et montez-y l’enseigne`).toBe(true)
     }
-    expect(vitrines.length, 'le balayage ne trouve plus de vitrine — instrument cassé').toBe(VITRINES.length)
+    expect(vitrines.length, 'le balayage ne trouve plus de vitrine — instrument cassé').toBe(VITRINES.length + Object.keys(PAR_LE_CADRE).length)
   })
 
   it('l’enseigne garde le NOM en alternative textuelle', () => {

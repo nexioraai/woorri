@@ -1,4 +1,5 @@
 // src/app/sites/[slug]/page.tsx
+import InstitutionTheme from './themes/InstitutionTheme'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
@@ -48,6 +49,8 @@ const themes = {
   noir: NoirTheme,
   vif: VifTheme,
   aurora: AuroraTheme,
+  // LOT 4b (2026-11-26) — les institutions générées seulement.
+  institution: InstitutionTheme,
 } as const
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ [key: string]: string | undefined }> }
@@ -157,6 +160,8 @@ export default async function SitePage({ params, searchParams }: Props) {
     .filter((x) => x.i > 0 && x.bloc)
 
   const key = (site.theme as keyof typeof themes) || 'editorial'
+  // Le thème `institution` reçoit ses rubriques, son bandeau et ses chiffres clés (lus ici : un thème est synchrone).
+  const institution = key === 'institution' ? await (await import('./themes/institution/lireInstitution')).lireDonneesInstitution(site.id, site.primary_color) : undefined
   const Theme = themes[key] ?? EditorialTheme
 
   const primary = site.primary_color || '#111111'
@@ -168,7 +173,7 @@ export default async function SitePage({ params, searchParams }: Props) {
       <JsonLd site={site} url={url} />
       <PromoBanner slug={site.slug} primary={primary} mode={site.mode} labels={cartLabels} currency={resolveShopCurrency(site.products)} />
       <CartShell primary={primary} labels={cartLabels} slug={site.slug} mode={site.mode} products={site.products} shippingFlat={site.shipping_flat} variant={key === 'noir' ? 'dark' : 'light'}>
-        <Theme site={site} hasAvis={hasAvis} actualites={actualites} host={host} menu={menu} partenaires={partenaires} liensLegaux={liensLegaux} heroVitrine={heroVitrine} suiteHero={suiteHero} encreDeMarque={encreDeMarque} />
+        <Theme site={site} hasAvis={hasAvis} actualites={actualites} {...(institution ? { institution } : {})} host={host} menu={menu} partenaires={partenaires} liensLegaux={liensLegaux} heroVitrine={heroVitrine} suiteHero={suiteHero} encreDeMarque={encreDeMarque} />
         {site.mode === 3 && showsVisitorCatalogSearch(site.dropship_type) && site.theme !== 'aurora' && <CatalogSearch slug={site.slug} primary={primary} lang={site.lang} theme={key as ThemeKey} dropshipType={site.dropship_type} />}
       </CartShell>
       <ScrollRevealInit />

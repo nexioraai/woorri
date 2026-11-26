@@ -1,4 +1,7 @@
 import { ogDePage } from '../themes/metadonneesDuSite'
+import CadreInstitution from '../themes/institution/CadreInstitution'
+import { lirePagesLegales } from '../themes/pagesLegales'
+import { lienContact } from '../themes/destinationBouton'
 import { lireBlocs } from '../pages/blocs'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -174,6 +177,18 @@ export default async function PageDeclaree({ params }: Props) {
   const lang = (site.lang || 'fr').slice(0, 2)
   const rtl = lang === 'ar'
 
+  // LOT 4b — UNE PAGE INTÉRIEURE D'INSTITUTION a l'en-tête (grand menu) et le pied du site :
+  // un vrai site, pas une page isolée. Les autres thèmes (et la CPA) ne changent pas.
+  const institution = site.theme === 'institution'
+    ? { donnees: await (await import('../themes/institution/lireInstitution')).lireDonneesInstitution(site.id, site.primary_color), legaux: await lirePagesLegales(site.id, base, site.lang) }
+    : null
+  const enveloppe = (contenu: React.ReactNode) => institution === null ? contenu : (
+    <CadreInstitution nom={site.name} logo={site.logo_url} slug={site.slug} base={base} couleur={site.primary_color || '#1e4d8c'}
+      rubriques={institution.donnees.rubriques} contact={lienContact(site, host)} liensLegaux={institution.legaux}>
+      {contenu}
+    </CadreInstitution>
+  )
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -210,7 +225,7 @@ export default async function PageDeclaree({ params }: Props) {
       {/* `overflow-x: clip` : un bloc pleine largeur (100vw) déborderait de la
           largeur de la barre de défilement sous Windows. `clip` coupe sans
           créer de zone défilante : l'image collante du parcours tient. */}
-      <div style={{ minHeight: '100vh', background: '#ffffff', color: '#111111', overflowX: 'clip' }}>
+      {enveloppe(<div style={{ minHeight: '100vh', background: '#ffffff', color: '#111111', overflowX: 'clip' }}>
       <main
         dir={rtl ? 'rtl' : 'ltr'}
         style={{ maxWidth: fiche ? 1180 : 820, margin: '0 auto', padding: '64px 24px' }}
@@ -292,7 +307,7 @@ export default async function PageDeclaree({ params }: Props) {
             page. Aucune carte si aucun enfant : pas de section vide. */}
         {actualites === null && <SousPages enfants={enfants} base={base} accent={accent} rtl={rtl} />}
       </main>
-      </div>
+      </div>)}
     </>
   )
 }
