@@ -1,4 +1,5 @@
 import 'server-only'
+import { semerInstitution } from '@/lib/sites/semerInstitution'
 import { designationValable, institutionAvantCommerce } from '@/lib/sites/familleInstitution'
 import { NextResponse, after } from 'next/server';
 import { indicatifDuPays, corrigerIndicatif } from '@/lib/telephone';
@@ -1181,6 +1182,19 @@ Return ONLY valid JSON, no markdown:
     if (error) {
       console.error('SUPABASE ERROR:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // LOT 4 (2026-11-26) — UNE INSTITUTION NAÎT COMPLÈTE : ses pages et sous-pages
+    // (menu déroulant), et un logo provisoire tiré de son sigle. Rien d'inventé :
+    // ce qui ne peut être su est un encadré « À compléter ». Un échec ne défait
+    // pas le site déjà créé : il est journalisé.
+    if (sector === 'institution') {
+      try {
+        const semis = await semerInstitution({ slug, demande: message, genere: parsed as never, photos: (q) => fetchPexelsImages(q, parsed.primaryColor) });
+        console.log('[Generation] Institution semée :', semis.famille, '| pages :', semis.pages, '| logo :', semis.logo, semis.erreurs.length ? `| erreurs : ${semis.erreurs.join(' ; ')}` : '');
+      } catch (e) {
+        console.error('[Generation] semis institution en échec :', e);
+      }
     }
 
     // ============================================================
