@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { institutionAvantCommerce } from '@/lib/sites/familleInstitution'
 import { sansQuota } from '@/lib/admin-emails';
 import { isKnownDropshipSubtype, requiresDropshipSubtype } from '@/lib/dropship/subtypeAdmission';
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client';
@@ -25,6 +26,7 @@ YOU MUST DETECT the business intent from what the user says (in ANY language, wh
 
 UNDERSTAND INTENT, NEVER KEYWORDS. People describe the same idea with wildly different words, in any language, and most have NEVER heard terms like "dropshipping", "e-commerce", or "showcase/vitrine". Someone may say "I want to sell but I have no money for stock", "a supplier who ships for me", "sell without buying anything upfront", "je veux vendre en ligne", or simply describe their idea with no technical term at all. Classify by what the person actually WANTS to do — the underlying business reality — not by whether they used a specific word. NEVER guess: whenever the intent is unclear or two modes could both fit, ASK a short, clear question in the user's language to clarify before deciding. Asking is always better than assuming.
 - SHOWCASE (mode 1): restaurants, cafes, bars, bakeries, salons, spas, gyms, clinics, doctors, lawyers, accountants, mechanics, plumbers, electricians, photographers, coaches, consultants, any local service, any perishable food, any made-to-order craft. A site to present a local business — no online selling of shipped goods.
+- INSTITUTIONS — ministries, town halls, NGOs and associations, public schools and universities, hospitals and health districts, public agencies (mode 1): they are NOT businesses. For them, item 2 below means THEIR MISSIONS AND THE SERVICES THEY GIVE THE PUBLIC — never ask what they "sell", never talk about customers, prices or products.
 - ONLINE BOUTIQUE (mode 2): a shop selling THEIR OWN physical inventory they hold and ship themselves — local clothing store, bookstore, jewelry maker, florist, a brand with its own warehouse stock.
 - DROPSHIPPING / PRINT-ON-DEMAND (mode 3): an online store fulfilled by suppliers, holding NO stock of its own. Sub-types: "reseller" (resell trending manufactured goods), "pod_brand" (merchant uploads their own designs printed on blanks), "pod_custom" (each visitor uploads their own design).
 CRITICAL — TELLING MODE 2 FROM MODE 3. Both are online shops selling shipped physical products, so the ONLY thing that separates them is: WHO HOLDS AND SHIPS THE STOCK?
@@ -92,6 +94,8 @@ Never invent contact details. Only include details the user explicitly gave.`;
 
 function detectSector(message: string): string {
   const lower = message.toLowerCase();
+  // LOT 3 (2026-11-26) — une institution n'est pas un commerce ; le premier terme l'emporte.
+  if (institutionAvantCommerce(lower, [/\b(restaurant|café|cafe|coffee|bar|brasserie|bistro|pizzeria|fast.?food|food.?truck|cantine|traiteur|boulangerie|pâtisserie|patisserie|cuisine|chef|menu|plat|repas|food|fleuriste|fleur|flower|florist)\b/i, /\b(boutique|shop|store|magasin|épicerie|epicerie|marché|marche|e-commerce|ecommerce|vente|produit|product|vêtement|vetement|mode|clothing|gadget|accessoire|accessory|electronics|électronique)\b/i, /\b(pièces?\s+détachées?|pieces?\s+detachees?|pièce\s+auto|pieces?\s+auto|pièces?\s+d'origine|pieces?\s+d'origine|oem|spare\s+parts?)\b/i]) !== null) return 'institution';
   if (/\b(restaurant|café|cafe|coffee|bar|brasserie|bistro|pizzeria|fast.?food|food.?truck|cantine|traiteur|boulangerie|pâtisserie|patisserie|cuisine|chef|menu|plat|repas|food|fleuriste|fleur|flower|florist)\b/i.test(lower)) return 'restaurant';
   if (/\b(pièces?\s+détachées?|pieces?\s+detachees?|pièce\s+auto|pieces?\s+auto|pièces?\s+d'origine|pieces?\s+d'origine|oem|spare\s+parts?)\b/i.test(lower)) return 'auto_parts';
   if (/\b(boutique|shop|store|magasin|épicerie|epicerie|marché|marche|e-commerce|ecommerce|vente|produit|product|vêtement|vetement|mode|clothing|gadget|accessoire|accessory|electronics|électronique)\b/i.test(lower)) return 'shop';
@@ -108,6 +112,8 @@ const VALID_MODES: Record<string, number[]> = {
   portfolio: [1],
   shop: [1, 2, 3],
   general: [1, 2, 3],
+  // LOT 3 — une institution a un site (mode 1), jamais une boutique.
+  institution: [1],
 };
 function validModesForHistory(history: Turn[]): number[] {
   const userText = history.filter((t) => t.role === 'user').map((t) => t.content).join(' ');

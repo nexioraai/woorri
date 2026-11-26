@@ -1,4 +1,5 @@
 import 'server-only'
+import { designationValable, institutionAvantCommerce } from '@/lib/sites/familleInstitution'
 import { NextResponse, after } from 'next/server';
 import { indicatifDuPays, corrigerIndicatif } from '@/lib/telephone';
 import { sansQuota } from '@/lib/admin-emails';
@@ -128,6 +129,9 @@ export const GeneratedSiteSchema = z.object({
   cta: z.string().optional().default(''),
   products: z.array(z.any()).optional().default([]),
   socialLinks: SocialLinksSchema.optional().default({ instagram: '', whatsapp: '', facebook: '', tiktok: '' }),
+  // LOT 3 (2026-11-26) — la désignation d'une institution (« le Ministère »). Facultative ;
+  // validée ensuite par `designationValable` avant d'être écrite.
+  designation: z.string().optional(),
 });
 
 // Service role pour les inserts (bypass RLS — sécurisé car validé via Bearer token avant)
@@ -308,10 +312,18 @@ function validatePrompt(message: string, lang: string): { valid: boolean; reason
   return { valid: true };
 }
 
+// Les motifs de COMMERCE, partagés avec l'arbitrage institution / commerce (2026-11-26).
+const MOTIF_RESTAURANT = /\b(restaurant|café|cafe|coffee|bar|brasserie|bistro|pizzeria|fast.?food|food.?truck|cantine|traiteur|boulangerie|pâtisserie|patisserie|cuisine|chef|menu|plat|repas|food)\b/i;
+const MOTIF_BOUTIQUE = /\b(boutique|shop|store|magasin|épicerie|epicerie|marché|marche|e-commerce|ecommerce|vente|produit|product|vêtement|vetement|mode|clothing)\b/i;
+
 export function detectSector(message: string): string {
   const lower = message.toLowerCase();
-  if (/\b(restaurant|café|cafe|coffee|bar|brasserie|bistro|pizzeria|fast.?food|food.?truck|cantine|traiteur|boulangerie|pâtisserie|patisserie|cuisine|chef|menu|plat|repas|food)\b/i.test(lower)) return 'restaurant';
-  if (/\b(boutique|shop|store|magasin|épicerie|epicerie|marché|marche|e-commerce|ecommerce|vente|produit|product|vêtement|vetement|mode|clothing)\b/i.test(lower)) return 'shop';
+  // LOT 3 — UNE INSTITUTION N'EST PAS UN COMMERCE (ministère, mairie, ONG, école
+  // publique, hôpital, agence publique). Le premier terme l'emporte : « restaurant
+  // près de l'hôpital » reste un restaurant.
+  if (institutionAvantCommerce(lower, [MOTIF_RESTAURANT, MOTIF_BOUTIQUE]) !== null) return 'institution';
+  if (MOTIF_RESTAURANT.test(lower)) return 'restaurant';
+  if (MOTIF_BOUTIQUE.test(lower)) return 'shop';
   if (/\b(service|consulting|conseil|salon|coiffeur|barber|spa|massage|clinique|cabinet|garage|réparation|reparation|nettoyage|plombier|électricien|electricien|avocat|comptable)\b/i.test(lower)) return 'services';
   if (/\b(portfolio|designer|photograph|artist|artiste|musicien|developer|développeur|developpeur|freelance)\b/i.test(lower)) return 'portfolio';
   return 'general';
@@ -360,6 +372,20 @@ SECTOR DETAIL - SHOP/BOUTIQUE (subordinate to the MODE rules above -- if those r
 CRITICAL SECTOR - SERVICES:
 - Generate 5-7 detailed specific services
 - Set "type" to specific service category (e.g. "Salon de coiffure")`;
+  }
+  if (sector === 'institution') {
+    // LOT 3 (2026-11-26) — CES RÈGLES PRIMENT sur le gabarit « commerce » ci-dessus.
+    return `
+
+CRITICAL SECTOR - INSTITUTION (ministry, town hall, NGO, public school or university, hospital, public agency). These rules OVERRIDE every business rule above:
+- This is NOT a business. Mode 1. NO prices anywhere: every "price" is "", "priceRange" is "", "products" is [].
+- NO customer testimonials: "testimonials" is []. Never invent people, quotes, figures, dates or results.
+- NEVER invent contact details: address, phone and email stay "" unless the request gives them. This overrides "write a realistic address".
+- "sections": the institution's MISSIONS and the SERVICES it gives the public (e.g. "Nos missions", "Services aux usagers", "Programmes"), 3-6 items each, factual, without price.
+- "type": the exact kind of institution in the site language (e.g. "Ministère de la Santé publique", "Organisation non gouvernementale", "Hôpital de district").
+- "designation": how the institution names ITSELF in a sentence, WITH its article, in the site language (e.g. "le Ministère", "la Mairie", "l'Association", "l'Hôpital"). Add this key to the JSON.
+- "faq": questions a citizen or a beneficiary really asks (procedures, opening hours, documents), answered without inventing facts.
+- "cta": an action for a citizen ("Nous contacter", "Nos services"), never "Acheter".`;
   }
   if (sector === 'portfolio') {
     return `
@@ -1007,7 +1033,8 @@ Return ONLY valid JSON, no markdown:
     // resolveFinalMode(). Calculee ICI (avant l'enrichissement image) pour
     // que enforceModeProducts() s'applique avant tout appel Pexels inutile
     // sur des produits Mode 2/3 qui seront de toute facon jetes.
-    const finalMode = resolveFinalMode(siteMode, parsed.mode);
+    // LOT 3 (2026-11-26) — une institution a un SITE (mode 1), quel que soit le mode renvoyé.
+    const finalMode = sector === 'institution' ? 1 : resolveFinalMode(siteMode, parsed.mode);
     // ============================================================
     // LOT 1 / L1-01 -- L'INVARIANT « MODE 3 => SOUS-TYPE ».
     //
@@ -1097,6 +1124,8 @@ Return ONLY valid JSON, no markdown:
       name: parsed.name,
       slogan: parsed.slogan,
       type: parsed.type,
+      // LOT 3 — la désignation d'une institution (« le Ministère »…), seulement si elle est valable.
+      ...(sector === 'institution' && designationValable(parsed.designation) !== null ? { designation: designationValable(parsed.designation) } : {}),
       primary_color: parsed.primaryColor,
       hero_title: parsed.heroTitle,
       hero_subtitle: parsed.heroSubtitle,

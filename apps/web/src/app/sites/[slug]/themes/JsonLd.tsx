@@ -1,4 +1,5 @@
 // src/app/sites/[slug]/themes/JsonLd.tsx
+import { familleInstitution, SCHEMA_INSTITUTION } from '@/lib/sites/familleInstitution'
 import type { Site } from './shared'
 import { resolveSiteFreshness } from './siteFreshness'
 import JsonLdScript from './JsonLdScript'
@@ -8,6 +9,15 @@ function resolveSchemaType(rawType?: string): {
   isPhysical: boolean
 } {
   const t = (rawType ?? '').toLowerCase()
+
+  // LOT 3 (2026-11-26) — LA FAMILLE D'INSTITUTION, quand le type la nomme sans
+  // ambiguïté : ministère, mairie, agence publique → GovernmentOrganization ;
+  // ONG → NGO ; hôpital → Hospital ; école publique, université →
+  // EducationalOrganization. Un hôpital, une école, une mairie ont un lieu.
+  const famille = familleInstitution(t)
+  if (famille !== null) {
+    return { schemaType: SCHEMA_INSTITUTION[famille], isPhysical: famille === 'hopital' || famille === 'ecole' || famille === 'mairie' }
+  }
 
   // ── UN ÉTABLISSEMENT PUBLIC N'EST PAS UN COMMERCE, ET PASSE EN PREMIER.
   //
