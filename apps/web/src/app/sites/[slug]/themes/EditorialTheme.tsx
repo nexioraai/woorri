@@ -49,6 +49,7 @@ import RevenirEnHaut from './RevenirEnHaut'
 import ClickableProductCard from './ClickableProductCard'
 import EnseigneDuSite from './EnseigneDuSite'
 import PageProduits, { produitsDeLaPage } from './PageProduits'
+import { tuileGalerie } from './tuileGalerie'
 
 // ---------- Premium Button ----------
 function PremiumButton({
@@ -537,13 +538,10 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-              {gallery.slice(0, 9).map((url, i) => (
+              {gallery.slice(0, 9).map((url, i, liste) => (
                 <div
                   key={i}
-                  className={`relative overflow-hidden rounded-2xl bg-neutral-100 group ${
-                    i === 0 ? 'md:col-span-2 md:row-span-2' : ''
-                  }`}
-                  style={{ aspectRatio: i === 0 ? '1 / 1' : '4 / 5' }}
+                  className={`relative overflow-hidden rounded-2xl bg-neutral-100 group ${tuileGalerie(i, liste.length)}`}
                 >
                   <Image src={url} alt="" fill sizes="(max-width: 768px) 50vw, 33vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

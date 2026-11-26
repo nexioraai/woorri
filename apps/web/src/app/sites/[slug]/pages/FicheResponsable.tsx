@@ -50,6 +50,18 @@ export function estUneFiche(blocs: Bloc[]): boolean {
   return indiceDuMot(blocs) >= 0
 }
 
+// LE NOM À CÔTÉ DE LA PHOTO (CPA, 2026-11-26). La signature du mot (`auteur`)
+// est tantôt un intitulé (« Chef comptable »), tantôt une personne
+// (« Dr Youssouf Abdoulaye Ali »). Elle n'est reprise dans l'en-tête, sous la
+// fonction, que si c'est une PERSONNE — reconnue à sa civilité — sinon
+// l'intitulé s'afficherait deux fois.
+const CIVILITE = /^(Dr|Pr|Mr|M|Mme|Mlle|Me)\.?\s+\S/
+
+export function nomDuResponsable(auteur: string | undefined): string | null {
+  const a = (auteur ?? '').trim()
+  return CIVILITE.test(a) ? a : null
+}
+
 export default function FicheResponsable({
   site, titre, chapeau, blocs, base, accent, parent, freres, cheminCourant,
 }: {
@@ -126,6 +138,9 @@ export default function FicheResponsable({
                   <ShieldCheck size={16} aria-hidden /> Équipe de direction
                 </span>
                 <h1 style={{ fontSize: 40, lineHeight: 1.1, fontWeight: 800, letterSpacing: '-0.02em', margin: '16px 0 8px', textWrap: 'balance' }}>{titre}</h1>
+                {nomDuResponsable(mot.auteur) && (
+                  <div style={{ fontSize: 23, lineHeight: 1.3, fontWeight: 700, color: '#1b1f1c', margin: '0 0 6px' }}>{nomDuResponsable(mot.auteur)}</div>
+                )}
                 <div style={{ fontSize: 19, color: 'var(--acc)', fontWeight: 600 }}>{site.name}</div>
                 {chapeau && <p style={{ fontSize: 16.5, lineHeight: 1.6, color: '#5b5f5c', margin: '14px 0 0' }}>{chapeau}</p>}
               </div>
