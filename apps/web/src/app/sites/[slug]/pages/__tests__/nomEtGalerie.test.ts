@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { nomDuResponsable } from '../FicheResponsable'
-import { tuileGalerie } from '../../themes/tuileGalerie'
+import { tuileGalerie, tailleGalerie } from '../../themes/tuileGalerie'
 
 describe('fiche — le nom du responsable', () => {
   it('une personne (civilité) est reprise, un intitulé ne l’est pas', () => {
@@ -31,4 +31,18 @@ describe('galerie — aucun trou en bas de la grille', () => {
       expect(large % 3).toBe(0)
     })
   }
+})
+
+describe('galerie — la taille chargée suit la tuile', () => {
+  it('4 photos : grande 66vw, deux au tiers, la dernière pleine largeur', () => {
+    expect([0, 1, 2, 3].map((i) => tailleGalerie(i, 4))).toEqual([
+      '(max-width: 768px) 100vw, 66vw',
+      '(max-width: 768px) 50vw, 33vw',
+      '(max-width: 768px) 50vw, 33vw',
+      '(max-width: 768px) 100vw, 100vw',
+    ])
+  })
+  it('la grande tuile prend la hauteur de ses voisines en écran large', () => {
+    expect(tuileGalerie(0, 4)).toContain('md:aspect-auto')
+  })
 })
