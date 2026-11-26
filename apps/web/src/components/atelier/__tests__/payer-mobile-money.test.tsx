@@ -152,6 +152,30 @@ describe('payer par mobile money — l’écran', () => {
     vi.unstubAllGlobals()
   })
 
+  it('NOM DU TITULAIRE · exigé par MoneRails (mesuré : 400 sans lui) — gardé, obligatoire, avec son aide reliée au champ', async () => {
+    const React = await import('react')
+    const { createRoot } = await import('react-dom/client')
+    const { PayerMobileMoney, AIDE_NOM_TITULAIRE } = await import('@/components/atelier/PayerMobileMoney')
+    expect(AIDE_NOM_TITULAIRE).toBe('Le nom du compte Airtel ou Moov qui paie')
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ montant: 14000, devise: 'XAF', test: true, operateurs: [{ code: 'AIRTEL', nom: 'Airtel Money', validation: ['pin'] }] }), { status: 200 })))
+    const racine = document.createElement('div')
+    document.body.appendChild(racine)
+    await React.act(async () => {
+      createRoot(racine).render(React.createElement(PayerMobileMoney, { app: 'a7', jeton: async () => 't', renouveler: true, onPaye: async () => null }))
+    })
+    await React.act(async () => { (racine.querySelector('button') as HTMLButtonElement).click() })
+    await React.act(async () => { await new Promise((ok) => setTimeout(ok, 0)) })
+    const champ = racine.querySelector('input[autocomplete="name"]') as HTMLInputElement
+    expect(champ, 'le champ du nom').not.toBeNull()
+    expect(champ.required).toBe(true)
+    expect(champ.minLength).toBe(2)
+    expect(champ.maxLength).toBe(80)
+    const aide = document.getElementById(champ.getAttribute('aria-describedby') ?? '')
+    expect(aide?.textContent).toBe(AIDE_NOM_TITULAIRE)
+    expect(champ.closest('label')?.textContent).toContain(AIDE_NOM_TITULAIRE)
+    vi.unstubAllGlobals()
+  })
+
   it('L3 · le badge « mode test » suit le serveur : absent quand le compte est en réel', async () => {
     const React = await import('react')
     const { createRoot } = await import('react-dom/client')

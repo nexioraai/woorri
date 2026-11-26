@@ -14,7 +14,7 @@
  * test » suit le mode que le serveur dit (lot L3). L'écran ne déclare rien de payé : il suit l'état
  * du prestataire, puis relit le compteur — c'est l'avis signé qui active.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { ActionClient, EtatEncaissement, Operateur } from '@/lib/payments/mobile-money/types';
 
@@ -78,6 +78,9 @@ export const LIBELLE_REESSAYER = 'Réessayer';
 
 /** L'indicatif fixe affiché devant le numéro, dans la fenêtre (Tchad). */
 export const INDICATIF = '+235';
+/** Le nom est EXIGÉ par MoneRails (`customer.name`, 2 à 80 caractères) — mesuré
+ *  le 2026-11-26 avec la clé de test : sans lui, 400 pour Airtel comme pour Moov. */
+export const AIDE_NOM_TITULAIRE = 'Le nom du compte Airtel ou Moov qui paie';
 
 /** Le titre de l'écran d'attente, dans la fenêtre « Publier » (2026-11-24). */
 export const TITRE_ATTENTE = 'Validez le paiement sur votre téléphone';
@@ -144,6 +147,7 @@ export function PayerMobileMoney({
   const [operateur, setOperateur] = useState('');
   const [telephone, setTelephone] = useState('');
   const [nom, setNom] = useState('');
+  const idAideNom = useId();
   const [code, setCode] = useState('');
   const [vue, setVue] = useState<Vue | null>(null);
   const [avis, setAvis] = useState<string | null>(null);
@@ -362,7 +366,8 @@ export function PayerMobileMoney({
             )}
           </label>
           <label className={etiquette}>Nom du titulaire
-            <input value={nom} onChange={(e) => setNom(e.target.value)} autoComplete="name" className={`${champ} mt-1`} required minLength={2} maxLength={80} />
+            <input value={nom} onChange={(e) => setNom(e.target.value)} autoComplete="name" className={`${champ} mt-1`} required minLength={2} maxLength={80} aria-describedby={idAideNom} />
+            <span id={idAideNom} className="mt-1 block text-xs font-normal text-white/55">{AIDE_NOM_TITULAIRE}</span>
           </label>
           <button type="submit" disabled={envoi || choisi === null}
             className={enFenetre
