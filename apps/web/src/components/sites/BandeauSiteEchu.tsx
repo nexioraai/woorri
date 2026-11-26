@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { lireEtatSite } from '@/components/apps/publierSite'
-import { PHRASE_SITE_ECHU } from '@/lib/sites/site-echu'
+import { useTranslation } from '@/lib/translations'
 import { lienRenouveler } from '@/components/dashboard/renouvelerSite'
 
 /** Le bandeau ne s'affiche que pour un site ÉCHU — pas pour « bientôt » (le tableau de bord le dit). */
@@ -20,11 +20,13 @@ export function bandeauVisible(e: { readonly rappel: 'bientot' | 'echu' | null }
   return e !== null && e.rappel === 'echu'
 }
 
+/** La langue est celle de la page (la même que le reste de l'éditeur). */
 export function VueBandeauSiteEchu({ slug }: { readonly slug: string }) {
+  const { t } = useTranslation()
   return (
     <div role="status" data-site-echu="" className="flex flex-wrap items-center gap-3 border-b border-amber-400/40 bg-amber-400/10 px-4 py-2.5 text-sm text-amber-100">
-      <span className="min-w-0 flex-1">{PHRASE_SITE_ECHU}</span>
-      <Link href={lienRenouveler(slug)} className="shrink-0 rounded-lg bg-accent px-3 py-1.5 text-[13px] font-semibold text-white hover:bg-accent/90">Renouveler</Link>
+      <span className="min-w-0 flex-1">{t('siteEchu.message')}</span>
+      <Link href={lienRenouveler(slug)} className="shrink-0 rounded-lg bg-accent px-3 py-1.5 text-[13px] font-semibold text-white hover:bg-accent/90">{t('siteEchu.renouveler')}</Link>
     </div>
   )
 }

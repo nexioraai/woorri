@@ -324,6 +324,9 @@ export const fr = {
   'dashboard.archiveBlocked': 'Ce site a des commandes non résolues, il ne peut pas être supprimé pour le moment.',
   'dashboard.deleteFailed': 'La suppression a échoué.',
   'dashboard.loading': 'Chargement...',
+  // Le bandeau d'un site échu, dans les éditeurs (2026-11-26).
+  'siteEchu.message': 'L’abonnement de ce site est arrivé à échéance. Renouvelez-le pour reprendre les modifications. Votre site reste en ligne.',
+  'siteEchu.renouveler': 'Renouveler',
   'dashboard.eyebrow': 'Dashboard',
   'dashboard.title': 'Mes projets',
   'dashboard.newSite': 'Nouveau site',

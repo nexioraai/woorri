@@ -114,6 +114,15 @@ export type DemandeFenetre = {
 
 export const TITRE_FENETRE_PUBLIER = 'Publier votre application'
 export const BOUTON_PUBLIER = 'Publier'
+/** RENOUVELER une appli déjà en ligne (2026-11-26) : la fenêtre ne dit plus « Publier ». */
+export const TITRE_FENETRE_RENOUVELER = 'Renouveler votre application'
+export const BOUTON_RENOUVELER = 'Renouveler'
+export const LIBELLES_APPLI_RENOUVELLEMENT = {
+  adresse: 'Adresse de votre application',
+  apresMobileMoney: 'Dès que vous validez le paiement sur votre téléphone, votre application est renouvelée pour un mois.',
+  enLigne: 'Votre application est en ligne',
+  testSansPublication: 'Paiement de test confirmé. En mode test, l’application n’est pas renouvelée.',
+} as const
 export const PHRASE_LISTE_CHANGEE = 'Les données visibles par tout le monde ont changé depuis l’ouverture de cette fenêtre : fermez-la et cliquez de nouveau sur « Publier ».'
 /** Ce que dit l'écran quand « Publier » vise une appli DÉJÀ en ligne (B, 2026-11-24). */
 export const PHRASE_DEJA_EN_LIGNE = 'Votre application est déjà en ligne : rien n’a changé, son adresse reste la même.'
@@ -188,16 +197,19 @@ export async function lancerPublication(o: OptionsPublication): Promise<IssuePub
     const sansBearer = o.autorisation.replace(/^Bearer\s+/u, '')
 
     // Sinon, LA fenêtre : l'adresse, et ce qui sera visible par tout le monde.
+    // DÉJÀ EN LIGNE (une adresse publiée) : c'est un renouvellement.
+    const renouvellement = etat.adresse !== null
     return await new Promise<IssuePublication>((resolve) => {
       o.ouvrirFenetre({
-        titre: TITRE_FENETRE_PUBLIER,
+        titre: renouvellement ? TITRE_FENETRE_RENOUVELER : TITRE_FENETRE_PUBLIER,
+        ...(renouvellement ? { libelles: LIBELLES_APPLI_RENOUVELLEMENT } : {}),
         // L'adresse proposée vient du SERVEUR, déjà vérifiée libre (2026-11-24) ;
         // le calcul local ne sert que si le serveur n'en dit rien (ancienne réponse).
         adresseInitiale: etat.nom ?? etat.adresseProposee ?? adresseProposee(o.titre ?? o.demande),
         adresseModifiable: etat.nom === null,
         listes: aAccepter,
         // UN SEUL BOUTON « PUBLIER » (2026-11-24), qu'il y ait à payer ou non.
-        libelleBouton: BOUTON_PUBLIER,
+        libelleBouton: renouvellement ? BOUTON_RENOUVELER : BOUTON_PUBLIER,
         moyens,
         mobileMoney: moyens.includes('mobile_money')
           ? { app: o.id, jeton: () => Promise.resolve(sansBearer), onPaye: o.apresMobileMoney ?? (() => Promise.resolve()), lireAdresse: () => adresseEnLigne(o.id, o.autorisation) }

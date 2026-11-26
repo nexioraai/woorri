@@ -312,6 +312,9 @@ export const es = {
   'dashboard.archiveBlocked': 'Este sitio tiene pedidos sin resolver y no se puede eliminar por ahora.',
   'dashboard.deleteFailed': 'La eliminación falló.',
   'dashboard.loading': 'Cargando...',
+  // Le bandeau d'un site échu, dans les éditeurs (2026-11-26).
+  'siteEchu.message': 'La suscripción de este sitio ha vencido. Renuévela para retomar los cambios. Tu sitio sigue en línea.',
+  'siteEchu.renouveler': 'Renovar',
   'dashboard.eyebrow': 'Panel',
   'dashboard.title': 'Mis proyectos',
   'dashboard.newSite': 'Nuevo sitio',

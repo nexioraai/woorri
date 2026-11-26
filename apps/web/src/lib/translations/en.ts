@@ -314,6 +314,9 @@ export const en: Record<TranslationKey, string> = {
   'dashboard.archiveBlocked': 'This site has unresolved orders and cannot be deleted right now.',
   'dashboard.deleteFailed': 'Deletion failed.',
   'dashboard.loading': 'Loading...',
+  // Le bandeau d'un site échu, dans les éditeurs (2026-11-26).
+  'siteEchu.message': 'This site’s subscription has expired. Renew it to resume editing. Your site stays online.',
+  'siteEchu.renouveler': 'Renew',
   'dashboard.eyebrow': 'Dashboard',
   'dashboard.title': 'My projects',
   'dashboard.newSite': 'New site',

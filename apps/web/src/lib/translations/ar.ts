@@ -313,6 +313,9 @@ export const ar: Record<TranslationKey, string> = {
   'dashboard.archiveBlocked': 'يحتوي هذا الموقع على طلبات غير مسواة ولا يمكن حذفه الآن.',
   'dashboard.deleteFailed': 'فشل الحذف.',
   'dashboard.loading': 'جارٍ التحميل...',
+  // Le bandeau d'un site échu, dans les éditeurs (2026-11-26).
+  'siteEchu.message': 'انتهى اشتراك هذا الموقع. جدّده لاستئناف التعديلات. يبقى موقعك متاحًا على الإنترنت.',
+  'siteEchu.renouveler': 'تجديد',
   'dashboard.eyebrow': 'لوحة التحكم',
   'dashboard.title': 'مشاريعي',
   'dashboard.newSite': 'موقع جديد',

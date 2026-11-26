@@ -18,6 +18,13 @@ export const LIBELLES_SITE = {
   enLigne: 'Votre site est en ligne',
   testSansPublication: 'Paiement de test confirmé. En mode test, le site n’est pas publié.',
 } as const
+/** RENOUVELER un site déjà en ligne (2026-11-26) : la fenêtre ne dit plus « Publier ». */
+export const TITRE_RENOUVELER_SITE = 'Renouveler votre site'
+export const LIBELLES_SITE_RENOUVELLEMENT = {
+  ...LIBELLES_SITE,
+  apresMobileMoney: 'Dès que vous validez le paiement sur votre téléphone, votre site est renouvelé pour un mois.',
+  testSansPublication: 'Paiement de test confirmé. En mode test, le site n’est pas renouvelé.',
+} as const
 export const PHRASE_PUBLIER_SITE_FERME = 'Le paiement en ligne de ce site n’est pas encore ouvert.'
 
 export type EtatSite = { enLigne: boolean; lien: string; moyens: MoyenPublication[]; payeJusquAu: string | null; rappel: 'bientot' | 'echu' | null }
@@ -67,18 +74,20 @@ export async function lancerPublicationSite(o: {
     return e === null ? { type: 'paiement' } : { type: 'erreur', message: e }
   }
   const sansBearer = o.autorisation.replace(/^Bearer\s+/u, '')
+  // DÉJÀ EN LIGNE : c'est un renouvellement ; une première publication garde « Publier ».
+  const renouvellement = etat.enLigne
   return new Promise<IssueSite>((resolve) => {
     o.ouvrirFenetre({
-      titre: TITRE_FENETRE_SITE,
+      titre: renouvellement ? TITRE_RENOUVELER_SITE : TITRE_FENETRE_SITE,
       adresseInitiale: o.slug,
       adresseModifiable: false,
       listes: [],
-      libelleBouton: 'Publier',
+      libelleBouton: renouvellement ? 'Renouveler' : 'Publier',
       moyens: etat.moyens,
       avecEtapes: true,
       compte: null,
       verifier: null,
-      libelles: LIBELLES_SITE,
+      libelles: renouvellement ? LIBELLES_SITE_RENOUVELLEMENT : LIBELLES_SITE,
       mobileMoney: etat.moyens.includes('mobile_money')
         ? {
             app: `site-${o.slug}`,

@@ -25,15 +25,35 @@ const { VueBandeauSiteEchu, bandeauVisible } = await import('@/components/sites/
 const { updateOwnedSite } = await import('@/lib/supabase-owned-site')
 const { phraseRappel } = await import('@/components/dashboard/rappelSite')
 const { PHRASE_SITE_ECHU } = await import('@/lib/sites/site-echu')
+const { LanguageProvider } = await import('@/lib/translations')
+const { fr } = await import('@/lib/translations/fr')
+const { en } = await import('@/lib/translations/en')
+const { es } = await import('@/lib/translations/es')
+const { ar } = await import('@/lib/translations/ar')
 
 beforeEach(() => { journal = journalVierge(); refus = null })
 
 describe('un site échu, côté propriétaire', () => {
-  it('① le bandeau : la phrase, et « Renouveler » vers le tableau de bord de CE site', () => {
-    const html = renderToStaticMarkup(<VueBandeauSiteEchu slug="ma-vitrine" />)
+  const rendre = (langue: 'fr' | 'en') => renderToStaticMarkup(<LanguageProvider langueImposee={langue}><VueBandeauSiteEchu slug="ma-vitrine" /></LanguageProvider>)
+  it('① le bandeau, en français : la phrase du propriétaire, et « Renouveler » vers le tableau de bord de CE site', () => {
+    const html = rendre('fr')
     expect(html).toContain(PHRASE_SITE_ECHU)
     expect(html).toMatch(/href="\/dashboard\?renouveler=ma-vitrine"[^>]*>Renouveler</u)
     expect(html).toContain('role="status"')
+  })
+  it('① le bandeau suit la langue de la page : en anglais, la phrase et le bouton anglais', () => {
+    const html = rendre('en')
+    expect(html).toContain(en['siteEchu.message'])
+    expect(en['siteEchu.message']).toBe('This site’s subscription has expired. Renew it to resume editing. Your site stays online.')
+    expect(html).toMatch(/href="\/dashboard\?renouveler=ma-vitrine"[^>]*>Renew</u)
+    expect(html).not.toContain(PHRASE_SITE_ECHU)
+  })
+  it('① les quatre langues ont la phrase et le bouton ; le français est mot pour mot celui du propriétaire', () => {
+    expect(fr['siteEchu.message']).toBe(PHRASE_SITE_ECHU)
+    for (const d of [fr, en, es, ar]) {
+      expect(d['siteEchu.message'].length).toBeGreaterThan(20)
+      expect(d['siteEchu.renouveler'].length).toBeGreaterThan(2)
+    }
   })
 
   it('① le bandeau ne paraît que pour un site échu', () => {
