@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { suppliersForDropshipType } from '@/lib/dropship/suppliers';
 import { usesCatalogSelections } from '@/lib/dropship/catalogAdmission';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 export const maxDuration = 10;
 
@@ -105,6 +106,8 @@ export async function PATCH(req: NextRequest) {
 
     const auth = await requireSiteOwner(req, slug, 'id, mode, dropship_type');
     if (!auth.ok) return auth.response;
+    const echu = await refuserSiEchu(auth)
+    if (echu !== null) return echu
 
     // CHANTIER 6 -- meme garde, meme primitive, meme contrat de reponse. La
     // question du mode precede toujours celle du sous-mode.
@@ -147,6 +150,8 @@ export async function DELETE(req: NextRequest) {
 
   const auth = await requireSiteOwner(req, slug, 'id, mode, dropship_type');
   if (!auth.ok) return auth.response;
+  const echu = await refuserSiEchu(auth)
+  if (echu !== null) return echu
 
   // CHANTIER 6 -- meme garde, meme primitive, meme contrat de reponse. La
   // question du mode precede toujours celle du sous-mode.
@@ -180,6 +185,8 @@ export async function POST(req: NextRequest) {
 
     const auth = await requireSiteOwner(req, slug, 'id, mode, dropship_type');
     if (!auth.ok) return auth.response;
+    const echu = await refuserSiEchu(auth)
+    if (echu !== null) return echu
 
     // CHANTIER 6 -- meme garde, meme primitive, meme contrat de reponse. La
     // question du mode precede toujours celle du sous-mode.

@@ -20,6 +20,7 @@ import {
 import { resolveProductByName, resolutionMessage } from '@/lib/agent-tools/productResolution';
 import { toolNamesForSite } from '@/lib/agent-tools/toolCapabilities';
 import { resolveGalleryImage, galleryResolutionMessage, validateGalleryUrl } from '@/lib/agent-tools/galleryResolution';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 /**
  * Ce que `/apply` lit reellement d'un produit de `shop_products` : son
@@ -145,6 +146,8 @@ export async function POST(
     // ============================================================
     const auth = await requireSiteOwner(req, slug, '*');
     if (!auth.ok) return auth.response;
+    const echu = await refuserSiEchu(auth)
+    if (echu !== null) return echu
     const site = auth.site as any;
 
     const body = await req.json();

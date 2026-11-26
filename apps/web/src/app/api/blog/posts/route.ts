@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 import {
   listPosts,
   createPost,
@@ -67,6 +68,8 @@ export async function POST(req: Request) {
 
   const auth = await requireSiteOwner(req, site, 'id');
   if (!auth.ok) return auth.response;
+  const echu = await refuserSiEchu(auth)
+  if (echu !== null) return echu
 
   // TOUT CE QUI N'EST PAS DANS L'ALLOWLIST N'EXISTE PAS. `site_id`, `id`,
   // `created_at`, `published_at` et `cover_storage_path` sont structurellement

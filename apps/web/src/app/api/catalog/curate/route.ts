@@ -5,6 +5,7 @@ import { usesCatalogSelections } from '@/lib/dropship/catalogAdmission';
 import { suppliersForDropshipType } from '@/lib/dropship/suppliers';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { logAiUsage } from '@/lib/ai-usage';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 export const maxDuration = 45;
 
@@ -33,6 +34,8 @@ export async function POST(req: NextRequest) {
       'id, type, mode, dropship_type, cj_margin_percent, lang, niche_keywords'
     );
     if (!auth.ok) return auth.response;
+    const echu = await refuserSiEchu(auth)
+    if (echu !== null) return echu
     const site = auth.site;
     const siteErr = null;
 

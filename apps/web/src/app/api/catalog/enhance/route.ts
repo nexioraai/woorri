@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { logAiUsage } from '@/lib/ai-usage';
 import { usesCatalogSelections } from '@/lib/dropship/catalogAdmission';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 export const maxDuration = 45;
 
@@ -26,6 +27,8 @@ export async function POST(req: NextRequest) {
     // sur la boutique d'un autre.
     const auth = await requireSiteOwner(req, slug, 'id, type, lang, mode, dropship_type');
     if (!auth.ok) return auth.response;
+    const echu = await refuserSiEchu(auth)
+    if (echu !== null) return echu
     const site = auth.site;
 
     // ============================================================

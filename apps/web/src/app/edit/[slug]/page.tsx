@@ -16,6 +16,7 @@ import HealthBadge from '@/components/edit/HealthBadge';
 import { MIN_MARGIN_PERCENT, LOW_MARGIN_PERCENT, NEXIORA_COMMISSION_PERCENT, DEFAULT_MARGIN_PERCENT, merchantProfit } from '@/lib/pricing';
 import { supabase } from '@/lib/supabase';
 import { fetchOwnedSite, updateOwnedSite } from '@/lib/supabase-owned-site';
+import BandeauSiteEchu from '@/components/sites/BandeauSiteEchu';
 import { computeAiScore } from '@/app/lib/aiScore';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Trash2 } from 'lucide-react';
@@ -329,6 +330,7 @@ export default function EditPage() {
   return (
     <main className="min-h-screen nexiora-bg text-white">
       <Navbar />
+      <BandeauSiteEchu slug={slug} />
 
       <section className="max-w-3xl mx-auto px-6 pt-12 pb-24">
         {/* Header */}

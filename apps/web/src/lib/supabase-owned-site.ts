@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { estRefusSiteEchu, PHRASE_SITE_ECHU } from '@/lib/sites/site-echu';
 
 /**
  * Point d'entree UNIQUE pour lire/ecrire `sites` par `slug` depuis le
@@ -130,5 +131,9 @@ export async function updateOwnedSite(
 ) {
   const safePatch = { ...patch };
   for (const field of SITE_FORBIDDEN_CLIENT_FIELDS) delete safePatch[field];
-  return supabase.from('sites').update(safePatch).eq('slug', slug).eq('owner_email', ownerEmail);
+  const r = await supabase.from('sites').update(safePatch).eq('slug', slug).eq('owner_email', ownerEmail);
+  // SITE ÉCHU (2026-11-26) : le refus de la base (sites_refuser_si_echu) se
+  // dit avec la phrase du propriétaire, pas avec le texte technique.
+  if (r.error && estRefusSiteEchu(r.error)) return { ...r, error: { ...r.error, message: PHRASE_SITE_ECHU } };
+  return r;
 }

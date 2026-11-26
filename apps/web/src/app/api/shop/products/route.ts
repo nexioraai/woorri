@@ -4,6 +4,7 @@ import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { supabase as supabaseAnon } from '@/lib/supabase';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAllProducts, createProduct } from '@/lib/shop';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 /** Authentifie l'utilisateur et vérifie qu'il possède le site. Retourne le site_id. */
 /** GET /api/shop/products?slug=... → liste tous les produits du site (gestion admin). */
@@ -74,6 +75,8 @@ export async function POST(req: Request) {
     // n'a pas plus le droit de creer un produit vendable qu'un inconnu.
     const auth = await requireSiteOwner(req, body.slug, 'id, mode');
     if (!auth.ok) return auth.response;
+    const echu = await refuserSiEchu(auth)
+    if (echu !== null) return echu
 
     const productData: Record<string, unknown> = {};
     for (const field of ALLOWED_PRODUCT_FIELDS) {

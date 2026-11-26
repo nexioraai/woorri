@@ -3,6 +3,7 @@ import { ADRESSE_GESTION } from '@/lib/apps/entites-declarees';
 import { adresseEnLigne, changerAdresse, CONFIRMER_MOT_DE_PASSE, lancerPublication, PHRASE_DEJA_EN_LIGNE, LIBELLE_MOT_DE_PASSE, refaireMotDePasse, type DemandeFenetre } from '@/components/apps/publierAppli';
 import { FenetrePublier } from '@/components/apps/FenetrePublier';
 import { lancerPublicationSite, lireEtatSite } from '@/components/apps/publierSite';
+import { lireRenouveler } from '@/components/dashboard/renouvelerSite';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -633,6 +634,18 @@ export default function DashboardPage() {
     });
     if (issue.type === 'erreur') alert(issue.message);
   };
+
+  // « Renouveler » depuis l'éditeur d'un site échu (2026-11-26) : l'adresse
+  // `?renouveler=<slug>` ouvre la fenêtre, une seule fois.
+  useEffect(() => {
+    if (loading) return;
+    const demande = lireRenouveler(window.location.search);
+    if (demande === null) return;
+    window.history.replaceState(null, '', window.location.pathname);
+    const s = sites.find((x) => x.slug === demande);
+    if (s) void handlePublish(s.slug, s.published, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   if (loading) return (
     <div className="min-h-screen nexiora-bg flex items-center justify-center">

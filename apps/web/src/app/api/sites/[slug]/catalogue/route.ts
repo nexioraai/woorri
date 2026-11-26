@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 // ============================================================
 // LOT 6 — L'ECRITURE DU CATALOGUE.
@@ -66,6 +67,8 @@ export async function POST(req: Request, { params }: Params) {
   const { slug } = await params
   const garde = await requireSiteOwner(req, slug)
   if ('response' in garde) return garde.response
+  const echu = await refuserSiEchu(garde)
+  if (echu !== null) return echu
 
   let corps: Record<string, unknown>
   try { corps = await req.json() } catch { return NextResponse.json({ error: 'Envoi illisible.' }, { status: 400 }) }
@@ -85,6 +88,8 @@ export async function PATCH(req: Request, { params }: Params) {
   const { slug } = await params
   const garde = await requireSiteOwner(req, slug)
   if ('response' in garde) return garde.response
+  const echu = await refuserSiEchu(garde)
+  if (echu !== null) return echu
 
   let corps: Record<string, unknown>
   try { corps = await req.json() } catch { return NextResponse.json({ error: 'Envoi illisible.' }, { status: 400 }) }
@@ -111,6 +116,8 @@ export async function DELETE(req: Request, { params }: Params) {
   const { slug } = await params
   const garde = await requireSiteOwner(req, slug)
   if ('response' in garde) return garde.response
+  const echu = await refuserSiEchu(garde)
+  if (echu !== null) return echu
 
   const id = new URL(req.url).searchParams.get('id') ?? ''
   if (!id) return NextResponse.json({ error: 'Produit non désigné.' }, { status: 400 })

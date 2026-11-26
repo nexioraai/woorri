@@ -10,6 +10,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { poserCookieApercu } from '@/lib/poserApercu'
 import { fetchOwnedSite, updateOwnedSite } from '@/lib/supabase-owned-site'
+import BandeauSiteEchu from '@/components/sites/BandeauSiteEchu'
 import { lireBlocs, TYPES_DE_BLOC, type Bloc } from '@/app/sites/[slug]/pages/blocs'
 import { champsDuBloc, champEstUnFichier, poser, type Chemin } from '@/components/edit/champsDeBloc'
 import { ETIQUETTES, NEUF } from '@/components/EditeurBlocs'
@@ -613,6 +614,7 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
           <ExternalLink className="h-4 w-4" aria-hidden />Voir le site
         </a>
       </header>
+      <BandeauSiteEchu slug={slug} />
 
       {/* Téléphone et tablette : trois onglets. */}
       <div role="tablist" aria-label="Vue de l’éditeur" className="mx-3 mt-2.5 grid shrink-0 grid-cols-3 gap-1 rounded-[14px] bg-white/[0.05] p-1 lg:hidden">

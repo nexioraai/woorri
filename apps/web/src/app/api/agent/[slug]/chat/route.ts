@@ -22,6 +22,7 @@ import { guidanceForSite } from '@/lib/agent-tools/modeGuidance';
 import { SUPPORTED_LANGUAGE_CODES } from '@/lib/i18n/supportedLanguages';
 import { PRICE_RANGE_VALUES } from '@/lib/site-profile/priceRange';
 import { AREA_SERVED_MAX_LENGTH } from '@/lib/site-profile/areaServed';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 const allTools: Anthropic.Tool[] = [
   {
@@ -571,6 +572,8 @@ export async function POST(
     // ============================================================
     const auth = await requireSiteOwner(req, slug, '*');
     if (!auth.ok) return auth.response;
+    const echu = await refuserSiEchu(auth)
+    if (echu !== null) return echu
     const site = auth.site as any;
     const ownerEmail = auth.email ?? '';
 

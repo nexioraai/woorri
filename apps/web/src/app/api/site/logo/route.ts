@@ -4,6 +4,7 @@ import sharp from 'sharp'
 import { evaluerLogo } from '@/lib/images/qualiteLogo'
 import { createClient } from '@supabase/supabase-js'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 // ============================================================
 // LE MARCHAND DÉPOSE SON LOGO.
@@ -86,6 +87,8 @@ export async function POST(req: Request) {
   // l'avais sous les yeux en écrivant celle-ci.
   const garde = await requireSiteOwner(req, slug, 'id, slug')
   if (!garde.ok) return garde.response
+  const echu = await refuserSiEchu(garde)
+  if (echu !== null) return echu
   if (fichier.size > TAILLE_MAX) {
     return NextResponse.json(
       { error: 'Logo trop lourd (5 Mo maximum). Exportez-le en PNG à 512 px.' },

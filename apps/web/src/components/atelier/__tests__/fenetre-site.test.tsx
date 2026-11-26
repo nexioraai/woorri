@@ -126,7 +126,7 @@ describe('le rappel au propriétaire (carte du site)', () => {
   it('3 jours avant : la date et « Renouvelez-le » ; après : « reste en ligne », modifications arrêtées ; sinon rien', async () => {
     const { phraseRappel } = await import('@/components/dashboard/rappelSite')
     expect(phraseRappel({ payeJusquAu: '2026-12-13T12:00:00Z', rappel: 'bientot' })).toBe('Votre abonnement se termine le 13 décembre. Renouvelez-le pour continuer à modifier votre site.')
-    expect(phraseRappel({ payeJusquAu: '2026-12-10T12:00:00Z', rappel: 'echu' })).toBe('Votre abonnement est arrivé à échéance le 10 décembre. Votre site reste en ligne, mais ses modifications sont arrêtées : renouvelez-le pour les reprendre.')
+    expect(phraseRappel({ payeJusquAu: '2026-12-10T12:00:00Z', rappel: 'echu' })).toBe('L’abonnement de ce site est arrivé à échéance. Renouvelez-le pour reprendre les modifications. Votre site reste en ligne.')
     expect(phraseRappel({ payeJusquAu: '2026-12-30T12:00:00Z', rappel: null })).toBeNull()
   })
 })

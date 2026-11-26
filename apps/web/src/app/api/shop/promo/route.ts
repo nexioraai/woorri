@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { canTransact } from '@/lib/commerce-admission/canTransact';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 // ============================================================
 // M2-217 — L'OUTIL PROMO DU MARCHAND (Mode 2).
@@ -53,6 +54,8 @@ export async function POST(req: Request) {
     // Même admission que la création de produit : propriété + mode commerçant.
     const auth = await requireSiteOwner(req, slug, 'id, mode');
     if (!auth.ok) return auth.response;
+    const echu = await refuserSiEchu(auth)
+    if (echu !== null) return echu
     if (!canTransact((auth.site as { mode?: unknown }).mode)) {
       return NextResponse.json(
         { error: 'Ce site est une vitrine : il ne peut pas exercer d’activité commerciale.' },

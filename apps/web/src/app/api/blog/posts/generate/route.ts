@@ -6,6 +6,7 @@ import { logAiUsage } from '@/lib/ai-usage';
 import { consommerJeton } from '@/lib/rate-limit/rateLimit';
 import { buildBriefPrompt, buildContentPrompt, parseJson } from '@/lib/marketing/prompts';
 import { createPost, slugifyArticleTitle, ecritureRefusee } from '@/lib/blog';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 // ============================================================
 // LOT BLOG 4 -- GENERATION D'UN BROUILLON D'ARTICLE.
@@ -98,6 +99,8 @@ export async function POST(req: Request) {
   // 1. IDENTITE -- avant toute lecture et toute depense.
   const auth = await requireSiteOwner(req, site, '*');
   if (!auth.ok) return auth.response;
+  const echu = await refuserSiEchu(auth)
+  if (echu !== null) return echu
   const siteRow = auth.site as Record<string, unknown> & { id: string };
 
   // 2. DEPENSE -- bornee AVANT le premier appel facture. Meme autorite et

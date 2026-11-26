@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 // ============================================================
 // LOT 3 -- L'ECRITURE DES PAGES D'UN SITE.
@@ -83,6 +84,8 @@ export async function POST(req: Request, { params }: Params) {
   const { slug } = await params
   const garde = await requireSiteOwner(req, slug, 'id')
   if (!garde.ok) return garde.response
+  const echu = await refuserSiEchu(garde)
+  if (echu !== null) return echu
 
   const corps = filtrer(await req.json().catch(() => ({})))
   const { data, error } = await supabaseAdmin
@@ -99,6 +102,8 @@ export async function PATCH(req: Request, { params }: Params) {
   const { slug } = await params
   const garde = await requireSiteOwner(req, slug, 'id')
   if (!garde.ok) return garde.response
+  const echu = await refuserSiEchu(garde)
+  if (echu !== null) return echu
 
   const { id, ...reste } = await req.json().catch(() => ({} as Record<string, unknown>))
   if (typeof id !== 'string') return NextResponse.json({ error: 'id manquant' }, { status: 400 })
@@ -121,6 +126,8 @@ export async function DELETE(req: Request, { params }: Params) {
   const { slug } = await params
   const garde = await requireSiteOwner(req, slug, 'id')
   if (!garde.ok) return garde.response
+  const echu = await refuserSiEchu(garde)
+  if (echu !== null) return echu
 
   const { searchParams } = new URL(req.url)
   const id = searchParams.get('id')

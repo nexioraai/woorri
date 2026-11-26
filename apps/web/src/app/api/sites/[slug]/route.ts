@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { supabaseAdmin as supabase } from '@/lib/supabase-admin';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 // Mapping camelCase (client) -> snake_case (DB)
 const FIELD_MAP: Record<string, string> = {
@@ -63,6 +64,8 @@ export async function PATCH(
     // ============================================================
     const auth = await requireSiteOwner(req, slug, 'id');
     if (!auth.ok) return auth.response;
+    const echu = await refuserSiEchu(auth)
+    if (echu !== null) return echu
     const site = auth.site as { id: string };
 
     const body = await req.json();

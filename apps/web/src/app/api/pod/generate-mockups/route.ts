@@ -7,6 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { isOwnPodDesignUrl } from '@/lib/mode3/podBrandMockups';
 import { logAnomaly } from '@/lib/anomaly';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 const POSITION = {
   area_width: 1800,
@@ -98,6 +99,8 @@ export async function POST(req: Request) {
     // catalog/enhance et catalog/curate pour ce type d'action facturee.
     const auth = await requireSiteOwner(req, slug, 'id, pod_designs, dropship_type');
     if (!auth.ok) return auth.response;
+    const echu = await refuserSiEchu(auth)
+    if (echu !== null) return echu
     const ownedSite = auth.site as { id: string; pod_designs: any; dropship_type: string | null };
 
     // ---- POLL mode ----

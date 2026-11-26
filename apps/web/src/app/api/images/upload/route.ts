@@ -6,6 +6,7 @@ import { detourer, verdict } from '@/lib/images/detourage'
 import { poser } from '@/lib/images/ombre'
 import { modeleDetourage } from '@/lib/images/modele'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 import {
   TAILLE_MAX,
   TYPES_ACCEPTES,
@@ -64,6 +65,8 @@ export async function POST(req: Request) {
   // marchand — et faire porter le volume à son compte.
   const garde = await requireSiteOwner(req, slug, 'id, slug')
   if (!garde.ok) return garde.response
+  const echu = await refuserSiEchu(garde)
+  if (echu !== null) return echu
 
   if (fichier.size > TAILLE_MAX) {
     return NextResponse.json(

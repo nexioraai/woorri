@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { nomPropre } from '@/lib/fichiers/nomPropre'
 import { lireEnvoi, autoriserDepot } from '@/lib/fichiers/depotDirect'
 import { cleDuFichier, emploisDansLeSite, emploisDansLesPages, messageEmploye } from '@/lib/fichiers/emploisDuFichier'
+import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 
 // ============================================================
 // LOT 5 -- LES FICHIERS D'UN SITE.
@@ -78,6 +79,8 @@ export async function POST(req: Request, { params }: Params) {
   const { slug } = await params
   const garde = await requireSiteOwner(req, slug)
   if ('response' in garde) return garde.response
+  const echu = await refuserSiEchu(garde)
+  if (echu !== null) return echu
 
   // Multipart (≤ 4 Mo) OU JSON (dépôt direct d'un fichier lourd) — voir
   // `depotDirect.ts`. Le chemin reste CONSTRUIT ici dans les deux cas.
@@ -147,6 +150,8 @@ export async function DELETE(req: Request, { params }: Params) {
   const { slug } = await params
   const garde = await requireSiteOwner(req, slug)
   if ('response' in garde) return garde.response
+  const echu = await refuserSiEchu(garde)
+  if (echu !== null) return echu
 
   const u = new URL(req.url)
   const dossier = u.searchParams.get('dossier') ?? 'documents'
