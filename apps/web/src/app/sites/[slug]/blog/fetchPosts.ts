@@ -116,6 +116,18 @@ export async function fetchBlogIndex(
   return { site, posts }
 }
 
+/** LOT ACTUALITÉS (2026-11-26) — les `n` dernières publications d'un site, toutes catégories, pour l'accueil. */
+export async function fetchDernieresActualites(siteId: string, n: number): Promise<BlogPostCard[]> {
+  const supabase = await lecteurDuSite()
+  const { data } = await supabase
+    .from('site_blog_posts_public')
+    .select(COLS_CARTE)
+    .eq('site_id', siteId)
+    .order('published_at', { ascending: false })
+    .limit(n)
+  return ((data as BlogPostCard[]) ?? []).map((p) => ({ ...p, categorie: lireCategorie(p.categorie) }))
+}
+
 /** Un article. `null` couvre indistinctement : site absent, article absent,
  *  article d'un autre site, brouillon, site archive. */
 export async function fetchBlogPost(

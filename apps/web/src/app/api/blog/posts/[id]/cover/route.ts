@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { requireArticleOwner } from '@/lib/auth/require-article-owner';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues';
 import { consommerJeton } from '@/lib/rate-limit/rateLimit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { setPostCover } from '@/lib/blog';
@@ -69,6 +70,8 @@ export async function POST(req: Request, { params }: Ctx) {
   const auth = await requireArticleOwner(req, id);
   if ('error' in auth) return auth.error;
   const article = auth.article;
+  const echu = await refuserSiEchu({ site: { id: article.site_id }, viaAdmin: auth.viaAdmin });
+  if (echu !== null) return echu;
 
   let file: File | null = null;
   try {

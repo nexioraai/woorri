@@ -36,11 +36,12 @@ import { getModeCapabilities } from './modeCapabilities'
 import type { AvisDuSite } from './avisDuSite'
 import SectionAppelsOffres from './SectionAppelsOffres'
 import LienAppelsOffres from './LienAppelsOffres'
+import SectionActualites from './SectionActualites'
 import MenuDeclare from './MenuDeclare'
 import EnseigneDuSite from './EnseigneDuSite'
 import PageProduits, { produitsDeLaPage } from './PageProduits'
 
-export default function AuroraTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [] }: { site: Site } & AvisDuSite) {
+export default function AuroraTheme({ site, hasAvis = false, actualites = [], host = null, menu = [], partenaires = [] }: { site: Site } & AvisDuSite) {
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
   const ancresEnBarre = menu.length === 0
   const primary = site.primary_color || '#6366f1'
@@ -454,6 +455,9 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
           absente » (arbitrage du propriétaire, 2026-11-06). */}
       {hasAvis && !hidden('AppelsOffres') && (
         <SectionAppelsOffres site={site} primary={primary} host={host} />
+      )}
+      {actualites.length > 0 && !hidden('Actualites') && (
+        <SectionActualites site={site} primary={primary} host={host} posts={actualites} />
       )}
     </div>
   )

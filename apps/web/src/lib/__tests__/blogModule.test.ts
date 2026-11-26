@@ -22,9 +22,9 @@ import {
 // ============================================================
 
 describe('filtrerChamps — l’allowlist, seule barrière du corps de requête', () => {
-  it('retient exactement les six champs autorisés', () => {
+  it('retient exactement les sept champs autorisés (la catégorie depuis le 2026-11-26)', () => {
     expect([...ALLOWED_POST_FIELDS]).toEqual([
-      'title', 'slug', 'excerpt', 'content', 'cover_image', 'published',
+      'title', 'slug', 'excerpt', 'content', 'cover_image', 'published', 'categorie',
     ]);
   });
 

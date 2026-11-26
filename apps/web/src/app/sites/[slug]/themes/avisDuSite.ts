@@ -47,6 +47,7 @@ import type { Bloc } from '../pages/blocs'
  * demandera -- et ce sera une decision, pas une derive.
  */
 import type { EntreeMenu } from '../pages/typesPage'
+import type { CarteActualite } from '../pages/actualites'
 
 import type { Partenaire } from '../pages/Partenaires'
 import type { LienLegal } from './typesLegaux'
@@ -98,6 +99,13 @@ export type AvisDuSite = {
 
   /** `true` si ce site publie au moins un avis VISIBLE du public. */
   hasAvis?: boolean
+
+  /**
+   * « DERNIÈRES ACTUALITÉS » (2026-11-26). Les 3 dernières publications, SEULEMENT
+   * si le site a allumé le module (page `actualites` déclarée) ET publié au
+   * moins une fois. Absent ou vide : aucune section — l'accueil d'avant.
+   */
+  actualites?: CarteActualite[]
 
   /**
    * L'HOTE REELLEMENT SERVI, pour resoudre une adresse absolue.

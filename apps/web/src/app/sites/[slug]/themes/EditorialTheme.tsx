@@ -34,6 +34,7 @@ import { getModeCapabilities } from './modeCapabilities'
 import type { AvisDuSite } from './avisDuSite'
 import SectionAppelsOffres from './SectionAppelsOffres'
 import LienAppelsOffres from './LienAppelsOffres'
+import SectionActualites from './SectionActualites'
 import MenuDeclare from './MenuDeclare'
 import HeroDiapo, { photosDAccueil } from './HeroDiapo'
 import TexteQuiSEcrit from './TexteQuiSEcrit'
@@ -90,7 +91,7 @@ function PremiumButton({
 }
 
 // ---------- Theme ----------
-export default function EditorialTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [], liensLegaux = [], heroVitrine = null, suiteHero = [], encreDeMarque = false }: { site: Site } & AvisDuSite) {
+export default function EditorialTheme({ site, hasAvis = false, actualites = [], host = null, menu = [], partenaires = [], liensLegaux = [], heroVitrine = null, suiteHero = [], encreDeMarque = false }: { site: Site } & AvisDuSite) {
   // ── LES PRODUITS, POUR LES PAGES PERSONNALISÉES.
   //
   // Les sections boutique calculent déjà cette liste chacune de leur côté ;
@@ -513,6 +514,9 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
           absente » (arbitrage du propriétaire, 2026-11-06). */}
       {hasAvis && !hidden('AppelsOffres') && (
         <SectionAppelsOffres site={site} primary={primary} host={host} />
+      )}
+      {actualites.length > 0 && !hidden('Actualites') && (
+        <SectionActualites site={site} primary={primary} host={host} posts={actualites} />
       )}
 
 

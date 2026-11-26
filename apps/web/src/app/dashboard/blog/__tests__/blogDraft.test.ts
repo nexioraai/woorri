@@ -30,11 +30,11 @@ describe('corpsCreation — le navigateur ne fabrique JAMAIS de `site_id`', () =
   });
 
   it('AUCUN `site_id`, `id`, `published_at` ni `cover_storage_path` n’est émis', () => {
-    const c = corpsCreation('mon-site', { title: 'T', slug: 's', excerpt: 'e', content: 'c' });
+    const c = corpsCreation('mon-site', { title: 'T', slug: 's', excerpt: 'e', content: 'c', categorie: 'article' });
     for (const interdit of ['site_id', 'id', 'published_at', 'cover_storage_path', 'created_at']) {
       expect(c, interdit).not.toHaveProperty(interdit);
     }
-    expect(Object.keys(c).sort()).toEqual(['content', 'excerpt', 'site', 'slug', 'title']);
+    expect(Object.keys(c).sort()).toEqual(['categorie', 'content', 'excerpt', 'site', 'slug', 'title']);
   });
 
   it('un slug vide n’est PAS transmis — le serveur le dérive du titre', () => {
@@ -69,7 +69,7 @@ describe('corpsModification — n’envoie QUE ce qui a changé', () => {
   });
 
   it('jamais de `site_id` ni de `published`, quel que soit le brouillon', () => {
-    const p = corpsModification(SERVEUR, { title: 'A', slug: 'b', excerpt: 'c', content: 'd' });
+    const p = corpsModification(SERVEUR, { title: 'A', slug: 'b', excerpt: 'c', content: 'd', categorie: 'article' });
     expect(p).not.toHaveProperty('site_id');
     expect(p).not.toHaveProperty('published');
   });

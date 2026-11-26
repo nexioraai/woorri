@@ -67,7 +67,8 @@ import { requireSiteOwnerById } from './require-site-owner';
  * rend une reponse deja formee, jamais un booleen a interpreter.
  */
 export type ArticleOwnerCheck =
-  | { ok: true; article: SiteBlogPost }
+  /** `viaAdmin` (2026-11-26) : l'opérateur, jamais arrêté par l'échéance d'un site. */
+  | { ok: true; article: SiteBlogPost; viaAdmin?: boolean }
   | { error: NextResponse };
 
 /**
@@ -134,5 +135,5 @@ export async function requireArticleOwner(
     return auth.response.status === 401 ? { error: auth.response } : introuvable();
   }
 
-  return { ok: true, article };
+  return { ok: true, article, viaAdmin: auth.viaAdmin === true };
 }

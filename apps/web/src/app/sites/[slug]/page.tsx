@@ -12,6 +12,8 @@ import EditorialTheme from './themes/EditorialTheme'
 import { avisDuSite } from './themes/avisDuSite'
 import { fetchAvisEntries } from './appels-offres/fetchAvis'
 import { fetchMenu, fetchPage } from './pages/fetchPage'
+import { CHEMIN_ACTUALITES, NOMBRE_DERNIERES } from './pages/actualites'
+import { fetchDernieresActualites } from './blog/fetchPosts'
 import { lireBlocs } from './pages/blocs'
 import NoirTheme from './themes/NoirTheme'
 import VifTheme from './themes/VifTheme'
@@ -117,7 +119,7 @@ export default async function SitePage({ params, searchParams }: Props) {
   // table. Ce fichier ne réécrit pas sa requête : il l'appelle.
   // LOT 1 + 2 — les deux faits serveur, par la MÊME route unique.
   // LOT 1 + 2 + 15.13 — les faits serveur, par la MÊME route unique.
-  const [{ hasAvis }, menu, partenaires, liensLegaux, pageHero, encreDeMarque] = await Promise.all([
+  const [{ hasAvis }, menu, partenaires, liensLegaux, pageHero, encreDeMarque, pageActualites, dernieres] = await Promise.all([
     fetchAvisEntries(site.id).then(avisDuSite),
     fetchMenu(site.id),
     lirePartenaires(site.id),
@@ -128,7 +130,12 @@ export default async function SitePage({ params, searchParams }: Props) {
     fetchPage(site.id, 'accueil-hero').catch(() => null),
     // L'encre de marque : opt-in par une page non publiée (voir lireEncreDeMarque).
     lireEncreDeMarque(site.id),
+    // LE MODULE ACTUALITÉS : allumé par une page `actualites` déclarée (opt-in).
+    fetchPage(site.id, CHEMIN_ACTUALITES).catch(() => null),
+    fetchDernieresActualites(site.id, NOMBRE_DERNIERES).catch(() => []),
   ])
+  // « Dernières actualités » : module allumé ET au moins une publication — jamais une section vide.
+  const actualites = pageActualites !== null ? dernieres : []
   const premierBloc = pageHero?.blocs?.[0] as (Record<string, unknown> & { items?: unknown[] }) | undefined
   const affichageHero: 'vitrine' | 'parcours' | null = premierBloc?.affichage === 'vitrine' ? 'vitrine' : premierBloc?.affichage === 'parcours' ? 'parcours' : null
   const heroVitrine = premierBloc?.type === 'etapes' && affichageHero && Array.isArray(premierBloc.items) && premierBloc.items.length >= 4
@@ -161,7 +168,7 @@ export default async function SitePage({ params, searchParams }: Props) {
       <JsonLd site={site} url={url} />
       <PromoBanner slug={site.slug} primary={primary} mode={site.mode} labels={cartLabels} currency={resolveShopCurrency(site.products)} />
       <CartShell primary={primary} labels={cartLabels} slug={site.slug} mode={site.mode} products={site.products} shippingFlat={site.shipping_flat} variant={key === 'noir' ? 'dark' : 'light'}>
-        <Theme site={site} hasAvis={hasAvis} host={host} menu={menu} partenaires={partenaires} liensLegaux={liensLegaux} heroVitrine={heroVitrine} suiteHero={suiteHero} encreDeMarque={encreDeMarque} />
+        <Theme site={site} hasAvis={hasAvis} actualites={actualites} host={host} menu={menu} partenaires={partenaires} liensLegaux={liensLegaux} heroVitrine={heroVitrine} suiteHero={suiteHero} encreDeMarque={encreDeMarque} />
         {site.mode === 3 && showsVisitorCatalogSearch(site.dropship_type) && site.theme !== 'aurora' && <CatalogSearch slug={site.slug} primary={primary} lang={site.lang} theme={key as ThemeKey} dropshipType={site.dropship_type} />}
       </CartShell>
       <ScrollRevealInit />

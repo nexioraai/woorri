@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { refuserSiEchu } from '@/lib/sites/modifications-echues'
 import {
+  categorieEcrite,
   listPosts,
   createPost,
   filtrerChamps,
@@ -84,6 +85,11 @@ export async function POST(req: Request) {
   }
   const publie = champs.published === true;
 
+  // LA CATÉGORIE (2026-11-26) : absente → `article` (le défaut de la base) ;
+  // hors liste → 400, jamais une écriture que la base refuserait.
+  const categorie = 'categorie' in champs ? categorieEcrite(champs.categorie) : 'article';
+  if (categorie === null) return NextResponse.json({ error: 'Catégorie inconnue.' }, { status: 400 });
+
   // Le slug est un segment d'URL, jamais du texte libre : il est NORMALISE,
   // qu'il vienne du client ou du titre. La contrainte `site_blog_posts_slug_chk`
   // ne peut donc pas se declencher sur la forme -- seule une collision reste
@@ -98,6 +104,7 @@ export async function POST(req: Request) {
       content: typeof champs.content === 'string' ? champs.content : '',
       cover_image: typeof champs.cover_image === 'string' ? champs.cover_image : null,
       published: publie,
+      categorie,
       // DERIVE, JAMAIS RECU. Antidater une publication ferait mentir le
       // `<lastmod>` du sitemap et le `datePublished` du JSON-LD.
       published_at: publie ? new Date().toISOString() : null,

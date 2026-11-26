@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { requireArticleOwner } from '@/lib/auth/require-article-owner';
+import { refuserSiEchu } from '@/lib/sites/modifications-echues';
 import {
   updatePost,
   deletePost,
+  categorieEcrite,
   filtrerChamps,
   slugifyArticleTitle,
   ecritureRefusee,
@@ -42,6 +44,9 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const auth = await requireArticleOwner(req, id);
   if ('error' in auth) return auth.error;
   const article = auth.article;
+  // APRÈS L'ÉCHÉANCE (2026-11-26) : un article ne se modifie plus — oubli du lot précédent.
+  const echu = await refuserSiEchu({ site: { id: article.site_id }, viaAdmin: auth.viaAdmin });
+  if (echu !== null) return echu;
 
   let body: unknown;
   try {
@@ -61,6 +66,12 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if ('slug' in patch) {
     const brut = typeof patch.slug === 'string' && patch.slug.trim() ? patch.slug : article.title;
     patch.slug = slugifyArticleTitle(brut);
+  }
+
+  if ('categorie' in patch) {
+    const categorie = categorieEcrite(patch.categorie);
+    if (categorie === null) return NextResponse.json({ error: 'Catégorie inconnue.' }, { status: 400 });
+    patch.categorie = categorie;
   }
 
   if ('published' in patch) {
@@ -106,6 +117,8 @@ export async function DELETE(req: Request, { params }: Ctx) {
 
   const auth = await requireArticleOwner(req, id);
   if ('error' in auth) return auth.error;
+  const echuSuppression = await refuserSiEchu({ site: { id: auth.article.site_id }, viaAdmin: auth.viaAdmin });
+  if (echuSuppression !== null) return echuSuppression;
 
   try {
     await deletePost(id, auth.article.site_id);

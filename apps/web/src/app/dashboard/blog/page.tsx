@@ -1,4 +1,5 @@
 'use client';
+import { estRefusSiteEchu } from '@/lib/sites/site-echu';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileText, Sparkles, Trash2, Eye, Upload, Plus } from 'lucide-react';
@@ -8,6 +9,7 @@ import { useTranslation } from '@/lib/translations';
 import {
   BROUILLON_VIDE, versBrouillon, corpsCreation, corpsModification,
   peutEnregistrer, peutPublier, cleErreur, refusCouverture, COVER_MIME,
+  CATEGORIES_BROUILLON, categorieDuServeur,
   type ArticleBrouillon, type ArticleServeur,
 } from './blogDraft';
 
@@ -61,7 +63,13 @@ export default function BlogDashboardPage() {
           Authorization: `Bearer ${tk}`,
         },
       });
-      if (!res.ok) { setErreur(t(cleErreur(res.status))); return null; }
+      if (!res.ok) {
+        // SITE ÉCHU (2026-11-26) : la phrase de l'échéance, pas « authentification ».
+        const refus = await res.clone().json().catch(() => null) as { code?: unknown } | null;
+        if (estRefusSiteEchu(refus)) { setErreur(t('siteEchu.message')); return null; }
+        setErreur(t(cleErreur(res.status)));
+        return null;
+      }
       setErreur('');
       return res;
     },
@@ -228,6 +236,12 @@ export default function BlogDashboardPage() {
                   onChange={(e) => setBrouillon({ ...brouillon, title: e.target.value })} />
                 <input className={champ} placeholder={t('blog.fSlug')} value={brouillon.slug}
                   onChange={(e) => setBrouillon({ ...brouillon, slug: e.target.value })} />
+                <label className="block text-xs uppercase tracking-wider text-white/40">{t('blog.fCategorie')}
+                  <select className={`${champ} mt-1 normal-case tracking-normal`} value={brouillon.categorie} data-categorie=""
+                    onChange={(e) => setBrouillon({ ...brouillon, categorie: categorieDuServeur(e.target.value) })}>
+                    {CATEGORIES_BROUILLON.map((c) => <option key={c} value={c}>{t(`blog.cat.${c}`)}</option>)}
+                  </select>
+                </label>
                 <textarea className={champ} rows={2} placeholder={t('blog.fExcerpt')} value={brouillon.excerpt}
                   onChange={(e) => setBrouillon({ ...brouillon, excerpt: e.target.value })} />
                 <textarea className={champ} rows={16} placeholder={t('blog.fContent')} value={brouillon.content}

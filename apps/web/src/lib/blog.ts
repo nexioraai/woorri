@@ -32,6 +32,8 @@ export type SiteBlogPost = {
   cover_storage_path: string | null;
   published: boolean;
   published_at: string | null;
+  /** LOT ACTUALITÉS (2026-11-26) — vocabulaire FERMÉ, tenu par la base (`site_blog_posts_categorie_chk`). */
+  categorie?: CategoriePost;
   created_at: string;
   updated_at: string;
 };
@@ -66,7 +68,19 @@ export const ALLOWED_POST_FIELDS = [
   'content',
   'cover_image',
   'published',
+  // LOT ACTUALITÉS (2026-11-26) — article, communiqué ou événement, choisi
+  // dans /dashboard/blog. Validée par `categorieEcrite` avant toute écriture.
+  'categorie',
 ] as const;
+
+/** Les trois catégories — MIROIR de la CHECK `site_blog_posts_categorie_chk`. */
+export const CATEGORIES_POST = ['article', 'communique', 'evenement'] as const;
+export type CategoriePost = (typeof CATEGORIES_POST)[number];
+
+/** Une catégorie reçue d'un client : la valeur sûre, ou `null` si elle n'est pas dans la liste. */
+export function categorieEcrite(v: unknown): CategoriePost | null {
+  return (CATEGORIES_POST as readonly unknown[]).includes(v) ? (v as CategoriePost) : null;
+}
 
 export type PostPatch = Partial<Record<(typeof ALLOWED_POST_FIELDS)[number], unknown>>;
 

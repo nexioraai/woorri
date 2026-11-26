@@ -59,7 +59,7 @@ actualités · deux portes d'entrée · partenaires · pied de page
 `/fournisseurs/enregistrement` · `/conditions` · `/documents` · `/faq` · `/contact`
 
 **7. Actualités ▾ (3)**
-`/actualites` ✅ · `/evenements` · `/communiques` · `/actualites/<titre>` ✅
+`/actualites` ❌ (404 mesuré le 2026-11-26) · `/actualites/evenements` · `/actualites/communiques` (répondent, mais vides et hors menu) · `/blog/<titre>` ✅
 
 **8. Contact (1)** — formulaire routé, référence automatique, accusé de réception
 
@@ -98,7 +98,7 @@ un avis · un article · un produit · une province
 | 4 | **Organigramme interactif + alternative 2D** | 16 | ✅ **FERMÉ** — bloc `organigramme` (5 occurrences dans le vocabulaire), servi sur `/qui-sommes-nous/gouvernance` : **200 à l'adresse publique**, 18 occurrences mesurées le 2026-11-09. *La ligne disait ⬜ alors que le travail était fait — corrigée après vérification dans le dépôt ET à l'écran.* |
 | 5 | Appels d'offres enrichis | 20 | ✅ **FERMÉ** — dossier de consultation (14/14 en base) · filtre par état (**28/28 à l'adresse publique**) · **archive** servie par `appels-offres/archive/page.tsx`, qui rend 404 quand elle est VIDE et le dit dans son code : proposer un lien vers une archive vide, c'est promettre un contenu qu'on ne livre pas · **avis d'attribution** : `attributaire`, `montant_attribue`, `attribue_le` projetés par `fetchAvis`. *La ligne disait 🔄 alors que les deux restes étaient livrés — corrigée le 2026-11-09 après vérification.* |
 | 6 | Catalogue public | 12 | ✅ **FERMÉ** — **26/26 à l'adresse publique**. Ni prix ni stock par CONSTRUCTION : la table n'en porte pas (PGRST204 mesuré). Un brouillon rend le MÊME 404 qu'une référence inexistante. |
-| 7 | Actualités — événements, communiqués, filtres | 8 | ✅ **FERMÉ** — le moteur avait déjà son fonds d'articles ; il manquait la CATÉGORIE. Bloc « articles » (16ᵉ type), **21/21 à l'adresse publique**, et `/blog` ne perd rien. |
+| 7 | Actualités — événements, communiqués, filtres | 8 | ❌ **ROUVERT le 2026-11-26 — PAS FAIT.** La catégorie existe en base et le bloc « articles » s'affiche, mais : ① `/actualites` répond **404** (aucune page `actualites` déclarée) ; ② Agenda et Communiqués sont créés **hors menu** (`menu = false`, `poser-pages-cpa.mjs`) et vides ; ③ `/dashboard/blog` **n'écrivait jamais la catégorie** : tout article créé depuis l'interface tombait en « article » et n'apparaissait que sur `/blog` ; ④ aucune section d'actualités sur l'accueil. Le « 21/21 » venait d'articles témoins **insérés avec la clé de service** (`prouver-ecran-actualites.mjs`), pas d'un geste fait depuis l'interface. Reprise : module Actualités du moteur (commit du 2026-11-26), allumé sur la CPA par un geste du propriétaire. |
 | 8 | Contact et demandes — référence générée automatiquement, et suivi de la demande | 10 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Les deux échecs rendent mot pour mot la même réponse ; le texte du demandeur ne sort jamais. |
 | 9 | Pages légales + plan du site engendré | 4 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Un brouillon ne laisse ni titre ni chemin dans le plan ; une route moteur s'efface si une page déclarée porte son chemin. |
 | 10 | **Authentification, rôles, habilitations** | 16 | ✅ **FERMÉ** — mécanique posée et mesurée (17 + 7 + 11 points). **Pas de preuve à l'écran** : rien n'est encore visible, c'est le lot 11 qui construit l'espace. Une dette nommée, voir §10. |

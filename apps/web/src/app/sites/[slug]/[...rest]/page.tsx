@@ -11,6 +11,10 @@ import SousPages from '../pages/SousPages'
 import FicheResponsable, { estUneFiche } from '../pages/FicheResponsable'
 import { fetchBlogIndex, type BlogPostCard, type CategorieArticle } from '../blog/fetchPosts'
 import { fetchPage, fetchFilDAriane, fetchEnfants } from '../pages/fetchPage'
+import type { PageSite } from '../pages/typesPage'
+import { CHEMIN_ACTUALITES, libellesActualites, libelleOnglet, vueActualites } from '../pages/actualites'
+import OngletsActualites from '../pages/OngletsActualites'
+import ListeArticles from '../pages/ListeArticles'
 import HtmlLang from '../themes/HtmlLang'
 import JsonLdScript from '../themes/JsonLdScript'
 
@@ -58,12 +62,37 @@ function cheminDe(rest: string[]): string {
   return rest.map((s) => decodeURIComponent(s)).filter(Boolean).join('/')
 }
 
+/**
+ * LA PAGE À CETTE ADRESSE, ET LE MODULE ACTUALITÉS S'IL EST ALLUMÉ.
+ *
+ * Le module ne s'allume que si le site DÉCLARE la page `actualites` (voir
+ * `pages/actualites.ts`). Une sous-adresse `actualites/<onglet>` sans page
+ * déclarée reçoit alors une page de titre seul, pour que l'onglet existe ;
+ * sans page `actualites`, tout se passe exactement comme avant.
+ */
+async function resoudre(siteId: string, slug: string, lang: string | null | undefined, chemin: string): Promise<{
+  page: PageSite | null
+  actualites: { categorie: CategorieArticle | null; posts: BlogPostCard[] } | null
+}> {
+  const page = await fetchPage(siteId, chemin)
+  const vue = vueActualites(chemin)
+  if (vue === null) return { page, actualites: null }
+  const racine = vue.categorie === null ? page : await fetchPage(siteId, CHEMIN_ACTUALITES)
+  if (racine === null) return { page, actualites: null }
+  const index = await fetchBlogIndex(slug, vue.categorie)
+  const t = libellesActualites(lang)
+  return {
+    page: page ?? { chemin, parent: CHEMIN_ACTUALITES, titre: libelleOnglet(t, vue.categorie), chapeau: null, corps: null, maj_le: null, blocs: [] },
+    actualites: { categorie: vue.categorie, posts: index?.posts ?? [] },
+  }
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, rest } = await params
   const site = await lireSite(slug)
   if (!site) return { title: 'Page introuvable' }
 
-  const page = await fetchPage(site.id, cheminDe(rest))
+  const { page } = await resoudre(site.id, slug, site.lang, cheminDe(rest))
   // Pas de `robots: noindex` : la page rend 404 par `notFound()`, et une 404
   // est deja le signal correct. Annoncer `noindex` sur une page servie en 200
   // serait le defaut GEN-D033 a l'envers.
@@ -104,7 +133,7 @@ export default async function PageDeclaree({ params }: Props) {
   if (!site) notFound()
 
   const chemin = cheminDe(rest)
-  const page = await fetchPage(site.id, chemin)
+  const { page, actualites } = await resoudre(site.id, slug, site.lang, chemin)
   // REFUS ① : rien de declare a cette adresse -> 404, jamais une page vide.
   if (!page) notFound()
 
@@ -237,9 +266,19 @@ export default async function PageDeclaree({ params }: Props) {
 
         {/* LOT 4 — LE CORPS STRUCTURE. Il vient APRES le corps libre : une page
             qui portait deja du texte ne le perd pas en gagnant ses blocs. */}
-        {page.blocs.length > 0 && (
+        {/* LE MODULE ACTUALITÉS : les onglets, puis la liste de la catégorie.
+            Il REMPLACE le bloc « articles » de la page (même liste, deux fois
+            sinon) et ses cartes de sous-pages (les onglets les remplacent). */}
+        {actualites !== null && (
+          <div data-module-actualites="">
+            <OngletsActualites base={base} courante={actualites.categorie} t={libellesActualites(site.lang)} primary={accent} />
+            <ListeArticles articles={actualites.posts} base={base} lang={site.lang} primary={accent} vide={libellesActualites(site.lang).vide} />
+          </div>
+        )}
+
+        {page.blocs.filter((b) => actualites === null || b.type !== 'articles').length > 0 && (
           <BlocsDePage
-            blocs={page.blocs}
+            blocs={page.blocs.filter((b) => actualites === null || b.type !== 'articles')}
             base={base}
             primary={site.primary_color || undefined}
             articles={parCategorie}
@@ -251,7 +290,7 @@ export default async function PageDeclaree({ params }: Props) {
         {/* LES ENFANTS -- une page d'entree ne porte qu'un chapeau et des
             cartes vers ses sous-pages. C'est le principe de la page dans la
             page. Aucune carte si aucun enfant : pas de section vide. */}
-        <SousPages enfants={enfants} base={base} accent={accent} rtl={rtl} />
+        {actualites === null && <SousPages enfants={enfants} base={base} accent={accent} rtl={rtl} />}
       </main>
       </div>
     </>

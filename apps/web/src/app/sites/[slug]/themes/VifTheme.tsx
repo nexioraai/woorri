@@ -24,6 +24,7 @@ import { getModeCapabilities } from './modeCapabilities'
 import type { AvisDuSite } from './avisDuSite'
 import SectionAppelsOffres from './SectionAppelsOffres'
 import LienAppelsOffres from './LienAppelsOffres'
+import SectionActualites from './SectionActualites'
 import MenuDeclare from './MenuDeclare'
 import { HeroDiapoLibre, photosDAccueil } from './HeroDiapo'
 import VifShopSection from './VifShopSection'
@@ -40,7 +41,7 @@ export const CREAM_DEEP = '#EFE6D4'
 export const INK = '#B08847'
 export const GOLD = '#B08847'
 
-export default function VifTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [] }: { site: Site } & AvisDuSite) {
+export default function VifTheme({ site, hasAvis = false, actualites = [], host = null, menu = [], partenaires = [] }: { site: Site } & AvisDuSite) {
   // ── LES PRODUITS, POUR LES PAGES PERSONNALISÉES.
   //
   // Les sections boutique calculent déjà cette liste chacune de leur côté ;
@@ -602,6 +603,9 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
           absente » (arbitrage du propriétaire, 2026-11-06). */}
       {hasAvis && !hidden('AppelsOffres') && (
         <SectionAppelsOffres site={site} primary={GOLD} host={host} />
+      )}
+      {actualites.length > 0 && !hidden('Actualites') && (
+        <SectionActualites site={site} primary={GOLD} host={host} posts={actualites} />
       )}
       <style>{`
         /* Scrollbar styling */

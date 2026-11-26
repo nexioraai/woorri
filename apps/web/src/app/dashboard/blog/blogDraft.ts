@@ -12,22 +12,33 @@
 // l'invariant central du chantier, vu du cote client.
 // ============================================================
 
+/** LOT ACTUALITÉS (2026-11-26) — miroir de la CHECK de la base. */
+export const CATEGORIES_BROUILLON = ['article', 'communique', 'evenement'] as const;
+export type CategorieBrouillon = (typeof CATEGORIES_BROUILLON)[number];
+
 export type ArticleBrouillon = {
   title: string;
   slug: string;
   excerpt: string;
   content: string;
+  categorie: CategorieBrouillon;
 };
 
-export type ArticleServeur = ArticleBrouillon & {
+/** Une catégorie lue du serveur, ramenée à une valeur sûre (`article` par défaut). */
+export function categorieDuServeur(v: unknown): CategorieBrouillon {
+  return (CATEGORIES_BROUILLON as readonly unknown[]).includes(v) ? (v as CategorieBrouillon) : 'article';
+}
+
+export type ArticleServeur = Omit<ArticleBrouillon, 'categorie'> & {
   id: string;
   cover_image: string | null;
   published: boolean;
   published_at: string | null;
   updated_at: string | null;
+  categorie?: string | null;
 };
 
-export const BROUILLON_VIDE: ArticleBrouillon = { title: '', slug: '', excerpt: '', content: '' };
+export const BROUILLON_VIDE: ArticleBrouillon = { title: '', slug: '', excerpt: '', content: '', categorie: 'article' };
 
 /** Reprend un article du serveur dans le formulaire, sans perdre les nuls. */
 export function versBrouillon(a: ArticleServeur): ArticleBrouillon {
@@ -36,6 +47,7 @@ export function versBrouillon(a: ArticleServeur): ArticleBrouillon {
     slug: a.slug ?? '',
     excerpt: a.excerpt ?? '',
     content: a.content ?? '',
+    categorie: categorieDuServeur(a.categorie),
   };
 }
 
@@ -50,7 +62,7 @@ export function versBrouillon(a: ArticleServeur): ArticleBrouillon {
  * derive alors le lien du titre, plutot que de recevoir une chaine vide.
  */
 export function corpsCreation(site: string, b: ArticleBrouillon): Record<string, unknown> {
-  const corps: Record<string, unknown> = { site, title: b.title.trim(), content: b.content };
+  const corps: Record<string, unknown> = { site, title: b.title.trim(), content: b.content, categorie: b.categorie };
   if (b.slug.trim()) corps.slug = b.slug.trim();
   if (b.excerpt.trim()) corps.excerpt = b.excerpt.trim();
   return corps;
@@ -73,6 +85,7 @@ export function corpsModification(
   if (b.slug.trim() && b.slug.trim() !== (origine.slug ?? '')) patch.slug = b.slug.trim();
   if (b.excerpt !== (origine.excerpt ?? '')) patch.excerpt = b.excerpt;
   if (b.content !== (origine.content ?? '')) patch.content = b.content;
+  if (b.categorie !== categorieDuServeur(origine.categorie)) patch.categorie = b.categorie;
   return patch;
 }
 
