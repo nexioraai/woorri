@@ -27,6 +27,12 @@ Si une régression, incohérence ou dette existante est découverte hors périm�
 
 ---
 
+## ZÉRO RÉSIDU — RÈGLE PERMANENTE (2026-11-26)
+
+ZÉRO RÉSIDU. Toute copie de secours, fichier temporaire, script d'essai, page d'aperçu, serveur local ou donnée de test créé pendant un lot est supprimé ou arrêté avant la fin de ce lot. Préférer git (stash, branche) aux copies *.backup*. Le rapport de chaque lot le prouve (git status propre, find sans résultat, processus arrêtés). Aucune exception, même pour un fichier ignoré par git.
+
+---
+
 ## Interdictions absolues
 
 - NE JAMAIS faire `git push` sans validation explicite de l'utilisateur.
@@ -74,9 +80,7 @@ Choisir la modification minimale permettant d'obtenir le résultat demandé.
 
 ### 3. Sauvegarder
 
-Créer un backup `.backup` de chaque fichier avant modification.
-
-Ne pas écraser un backup utile sans vérifier son contenu.
+Sauvegarder avec git (`git stash`, une branche, ou le commit précédent) — plus de copies `*.backup*` (règle ZÉRO RÉSIDU ci-dessus).
 
 ### 4. Modifier
 
