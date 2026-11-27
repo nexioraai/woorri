@@ -32,9 +32,12 @@ import {
   adresseCompteOeuvre,
   DOMAINE_COMPTES,
   engendrerMotDePasse,
-  LONGUEUR_MOT_DE_PASSE,
+  engendrerSecretAleatoire,
+  LONGUEUR_SECRET,
+  PLANCHER_MOT_DE_PASSE,
 } from '../compte-oeuvre'
 import { COSTUMES_CONNUS, REGLE_IDENTITES_DERIVEES } from '../identites-derivees'
+import { MOTS_LISIBLES } from '../mots-de-passe-lisibles'
 
 const RACINE = join(__dirname, '..', '..', '..', '..', '..', '..')
 const SOURCE = (): string =>
@@ -151,38 +154,33 @@ describe('EP-324 · le compte d’une œuvre', () => {
     ).toMatch(/await assurerCompteOeuvre\(/u)
   })
 
-  it('④ LE MOT DE PASSE EST LONG ET CRYPTOGRAPHIQUE', () => {
-    // L'adresse se déduit de l'identifiant de l'œuvre, qui est dans l'URL
-    // publique : TOUT le secret tient dans le mot de passe.
+  it('④ LE MOT DE PASSE EST LISIBLE, CRYPTOGRAPHIQUE, ET D’UN PLANCHER GARANTI (C1, 2026-11-27)', () => {
+    // L'adresse se déduit du nom de l'appli : TOUT le secret tient dans le
+    // mot de passe. Décision du propriétaire (C1) : 4 mots + 2 chiffres,
+    // plancher abaissé de 28 à 24 signes. Avant : 30 signes aléatoires.
     const m = MODULE()
     expect(m, 'le mot de passe vient d’un générateur de confort, pas de clé')
       .not.toContain('Math.random')
-    expect(m, 'le mot de passe ne vient plus d’un générateur cryptographique')
-      .toContain('randomBytes')
-    const a = engendrerMotDePasse()
-    const b = engendrerMotDePasse()
-    // ── LA LONGUEUR EST EXACTE, PAS UN PLANCHER.
-    //
-    // `>= 28` a laissé passer un générateur dont la longueur VARIAIT entre
-    // 25 et 32 signes — il a fallu un tirage malheureux (0,3 %) pour le
-    // découvrir, après vingt heures de production. Un plancher ne mesure
-    // pas une garantie : on assertionne donc l'égalité, mille fois, parce
-    // qu'un seul tirage ne dit rien d'une distribution.
-    expect(a.length, 'le mot de passe n’a pas la longueur annoncée').toBe(
-      LONGUEUR_MOT_DE_PASSE,
-    )
-    const longueurs = new Set(
-      Array.from({ length: 1000 }, () => engendrerMotDePasse().length),
-    )
-    expect(
-      [...longueurs],
-      'la longueur du mot de passe VARIE : ce n’est pas une garantie',
-    ).toEqual([LONGUEUR_MOT_DE_PASSE])
-    expect(LONGUEUR_MOT_DE_PASSE, 'le mot de passe est trop court').toBeGreaterThanOrEqual(28)
-    expect(a, 'deux mots de passe identiques : le générateur ne tire rien').not.toBe(b)
-    // Pas de signes qu'un double-clic coupe : la personne va le recopier.
-    expect(a, 'le mot de passe porte des signes qu’un double-clic coupe')
-      .toMatch(/^[A-Za-z0-9]+$/u)
+    expect(m, 'le mot de passe ne vient plus d’un tirage cryptographique')
+      .toMatch(/randomInt\(MOTS_LISIBLES\.length\)/u)
+    // ── UN PLANCHER SE MESURE SUR UNE DISTRIBUTION, PAS SUR UN TIRAGE.
+    //    Mille tirages : aucun sous 24, tous de la forme annoncée.
+    const tirages = Array.from({ length: 1000 }, () => engendrerMotDePasse())
+    expect(PLANCHER_MOT_DE_PASSE, 'le plancher décidé est 24').toBe(24)
+    expect(Math.min(...tirages.map((t) => t.length)), 'un mot de passe passe sous le plancher').toBeGreaterThanOrEqual(PLANCHER_MOT_DE_PASSE)
+    for (const t of tirages) {
+      expect(t, 'forme : Mot-Mot-Mot-Mot-47, sans accent, chiffres 2 à 9').toMatch(/^(?:[A-Z][a-z]{4,6}-){4}[2-9]{2}$/u)
+      expect(t, 'une majuscule I, L ou O se confond avec l, 1 ou 0').not.toMatch(/(?:^|-)[ILO]/u)
+    }
+    expect(new Set(tirages).size, 'des mots de passe se répètent : le générateur ne tire rien').toBe(1000)
+    // L'entropie se recalcule depuis la liste : 4 mots, 2 chiffres sur 8.
+    const bits = 4 * Math.log2(MOTS_LISIBLES.length) + 2 * Math.log2(8)
+    expect(bits, 'la liste de mots a rétréci : le mot de passe s’affaiblit').toBeGreaterThanOrEqual(45)
+    expect(new Set(MOTS_LISIBLES).size, 'la liste porte des doublons').toBe(MOTS_LISIBLES.length)
+    for (const w of MOTS_LISIBLES) expect(w, 'mot hors règle').toMatch(/^[a-hj-kmnp-z][a-z]{4,6}$/u)
+    // Le compte LIBÉRÉ puis banni garde un secret long et aléatoire : il n'est montré à personne.
+    expect(engendrerSecretAleatoire().length).toBe(LONGUEUR_SECRET)
+    expect(engendrerSecretAleatoire()).toMatch(/^[A-Za-z0-9]{30}$/u)
   })
 
   it('⑤ LA BOÎTE AUX LETTRES N’EXISTE PAS : le compte est confirmé d’office', () => {

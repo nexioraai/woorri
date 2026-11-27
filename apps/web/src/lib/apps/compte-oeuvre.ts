@@ -37,7 +37,8 @@
  * à n'importe quelle autre œuvre. EP-320 ⑨ garde la politique, ce module
  * garde l'écriture.
  */
-import { randomBytes } from 'node:crypto'
+import { randomBytes, randomInt } from 'node:crypto'
+import { MOTS_LISIBLES } from './mots-de-passe-lisibles'
 import { createClient } from '@supabase/supabase-js'
 
 /** Le domaine des comptes d'œuvre. Aucune boîte n'y reçoit de courrier. */
@@ -87,8 +88,8 @@ export function adresseCompteOeuvre(idOeuvre: string): string {
   return `${locale}@${DOMAINE_COMPTES}`
 }
 
-/** La longueur GARANTIE d'un mot de passe d'œuvre. */
-export const LONGUEUR_MOT_DE_PASSE = 30
+/** La longueur GARANTIE d'un SECRET aléatoire (jamais montré : compte libéré et banni). */
+export const LONGUEUR_SECRET = 30
 
 /**
  * UN MOT DE PASSE LONG ET ALÉATOIRE — DE LONGUEUR GARANTIE.
@@ -120,12 +121,39 @@ export const LONGUEUR_MOT_DE_PASSE = 30
  * on retire aussi les tirets et les soulignés pour qu'un double-clic la
  * sélectionne en entier. 30 signes sur 62 valeurs ≈ 178 bits.
  */
-export function engendrerMotDePasse(): string {
+export function engendrerSecretAleatoire(): string {
   let chaine = ''
-  while (chaine.length < LONGUEUR_MOT_DE_PASSE) {
+  while (chaine.length < LONGUEUR_SECRET) {
     chaine += randomBytes(32).toString('base64url').replace(/[-_]/gu, '')
   }
-  return chaine.slice(0, LONGUEUR_MOT_DE_PASSE)
+  return chaine.slice(0, LONGUEUR_SECRET)
+}
+
+/**
+ * LE MOT DE PASSE QU'ON MONTRE — LISIBLE, ET D'UN PLANCHER GARANTI
+ * (décision du propriétaire, option C1, 2026-11-27).
+ *
+ * « Pomme-Velo-Sable-Toit-47 » se recopie de tête ; trente signes aléatoires
+ * non. Quatre mots tirés par `randomInt` (crypto, uniforme) dans
+ * `MOTS_LISIBLES`, puis deux chiffres de 2 à 9 (ni 0 ni 1 : O et l).
+ * Environ 45 bits pour 894 mots — moins que les 178 d'avant, c'est le prix
+ * de la lisibilité, décidé ; les essais de connexion sont limités par
+ * Supabase Auth. Mots de 5 lettres au moins : 4×5 + 4 tirets + 2 chiffres
+ * = 26 ≥ 24, le plancher tient PAR CONSTRUCTION — et la ligne qui suit le
+ * VÉRIFIE quand même, parce qu'une liste peut changer.
+ */
+export const PLANCHER_MOT_DE_PASSE = 24
+const CHIFFRES_LISIBLES = '23456789'
+
+export function engendrerMotDePasse(): string {
+  const mot = (): string => {
+    const m = MOTS_LISIBLES[randomInt(MOTS_LISIBLES.length)] ?? ''
+    return m.charAt(0).toUpperCase() + m.slice(1)
+  }
+  const chiffre = (): string => CHIFFRES_LISIBLES.charAt(randomInt(CHIFFRES_LISIBLES.length))
+  const mdp = `${mot()}-${mot()}-${mot()}-${mot()}-${chiffre()}${chiffre()}`
+  if (mdp.length < PLANCHER_MOT_DE_PASSE) throw new Error(`COMPTE_OEUVRE_MOT_DE_PASSE_COURT: ${String(mdp.length)} signes`)
+  return mdp
 }
 
 export type Compte = {
@@ -215,7 +243,7 @@ async function liberer(
   const maj = await admin.updateUserById(occupant.id, {
     email: ailleurs,
     email_confirm: true,
-    ...(existe ? {} : { password: engendrerMotDePasse(), ban_duration: BAN_DEFINITIF }),
+    ...(existe ? {} : { password: engendrerSecretAleatoire(), ban_duration: BAN_DEFINITIF }),
   })
   if (maj.error !== null) throw new Error(`COMPTE_OEUVRE_LIBERATION: ${maj.error.message}`)
 }
