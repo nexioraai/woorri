@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Banknote } from 'lucide-react';
-import { blocage, ecart } from '@/lib/apps/activation-manuelle';
+import { blocage, ecart, formuleLisible } from '@/lib/apps/activation-manuelle';
 
 // L'ACTIVATION À LA MAIN (étape ④ du quota, 2026-11-19) — le SEUL cas où le
 // propriétaire intervient : un client que la carte ne couvre pas (espèces,
@@ -10,7 +10,7 @@ import { blocage, ecart } from '@/lib/apps/activation-manuelle';
 // par le serveur (`/api/admin/paiements-manuels`) ; cet écran ne fait que
 // chercher, préparer et faire CONFIRMER, avec la date qui en résultera.
 
-type Appli = { id: string; nom: string | null; adresse: string | null; proprietaire: string | null; formule: string; payeJusquAu: string | null };
+type Appli = { id: string; nom: string | null; adresse: string | null; proprietaire: string | null; formule: string; payeJusquAu: string | null; offerte: boolean };
 type Reglages = { prixMensuelXaf: string; lotPrixXaf: string; dureeJours: string; lotTaille: string };
 
 const jour = (d: Date) => new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
@@ -126,7 +126,7 @@ export default function ActivationManuelle() {
               <button type="button" onClick={() => { setChoisie(a); setAConfirmer(false); setOffrirAConfirmer(false); }}
                 className={`w-full rounded-lg border px-3 py-2 text-left text-xs ${choisie?.id === a.id ? 'border-emerald-400/60 bg-emerald-500/10' : 'border-white/10 hover:bg-white/5'}`}>
                 <span className="font-semibold">{a.adresse ?? a.nom ?? a.id}</span>
-                <span className="text-white/50"> · {a.proprietaire ?? 'propriétaire inconnu'} · {a.formule === 'abonnee' && a.payeJusquAu ? `payée jusqu’au ${jour(new Date(a.payeJusquAu))}` : 'gratuite'}</span>
+                <span className="text-white/50"> · {a.proprietaire ?? 'propriétaire inconnu'} · {formuleLisible(a, jour)}</span>
               </button>
             </li>
           ))}
@@ -157,9 +157,16 @@ export default function ActivationManuelle() {
         </div>
       )}
 
+      {/* « Offrir (épreuve) » À CÔTÉ de « Vérifier avant d'activer » (2026-11-27) :
+          placé sous le formulaire, il tombait hors de l'écran. */}
       {choisie !== null && !aConfirmer && (
-        <button type="button" disabled={!pret} onClick={() => { setDatePrevue(dateApres()); setAConfirmer(true); }}
-          className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold disabled:opacity-40">Vérifier avant d’activer</button>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <button type="button" disabled={!pret} onClick={() => { setDatePrevue(dateApres()); setAConfirmer(true); }}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold disabled:opacity-40">Vérifier avant d’activer</button>
+          <button type="button" disabled={busy || offrirAConfirmer} onClick={() => setOffrirAConfirmer(true)}
+            title="Rendre publiable sans paiement : fournisseur « offert », 0 — jamais une vente."
+            className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold disabled:opacity-40">Offrir (épreuve)</button>
+        </div>
       )}
 
       {/* LA CONFIRMATION EST DESSINÉE, pas `confirm()` : elle dit la date, et l'écart de montant. */}
@@ -181,22 +188,14 @@ export default function ActivationManuelle() {
         </div>
       )}
 
-      {choisie !== null && !aConfirmer && (
-        <div className="mt-6 border-t border-white/10 pt-4">
-          <p className="text-xs text-white/50">Ou, pour une appli d’épreuve : la rendre publiable sans paiement. Rien n’est reçu, rien n’est compté comme vente (fournisseur « offert », 0).</p>
-          {!offrirAConfirmer ? (
-            <button type="button" disabled={busy} onClick={() => setOffrirAConfirmer(true)}
-              className="mt-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold disabled:opacity-40">Offrir (épreuve)</button>
-          ) : (
-            <div className="mt-2 rounded-xl border border-white/20 bg-white/5 p-4 text-sm">
-              <p className="font-semibold">Offrir « {choisie.adresse ?? choisie.nom} » pour épreuve ({reglages?.dureeJours} jours, 0) ?</p>
-              <p className="mt-1 text-xs text-white/60">Une seule fois par application.</p>
-              <div className="mt-3 flex gap-2">
-                <button type="button" disabled={busy} onClick={() => { void offrir(); }} className="rounded-lg bg-white/15 px-4 py-2 text-sm font-semibold disabled:opacity-40">Confirmer l’offre</button>
-                <button type="button" disabled={busy} onClick={() => setOffrirAConfirmer(false)} className="rounded-lg bg-white/10 px-4 py-2 text-sm">Annuler</button>
-              </div>
-            </div>
-          )}
+      {choisie !== null && !aConfirmer && offrirAConfirmer && (
+        <div className="mt-3 rounded-xl border border-white/20 bg-white/5 p-4 text-sm">
+          <p className="font-semibold">Offrir « {choisie.adresse ?? choisie.nom} » pour épreuve ({reglages?.dureeJours} jours, 0) ?</p>
+          <p className="mt-1 text-xs text-white/60">Rien n’est reçu, rien n’est compté comme vente (fournisseur « offert », 0). Une seule fois par application.</p>
+          <div className="mt-3 flex gap-2">
+            <button type="button" disabled={busy} onClick={() => { void offrir(); }} className="rounded-lg bg-white/15 px-4 py-2 text-sm font-semibold disabled:opacity-40">Confirmer l’offre</button>
+            <button type="button" disabled={busy} onClick={() => setOffrirAConfirmer(false)} className="rounded-lg bg-white/10 px-4 py-2 text-sm">Annuler</button>
+          </div>
         </div>
       )}
 

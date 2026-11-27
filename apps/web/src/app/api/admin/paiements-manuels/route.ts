@@ -22,7 +22,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { estAdmin } from '@/lib/admin-emails'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
-import { blocage } from '@/lib/apps/activation-manuelle'
+import { appliesOffertes, blocage } from '@/lib/apps/activation-manuelle'
 
 export const runtime = 'nodejs'
 
@@ -74,6 +74,11 @@ export async function GET(req: Request) {
   const ids = [...applis.keys()]
   const compteurs = ids.length === 0 ? { data: [] } : await supabaseAdmin.from('app_compteurs').select('app_id, statut, paye_jusqu_au').in('app_id', ids)
   const parApp = new Map(((compteurs.data ?? []) as { app_id: string; statut: string; paye_jusqu_au: string | null }[]).map((c) => [c.app_id, c]))
+  // « offerte » ou « payée » : le dernier abonnement inscrit au registre le dit (2026-11-27).
+  const abonnements = ids.length === 0
+    ? { data: [] }
+    : await supabaseAdmin.from('app_paiements').select('app_id, fournisseur').in('app_id', ids).eq('objet', 'abonnement').order('cree_le', { ascending: false })
+  const offertes = appliesOffertes((abonnements.data ?? []) as { app_id: string; fournisseur: string }[])
   const r = await reglages()
 
   return NextResponse.json(
@@ -85,6 +90,7 @@ export async function GET(req: Request) {
         proprietaire: proprietaires.get(x.owner_id) ?? null,
         formule: parApp.get(x.id)?.statut ?? 'gratuite',
         payeJusquAu: parApp.get(x.id)?.paye_jusqu_au ?? null,
+        offerte: offertes.has(x.id),
       })),
       reglages: { prixMensuelXaf: r.prix_mensuel_xaf ?? '', lotPrixXaf: r.lot_prix_xaf ?? '', dureeJours: r.duree_jours ?? '', lotTaille: r.lot_taille ?? '' },
     },

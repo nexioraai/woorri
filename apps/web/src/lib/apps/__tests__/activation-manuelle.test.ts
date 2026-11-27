@@ -26,3 +26,28 @@ describe('l’activation à la main', () => {
     expect(prixRegle('abonnement', { prixMensuelXaf: '', lotPrixXaf: '3000' })).toBeNull()
   })
 })
+
+// ── « OFFERTE » OU « PAYÉE » (2026-11-27) — et le bouton « Offrir (épreuve) » à côté de « Vérifier ».
+import { appliesOffertes, formuleLisible } from '../activation-manuelle'
+
+describe('ce que la liste de /admin dit d’une appli', () => {
+  const jour = (d: Date) => d.toISOString().slice(0, 10)
+  it('offerte (lancement ou épreuve) : « offerte jusqu’au », jamais « payée »', () => {
+    expect(formuleLisible({ formule: 'abonnee', payeJusquAu: '2026-12-27T00:00:00Z', offerte: true }, jour)).toBe('offerte jusqu’au 2026-12-27')
+  })
+  it('payée : inchangé', () => {
+    expect(formuleLisible({ formule: 'abonnee', payeJusquAu: '2026-12-27T00:00:00Z', offerte: false }, jour)).toBe('payée jusqu’au 2026-12-27')
+  })
+  it('gratuite, ou abonnée sans date : « gratuite », comme avant', () => {
+    expect(formuleLisible({ formule: 'gratuite', payeJusquAu: null, offerte: false }, jour)).toBe('gratuite')
+    expect(formuleLisible({ formule: 'abonnee', payeJusquAu: null, offerte: true }, jour)).toBe('gratuite')
+  })
+  it('seul le DERNIER abonnement de chaque appli compte', () => {
+    const s = appliesOffertes([
+      { app_id: 'a', fournisseur: 'offert' },
+      { app_id: 'b', fournisseur: 'stripe' }, { app_id: 'b', fournisseur: 'offert' },
+      { app_id: 'c', fournisseur: 'offert' }, { app_id: 'c', fournisseur: 'stripe' },
+    ])
+    expect([...s].sort()).toEqual(['a', 'c'])
+  })
+})

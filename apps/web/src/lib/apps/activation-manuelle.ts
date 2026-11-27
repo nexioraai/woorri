@@ -34,3 +34,30 @@ export function ecart(objet: Objet, recu: number, r: ReglagesActivation): string
   if (prix === null || recu === prix) return null
   return `Attention : le prix réglé est ${fcfa(prix)}, le montant reçu est ${fcfa(recu)}.`
 }
+
+/**
+ * CE QUE LA LISTE DE /admin DIT D'UNE APPLI (2026-11-27).
+ *
+ * « offerte » quand le DERNIER abonnement inscrit au registre est `offert`
+ * (les 4 du lancement, les épreuves) : une offre n'est pas une vente, l'écran
+ * ne dit pas « payée ». Un vrai paiement arrivé après l'offre redevient
+ * « payée ». Le reste est inchangé : pas abonnée ou sans date → « gratuite ».
+ */
+export type FormuleListee = { readonly formule: string; readonly payeJusquAu: string | null; readonly offerte: boolean }
+
+export function formuleLisible(a: FormuleListee, jour: (d: Date) => string): string {
+  if (a.formule !== 'abonnee' || a.payeJusquAu === null) return 'gratuite'
+  return `${a.offerte ? 'offerte' : 'payée'} jusqu’au ${jour(new Date(a.payeJusquAu))}`
+}
+
+/** Le dernier abonnement de chaque appli est-il une offre ? (lignes triées du plus récent au plus ancien) */
+export function appliesOffertes(lignes: readonly { readonly app_id: string; readonly fournisseur: string }[]): Set<string> {
+  const vu = new Set<string>()
+  const offertes = new Set<string>()
+  for (const l of lignes) {
+    if (vu.has(l.app_id)) continue
+    vu.add(l.app_id)
+    if (l.fournisseur === 'offert') offertes.add(l.app_id)
+  }
+  return offertes
+}

@@ -29,4 +29,4 @@ Une vérification en production échoue → arrêt à l'étape. Un rôle voit pl
 
 ## Petits lots après l'épreuve d'É1
 
-- **/admin, liste de recherche** (`apps/web/src/components/admin/ActivationManuelle.tsx`) : afficher « offerte jusqu'au … » au lieu de « payée jusqu'au … » pour une appli dont le paiement en cours est `offert`, y compris les 4 du lancement (`lancement-<id>`) et les épreuves (`epreuve-<id>`). Aujourd'hui, toute appli abonnée y est dite « payée ». C'est un mot à l'écran, pas un total : aucun total ne lit `app_paiements` (relevé le 2026-11-27).
+- **FAIT le 2026-11-27 (commit local, non poussé).** **/admin, liste de recherche** (`apps/web/src/components/admin/ActivationManuelle.tsx`) : afficher « offerte jusqu'au … » au lieu de « payée jusqu'au … » pour une appli dont le paiement en cours est `offert`, y compris les 4 du lancement (`lancement-<id>`) et les épreuves (`epreuve-<id>`). Aujourd'hui, toute appli abonnée y est dite « payée ». C'est un mot à l'écran, pas un total : aucun total ne lit `app_paiements` (relevé le 2026-11-27).

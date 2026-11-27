@@ -19,6 +19,7 @@ const etat = vi.hoisted(() => ({
   prixLot: '' as string,
   rpc: { data: null as unknown, error: null as null | { message: string } },
   appels: [] as unknown[],
+  abonnements: [{ app_id: 'app-1', fournisseur: 'offert' }] as { app_id: string; fournisseur: string }[],
 }))
 
 vi.mock('@/lib/supabase-admin', async () => {
@@ -32,6 +33,8 @@ vi.mock('@/lib/supabase-admin', async () => {
           : { id: f.find(([, c]) => c === 'id')?.[2] ?? 'app-1', owner_id: 'u-1', nom: 'Gestion de pharmacie', publication_slug: 'pharma' },
         error: null }) },
       app_compteurs: { reponse: { data: [{ app_id: 'app-1', statut: 'abonnee', paye_jusqu_au: '2026-12-31T23:59:59Z' }], error: null } },
+      // Du plus récent au plus ancien : la dernière ligne d'abonnement d'app-1 est une offre.
+      app_paiements: { reponse: () => ({ data: etat.abonnements, error: null }) },
     },
     journalVierge(),
   )
@@ -113,6 +116,15 @@ describe('activation à la main', () => {
     const d = (await r.json()) as { applis: Record<string, unknown>[]; reglages: Record<string, string> }
     expect(d.applis[0]).toMatchObject({ id: 'app-1', adresse: 'pharma', proprietaire: 'pharmacien@exemple.td', formule: 'abonnee' })
     expect(d.reglages).toEqual({ prixMensuelXaf: '12000', lotPrixXaf: '3000', dureeJours: '30', lotTaille: '50' })
+  })
+
+  it('⑧ le dernier abonnement inscrit est une offre : « offerte » ; un vrai paiement plus récent : non', async () => {
+    const lire = async () => ((await (await GET(new Request('https://www.deribfy.com/api/admin/paiements-manuels?q=pharma', { headers: { authorization: 'Bearer j' } }))).json()) as { applis: { offerte: boolean }[] }).applis[0]
+    etat.abonnements = [{ app_id: 'app-1', fournisseur: 'offert' }]
+    expect((await lire())?.offerte).toBe(true)
+    etat.abonnements = [{ app_id: 'app-1', fournisseur: 'especes' }, { app_id: 'app-1', fournisseur: 'offert' }]
+    expect((await lire())?.offerte).toBe(false)
+    etat.abonnements = [{ app_id: 'app-1', fournisseur: 'offert' }]
   })
 })
 
