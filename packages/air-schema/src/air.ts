@@ -1076,6 +1076,29 @@ const entitySchema = z.strictObject({
     )
     .max(5)
     .optional(),
+  /**
+   * LA LECTURE PAR CLÉ (É1, 2026-11-27) — une page de suivi : le visiteur lit
+   * UNE ligne avec sa clé, jamais la liste.
+   *
+   * ── LA MÊME FAMILLE QUE `lecturePublique`, REPRODUITE PAR MOI EN É1.
+   *
+   * MESURÉ sur « Suivi de colis » (0178c047) : le modèle a déclaré
+   * `lectureParCle` ; ce contrat strict a refusé la table ENTIÈRE
+   * (« Unrecognized key: "lectureParCle" ») ; la table du cahier, sans clé,
+   * a été livrée — colonne numéro vide, fonction `colis_par_cle` absente,
+   * suivi impossible. Le compilateur et le web la portaient ; le contrat, non.
+   *
+   * FORME VOLONTAIREMENT LARGE : une valeur mal formée ici refuserait la
+   * table entière. C'est le compilateur (`lectureParCleEmise`) qui juge la
+   * clé et les colonnes, et qui n'ouvre rien s'il refuse — la table, elle,
+   * reste.
+   */
+  lectureParCle: z
+    .strictObject({
+      cle: z.string().max(63),
+      champs: z.array(z.string().max(63)).max(30),
+    })
+    .optional(),
   fields: z.array(fieldSchema).min(1),
 });
 
