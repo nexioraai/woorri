@@ -78,6 +78,26 @@ export default function ActivationManuelle() {
     finally { setBusy(false); }
   };
 
+  // « OFFRIR (ÉPREUVE) » (2026-11-27) : une autre route, une autre ligne au
+  // registre (fournisseur `offert`, 0) — jamais un paiement reçu.
+  const [offrirAConfirmer, setOffrirAConfirmer] = useState(false);
+  const offrir = async () => {
+    if (choisie === null) return;
+    setBusy(true); setMsg(null);
+    try {
+      const res = await fetch('/api/admin/offrir-epreuve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
+        body: JSON.stringify({ appId: choisie.id }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Erreur');
+      setMsg({ ok: true, text: `« ${choisie.adresse ?? choisie.nom} » est offerte pour épreuve jusqu’au ${jour(new Date(d.jusquAu))} : elle se publie sans paiement. Aucune vente enregistrée.` });
+      setOffrirAConfirmer(false); setChoisie(null); setApplis([]);
+    } catch (e) { setMsg({ ok: false, text: e instanceof Error ? e.message : String(e) }); setOffrirAConfirmer(false); }
+    finally { setBusy(false); }
+  };
+
   const pret = choisie !== null && bloque === null && reference.trim().length >= 3 && Number.isInteger(recu) && recu > 0 && !busy;
 
   return (
@@ -103,7 +123,7 @@ export default function ActivationManuelle() {
         <ul className="mb-4 space-y-1">
           {applis.map((a) => (
             <li key={a.id}>
-              <button type="button" onClick={() => { setChoisie(a); setAConfirmer(false); }}
+              <button type="button" onClick={() => { setChoisie(a); setAConfirmer(false); setOffrirAConfirmer(false); }}
                 className={`w-full rounded-lg border px-3 py-2 text-left text-xs ${choisie?.id === a.id ? 'border-emerald-400/60 bg-emerald-500/10' : 'border-white/10 hover:bg-white/5'}`}>
                 <span className="font-semibold">{a.adresse ?? a.nom ?? a.id}</span>
                 <span className="text-white/50"> · {a.proprietaire ?? 'propriétaire inconnu'} · {a.formule === 'abonnee' && a.payeJusquAu ? `payée jusqu’au ${jour(new Date(a.payeJusquAu))}` : 'gratuite'}</span>
@@ -158,6 +178,25 @@ export default function ActivationManuelle() {
             <button type="button" disabled={busy} onClick={() => { void enregistrer(); }} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold disabled:opacity-40">Confirmer</button>
             <button type="button" disabled={busy} onClick={() => setAConfirmer(false)} className="rounded-lg bg-white/10 px-4 py-2 text-sm">Annuler</button>
           </div>
+        </div>
+      )}
+
+      {choisie !== null && !aConfirmer && (
+        <div className="mt-6 border-t border-white/10 pt-4">
+          <p className="text-xs text-white/50">Ou, pour une appli d’épreuve : la rendre publiable sans paiement. Rien n’est reçu, rien n’est compté comme vente (fournisseur « offert », 0).</p>
+          {!offrirAConfirmer ? (
+            <button type="button" disabled={busy} onClick={() => setOffrirAConfirmer(true)}
+              className="mt-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold disabled:opacity-40">Offrir (épreuve)</button>
+          ) : (
+            <div className="mt-2 rounded-xl border border-white/20 bg-white/5 p-4 text-sm">
+              <p className="font-semibold">Offrir « {choisie.adresse ?? choisie.nom} » pour épreuve ({reglages?.dureeJours} jours, 0) ?</p>
+              <p className="mt-1 text-xs text-white/60">Une seule fois par application.</p>
+              <div className="mt-3 flex gap-2">
+                <button type="button" disabled={busy} onClick={() => { void offrir(); }} className="rounded-lg bg-white/15 px-4 py-2 text-sm font-semibold disabled:opacity-40">Confirmer l’offre</button>
+                <button type="button" disabled={busy} onClick={() => setOffrirAConfirmer(false)} className="rounded-lg bg-white/10 px-4 py-2 text-sm">Annuler</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
