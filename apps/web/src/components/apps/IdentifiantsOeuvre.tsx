@@ -89,9 +89,10 @@ export function IdentifiantsOeuvre({
             {`${lien.replace(/^https:\/\//u, '')}${ADRESSE_GESTION}`}
           </p>
           <p className="mt-1 text-[10px] leading-relaxed text-white/40">
-            Elle n’apparaît nulle part dans votre application, et c’est voulu :
-            un visiteur ne doit pas même savoir que cet espace existe. C’est la
-            connexion qui protège vos données, pas le secret de l’adresse.
+            Chaque page publique de votre application porte un lien « Espace de
+            gestion » qui y mène. Un visiteur le voit, mais ne peut rien y faire
+            sans ces identifiants : c’est la connexion qui protège vos données,
+            pas le secret de l’adresse.
           </p>
         </>
       )}
