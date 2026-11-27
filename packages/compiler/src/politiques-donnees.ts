@@ -225,8 +225,10 @@ export const COLONNES_PAR_CLE_MAX = 12
 export const TIRAGE_CLE = "upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12))"
 
 export function lectureParCleEmise(e: EntiteDonnees): LectureParCleEmise {
-  const lpc = e.lectureParCle as { cle?: unknown; champs?: unknown } | undefined
-  if (lpc === undefined || lpc === null || typeof lpc !== 'object') return { ok: false, motif: 'lectureParCle illisible' }
+  // `unknown` : la déclaration vient du JSON du modèle, `null` y est possible.
+  const brut: unknown = e.lectureParCle
+  if (brut === undefined || brut === null || typeof brut !== 'object') return { ok: false, motif: 'lectureParCle illisible' }
+  const lpc = brut as { cle?: unknown; champs?: unknown }
   if (e.lecturePublique === true) {
     return { ok: false, motif: 'la table est déjà lisible par tous (lecturePublique) : une clé ne la fermerait pas' }
   }
