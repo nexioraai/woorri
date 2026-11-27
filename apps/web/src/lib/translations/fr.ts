@@ -444,6 +444,8 @@ export const fr = {
   'naved.pgMenu': 'Dans le menu',
   'naved.pgChargement': 'Chargement…',
   'naved.publishesTendersHint': 'Vrai même la semaine où aucun avis n\'est publié. Ajoute le lien dans le menu du site.',
+  'naved.maquetteDemo': 'Maquette de démonstration',
+  'naved.maquetteDemoHint': 'Affiche « Maquette de démonstration — non officielle » en bas de toutes les pages. Décochez une fois le site validé par l\'institution.',
   'naved.hideFromSite': 'Masquer du site',
   'naved.save': 'Enregistrer',
   'naved.saving': 'Enregistrement…',

@@ -72,7 +72,7 @@ export default function CookieConsent() {
           // conformite Loi 25, pas seulement un detail visuel. Le style inline
           // a la priorite la plus haute (hors !important) et restaure sans
           // ambiguite l'intention deja ecrite dans la className.
-          style={{ position: 'fixed', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
+          style={{ position: 'fixed', bottom: 'calc(1rem + var(--deribfy-bas, 0px))', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
         >
           <p className="text-sm text-slate-200 leading-relaxed mb-4">
             {t('cookieBanner.message')}{' '}

@@ -104,6 +104,11 @@ export default async function SiteLayout({
     .from('sites').select('assistant_actif,slug,custom_domain,publishes_tenders,ouvre_des_comptes').eq('slug', slug).maybeSingle()
   const r = reglage as { assistant_actif?: boolean; slug: string; custom_domain: string | null; publishes_tenders?: boolean; ouvre_des_comptes?: boolean } | null
   const assistant = r?.assistant_actif === true
+  // LOT 4c — LE BANDEAU « MAQUETTE DE DÉMONSTRATION ». Lu À PART : tant que la
+  // colonne n'existe pas (SQL non passé), cette lecture échoue seule et ne
+  // touche ni l'assistant ni l'adresse du site — l'erreur vaut « pas de bandeau ».
+  const { data: maq } = await supabaseAdmin.from('sites').select('maquette_demo').eq('slug', slug).maybeSingle()
+  const maquette = (maq as { maquette_demo?: boolean | null } | null)?.maquette_demo === true
   const base = r ? resolveSiteBaseUrl(r as never, (await headers()).get('host')) : ''
 
   // LOT 17 — les pages légales déclarées (bandeau des pages sans pied de thème).
@@ -152,11 +157,14 @@ export default async function SiteLayout({
         // clair. Sans lui, un champ de formulaire reste sombre sur fond
         // blanc : le fond est corrigé, la saisie reste illisible.
         colorScheme: 'light',
+        // Le bandeau fixe de la maquette ne recouvre jamais le bas de page.
+        paddingBottom: maquette ? 44 : undefined,
       }}
     >
       <SurvolVivant primary={primary} />
       {children}
-      {(await estEnApercu(slug)) && <ReperApercu />}
+      {(await estEnApercu(slug)) && <ReperApercu hausse={maquette} />}
+      {maquette && <BandeauMaquette />}
       <PiedLegal liens={liensLegaux} />
       {assistant && <Assistant slug={slug} base={base} primary={primary} nom={nomDuSite} textes={textesAssistant} />}
     </div>
@@ -170,18 +178,47 @@ export default async function SiteLayout({
  * fixe des thèmes le recouvrait (l'ancien bandeau de /preview était invisible) ;
  * à droite se trouve le bouton WhatsApp.
  */
-function ReperApercu() {
+function ReperApercu({ hausse = false }: { hausse?: boolean }) {
   return (
     <div
       role="status"
       data-apercu-non-publie=""
       style={{
-        position: 'fixed', left: 16, bottom: 16, zIndex: 2147483000, maxWidth: 'calc(100vw - 112px)',
+        position: 'fixed', left: 16, bottom: hausse ? 60 : 16, zIndex: 2147483000, maxWidth: 'calc(100vw - 112px)',
         background: '#FA5D1E', color: '#ffffff', borderRadius: 999, padding: '8px 14px',
         font: '600 13px/1.3 system-ui, sans-serif', boxShadow: '0 6px 20px rgba(0,0,0,.25)',
       }}
     >
       Aperçu — ce site n’est pas encore publié
+    </div>
+  )
+}
+
+/**
+ * LOT 4c — « MAQUETTE DE DÉMONSTRATION — NON OFFICIELLE ». Un réglage du site,
+ * réservé au propriétaire (« Éditer »), allumé à la génération d'une
+ * institution. Fixe en BAS, sur toute la largeur, sur TOUTES les pages : il ne
+ * se ferme pas d'un clic — seul le propriétaire le retire, dans ses réglages.
+ *
+ * Il RÉSERVE sa hauteur : `--deribfy-bas` (44 px) remonte tout ce qui est fixé
+ * en bas — bulle de l'assistant, « revenir en haut », barre du bon, boutons
+ * WhatsApp, bannière des cookies. Sans bandeau, la variable n'existe pas et
+ * chacun garde sa place d'avant, au pixel près.
+ */
+function BandeauMaquette() {
+  return (
+    <div
+      role="note"
+      data-bandeau-maquette=""
+      style={{
+        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 2147482999, height: 44,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px',
+        background: 'repeating-linear-gradient(135deg, #111 0 14px, #1f1f1f 14px 28px)', color: '#FFD60A',
+        borderTop: '3px solid #FFD60A', font: '800 14px/1.2 system-ui, sans-serif', letterSpacing: '0.02em', textAlign: 'center',
+      }}
+    >
+      <style>{':root{--deribfy-bas:44px}'}</style>
+      Maquette de démonstration — non officielle
     </div>
   )
 }

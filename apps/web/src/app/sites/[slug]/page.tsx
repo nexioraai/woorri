@@ -1,4 +1,6 @@
 // src/app/sites/[slug]/page.tsx
+import { blocsPourVisiteur } from '@/lib/sites/institutionVisiteur'
+import { estProprietaireDuSite } from '@/lib/sites/proprietaireDuSite'
 import InstitutionTheme from './themes/InstitutionTheme'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
@@ -155,9 +157,15 @@ export default async function SitePage({ params, searchParams }: Props) {
 
   // SOUS LE HERO : les blocs suivants de la même page, lus UN PAR UN pour
   // garder leur rang stocké (un bloc mal formé est écarté sans décaler les autres).
-  const suiteHero = (Array.isArray(pageHero?.blocs) ? (pageHero!.blocs as unknown[]) : [])
+  const suiteBrute = (Array.isArray(pageHero?.blocs) ? (pageHero!.blocs as unknown[]) : [])
     .map((b, i) => ({ i, bloc: lireBlocs([b])[0] }))
     .filter((x) => x.i > 0 && x.bloc)
+  // LOT 4c — une ligne « À compléter » n'est montrée qu'au propriétaire vérifié ;
+  // pour un visiteur, un bloc qui n'a plus rien disparaît (jamais une section vide).
+  const proprietaire = suiteBrute.length > 0 ? await estProprietaireDuSite(site.id) : false
+  const suiteHero = proprietaire ? suiteBrute : suiteBrute
+    .map((x) => ({ i: x.i, bloc: blocsPourVisiteur([x.bloc])[0] }))
+    .filter((x) => x.bloc !== undefined)
 
   const key = (site.theme as keyof typeof themes) || 'editorial'
   // Le thème `institution` reçoit ses rubriques, son bandeau et ses chiffres clés (lus ici : un thème est synchrone).
@@ -173,7 +181,7 @@ export default async function SitePage({ params, searchParams }: Props) {
       <JsonLd site={site} url={url} />
       <PromoBanner slug={site.slug} primary={primary} mode={site.mode} labels={cartLabels} currency={resolveShopCurrency(site.products)} />
       <CartShell primary={primary} labels={cartLabels} slug={site.slug} mode={site.mode} products={site.products} shippingFlat={site.shipping_flat} variant={key === 'noir' ? 'dark' : 'light'}>
-        <Theme site={site} hasAvis={hasAvis} actualites={actualites} {...(institution ? { institution } : {})} host={host} menu={menu} partenaires={partenaires} liensLegaux={liensLegaux} heroVitrine={heroVitrine} suiteHero={suiteHero} encreDeMarque={encreDeMarque} />
+        <Theme site={site} hasAvis={hasAvis} actualites={actualites} {...(institution ? { institution } : {})} host={host} menu={menu} partenaires={partenaires} liensLegaux={liensLegaux} heroVitrine={heroVitrine} suiteHero={suiteHero} encreDeMarque={encreDeMarque} proprietaire={proprietaire} />
         {site.mode === 3 && showsVisitorCatalogSearch(site.dropship_type) && site.theme !== 'aurora' && <CatalogSearch slug={site.slug} primary={primary} lang={site.lang} theme={key as ThemeKey} dropshipType={site.dropship_type} />}
       </CartShell>
       <ScrollRevealInit />

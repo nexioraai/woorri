@@ -338,6 +338,25 @@ export default function Navbar() {
                     </span>
                   </label>
                 )}
+                {/* LOT 4c — LA MAQUETTE DE DÉMONSTRATION. Même garde que la case
+                    précédente : visible seulement si la colonne est DÉJÀ sur
+                    l'objet chargé (SQL passé), sinon la sauvegarde entière
+                    échouerait. Réservé au propriétaire : c'est son éditeur. */}
+                {site && 'maquette_demo' in site && (
+                  <label className="flex items-start gap-3 px-4 py-3 mb-3 rounded-xl bg-white/5 cursor-pointer" data-reglage-maquette="">
+                    <input
+                      type="checkbox"
+                      checked={!!site.maquette_demo}
+                      onChange={() => setSite({ ...site, maquette_demo: !site.maquette_demo })}
+                      disabled={!slug}
+                      className="mt-1"
+                    />
+                    <span className="text-sm">
+                      <span className="text-white/90 font-medium">{t('naved.maquetteDemo')}</span>
+                      <span className="block text-white/50 text-xs mt-1">{t('naved.maquetteDemoHint')}</span>
+                    </span>
+                  </label>
+                )}
                 <div className="space-y-2">
                   {(() => {
                     const sections = ['Home', 'About', 'Services'];

@@ -432,6 +432,8 @@ export const es = {
   'naved.pgMenu': 'En el menú',
   'naved.pgChargement': 'Cargando…',
   'naved.publishesTendersHint': 'Verdadero incluso la semana en que no se publica ningún anuncio. Añade el enlace al menú del sitio.',
+  'naved.maquetteDemo': 'Maqueta de demostración',
+  'naved.maquetteDemoHint': 'Muestra « Maqueta de demostración — no oficial » al pie de todas las páginas. Desmárquelo cuando la institución haya validado el sitio.',
   'naved.hideFromSite': 'Ocultar del sitio',
   'naved.save': 'Guardar cambios',
   'naved.saving': 'Guardando…',

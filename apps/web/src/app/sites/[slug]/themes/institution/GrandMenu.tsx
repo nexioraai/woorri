@@ -31,6 +31,7 @@ export default function GrandMenu({ rubriques, base, contact, couleur }: {
   return (
     <>
       <nav aria-label="Menu principal" className="hidden lg:flex items-stretch gap-1 h-full" onMouseLeave={() => setOuverte(null)} data-grand-menu="">
+        <a href={base || '/'} className="flex items-center px-4 text-[15px] font-bold tracking-tight" onMouseEnter={() => setOuverte(null)}>Accueil</a>
         {rubriques.map((x) => (
           <div key={x.chemin} className="flex items-stretch" onMouseEnter={() => { setOuverte(x.enfants.length > 0 ? x.chemin : null); setParClic(false) }}>
             {x.enfants.length > 0 ? (
@@ -52,12 +53,12 @@ export default function GrandMenu({ rubriques, base, contact, couleur }: {
             style={{ backgroundColor: r.couleur, color: '#fff' }}>
             <div className="max-w-7xl mx-auto px-8 py-12 grid grid-cols-[1.2fr_1fr] gap-12 items-center">
               <div>
-                <p className="text-sm font-bold uppercase tracking-[0.2em] opacity-75">{r.titre}</p>
+                {/* LOT 4c — LE TITRE N'EST DIT QU'UNE FOIS : il est le lien de la rubrique. */}
+                <a href={lien(r.chemin)} className="text-4xl font-black tracking-tight hover:underline underline-offset-8" data-titre-panneau="">{r.titre} →</a>
                 {r.chapeau && <p className="mt-3 text-lg leading-relaxed opacity-90 max-w-xl">{r.chapeau}</p>}
-                <ul className="mt-8 space-y-3" style={{ listStyle: 'none', padding: 0 }}>
-                  <li><a href={lien(r.chemin)} className="text-3xl font-black tracking-tight hover:underline underline-offset-8">{r.titre} →</a></li>
+                <ul className="mt-8 space-y-3 border-t border-white/25 pt-6" style={{ listStyle: 'none', padding: 0 }}>
                   {r.enfants.map((e) => (
-                    <li key={e.chemin}><a href={lien(e.chemin)} className="text-3xl font-black tracking-tight hover:underline underline-offset-8">{e.titre}</a></li>
+                    <li key={e.chemin}><a href={lien(e.chemin)} className="text-2xl font-bold tracking-tight hover:underline underline-offset-8">{e.titre}</a></li>
                   ))}
                 </ul>
               </div>
@@ -70,7 +71,7 @@ export default function GrandMenu({ rubriques, base, contact, couleur }: {
         )}
       </nav>
 
-      <button type="button" className="lg:hidden ml-auto flex items-center justify-center w-12 h-12 rounded-full text-white text-2xl"
+      <button type="button" className="lg:hidden flex items-center justify-center w-12 h-12 rounded-full text-white text-2xl"
         style={{ backgroundColor: couleur }} aria-label={mobile ? 'Fermer le menu' : 'Ouvrir le menu'} aria-expanded={mobile}
         onClick={() => setMobile(!mobile)} data-bouton-menu="">
         <span aria-hidden="true">{mobile ? '✕' : '☰'}</span>
@@ -83,6 +84,7 @@ export default function GrandMenu({ rubriques, base, contact, couleur }: {
             <button type="button" onClick={() => setMobile(false)} className="w-12 h-12 rounded-full text-white text-2xl" style={{ backgroundColor: couleur }} aria-label="Fermer le menu">✕</button>
           </div>
           <ul style={{ listStyle: 'none', margin: 0, padding: '0 20px 40px' }}>
+            <li className="mb-4"><a href={base || '/'} className="block rounded-2xl border-2 border-neutral-900 p-5 text-2xl font-black tracking-tight">Accueil</a></li>
             {rubriques.map((x) => (
               <li key={x.chemin} className="mb-4 rounded-2xl p-5 text-white" style={{ backgroundColor: x.couleur }}>
                 <a href={lien(x.chemin)} className="block text-2xl font-black tracking-tight">{x.titre}</a>

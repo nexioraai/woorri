@@ -23,7 +23,7 @@ export default function RevenirEnHaut({
         html { scroll-behavior: smooth }
         @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto } }
         .revenirHaut {
-          position: fixed; inset-inline-end: 18px; bottom: 18px; z-index: 40;
+          position: fixed; inset-inline-end: 18px; bottom: calc(18px + var(--deribfy-bas, 0px)); z-index: 40;
           width: 44px; height: 44px; border-radius: 999px;
           display: flex; align-items: center; justify-content: center;
           color: #fff; text-decoration: none; font-size: 19px; line-height: 1;

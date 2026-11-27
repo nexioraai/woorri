@@ -433,6 +433,8 @@ export const ar: Record<TranslationKey, string> = {
   'naved.pgMenu': 'في القائمة',
   'naved.pgChargement': 'جارٍ التحميل…',
   'naved.publishesTendersHint': 'صحيح حتى في الأسبوع الذي لا يُنشر فيه أي إعلان. يضيف الرابط إلى قائمة الموقع.',
+  'naved.maquetteDemo': 'نموذج تجريبي',
+  'naved.maquetteDemoHint': 'يعرض « نموذج تجريبي — غير رسمي » أسفل كل الصفحات. ألغِ التحديد بعد أن تعتمد المؤسسة الموقع.',
   'naved.hideFromSite': 'إخفاء من الموقع',
   'naved.save': 'حفظ التغييرات',
   'naved.saving': 'جارٍ الحفظ…',

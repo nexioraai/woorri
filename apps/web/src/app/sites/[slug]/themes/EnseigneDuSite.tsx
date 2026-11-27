@@ -48,6 +48,12 @@ export type EnseigneDuSiteProps = {
   /** Classes appliquées au NOM quand il n'y a pas de logo (typographie du thème). */
   className?: string
   style?: React.CSSProperties
+  /**
+   * Lot 4c — l'adresse de l'enseigne, quand l'appelant la connaît mieux :
+   * l'APERÇU d'un site non publié passe par `/sites/<slug>/enseigne.png`
+   * (le cookie d'aperçu n'atteint pas `/api/…`).
+   */
+  source?: string
 }
 
 export default function EnseigneDuSite({
@@ -58,13 +64,14 @@ export default function EnseigneDuSite({
   hauteur = 36,
   className,
   style,
+  source: sourceImposee,
 }: EnseigneDuSiteProps) {
   if (logo) {
     // LE LOGO DÉPOSÉ DÉCIDE S'IL Y A UNE ENSEIGNE ; la route décide de ce
     // qu'on en montre. Garder la première condition sur `logo` évite d'appeler
     // la route pour les vingt-quatre boutiques sur vingt-sept qui n'ont aucun
     // logo — pour elles, le nom reste la bonne réponse.
-    const source = typeof slug === 'string' && slug !== '' ? `/api/internal/site-logo/${slug}` : logo
+    const source = sourceImposee ?? (typeof slug === 'string' && slug !== '' ? `/api/internal/site-logo/${slug}` : logo)
     return (
       <Link href={href} className="shrink-0 flex items-center" aria-label={nom}>
         {/* `next/image` exige des dimensions connues ou un parent positionné ;

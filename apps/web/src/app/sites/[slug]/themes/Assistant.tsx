@@ -119,7 +119,7 @@ export default function Assistant({ slug, base, primary, nom, textes = {} }: {
     color: '#111', whiteSpace: 'pre-wrap' as const, fontSize: 14.5, lineHeight: 1.55 }
 
   return (
-    <div style={{ position: 'fixed', insetInlineEnd: 16, bottom: 16, zIndex: 60, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ position: 'fixed', insetInlineEnd: 16, bottom: 'calc(16px + var(--deribfy-bas, 0px))', zIndex: 60, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <style>{`
         @keyframes assistant-point { 0%, 80%, 100% { opacity: .25 } 40% { opacity: 1 } }
         .assistant-point { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #9ca3af;

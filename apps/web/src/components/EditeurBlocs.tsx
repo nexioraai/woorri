@@ -29,7 +29,7 @@ export const ETIQUETTES: Record<string, string> = {
   partenaires: 'Partenaires',
 }
 
-import { champsDuBloc, champEstUnFichier, poser, type Chemin } from './edit/champsDeBloc'
+import { ajouterLigne, champsDuBloc, champEstUnFichier, nombreDeLignes, poser, retirerLigne, type Chemin } from './edit/champsDeBloc'
 
 /** Les squelettes neufs — un par type, tous valides dès la création. */
 export const NEUF: Record<string, Bloc> = {
@@ -147,6 +147,17 @@ export default function EditeurBlocs({
                   )}
                 </label>
               )})}
+              {/* LOT 4c — une ligne de plus, ou de moins (organigramme, liste, tableau…). */}
+              {nombreDeLignes(b) !== null && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1" data-lignes-du-bloc="">
+                  <button type="button" onClick={() => onChange(blocs.map((x, j) => (j === i ? ajouterLigne(x) : x)))}
+                    className="text-xs px-2.5 py-1.5 rounded-lg border border-white/15 hover:bg-white/10">+ Ajouter une ligne</button>
+                  {(nombreDeLignes(b) ?? 0) > 1 && Array.from({ length: nombreDeLignes(b) ?? 0 }, (_, n) => (
+                    <button key={n} type="button" onClick={() => onChange(blocs.map((x, j) => (j === i ? retirerLigne(x, n) : x)))}
+                      className="text-xs px-2 py-1.5 rounded-lg border border-white/10 text-red-300 hover:bg-white/10" aria-label={`Retirer la ligne ${n + 1}`}>✕ {n + 1}</button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

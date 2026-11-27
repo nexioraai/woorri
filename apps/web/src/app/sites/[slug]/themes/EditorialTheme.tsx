@@ -91,7 +91,7 @@ function PremiumButton({
 }
 
 // ---------- Theme ----------
-export default function EditorialTheme({ site, hasAvis = false, actualites = [], host = null, menu = [], partenaires = [], liensLegaux = [], heroVitrine = null, suiteHero = [], encreDeMarque = false }: { site: Site } & AvisDuSite) {
+export default function EditorialTheme({ site, hasAvis = false, actualites = [], host = null, menu = [], partenaires = [], liensLegaux = [], heroVitrine = null, suiteHero = [], encreDeMarque = false, proprietaire = false }: { site: Site } & AvisDuSite) {
   // ── LES PRODUITS, POUR LES PAGES PERSONNALISÉES.
   //
   // Les sections boutique calculent déjà cette liste chacune de leur côté ;
@@ -304,7 +304,7 @@ export default function EditorialTheme({ site, hasAvis = false, actualites = [],
                     tout autre bloc garde le rendu des pages. */}
                 {bloc.type === 'citation' && photoValable(bloc.photo)
                   ? <Reveal><MotAccueil photo={bloc.photo} titre={bloc.titre} texte={bloc.texte} auteur={bloc.auteur} fonction={bloc.fonction} primary={primary} /></Reveal>
-                  : <BlocsDePage blocs={[bloc]} base={lienAccueil(site, host)} primary={primary} lang={site.lang} />}
+                  : <BlocsDePage blocs={[bloc]} base={lienAccueil(site, host)} primary={primary} lang={site.lang} proprietaire={proprietaire} />}
               </div>
             ))}
           </div>
@@ -819,7 +819,7 @@ export default function EditorialTheme({ site, hasAvis = false, actualites = [],
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Contact us on WhatsApp"
-          className="fixed bottom-6 right-6 z-40 flex items-center justify-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-2xl hover:scale-110 transition-transform"
+          className="fixed bottom-[calc(1.5rem_+_var(--deribfy-bas,0px))] right-6 z-40 flex items-center justify-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-2xl hover:scale-110 transition-transform"
         >
           <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-30" />
           <WhatsApp className="w-7 h-7 relative" />

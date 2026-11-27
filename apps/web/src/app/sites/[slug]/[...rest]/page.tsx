@@ -1,5 +1,8 @@
 import { ogDePage } from '../themes/metadonneesDuSite'
 import CadreInstitution from '../themes/institution/CadreInstitution'
+import EnTetePage from '../themes/institution/EnTetePage'
+import { blocsPourVisiteur, nonRempli } from '@/lib/sites/institutionVisiteur'
+import { estProprietaireDuSite } from '@/lib/sites/proprietaireDuSite'
 import { lirePagesLegales } from '../themes/pagesLegales'
 import { lienContact } from '../themes/destinationBouton'
 import { lireBlocs } from '../pages/blocs'
@@ -184,10 +187,28 @@ export default async function PageDeclaree({ params }: Props) {
     : null
   const enveloppe = (contenu: React.ReactNode) => institution === null ? contenu : (
     <CadreInstitution nom={site.name} logo={site.logo_url} slug={site.slug} base={base} couleur={site.primary_color || '#1e4d8c'}
-      rubriques={institution.donnees.rubriques} contact={lienContact(site, host)} liensLegaux={institution.legaux}>
+      rubriques={institution.donnees.rubriques} contact={lienContact(site, host)} liensLegaux={institution.legaux}
+      proprietaire={institution.donnees.proprietaire} apercu={institution.donnees.apercu ?? institution.donnees.proprietaire} social={site.social_links as Record<string, string | undefined> | null | undefined} recherche={institution.donnees.recherche ?? []}>
       {contenu}
     </CadreInstitution>
   )
+  // LOT 4c — CE QU'UN VISITEUR VOIT d'une page d'institution : jamais une case
+  // « À compléter » (le propriétaire, lui, les voit toutes) ; les sous-pages
+  // sans rien de réel ne sont pas des cartes.
+  // LOT 4c — TOUS LES THÈMES : une ligne « À compléter » n'est montrée qu'au propriétaire vérifié.
+  const proprietaire = institution !== null ? institution.donnees.proprietaire : await estProprietaireDuSite(site.id)
+  const visiteur = !proprietaire
+  const racine = institution?.donnees.rubriques.find((r) => r.chemin === (fil[0]?.chemin ?? page.chemin)) ?? null
+  const imageDeLaPage = lireBlocs(page.blocs).find((b): b is Extract<ReturnType<typeof lireBlocs>[number], { type: 'image' }> => b.type === 'image')?.url ?? null
+  const imageDeTete = imageDeLaPage ?? racine?.image ?? null
+  // La photo de la page monte dans l'en-tête : elle n'est pas répétée dessous.
+  const sansPhotoDeTete = institution !== null && imageDeLaPage !== null
+    ? page.blocs.filter((b, i) => !(b.type === 'image' && i === page.blocs.findIndex((x) => x.type === 'image')))
+    : page.blocs
+  const blocsAffiches = visiteur ? blocsPourVisiteur(sansPhotoDeTete) : sansPhotoDeTete
+  const lisibles = new Set((institution?.donnees.recherche ?? []).map((e) => e.chemin))
+  const enfantsAffiches = visiteur && institution !== null ? enfants.filter((e) => lisibles.has(e.chemin)) : enfants
+  const chapeauAffiche = visiteur && institution !== null && nonRempli(page.chapeau) ? null : page.chapeau
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -225,15 +246,19 @@ export default async function PageDeclaree({ params }: Props) {
       {/* `overflow-x: clip` : un bloc pleine largeur (100vw) déborderait de la
           largeur de la barre de défilement sous Windows. `clip` coupe sans
           créer de zone défilante : l'image collante du parcours tient. */}
-      {enveloppe(<div style={{ minHeight: '100vh', background: '#ffffff', color: '#111111', overflowX: 'clip' }}>
+      {enveloppe(<div style={{ minHeight: institution === null ? '100vh' : undefined, background: '#ffffff', color: '#111111', overflowX: 'clip' }}>
+      {institution !== null && (
+        <EnTetePage titre={page.titre} chapeau={chapeauAffiche} couleur={racine?.couleur ?? (site.primary_color || '#1e4d8c')} image={imageDeTete}
+          base={base} accueil="Accueil" fil={fil} />
+      )}
       <main
         dir={rtl ? 'rtl' : 'ltr'}
-        style={{ maxWidth: fiche ? 1180 : 820, margin: '0 auto', padding: '64px 24px' }}
+        style={{ maxWidth: fiche ? 1180 : 820, margin: '0 auto', padding: institution === null ? '64px 24px' : '48px 24px 8px' }}
       >
         {/* FIL D'ARIANE -- derive du chemin, et seuls les ancetres REELLEMENT
             publies y figurent. Un ancetre non publie n'y devient pas un lien
             mort : il n'y figure pas du tout. */}
-        <nav aria-label="Fil d'Ariane" style={{ fontSize: 14, marginBottom: 24, opacity: 0.7 }}>
+        {institution === null && <nav aria-label="Fil d'Ariane" style={{ fontSize: 14, marginBottom: 24, opacity: 0.7 }}>
           <Link href={base} style={{ color: accent, textDecoration: 'none' }}>{site.name}</Link>
           {fil.map((p) => (
             <span key={p.chemin}>
@@ -245,26 +270,27 @@ export default async function PageDeclaree({ params }: Props) {
           ))}
           <span style={{ opacity: 0.4 }}> / </span>
           <span aria-current="page">{page.titre}</span>
-        </nav>
+        </nav>}
 
         {fiche ? (
           <FicheResponsable
             site={site}
             titre={page.titre}
             chapeau={page.chapeau}
-            blocs={page.blocs}
+            blocs={blocsAffiches}
             base={base}
             accent={accent}
             parent={fil.length ? fil[fil.length - 1] : null}
             freres={freres}
             cheminCourant={page.chemin}
+            proprietaire={proprietaire}
           />
         ) : (<>
-        <h1 style={{ fontSize: 40, fontWeight: 800, margin: '0 0 16px', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+        {institution === null && <h1 style={{ fontSize: 40, fontWeight: 800, margin: '0 0 16px', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
           {page.titre}
-        </h1>
+        </h1>}
 
-        {page.chapeau && (
+        {institution === null && page.chapeau && (
           <p style={{ fontSize: 19, lineHeight: 1.6, opacity: 0.75, margin: '0 0 40px' }}>
             {page.chapeau}
           </p>
@@ -291,13 +317,14 @@ export default async function PageDeclaree({ params }: Props) {
           </div>
         )}
 
-        {page.blocs.filter((b) => actualites === null || b.type !== 'articles').length > 0 && (
+        {blocsAffiches.filter((b) => actualites === null || b.type !== 'articles').length > 0 && (
           <BlocsDePage
-            blocs={page.blocs.filter((b) => actualites === null || b.type !== 'articles')}
+            blocs={blocsAffiches.filter((b) => actualites === null || b.type !== 'articles')}
             base={base}
             primary={site.primary_color || undefined}
             articles={parCategorie}
             lang={site.lang}
+            proprietaire={proprietaire}
           />
         )}
         </>)}
@@ -305,7 +332,7 @@ export default async function PageDeclaree({ params }: Props) {
         {/* LES ENFANTS -- une page d'entree ne porte qu'un chapeau et des
             cartes vers ses sous-pages. C'est le principe de la page dans la
             page. Aucune carte si aucun enfant : pas de section vide. */}
-        {actualites === null && <SousPages enfants={enfants} base={base} accent={accent} rtl={rtl} />}
+        {actualites === null && <SousPages enfants={enfantsAffiches} base={base} accent={accent} rtl={rtl} />}
       </main>
       </div>)}
     </>

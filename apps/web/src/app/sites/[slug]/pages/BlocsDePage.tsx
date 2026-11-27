@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Bloc } from './blocs'
 import { zonesValables } from './blocs'
+import { blocsPourVisiteur } from '@/lib/sites/institutionVisiteur'
 import ListeArticles from './ListeArticles'
 import Organigramme from './Organigramme'
 import MotPortrait from './MotPortrait'
@@ -34,9 +35,15 @@ function TitreDeBloc({ texte }: { texte?: string }) {
 }
 
 export default function BlocsDePage({
-  blocs, base, primary = '#1e4d8c', articles, lang, videArticles = 'Aucune publication pour l’instant.',
+  blocs: tousLesBlocs, base, primary = '#1e4d8c', articles, lang, videArticles = 'Aucune publication pour l’instant.', proprietaire = false,
 }: {
   blocs: Bloc[]
+  /**
+   * LOT 4c — le propriétaire VÉRIFIÉ regarde : il voit aussi les lignes
+   * « À compléter ». Par défaut (tout visiteur, tout thème, toute page), elles
+   * sont retirées : une ligne neuve de l'éditeur n'est jamais servie au public.
+   */
+  proprietaire?: boolean
   base: string
   primary?: string
   /** LOT 7 — les articles DÉJÀ chargés par la page, par catégorie. */
@@ -44,6 +51,7 @@ export default function BlocsDePage({
   lang?: string | null
   videArticles?: string
 }) {
+  const blocs = proprietaire ? tousLesBlocs : blocsPourVisiteur(tousLesBlocs)
   if (blocs.length === 0) return null
   return (
     <div className="blocs-page" style={{ display: 'flex', flexDirection: 'column', gap: 34 }}>

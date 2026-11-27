@@ -63,8 +63,10 @@ export function nomDuResponsable(auteur: string | undefined): string | null {
 }
 
 export default function FicheResponsable({
-  site, titre, chapeau, blocs, base, accent, parent, freres, cheminCourant,
+  site, titre, chapeau, blocs, base, accent, parent, freres, cheminCourant, proprietaire = false,
 }: {
+  /** LOT 4c — le propriétaire vérifié voit aussi les lignes « À compléter ». */
+  proprietaire?: boolean
   site: { name: string; contact?: { email?: string; phone?: string; address?: string } }
   titre: string
   chapeau?: string | null
@@ -190,7 +192,7 @@ export default function FicheResponsable({
           )}
 
           {/* ── LE RESTE des blocs, rendu comme partout. */}
-          {reste.length > 0 && <BlocsDePage blocs={reste} base={base} primary={accent} />}
+          {reste.length > 0 && <BlocsDePage blocs={reste} base={base} primary={accent} proprietaire={proprietaire} />}
         </div>
 
         {/* ── LA COLONNE LATÉRALE (epss) : contact, pages liées. */}

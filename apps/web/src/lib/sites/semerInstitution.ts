@@ -37,8 +37,8 @@ export async function semerInstitution(
 ): Promise<CompteRenduSemis> {
   const famille = familleInstitution(o.demande) ?? familleInstitution(texte(o.genere.type)) ?? 'agence_publique'
   const rendu: CompteRenduSemis = { pages: 0, logo: false, famille, erreurs: [] }
-  const { data: site, error: eSite } = await d.admin.from('sites').select('id,logo_url').eq('slug', o.slug).maybeSingle()
-  const s = site as { id: string; logo_url: string | null } | null
+  const { data: site, error: eSite } = await d.admin.from('sites').select('id,logo_url,assistant_actif').eq('slug', o.slug).maybeSingle()
+  const s = site as { id: string; logo_url: string | null; assistant_actif?: boolean | null } | null
   if (eSite !== null || s === null) { rendu.erreurs.push(`site introuvable : ${eSite?.message ?? o.slug}`); return rendu }
 
   // DEUX PHOTOS DIFFÉRENTES, AU CONTEXTE AFRICAIN VÉRIFIÉ (lot 4b) : la première
@@ -63,10 +63,18 @@ export async function semerInstitution(
     photos: { presentation, activite },
     bandeau: phrasesBandeau(texte(o.genere.mission), texte(o.genere.about)),
     chiffres: CHIFFRES_PAR_FAMILLE[famille],
+    assistant: s.assistant_actif === true,
   })
   const { error: ePages } = await d.admin.from('site_pages').insert(pages.map((p) => ({ ...p, site_id: s.id })))
   if (ePages !== null) rendu.erreurs.push(`pages : ${ePages.message}`)
   else rendu.pages = pages.length
+
+  // LOT 4c — UNE INSTITUTION GÉNÉRÉE NAÎT « MAQUETTE DE DÉMONSTRATION » : un
+  // bandeau « non officielle » sur toutes les pages, que le propriétaire retire
+  // dans « Éditer » une fois le site validé par l'institution. Personne ne
+  // prend une maquette pour le site officiel d'un ministère.
+  const { error: eMaquette } = await d.admin.from('sites').update({ maquette_demo: true }).eq('id', s.id)
+  if (eMaquette !== null) rendu.erreurs.push(`maquette : ${eMaquette.message}`)
 
   // LE LOGO PROVISOIRE — jamais par-dessus un logo existant.
   if (!s.logo_url) {

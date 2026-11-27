@@ -434,6 +434,8 @@ export const en: Record<TranslationKey, string> = {
   'naved.pgMenu': 'In the menu',
   'naved.pgChargement': 'Loading…',
   'naved.publishesTendersHint': 'True even in a week with no notice published. Adds the link to the site menu.',
+  'naved.maquetteDemo': 'Demonstration mock-up',
+  'naved.maquetteDemoHint': 'Shows « Demonstration mock-up — unofficial » at the bottom of every page. Untick once the institution has approved the site.',
   'naved.hideFromSite': 'Hide from site',
   'naved.save': 'Save changes',
   'naved.saving': 'Saving…',

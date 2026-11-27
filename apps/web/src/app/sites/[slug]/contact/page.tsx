@@ -9,6 +9,10 @@ import { getDict } from '../themes/i18n'
 import HtmlLang from '../themes/HtmlLang'
 import JsonLdScript from '../themes/JsonLdScript'
 import ContactForm from '../ContactForm'
+import CadreInstitution from '../themes/institution/CadreInstitution'
+import EnTetePage from '../themes/institution/EnTetePage'
+import { lirePagesLegales } from '../themes/pagesLegales'
+import { lienContact } from '../themes/destinationBouton'
 import { ogDePage } from '../themes/metadonneesDuSite'
 import { pageWeb } from '../themes/filDAriane'
 
@@ -29,7 +33,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const site = await lireSite(slug)
   if (!site) return {}
-  const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
+  const host = (await headers()).get('host')
+  const base = resolveSiteBaseUrl(site, host)
   const t = getDict(site.lang)
   const title = `${t.nav.contact} — ${site.name}`
   // La description dit ce que la page CONTIENT ; le sous-titre générique du
@@ -48,7 +53,8 @@ export default async function PageContact({ params }: Props) {
   const { slug } = await params
   const site = await lireSite(slug)
   if (!site) notFound()
-  const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
+  const host = (await headers()).get('host')
+  const base = resolveSiteBaseUrl(site, host)
   const t = getDict(site.lang)
   const accent = site.primary_color || '#111111'
   const contact = (site.contact || {}) as { phone?: string; email?: string; address?: string }
@@ -60,6 +66,37 @@ export default async function PageContact({ params }: Props) {
       {href ? <a href={href} style={{ color: '#111', fontWeight: 600 }}>{valeur}</a> : <div style={{ fontWeight: 600 }}>{valeur}</div>}
     </div>
   )
+
+  // LOT 4c — LE CONTACT D'UNE INSTITUTION est une page du site : son en-tête,
+  // son fil d'Ariane, son pied de page. Les autres thèmes ne changent pas.
+  if (site.theme === 'institution') {
+    const couleur = site.primary_color || '#1e4d8c'
+    const [donnees, legaux] = await Promise.all([
+      (await import('../themes/institution/lireInstitution')).lireDonneesInstitution(site.id, site.primary_color),
+      lirePagesLegales(site.id, base, site.lang),
+    ])
+    return (
+      <div lang={site.lang ?? 'fr'}>
+        <HtmlLang lang={site.lang} />
+        <JsonLdScript data={pageWeb(site.name, base, site.lang, t.nav.contact, `${base}/contact`, [{ nom: t.nav.contact, url: `${base}/contact` }])} />
+        <CadreInstitution nom={site.name} logo={site.logo_url} slug={site.slug} base={base} couleur={couleur} rubriques={donnees.rubriques}
+          contact={lienContact(site, host)} liensLegaux={legaux} proprietaire={donnees.proprietaire} apercu={donnees.apercu ?? donnees.proprietaire}
+          social={site.social_links as Record<string, string | undefined> | null | undefined} recherche={donnees.recherche ?? []}>
+          <EnTetePage titre={t.sections.contactTitle} chapeau={t.sections.contactSubtitle} couleur={couleur} image={null} base={base} accueil="Accueil" fil={[]} />
+          <main className="max-w-6xl mx-auto px-5 sm:px-8 pt-12 grid gap-8 md:grid-cols-2 items-start">
+            <div className="rounded-3xl border border-neutral-200 p-6">
+              <ContactForm slug={site.slug} brand={couleur} lang={site.lang} />
+            </div>
+            <div style={{ display: 'grid', gap: 12 }}>
+              {contact.phone && ligne(t.labels.phone, contact.phone, tel ?? undefined)}
+              {contact.email && ligne(t.labels.email, contact.email, `mailto:${contact.email}`)}
+              {contact.address && ligne(t.labels.address, contact.address)}
+            </div>
+          </main>
+        </CadreInstitution>
+      </div>
+    )
+  }
 
   return (
     <div lang={site.lang ?? 'fr'} style={{ background: '#ffffff', color: '#111111' }}>

@@ -20,7 +20,7 @@ import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
 
 vi.mock('server-only', () => ({}))
 vi.mock('@/lib/supabase', () => ({ supabase: { from: vi.fn(), auth: { getUser: vi.fn() } } }))
-vi.mock('@/lib/lecteurDuSite', () => ({ lecteurDuSite: async () => ({ from: vi.fn() }) }))
+vi.mock('@/lib/lecteurDuSite', () => ({ lecteurDuSite: async () => ({ from: vi.fn() }), jetonDApercu: async () => null }))
 const lire = (f: string) => readFileSync(join(process.cwd(), f), 'utf8')
 
 // ── Les lectures de la page publique, remplacées : PAGES déclarées et ARTICLES par catégorie.
@@ -31,7 +31,7 @@ const ARTICLES = [
   { slug: 'journee-qualite', title: 'Journée qualité', excerpt: null, cover_image: null, published_at: '2026-11-18T10:00:00Z', categorie: 'evenement' },
 ]
 const demandes: (string | null)[] = []
-vi.mock('next/headers', () => ({ headers: async () => new Map([['host', 'ma-centrale.deribfy.app']]) }))
+vi.mock('next/headers', () => ({ headers: async () => new Map([['host', 'ma-centrale.deribfy.app']]), cookies: async () => ({ get: () => undefined }) }))
 vi.mock('next/navigation', () => ({ notFound: () => { throw new Error('NOT_FOUND') } }))
 vi.mock('@/app/sites/[slug]/themes/lireSite', () => ({
   lireSite: async () => ({ id: 's1', slug: 'ma-centrale', name: 'Ma Centrale', lang: 'fr', primary_color: '#0a7f5a', custom_domain: null }),

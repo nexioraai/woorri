@@ -53,6 +53,8 @@ import type { Partenaire } from '../pages/Partenaires'
 import type { LienLegal } from './typesLegaux'
 
 export type AvisDuSite = {
+  /** LOT 4c — le propriétaire VÉRIFIÉ regarde : les lignes « À compléter » des blocs lui sont montrées, à lui seul. */
+  proprietaire?: boolean
   /**
    * LOT 15.13 — LES PARTENAIRES DE L'ACCUEIL.
    *

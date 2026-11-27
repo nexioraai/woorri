@@ -42,7 +42,7 @@ export default function BarreBon({ slug, base, accent }: { slug: string; base: s
   return (
     <>
       <style>{`
-        .barreBon { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 60; width: min(720px, calc(100vw - 24px));
+        .barreBon { position: fixed; left: 50%; bottom: calc(18px + var(--deribfy-bas, 0px)); transform: translateX(-50%); z-index: 60; width: min(720px, calc(100vw - 24px));
           background: #0f172a; color: #fff; border-radius: 18px; box-shadow: 0 24px 50px -18px rgba(15,23,42,.6); animation: bbMonte .35s cubic-bezier(.34,1.56,.64,1) }
         @keyframes bbMonte { from { transform: translate(-50%, 30px); opacity: 0 } to { transform: translate(-50%, 0); opacity: 1 } }
         .barreBon .tete { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 18px }

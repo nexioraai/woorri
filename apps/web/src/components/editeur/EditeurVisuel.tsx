@@ -12,7 +12,7 @@ import { poserCookieApercu } from '@/lib/poserApercu'
 import { fetchOwnedSite, updateOwnedSite } from '@/lib/supabase-owned-site'
 import BandeauSiteEchu from '@/components/sites/BandeauSiteEchu'
 import { lireBlocs, TYPES_DE_BLOC, type Bloc } from '@/app/sites/[slug]/pages/blocs'
-import { champsDuBloc, champEstUnFichier, poser, type Chemin } from '@/components/edit/champsDeBloc'
+import { ajouterLigne, champsDuBloc, champEstUnFichier, nombreDeLignes, poser, retirerLigne, type Chemin } from '@/components/edit/champsDeBloc'
 import { ETIQUETTES, NEUF } from '@/components/EditeurBlocs'
 import TeleverseurFichiers from '@/components/TeleverseurFichiers'
 import { photoValable } from '@/app/sites/[slug]/pages/photoValable'
@@ -456,6 +456,18 @@ export default function EditeurVisuel({ slug }: { slug: string }) {
             </div>
           )
         })}
+        {/* LOT 4c — une ligne de plus, ou de moins : une boîte d'organigramme, une ligne de tableau… */}
+        {!pageHero && nombreDeLignes(b) !== null && (
+          <div className="flex flex-wrap items-center gap-1.5" data-lignes-du-bloc="">
+            <button type="button" onClick={() => { const c = [...blocsSel]; c[i] = ajouterLigne(b); void ecrireBlocs(p, c) }}
+              className="rounded-lg border border-white/12 px-3 py-2 text-[13px] font-semibold text-[#FFB08F] hover:bg-white/5">+ Ajouter une ligne</button>
+            {(nombreDeLignes(b) ?? 0) > 1 && Array.from({ length: nombreDeLignes(b) ?? 0 }, (_, n) => (
+              <button key={n} type="button" aria-label={`Retirer la ligne ${n + 1}`}
+                onClick={() => { if (confirm(`Retirer la ligne ${n + 1} ?`)) { const c = [...blocsSel]; c[i] = retirerLigne(b, n); void ecrireBlocs(p, c) } }}
+                className="rounded-lg border border-white/10 px-2 py-2 text-[12px] text-red-300 hover:bg-red-500/10">✕ {n + 1}</button>
+            ))}
+          </div>
+        )}
         {!pageHero && (
           <div className="flex gap-2 border-t border-white/10 pt-4">
             <button type="button" onClick={() => bouger(-1)} aria-label="Monter le bloc" className="rounded-lg border border-white/12 p-2 text-white/80 hover:bg-white/5"><ArrowUp className="h-4 w-4" /></button>
