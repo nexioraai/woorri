@@ -228,5 +228,10 @@ function fusionnerUne(
     ...(duConstructeur.lignesPubliques !== undefined
       ? { lignesPubliques: duConstructeur.lignesPubliques }
       : duCahier.lignesPubliques !== undefined ? { lignesPubliques: duCahier.lignesPubliques } : {}),
+    // ── LA LECTURE PAR CLÉ, MÊME RÈGLE (É1) : c'est le constructeur qui écrit
+    //    la page de suivi. Sans ces lignes, `...duCahier` la jetait.
+    ...(duConstructeur.lectureParCle !== undefined
+      ? { lectureParCle: duConstructeur.lectureParCle }
+      : duCahier.lectureParCle !== undefined ? { lectureParCle: duCahier.lectureParCle } : {}),
   }
 }

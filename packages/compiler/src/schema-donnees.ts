@@ -70,6 +70,13 @@ export interface EntiteDonnees {
   readonly champsPublics?: readonly string[]
   /** Les seules lignes qu'il reçoit : chaque `champ` vaut `vaut`. */
   readonly lignesPubliques?: readonly { readonly champ: string; readonly vaut: boolean | number | string }[]
+  /**
+   * LA LECTURE PAR CLÉ (É1, 2026-11-27) — un visiteur lit UNE ligne avec une
+   * clé qu'il fournit (un numéro de suivi), jamais la liste. `cle` nomme un
+   * champ texte `unique` ; `champs`, ce qu'il reçoit. Vit SEULEMENT dans les
+   * politiques (politiques-donnees.ts) : le schéma n'en dépend pas.
+   */
+  readonly lectureParCle?: { readonly cle: string; readonly champs: readonly string[] }
 }
 
 /** Le nom de table : l'identifiant, sans son préfixe. */

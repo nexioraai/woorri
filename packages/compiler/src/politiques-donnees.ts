@@ -186,6 +186,99 @@ function lignesLecturePublique(t: string, lp: LecturePubliqueEmise): string[] {
 }
 
 /**
+ * LA LECTURE PAR CLÉ — UNE ligne pour qui connaît sa clé, jamais la liste (É1).
+ *
+ * ── LE MÉCANISME, PROUVÉ SUR BASE JETABLE LE 2026-11-27 (É0, 26/26).
+ *
+ * · la politique `anon` ne laisse passer que la ligne dont la clé vaut le
+ *   réglage de transaction `deribfy.cle` — vide par défaut, donc AUCUNE ligne :
+ *   `select` direct sur la table rend zéro, même avec les colonnes accordées ;
+ * · seule la fonction `<t>_par_cle(p_cle)` pose ce réglage, le temps d'une
+ *   lecture, puis le remet à vide. Elle est `security invoker` : elle n'a que
+ *   les droits du visiteur, et ne contourne rien.
+ *
+ * ── POURQUOI `jsonb` ET `create or replace`, SANS `drop function`.
+ *
+ * La garde du migrateur refuse toute destruction de fonction
+ * (garde-migration.sql, `sql_drop`). Une signature fixe — `(text) → jsonb` —
+ * se repose donc toujours par `create or replace`, même quand les colonnes
+ * montrées changent.
+ *
+ * ── LA CLÉ EST TIRÉE PAR LA BASE.
+ *
+ * Un numéro séquentiel se devine par essais, et la fonction répond à qui
+ * l'appelle. `set default` pose un tirage de 12 signes hexadécimaux (48 bits)
+ * sur les lignes NEUVES ; une ligne existante garde sa valeur.
+ *
+ * ── FAIL-CLOSED. Une clé inconnue, non `unique`, non texte, une colonne
+ * inconnue, ou une table déjà lisible par tous : rien ne s'ouvre, et le
+ * fichier dit pourquoi.
+ */
+export type LectureParCleEmise =
+  | { readonly ok: true; readonly cle: string; readonly colonnes: readonly string[] }
+  | { readonly ok: false; readonly motif: string }
+
+/** Au plus autant de colonnes rendues au visiteur : borne de lisibilité, pas de coût. */
+export const COLONNES_PAR_CLE_MAX = 12
+
+/** L'expression du tirage de la clé — UNE source, relue par la liste blanche du migrateur. */
+export const TIRAGE_CLE = "upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 12))"
+
+export function lectureParCleEmise(e: EntiteDonnees): LectureParCleEmise {
+  const lpc = e.lectureParCle as { cle?: unknown; champs?: unknown } | undefined
+  if (lpc === undefined || lpc === null || typeof lpc !== 'object') return { ok: false, motif: 'lectureParCle illisible' }
+  if (e.lecturePublique === true) {
+    return { ok: false, motif: 'la table est déjà lisible par tous (lecturePublique) : une clé ne la fermerait pas' }
+  }
+  const conserves = e.fields.filter((f) => f.derived === undefined && f.sensitive !== true)
+  const parNom = new Map(conserves.map((f) => [sansFld(f.id), f]))
+  const cle = typeof lpc.cle === 'string' ? sansFld(lpc.cle) : ''
+  const champCle = parNom.get(cle)
+  if (!IDENT_COLONNE.test(cle) || champCle === undefined) return { ok: false, motif: `clé inconnue : « ${String(lpc.cle)} »` }
+  if (champCle.type === 'number' || champCle.type === 'decimal' || champCle.type === 'boolean') {
+    return { ok: false, motif: `la clé « ${cle} » doit être un texte` }
+  }
+  if (champCle.unique !== true) return { ok: false, motif: `la clé « ${cle} » doit être unique` }
+  if (!Array.isArray(lpc.champs) || lpc.champs.length === 0) return { ok: false, motif: 'aucune colonne rendue (champs)' }
+  const colonnes: string[] = [cle]
+  for (const brut of lpc.champs as unknown[]) {
+    const c = typeof brut === 'string' ? sansFld(brut) : ''
+    if (!IDENT_COLONNE.test(c) || !parNom.has(c)) return { ok: false, motif: `colonne inconnue : « ${String(brut)} »` }
+    if (!colonnes.includes(c)) colonnes.push(c)
+  }
+  if (colonnes.length > COLONNES_PAR_CLE_MAX + 1) return { ok: false, motif: `plus de ${String(COLONNES_PAR_CLE_MAX)} colonnes rendues` }
+  return { ok: true, cle, colonnes }
+}
+
+/** Le nom de la fonction de lecture par clé d'une table — exporté : la consigne et le juge le citent. */
+export const fonctionParCle = (table: string): string => `${table}_par_cle`
+
+function lignesLectureParCle(t: string, lpc: LectureParCleEmise): string[] {
+  if (!lpc.ok) return [`-- LECTURE PAR CLÉ NON OUVERTE : ${lpc.motif.replace(/[\r\n]/gu, ' ')}.`]
+  const f = fonctionParCle(t)
+  const cols = lpc.colonnes.map((c) => `x.${c}`).join(', ')
+  return [
+    `-- LECTURE PAR CLÉ : un visiteur lit UNE ligne avec « ${lpc.cle} », jamais la liste.`,
+    `alter table ${t} alter column ${lpc.cle} set default ${TIRAGE_CLE};`,
+    `drop policy if exists ${t}_par_cle on ${t};`,
+    `create policy ${t}_par_cle on ${t} for select to ${ROLE_PUBLIC}`,
+    `  using (${lpc.cle} = nullif(current_setting('deribfy.cle', true), ''));`,
+    `grant select (${lpc.colonnes.join(', ')}) on ${t} to ${ROLE_PUBLIC};`,
+    `create or replace function ${f}(p_cle text) returns jsonb language plpgsql security invoker as $f$`,
+    `declare r jsonb;`,
+    `begin`,
+    `  perform set_config('deribfy.cle', coalesce(p_cle, ''), true);`,
+    `  select to_jsonb(s) into r from (select ${cols} from ${t} x where x.${lpc.cle} = p_cle limit 1) s;`,
+    `  perform set_config('deribfy.cle', '', true);`,
+    `  return r;`,
+    `end`,
+    `$f$;`,
+    `revoke execute on function ${f}(text) from public;`,
+    `grant execute on function ${f}(text) to ${ROLE_PUBLIC};`,
+  ]
+}
+
+/**
  * LA REVENDICATION QUI DIT À QUELLE ŒUVRE ON APPARTIENT.
  *
  * ── LE DÉFAUT QUE CECI FERME, ET IL ÉTAIT GRAVE.
@@ -368,6 +461,9 @@ export function emettrePolitiquesSql(
       // `grant`, la politique ne sert à rien ; avec `grant all`, le refus
       // d'écriture ne tiendrait plus qu'à l'absence de politique.
       ...(litPublique(e) ? lignesLecturePublique(t, lecturePubliqueEmise(e)) : []),
+      // ── LA LECTURE PAR CLÉ, SEULEMENT SI LA TABLE LA DÉCLARE (É1). Absente,
+      //    le fichier est identique à l'octet près à ce qu'il était.
+      ...(e.lectureParCle !== undefined ? lignesLectureParCle(t, lectureParCleEmise(e)) : []),
       '',
     )
   }

@@ -69,6 +69,7 @@ import { phraseVersion } from '@/lib/apps/versions-oeuvre';
 import { boutonOuvert, libelleBouton, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
 import { messageDeRetouche, suffixeCompteur } from '@/lib/apps/message-de-retouche';
 import { PayerMobileMoney } from '@/components/atelier/PayerMobileMoney';
+import { EpreuveVisiteur } from '@/components/atelier/EpreuveVisiteur';
 import type { EtatCompteur } from '@/lib/apps/compteur-phrases';
 
 /** M2 — l'écran est-il étroit ? Lu par `useSyncExternalStore` : juste au rendu
@@ -1076,6 +1077,8 @@ export default function AtelierPage() {
                 {lienPublic}
               </a>
             )}
+            {/* É1 : la page de suivi, éprouvée par l'API publique comme un visiteur. */}
+            <EpreuveVisiteur id={id} jeton={jeton} publiee={lienPublic !== null} />
             <textarea
               value={texte}
               onChange={(e) => { setTexte(e.target.value); }}

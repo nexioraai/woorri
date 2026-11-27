@@ -36,13 +36,15 @@
  * bornée écrite dans la gestion compte comme publique. La règle de la
  * consigne couvre le premier cas ; aucun cliquet ne le mesure.
  */
-import { lecturePubliqueDe, lecturePubliqueLue, nomColonne, nomTable, type EntiteDeclaree } from './entites-declarees'
+import { lectureParCleLue, lecturePubliqueDe, lecturePubliqueLue, nomColonne, nomTable, type EntiteDeclaree } from './entites-declarees'
 
 export type DefautLecturePublique =
   | { readonly genre: 'sans-champs'; readonly table: string; readonly motif: string }
   | { readonly genre: 'lecture-entiere'; readonly table: string }
   | { readonly genre: 'champ-non-lu'; readonly table: string; readonly champ: string }
   | { readonly genre: 'tri-a-l-ecran'; readonly table: string; readonly champ: string }
+  | { readonly genre: 'par-cle-refusee'; readonly table: string; readonly motif: string }
+  | { readonly genre: 'par-cle-non-appelee'; readonly table: string }
 
 /** Une lecture `from('t')…select('…')`, telle que le code l'écrit. */
 type Lecture = { readonly table: string; readonly colonnes: readonly string[] | null; readonly filtres: readonly string[] }
@@ -66,9 +68,13 @@ export function lecturesDuCode(fichiers: ReadonlyMap<string, string>): Lecture[]
       const reste = code.slice(debut, debut + 600)
       const fin = reste.indexOf(';')
       const chaine = fin < 0 ? reste : reste.slice(0, fin)
-      const sel = /^\s*\.select\(\s*(?:(['"`])([^'"`]*)\1)?\s*[,)]/u.exec(chaine)
+      const sel = /^\s*\.select\(\s*(?:(['"`])([^'"`]*)\1|([A-Za-z_$][\w$]*))?\s*[,)]/u.exec(chaine)
       if (sel === null) continue // une écriture, pas une lecture
-      const brut = sel[2]
+      // ── UNE CONSTANTE SE RÉSOUT (2026-11-27). Mesuré le 26 : `.select(
+      // COLONNES_PUBLIQUES)` était pris pour une ÉCRITURE et ignoré — deux
+      // modifications justes refusées. Une constante introuvable dans le
+      // fichier compte comme une lecture qui ne se borne à rien.
+      const brut = sel[3] === undefined ? sel[2] : constanteDe(code, sel[3]) ?? '*'
       const morceaux = brut === undefined ? [] : brut.split(',').map((x) => x.trim()).filter((x) => x !== '')
       const colonnes = morceaux.length > 0 && morceaux.every((x) => IDENT.test(x)) ? morceaux : null
       const filtres = [...chaine.matchAll(/\.(?:eq|neq|gt|gte|lt|lte|like|ilike|is|in|order|contains|textSearch)\(\s*(['"`])([a-z_][a-z0-9_]*)\1/gu)].map((f) => f[2] ?? '')
@@ -76,6 +82,13 @@ export function lecturesDuCode(fichiers: ReadonlyMap<string, string>): Lecture[]
     }
   }
   return lectures
+}
+
+/** La valeur d'une constante de texte du fichier (`const X = 'a, b'`), ou `null`. */
+function constanteDe(code: string, nom: string): string | null {
+  const echappe = nom.replace(/\$/gu, '\\$')
+  const m = new RegExp(`\\bconst\\s+${echappe}\\s*(?::\\s*string\\s*)?=\\s*(['"\`])([^'"\`]*)\\1`, 'u').exec(code)
+  return m === null ? null : (m[2] ?? null)
 }
 
 /** Les colonnes vrai/faux qu'un `.filter(` du code consulte. */
@@ -92,11 +105,30 @@ export function colonnesTrieesALEcran(fichiers: ReadonlyMap<string, string>, boo
   return vues
 }
 
+/** Le code appelle-t-il `.rpc('<fonction>'` hors de `systeme/` ? */
+function appelleLaFonction(fichiers: ReadonlyMap<string, string>, fonction: string): boolean {
+  const motif = new RegExp(`\\.rpc\\(\\s*(['"\`])${fonction}\\1`, 'u')
+  for (const [chemin, code] of fichiers) {
+    if (chemin.startsWith('systeme/') || !/\.(?:tsx?|jsx?)$/u.test(chemin)) continue
+    if (motif.test(code)) return true
+  }
+  return false
+}
+
 export function jugerLecturePublique(
   entites: readonly EntiteDeclaree[],
   fichiers: ReadonlyMap<string, string>,
 ): DefautLecturePublique[] {
   const defauts: DefautLecturePublique[] = []
+  // ── LA LECTURE PAR CLÉ (É1) : la déclaration doit s'ouvrir, et la page doit
+  //    passer par la fonction — pas par `.from(t).select`, que la base rend vide.
+  for (const e of entites) {
+    if (e.lectureParCle === undefined) continue
+    const t = nomTable(e)
+    const lue = lectureParCleLue(e)
+    if (!lue.ok) defauts.push({ genre: 'par-cle-refusee', table: t, motif: lue.motif })
+    else if (!appelleLaFonction(fichiers, `${t}_par_cle`)) defauts.push({ genre: 'par-cle-non-appelee', table: t })
+  }
   const publiques = entites.filter(lecturePubliqueDe)
   if (publiques.length === 0) return defauts
   const lectures = lecturesDuCode(fichiers)
@@ -141,6 +173,10 @@ export function reprocheLecturePublique(d: readonly DefautLecturePublique[]): st
         return `- « ${x.table}.${x.champ} » est déclaré public mais aucune lecture ne le demande : n'importe qui le lirait sans le voir. Retire-le de "champsPublics" s'il n'est pas affiché.`
       case 'tri-a-l-ecran':
         return `- « ${x.table}.${x.champ} » trie des lignes à l'écran seulement : la base les rendrait quand même à tout le monde. Déclare "lignesPubliques": [{"champ": "${x.champ}", "vaut": …}].`
+      case 'par-cle-refusee':
+        return `- « ${x.table} » : la lecture par clé ne s'ouvre pas (${x.motif}). La clé est un champ texte "unique": true de la table, et "champs" nomme des colonnes qui existent.`
+      case 'par-cle-non-appelee':
+        return `- « ${x.table} » se lit par clé, mais aucune page n'appelle base.rpc('${x.table}_par_cle', { p_cle: … }). Chez le visiteur, c'est le SEUL chemin : une lecture .from('${x.table}') lui rend une liste vide.`
     }
   }
   return 'CE QU’UN VISITEUR SANS COMPTE RECEVRAIT N’EST PAS CE QUE LA PAGE LUI MONTRE :\n' + d.map(ligne).join('\n')
@@ -165,6 +201,15 @@ export function fermerCeQuiFuit(
     const t = nomTable(e)
     const siens = defauts.filter((d) => d.table === t)
     if (siens.length === 0) return e
+    // ── UNE LECTURE PAR CLÉ EN DÉFAUT SE RETIRE (É1) : la page de suivi sera
+    //    vide, jamais ouverte de travers.
+    if (siens.some((d) => d.genre === 'par-cle-refusee' || d.genre === 'par-cle-non-appelee')) {
+      fermes.push(`${t} : lecture par clé retirée (${siens.some((d) => d.genre === 'par-cle-refusee') ? 'déclaration refusée' : 'aucune page ne l’appelait'})`)
+      const { lectureParCle, ...reste } = e
+      void lectureParCle
+      e = reste
+      if (siens.every((d) => d.genre === 'par-cle-refusee' || d.genre === 'par-cle-non-appelee')) return e
+    }
     if (siens.some((d) => d.genre === 'tri-a-l-ecran')) {
       fermes.push(`${t} : lecture publique retirée (des lignes n’étaient cachées qu’à l’écran)`)
       return { ...e, lecturePublique: false }

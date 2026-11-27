@@ -29,6 +29,12 @@ export {
   // qu'on ne peut pas supprimer doit etre prouvee egale (EP-352 ⑥).
   litPublique,
   lecturePubliqueEmise,
+  // É1 : la lecture par clé — le web cite le nom de la fonction, le
+  // migrateur relit le tirage de la clé.
+  lectureParCleEmise,
+  fonctionParCle,
+  TIRAGE_CLE,
+  COLONNES_PAR_CLE_MAX,
   ROLE_PORTE,
   ROLE_PUBLIC,
   ROLES_REFUSES,

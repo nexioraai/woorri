@@ -63,7 +63,7 @@
  * compilateur tire `node:sqlite`). La comparaison de M1 reste dans
  * `migration-oeuvre.ts`, qui n'importe rien de tel.
  */
-import { emettrePolitiquesSql, emettreSchemaSql, typeSqlDe } from '@deribfy/compiler'
+import { emettrePolitiquesSql, emettreSchemaSql, TIRAGE_CLE, typeSqlDe } from '@deribfy/compiler'
 import { nomTable, type EntiteDeclaree } from './entites-declarees'
 import type { PlanMigration } from './migration-oeuvre'
 
@@ -199,7 +199,43 @@ const FORMES_PERMISES: readonly { readonly nom: string; readonly motif: RegExp }
     nom: 'revoke à anon et public',
     motif: new RegExp(String.raw`^revoke all on ${IDENT} from anon, public$`, 'u'),
   },
+  // ── LA LECTURE PAR CLÉ (É1, 2026-11-27) : QUATRE FORMES, CHACUNE AU MOT PRÈS.
+  //
+  // Ce sont exactement les instructions de `lignesLectureParCle`
+  // (politiques-donnees.ts), et rien de plus large. La fonction est un GABARIT
+  // FERMÉ : seuls les identifiants varient — aucun texte libre n'entre dans
+  // son corps. Le tirage de la clé est relu depuis le compilateur, pas recopié.
+  {
+    nom: 'tirage de la clé (set default)',
+    motif: new RegExp(
+      String.raw`^alter table ${IDENT} alter column ${IDENT} set default ` + echapper(TIRAGE_CLE) + '$',
+      'u',
+    ),
+  },
+  {
+    nom: 'fonction de lecture par clé',
+    motif: new RegExp(
+      String.raw`^create or replace function (${IDENT})_par_cle\(p_cle text\) returns jsonb language plpgsql security invoker as \$f\$ ` +
+        String.raw`declare r jsonb; begin perform set_config\('deribfy\.cle', coalesce\(p_cle, ''\), true\); ` +
+        String.raw`select to_jsonb\(s\) into r from \(select x\.${IDENT}(?:, x\.${IDENT})* from \1 x where x\.${IDENT} = p_cle limit 1\) s; ` +
+        String.raw`perform set_config\('deribfy\.cle', '', true\); return r; end \$f\$$`,
+      'u',
+    ),
+  },
+  {
+    nom: 'revoke execute de la lecture par clé',
+    motif: new RegExp(String.raw`^revoke execute on function ${IDENT}_par_cle\(text\) from public$`, 'u'),
+  },
+  {
+    nom: 'grant execute de la lecture par clé à anon',
+    motif: new RegExp(String.raw`^grant execute on function ${IDENT}_par_cle\(text\) to anon$`, 'u'),
+  },
 ]
+
+/** Un texte rendu littéral dans une expression régulière. */
+function echapper(s: string): string {
+  return s.toLowerCase().replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+}
 
 /**
  * DÉCOUPE LE SQL EN INSTRUCTIONS, en respectant chaînes et commentaires.
@@ -221,6 +257,20 @@ export function instructionsDe(sql: string): readonly string[] {
   let i = 0
   while (i < sql.length) {
     const c = sql[i] ?? ''
+    // ── UN BLOC `$tag$ … $tag$` EST UNE SEULE CHAÎNE (É1, 2026-11-27). Le
+    // corps d'une fonction plpgsql porte des `;` : sans ceci, il serait
+    // coupé en morceaux qui ne ressemblent à aucune forme — et refusé.
+    if (c === '$') {
+      const ouverture = /^\$([a-z_]*)\$/u.exec(sql.slice(i))
+      if (ouverture !== null) {
+        const balise = ouverture[0]
+        const fin = sql.indexOf(balise, i + balise.length)
+        const bout = fin < 0 ? sql.length : fin + balise.length
+        courante += sql.slice(i, bout)
+        i = bout
+        continue
+      }
+    }
     if (c === "'") {
       // Une chaîne SQL : `''` y échappe une apostrophe.
       let j = i + 1

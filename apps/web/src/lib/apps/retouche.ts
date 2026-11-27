@@ -58,7 +58,7 @@
  * sera posé dans `fournisseur.ts`, ce calcul deviendra une estimation serrée
  * et l'affichage passera de « au plus » à « environ ».
  */
-import { REGLE_CE_QUE_VOIT_LE_VISITEUR, REGLE_ECRITURES } from './entites-declarees'
+import { REGLE_CE_QUE_VOIT_LE_VISITEUR, REGLE_ECRITURES, REGLE_LECTURE_PAR_CLE } from './entites-declarees'
 
 export const JETONS_PAR_OCTET = 0.3
 
@@ -224,6 +224,10 @@ export const CONSIGNE_RETOUCHE = [
   'ce que le visiteur reçoit — sinon la modification est refusée :',
   '   [{"id":"ent_produit","name":"produit","lecturePublique":true,"champsPublics":["nom","prix"],"lignesPubliques":[{"champ":"masque","vaut":false}],"fields":[{"id":"fld_nom","name":"nom","type":"text","required":true}]}]',
   ...REGLE_CE_QUE_VOIT_LE_VISITEUR,
+  '',
+  'UNE PAGE DE SUIVI PAR NUMÉRO : redéclare la table avec SON id et',
+  '"lectureParCle" — jamais "lecturePublique", qui laisserait lister.',
+  ...REGLE_LECTURE_PAR_CLE,
   'Un nom de table vague (« chose », « element ») est refusé : nomme ce',
   'qu’elle conserve.',
   '',

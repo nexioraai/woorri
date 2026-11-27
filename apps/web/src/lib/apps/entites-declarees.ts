@@ -91,6 +91,12 @@ export type EntiteDeclaree = {
   readonly champsPublics?: readonly string[]
   readonly lignesPubliques?: readonly { readonly champ: string; readonly vaut: boolean | number | string }[]
   /**
+   * LA LECTURE PAR CLÉ (É1, 2026-11-27) : un visiteur lit UNE ligne avec la
+   * clé qu'il fournit (un numéro de suivi), jamais la liste. La base le tient
+   * (`lectureParCleEmise` du compilateur) ; la page appelle `base.rpc(...)`.
+   */
+  readonly lectureParCle?: { readonly cle: string; readonly champs: readonly string[] }
+  /**
    * SA PUBLICITÉ EST-ELLE INCONNAISSABLE ? — même raison qu'`obligation`.
    *
    * Une déclaration relue d'un SQL de schéma ne porte PAS ce drapeau : il
@@ -170,6 +176,49 @@ export function lecturePubliqueLue(e: {
     }
   }
   return { ok: true, colonnes: ['id', ...colonnes.filter((c) => c !== 'id')], conditions }
+}
+
+/**
+ * LA LECTURE PAR CLÉ, CÔTÉ ÉCRAN — copie de `lectureParCleEmise`
+ * (@deribfy/compiler), même raison que `lecturePubliqueLue` : le compilateur
+ * n'entre pas dans le paquet navigateur. PROUVÉE ÉGALE par
+ * `e1-lecture-par-cle.test.ts`, sur les mêmes déclarations bonnes et mauvaises.
+ */
+export type LectureParCleLue =
+  | { readonly ok: true; readonly cle: string; readonly colonnes: readonly string[] }
+  | { readonly ok: false; readonly motif: string }
+
+export function lectureParCleLue(e: {
+  readonly fields: readonly { readonly id: string; readonly type: string; readonly unique?: boolean; readonly derived?: unknown; readonly sensitive?: boolean }[]
+  readonly lecturePublique?: unknown
+  readonly lectureParCle?: unknown
+}): LectureParCleLue {
+  const sansFld = (x: string): string => x.replace(/^fld_/u, '')
+  const ident = /^[a-z][a-z0-9_]*$/u
+  const lpc = e.lectureParCle as { cle?: unknown; champs?: unknown } | undefined
+  if (lpc === undefined || lpc === null || typeof lpc !== 'object') return { ok: false, motif: 'lectureParCle illisible' }
+  if (e.lecturePublique === true) {
+    return { ok: false, motif: 'la table est déjà lisible par tous (lecturePublique) : une clé ne la fermerait pas' }
+  }
+  const parNom = new Map(
+    e.fields.filter((f) => f.derived === undefined && f.sensitive !== true).map((f) => [sansFld(f.id), f]),
+  )
+  const cle = typeof lpc.cle === 'string' ? sansFld(lpc.cle) : ''
+  const champCle = parNom.get(cle)
+  if (!ident.test(cle) || champCle === undefined) return { ok: false, motif: `clé inconnue : « ${String(lpc.cle)} »` }
+  if (champCle.type === 'number' || champCle.type === 'decimal' || champCle.type === 'boolean') {
+    return { ok: false, motif: `la clé « ${cle} » doit être un texte` }
+  }
+  if (champCle.unique !== true) return { ok: false, motif: `la clé « ${cle} » doit être unique` }
+  if (!Array.isArray(lpc.champs) || lpc.champs.length === 0) return { ok: false, motif: 'aucune colonne rendue (champs)' }
+  const colonnes: string[] = [cle]
+  for (const brut of lpc.champs as unknown[]) {
+    const c = typeof brut === 'string' ? sansFld(brut) : ''
+    if (!ident.test(c) || !parNom.has(c)) return { ok: false, motif: `colonne inconnue : « ${String(brut)} »` }
+    if (!colonnes.includes(c)) colonnes.push(c)
+  }
+  if (colonnes.length > 13) return { ok: false, motif: 'plus de 12 colonnes rendues' }
+  return { ok: true, cle, colonnes }
 }
 
 /**
@@ -465,6 +514,27 @@ export const REGLE_CE_QUE_VOIT_LE_VISITEUR: readonly string[] = [
   '   clé de recherche.',
 ]
 
+/**
+ * LA LECTURE PAR CLÉ (É1, 2026-11-27) — la page de suivi d'un visiteur.
+ *
+ * Mesuré : la page de suivi de l'appli colis du 26 novembre déclarait `colis`
+ * en lecture publique — publiée, n'importe qui aurait listé TOUS les colis
+ * par l'API. Exportée : la consigne de modification la reprend.
+ */
+export const REGLE_LECTURE_PAR_CLE: readonly string[] = [
+  '   LECTURE PAR CLÉ — une page de SUIVI : le visiteur tape SON numéro et',
+  '   voit SA ligne, jamais celle des autres :',
+  '     {"id": "ent_colis", "name": "colis", "lectureParCle":',
+  '      {"cle": "numero_suivi", "champs": ["statut", "ville"]}, …}',
+  '   La clé : un champ texte "unique": true. La base la TIRE à l’ajout —',
+  '   n’en écris pas, affiche-la (en mémoire, tire-la au hasard). "champs" :',
+  '   ce que la page montre, jamais un montant ni un téléphone. La page lit :',
+  "     const { data } = await base.rpc('<table>_par_cle', { p_cle: saisie })",
+  '   — ici colis_par_cle. `data` : la ligne, ou null. JAMAIS base.from() :',
+  '   chez le visiteur',
+  '   la table est vide. Pas de "lecturePublique" sur cette table.',
+]
+
 export function blocBase(entites: readonly EntiteDeclaree[]): string {
   const tables = entites.map((e) => `  ${phraseTable(e)}`).join('\n')
   return [
@@ -599,6 +669,8 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '   « Les appels d’offres sont publics » rend public l’APPEL, JAMAIS les',
     '   SOUMISSIONS : des offres concurrentes restent scellées jusqu’à',
     '   l’ouverture des plis. Si tu hésites, OMETS.',
+    '',
+    ...REGLE_LECTURE_PAR_CLE,
     // ── ET CE QUI VAUT DANS LES DEUX CAS, COMPOSÉ, JAMAIS RECOPIÉ.
     ...REGLE_6_COMMUN,
   ].join('\n')
