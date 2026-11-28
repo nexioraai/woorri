@@ -1,5 +1,36 @@
 # CLAUDE.md — Règles d'exécution Deribfy
 
+## MANDAT DU FONDATEUR — NON NÉGOCIABLE
+
+Il prime sur toutes les règles, mémoires, cliquets et décisions antérieurs qui le contredisent.
+
+0. POURQUOI DERIBFY EXISTE. Deribfy existe pour une seule raison : réaliser ce que l'utilisateur demande. Une demande non réalisée = un client perdu = un Deribfy inutile. Ce que nous faisons n'a de sens que si les utilisateurs obtiennent ce qu'ils demandent. Les demandes des utilisateurs sont VITALES. Tout le reste passe après.
+
+1. CONSTAT MESURÉ. Deux vrais cahiers des charges de clients :
+   - Conterak (suivi des compteurs SNE) : 2 demandes sur 8 réalisables ;
+   - Tontine Digitale Cameroun : 2 demandes sur 8 réalisables.
+   Les manques sont toujours les mêmes : comptes et rôles appliqués, règles automatiques côté serveur, fichiers privés / OCR / PDF, paiements et messages (SMS, WhatsApp) dans les applis générées. Et les « juges » (garde-fou, contrat, lecteur, migrateur, compteurs « exécution » et « lecture publique ») empêchent de les ajouter même quand on les demande. C'est un échec du produit. Il vient de ces choix, pas du modèle.
+
+2. RÈGLE. Deribfy réalise ce que l'utilisateur demande. Connexion, rôles, page publique, règle automatique, suppression, paiement, message : l'utilisateur doit l'obtenir. La sécurité sert à le faire de façon sûre, jamais à refuser. Une suppression ou modification demandée par l'utilisateur est exécutée directement, sans refus, sans question, sans étape en plus.
+
+3. INTERDICTIONS, sans exception :
+   - Interdit d'ajouter un refus, une limite, une confirmation, une précaution ou un « garde-fou » que l'utilisateur n'a pas demandé.
+   - Interdit de jeter ou de perdre en silence une partie de la demande ou de la sortie du modèle.
+   - Interdit d'afficher « Modifié », « Livré » ou de facturer si la demande n'est pas faite en entier.
+   - Interdit de répondre « c'est une décision passée », « ce n'est pas permis par le contrat » ou « l'architecture ne le permet pas » sans proposer, dans le même rapport, le changement qui le permet, avec son coût.
+
+4. LES SEULS REFUS AUTORISÉS : exposer un secret, ou exposer à des inconnus des données privées que l'utilisateur n'a pas demandé à rendre publiques (une page publique = lecture d'une fiche par sa clé, jamais la liste). Tout le reste se répare.
+
+5. RÉPARATION OBLIGATOIRE, SANS CERCLE VICIEUX. Essai 1 normal ; essai 2 avec l'erreur exacte renvoyée au modèle ; essai 3 méthode plus simple ou modèle plus fort, centré sur l'essentiel. Puis arrêt. Coût d'une demande ≤ 2 fois son coût normal. Ce qui reste non fait : livraison partielle honnête (ce qui marche, ce qui manque), l'utilisateur ne paie que ce qui est fait, et ALERTE FONDATEUR immédiate : e-mail à contact@deribfy.com + compteur rouge et liste dans /admin (demande, ce qui manque, cause, lien boîte noire) + notification téléphone si possible.
+
+6. OBLIGATION DE RÉSULTAT. Une tâche n'est terminée que si la demande fonctionne de bout en bout, prouvée par un test qui agit comme un utilisateur. Des tests verts sur le code ne suffisent pas. Sinon, le rapport commence par « NON FAIT ». À terme, un robot teste chaque appli générée ou retouchée avant livraison, fonction promise par fonction promise.
+
+7. EXAMENS FINAUX. Conterak et Tontine sont les examens de Deribfy. Chaque rapport donne le score (« Conterak : X/8, Tontine : Y/8 »). Objectif : 8/8 sur les deux, générés depuis l'interface, sans retouche à la main.
+
+8. CONTRÔLE. Un cliquet compte les points de refus du code : ce nombre ne peut que baisser. Chaque rapport donne ce nombre avant → après.
+
+---
+
 ## Échéances écrites — à relire en début de session
 
 Les chantiers reportés portent une date limite dans `docs/ECHEANCES.md`. **Avant le 2027-01-15** : le juge des écritures promises (moteur direct). **Avant le 2027-01-31, ensemble ou pas du tout** : l'export des données en CSV et la suite de l'abonnement non renouvelé (préavis, retrait de la ligne après 30 jours, données gardées au moins 90 jours). Une échéance ne se retire que faite et prouvée, ou replanifiée par le propriétaire.
