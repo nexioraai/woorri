@@ -228,7 +228,20 @@ const CSP_TRONC: readonly string[] = [
  * désactivée en silence. La correction est rangée avec ⑫ : le générateur
  * cesse d'émettre `confirm()` et produit une confirmation dans l'appli.
  */
-export const SANDBOX_SOUS_DOMAINE = 'sandbox allow-scripts allow-same-origin allow-modals'
+/**
+ * ET `allow-forms` (2026-11-28) — MÊME CLASSE DE DÉFAUT QUE ⑪.
+ *
+ * MESURÉ (Chromium, A/B sur la page servie de « Suivi de colis ») : sans
+ * `allow-forms`, Chrome refuse l'ENVOI de tout `<form>` (« Blocked form
+ * submission … 'allow-forms' permission is not set ») AVANT même l'événement
+ * `submit` : le gestionnaire React ne s'exécute jamais, rien ne s'affiche,
+ * pas même « introuvable ». WebKit, lui, l'envoie — d'où la gestion qui
+ * marchait dans Safari et la recherche publique morte dans Chrome et sur
+ * Android. Les 3 applis publiées avaient au moins un formulaire.
+ * `form-action 'none'` reste posé : le formulaire déclenche son gestionnaire,
+ * il ne navigue nulle part.
+ */
+export const SANDBOX_SOUS_DOMAINE = 'sandbox allow-scripts allow-same-origin allow-modals allow-forms'
 
 /**
  * LE RÉGIME DU SOUS-DOMAINE — une vraie origine, un réseau borné.
@@ -274,7 +287,8 @@ export const CSP_PAGE_PUBLIEE = [
   "form-action 'none'",
   "base-uri 'none'",
   "frame-ancestors 'none'",
-  'sandbox allow-scripts',
+  // `allow-forms` : voir SANDBOX_SOUS_DOMAINE (2026-11-28).
+  'sandbox allow-scripts allow-forms',
 ].join('; ')
 
 /** Les en-têtes d'une page publiée. Une seule décision, un seul endroit. */

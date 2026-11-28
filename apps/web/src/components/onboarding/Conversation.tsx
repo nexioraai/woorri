@@ -242,7 +242,7 @@ export function ApercuAppareil({
         <iframe
           title={titre}
           srcDoc={srcDoc}
-          sandbox="allow-scripts"
+          sandbox="allow-scripts allow-forms"
           style={{
             width: `${String(largeur)}px`,
             height: typeof hauteur === 'number' ? `${String(hauteur)}px` : hauteur,

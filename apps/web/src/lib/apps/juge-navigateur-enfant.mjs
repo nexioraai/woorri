@@ -147,7 +147,7 @@ try {
   await page.goto('about:blank')
   // ── LE MÊME ATTRIBUT QUE L'APERÇU, AU SIGNE PRÈS.
   await page.setContent(
-    `<!doctype html><meta charset="utf-8"><body><iframe id="cadre" sandbox="allow-scripts" srcdoc=""></iframe></body>`,
+    `<!doctype html><meta charset="utf-8"><body><iframe id="cadre" sandbox="allow-scripts allow-forms" srcdoc=""></iframe></body>`,
   )
   await page.evaluate(
     ([source]) => {

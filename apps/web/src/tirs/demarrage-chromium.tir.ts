@@ -43,7 +43,7 @@ describe('tir · les œuvres livrées démarrent dans Chromium, page servie comp
           const p = await navigateur.newPage({ viewport: { width: 1280, height: 900 } })
           const erreurs: string[] = []
           p.on('pageerror', (e) => erreurs.push(String(e.message).slice(0, 200)))
-          await p.setContent('<!doctype html><iframe id="c" sandbox="allow-scripts" style="width:1200px;height:800px"></iframe>')
+          await p.setContent('<!doctype html><iframe id="c" sandbox="allow-scripts allow-forms" style="width:1200px;height:800px"></iframe>')
           // La page est passée EN ARGUMENT, jamais dans un script inline : son
           // `</script>` fermerait l'hôte (erreur d'instrument mesurée le 2026-11-13).
           await p.evaluate((html) => { (document.getElementById('c') as HTMLIFrameElement).srcdoc = html }, page)

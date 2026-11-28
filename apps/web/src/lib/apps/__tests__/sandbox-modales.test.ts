@@ -24,7 +24,9 @@ describe('⑪ le bac à sable des applis publiées', () => {
     expect(SANDBOX_SOUS_DOMAINE.startsWith('sandbox ')).toBe(true)
   })
 
-  it('② exactement trois permissions — aucune autre porte', () => {
-    expect(sandbox()).toEqual(['allow-modals', 'allow-same-origin', 'allow-scripts'])
+  // 2026-11-28 : TROIS → QUATRE, `allow-forms` — sans lui Chrome n'envoie
+  // aucun formulaire (A/B mesuré sur « Suivi de colis » ; sandbox-formulaires.test).
+  it('② exactement quatre permissions — aucune autre porte', () => {
+    expect(sandbox()).toEqual(['allow-forms', 'allow-modals', 'allow-same-origin', 'allow-scripts'])
   })
 })

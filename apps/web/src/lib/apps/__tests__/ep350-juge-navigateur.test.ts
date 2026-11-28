@@ -19,6 +19,7 @@
 import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { lireSource } from './lire-source'
+import { motifTexte } from './motif-texte'
 
 const APPS = join(__dirname, '..')
 const ENVELOPPE = join(APPS, 'juge-navigateur.ts')
@@ -44,8 +45,9 @@ describe('EP-350 · le juge navigateur', () => {
 
   it('② LE CADRE EST CELUI DE L’APERÇU, AU SIGNE PRÈS', () => {
     const src = lireSource(ENFANT)
-    expect(src, 'le bac à sable du juge a divergé de celui de l’aperçu').toContain(
-      'sandbox="allow-scripts"',
+    // 2026-11-28 : + `allow-forms`, comme chaque cadre du produit (sandbox-formulaires.test).
+    expect(src, 'le bac à sable du juge a divergé de celui de l’aperçu').toMatch(
+      motifTexte('sandbox="allow-scripts allow-forms"'),
     )
     // ── `allow-same-origin` LE RENDRAIT AVEUGLE.
     //

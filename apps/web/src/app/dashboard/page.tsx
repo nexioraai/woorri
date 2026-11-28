@@ -750,7 +750,7 @@ export default function DashboardPage() {
             {/* sandbox SANS allow-same-origin : l'application tourne et ne
                 peut rien lire du site qui l'héberge — même garantie que
                 l'écran de génération. */}
-            <iframe title={apercuApp.nom} sandbox="allow-scripts" srcDoc={apercuApp.html}
+            <iframe title={apercuApp.nom} sandbox="allow-scripts allow-forms" srcDoc={apercuApp.html}
               className="flex-1 w-full rounded-2xl border border-white/10 bg-white" />
           </div>
         )}

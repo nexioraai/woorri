@@ -35,6 +35,7 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { APPAREILS, legendeAppareil } from '../appareils'
+import { motifTexte } from './motif-texte'
 
 const RACINE = join(__dirname, '..', '..', '..', '..', '..', '..')
 const lire = (...p: string[]): string => readFileSync(join(RACINE, ...p), 'utf8')
@@ -203,7 +204,8 @@ describe('EP-260 · le sélecteur d’appareil', () => {
 
   it('⑥ LE BAC À SABLE RESTE FERMÉ — l’application ne lit rien du site hôte', () => {
     const c = CONVERSATION()
-    expect(c, 'le sandbox a disparu').toMatch(/sandbox="allow-scripts"/u)
+    // 2026-11-28 : + `allow-forms` — sans lui Chrome n'envoie aucun formulaire (sandbox-formulaires.test).
+    expect(c, 'le sandbox a disparu').toMatch(motifTexte('sandbox="allow-scripts allow-forms"'))
     expect(
       c,
       '`allow-same-origin` autoriserait l’application à lire le site qui l’héberge',

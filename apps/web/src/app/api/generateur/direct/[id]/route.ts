@@ -115,7 +115,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       // direct, la page tourne en origine opaque. Deux verrous, un seul
       // suffit, aucun ne depend de l'autre.
       // `allow-modals` (⑪) : sans lui, `confirm()` rend `false` sans rien afficher.
-      'Content-Security-Policy': 'sandbox allow-scripts allow-modals',
+      // `allow-forms` (2026-11-28) : sans lui, Chrome n'envoie aucun formulaire — publication.ts.
+      'Content-Security-Policy': 'sandbox allow-scripts allow-modals allow-forms',
     },
   })
 }

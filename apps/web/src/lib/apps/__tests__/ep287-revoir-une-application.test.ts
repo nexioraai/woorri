@@ -25,6 +25,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { motifTexte } from './motif-texte'
 
 const API = join(__dirname, '..', '..', '..', 'app', 'api', 'generateur')
 const lire = (...p: string[]) => readFileSync(join(API, ...p), 'utf8')
@@ -147,7 +148,8 @@ describe('EP-287 · revoir une application', () => {
     const k = ECRAN.indexOf('srcDoc={apercuApp.html}')
     expect(k, 'l’œuvre ne passe plus par le cadre isolé').toBeGreaterThan(-1)
     const cadre = ECRAN.slice(Math.max(0, k - 300), k + 100)
-    expect(cadre).toContain('sandbox="allow-scripts"')
+    // 2026-11-28 : + `allow-forms` (sandbox-formulaires.test) ; l'origine reste opaque.
+    expect(cadre).toMatch(motifTexte('sandbox="allow-scripts allow-forms"'))
     expect(cadre, 'allow-same-origin donnerait à l’app la session du site').not.toContain(
       'allow-same-origin',
     )
@@ -168,7 +170,8 @@ describe('EP-287 · revoir une application', () => {
     // seulement à la page d'afficher ses boîtes de dialogue. C'est
     // `allow-same-origin` qui la rendrait non opaque — et il reste interdit.
     expect(REVOIR, 'le serveur n’impose plus l’origine opaque').toMatch(
-      /Content-Security-Policy[^:]*:\s*['"]sandbox allow-scripts(?: allow-modals)?['"]/u,
+      // 2026-11-28 : `allow-forms` non plus ne change pas l'origine (sandbox-formulaires.test).
+      /Content-Security-Policy[^:]*:\s*['"]sandbox allow-scripts(?: allow-modals)?(?: allow-forms)?['"]/u,
     )
     expect(REVOIR, 'l’aperçu reçoit allow-same-origin : son origine n’est plus opaque').not.toMatch(/allow-same-origin['"]/u)
   })

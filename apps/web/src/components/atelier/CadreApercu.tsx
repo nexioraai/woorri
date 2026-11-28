@@ -107,7 +107,7 @@ export function CadreApercu({
                 // personne. `allow-modals` (⑪) : sans lui, `confirm()` rend
                 // `false` sans rien afficher — « Retirer » ne marchait pas
                 // non plus dans l'aperçu.
-                sandbox="allow-scripts allow-modals"
+                sandbox="allow-scripts allow-modals allow-forms"
                 style={{
                   width: `${String(largeur)}px`,
                   height: `${String((hauteur ?? 0) / echelle)}px`,
@@ -121,7 +121,7 @@ export function CadreApercu({
             <iframe
               title={titre}
               srcDoc={srcDoc}
-              sandbox="allow-scripts allow-modals"
+              sandbox="allow-scripts allow-modals allow-forms"
               style={{ width: `${String(largeur)}px` }}
               className="h-full shrink-0 rounded-xl border border-white/10 bg-white shadow-2xl shadow-black/40"
             />
