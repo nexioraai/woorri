@@ -63,7 +63,7 @@
  * compilateur tire `node:sqlite`). La comparaison de M1 reste dans
  * `migration-oeuvre.ts`, qui n'importe rien de tel.
  */
-import { emettrePolitiquesSql, emettreSchemaSql, TIRAGE_CLE, typeSqlDe } from '@deribfy/compiler'
+import { DATE_AUTO, DATETIME_AUTO, emettrePolitiquesSql, emettreSchemaSql, TIRAGE_AUTO_8, TIRAGE_CLE, typeSqlDe } from '@deribfy/compiler'
 import { nomTable, type EntiteDeclaree } from './entites-declarees'
 import type { PlanMigration } from './migration-oeuvre'
 
@@ -211,6 +211,35 @@ const FORMES_PERMISES: readonly { readonly nom: string; readonly motif: RegExp }
       String.raw`^alter table ${IDENT} alter column ${IDENT} set default ` + echapper(TIRAGE_CLE) + '$',
       'u',
     ),
+  },
+  // ── LES CHAMPS AUTOMATIQUES (2026-11-28) : les quatre formes EXACTES que
+  //    `lignesChampsAutomatiques` émet, rien d'autre. Un défaut ne touche
+  //    que les lignes à venir ; une séquence ne contient aucune donnée.
+  {
+    nom: 'identifiant automatique (set default)',
+    motif: new RegExp(
+      String.raw`^alter table ${IDENT} alter column ${IDENT} set default '[a-z0-9àâäçéèêëîïôöùûüÿ]{1,10}-' \|\| ` + echapper(TIRAGE_AUTO_8) + '$',
+      'u',
+    ),
+  },
+  {
+    nom: 'date de création automatique (set default)',
+    motif: new RegExp(
+      String.raw`^alter table ${IDENT} alter column ${IDENT} set default (?:` + echapper(DATE_AUTO) + '|' + echapper(DATETIME_AUTO) + ')$',
+      'u',
+    ),
+  },
+  {
+    nom: 'compteur automatique (set default)',
+    motif: new RegExp(String.raw`^alter table ${IDENT} alter column ${IDENT} set default nextval\('${IDENT}'\)$`, 'u'),
+  },
+  {
+    nom: 'séquence d’un compteur',
+    motif: new RegExp(String.raw`^create sequence if not exists ${IDENT}$`, 'u'),
+  },
+  {
+    nom: 'usage de la séquence à authenticated',
+    motif: new RegExp(String.raw`^grant usage, select on sequence ${IDENT} to authenticated$`, 'u'),
   },
   {
     nom: 'fonction de lecture par clé',
@@ -400,7 +429,13 @@ export function emettreMigrationSql(
     gestes.push(`ajouter « ${e.champ} » à « ${e.table} »`)
   }
 
-  if (morceaux.length === 0) return { sql: '', gestes: [], refus: [] }
+  // ── UN CHAMP DEVENU AUTOMATIQUE (2026-11-28) : aucune colonne à ajouter,
+  //    mais son défaut vit dans les politiques — elles doivent partir.
+  const autos = plan.ajouts.filter((e) => e.genre === 'auto-change')
+  for (const e of autos) {
+    if (e.genre === 'auto-change') gestes.push(`remplir « ${e.champ} » automatiquement dans « ${e.table} »`)
+  }
+  if (morceaux.length === 0 && autos.length === 0) return { sql: '', gestes: [], refus: [] }
 
   // LA PORTE DE CHAQUE TABLE, réappliquée en entier.
   morceaux.push(emettrePolitiquesSql([...nouvelles], idOeuvre))

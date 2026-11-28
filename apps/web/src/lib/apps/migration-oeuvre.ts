@@ -61,6 +61,11 @@ export type EcartMigration =
       readonly table: string
       readonly champ: string
     }
+  /**
+   * UN CHAMP DEVIENT (OU CESSE D'ÊTRE) AUTOMATIQUE (2026-11-28). Un défaut de
+   * colonne ne touche que les lignes À VENIR : c'est un ajout.
+   */
+  | { readonly genre: 'auto-change'; readonly table: string; readonly champ: string }
   | { readonly genre: 'table-abandonnee'; readonly table: string }
   | { readonly genre: 'champ-abandonne'; readonly table: string; readonly champ: string }
   | {
@@ -117,6 +122,7 @@ export function sortDe(e: EcartMigration): SortEcart {
   switch (e.genre) {
     case 'table-ajoutee':
     case 'champ-ajoute':
+    case 'auto-change':
       return 'ajout'
     // ── CE QUI ARRÊTE, ET POURQUOI CHACUN.
     //
@@ -282,6 +288,9 @@ export function comparerDeclarations(
       // laisse tomber est une contrainte que l'application croit tenir.
       if ((g.unique === true) !== (f.unique === true)) {
         ecarts.push({ genre: 'unicite-changee', table, champ })
+      }
+      if (JSON.stringify(g.auto ?? null) !== JSON.stringify(f.auto ?? null)) {
+        ecarts.push({ genre: 'auto-change', table, champ })
       }
       if (!obligationIncomparable && g.required !== f.required) {
         ecarts.push({ genre: 'obligation-changee', table, champ })

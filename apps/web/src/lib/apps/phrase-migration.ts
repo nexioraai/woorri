@@ -36,17 +36,13 @@ function phraseEcart(e: EcartMigration): string | null {
       return `une nouvelle liste « ${e.table} »`
     case 'champ-ajoute':
       return `une colonne « ${e.champ} » à vos « ${e.table} »`
+    case 'auto-change':
+      return `un remplissage automatique de « ${e.champ} » dans vos « ${e.table} »`
     default:
       return null
   }
 }
 
-/**
- * CE QUE LA MODIFICATION FERA, ET CE QU'ELLE GARDERA.
- *
- * Rend `null` quand rien ne touche aux données : poser une question
- * dont la réponse est toujours « oui » apprend à répondre sans lire.
- */
 /**
  * FAUT-IL L'ACCORD AVANT DE MIGRER ? (2026-11-28)
  *
@@ -59,6 +55,12 @@ export function demandeAccordAvantMigration(plan: PlanMigration): boolean {
   return plan.ecarts.some((e) => e.genre === 'publicite-changee')
 }
 
+/**
+ * CE QUE LA MODIFICATION FERA, ET CE QU'ELLE GARDERA.
+ *
+ * Rend `null` quand rien ne touche aux données : poser une question
+ * dont la réponse est toujours « oui » apprend à répondre sans lire.
+ */
 export function phraseAvantMigration(
   plan: PlanMigration,
   avant: Instantane,

@@ -609,6 +609,18 @@ const fieldSchema = z.strictObject({
   type: fieldTypeSchema,
   required: z.boolean(),
   unique: z.boolean().optional(),
+  /**
+   * UN CHAMP QUE LA BASE REMPLIT À L'AJOUT (2026-11-28) — identifiant à
+   * préfixe (`SUIVI-XXXXXXXX`), date de création, compteur. La cohérence
+   * avec le type est vérifiée par le compilateur (`autoLu`), qui dit quoi
+   * corriger ; ce schéma n'en fixe que la forme.
+   */
+  auto: z
+    .strictObject({
+      genre: z.enum(["identifiant", "date_creation", "compteur"]),
+      prefixe: z.string().max(10).optional(),
+    })
+    .optional(),
   // Exigé ssi type=enum / type=reference — cohérence vérifiée par le
   // validateur sémantique (un schéma zod ne voit pas les autres champs).
   enumValues: z.array(z.string().min(1)).min(1).optional(),

@@ -23,6 +23,7 @@
  * tirerait le paquet dans le navigateur. Le validateur est donc INJECTÉ —
  * `lireEntites` reçoit la fonction qui juge, elle ne la connaît pas.
  */
+import { autoLu } from './champs-automatiques'
 
 /** Une entité telle qu'elle voyage, une fois validée. */
 export type EntiteDeclaree = {
@@ -34,6 +35,8 @@ export type EntiteDeclaree = {
     readonly type: string
     readonly required: boolean
     readonly unique?: boolean
+    /** UN CHAMP QUE LA BASE REMPLIT (2026-11-28) — @deribfy/compiler champs-automatiques. */
+    readonly auto?: { readonly genre: string; readonly prefixe?: string }
   }[]
   readonly appendOnly?: boolean
   /**
@@ -521,13 +524,28 @@ export const REGLE_CE_QUE_VOIT_LE_VISITEUR: readonly string[] = [
  * en lecture publique — publiée, n'importe qui aurait listé TOUS les colis
  * par l'API. Exportée : la consigne de modification la reprend.
  */
+/**
+ * LES CHAMPS QUE LA BASE REMPLIT (2026-11-28) — numéro lisible, date de
+ * création, compteur. Mesuré sur « Suivi de colis » : la consigne promettait
+ * « la base TIRE la clé » et le SQL ne la tirait pas ; le modèle a écrit un
+ * ajout sans numéro. La promesse est maintenant une propriété du SQL
+ * (@deribfy/compiler, champs-automatiques). Exportée : la retouche la reprend.
+ */
+export const REGLE_CHAMPS_AUTOMATIQUES: readonly string[] = [
+  '   CE QUE LA BASE REMPLIT À L’AJOUT se déclare "auto" sur le champ :',
+  '   "auto": {"genre": "identifiant", "prefixe": "SUIVI"} (texte unique → SUIVI-3F9A0C1B),',
+  '   {"genre": "date_creation"} (date ou datetime), {"genre": "compteur"} (number → 1, 2, 3).',
+  '   Ne l’envoie jamais à l’ajout : `.insert({…}).select()` rend sa valeur,',
+  '   affiche-la. En aperçu sans base, tire-la toi-même.',
+]
+
 export const REGLE_LECTURE_PAR_CLE: readonly string[] = [
   '   LECTURE PAR CLÉ — une page de SUIVI : le visiteur tape SON numéro et',
   '   voit SA ligne, jamais celle des autres :',
   '     {"id": "ent_colis", "name": "colis", "lectureParCle":',
   '      {"cle": "numero_suivi", "champs": ["statut", "ville"]}, …}',
-  '   La clé : un champ texte "unique": true. La base la TIRE à l’ajout —',
-  '   n’en écris pas, affiche-la (en mémoire, tire-la au hasard). "champs" :',
+  '   La clé : un champ texte "unique": true, déclaré "auto" identifiant (voir',
+  '   ci-dessus) — la base la remplit à l’ajout, n’en écris pas. "champs" :',
   '   ce que la page montre, jamais un montant ni un téléphone. La page lit :',
   "     const { data } = await base.rpc('<table>_par_cle', { p_cle: saisie })",
   '   — ici colis_par_cle. `data` : la ligne, ou null. JAMAIS base.from() :',
@@ -670,6 +688,8 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '   SOUMISSIONS : des offres concurrentes restent scellées jusqu’à',
     '   l’ouverture des plis. Si tu hésites, OMETS.',
     '',
+    ...REGLE_CHAMPS_AUTOMATIQUES,
+    '',
     ...REGLE_LECTURE_PAR_CLE,
     // ── ET CE QUI VAUT DANS LES DEUX CAS, COMPOSÉ, JAMAIS RECOPIÉ.
     ...REGLE_6_COMMUN,
@@ -804,6 +824,13 @@ export function lireEntites(
     const e = brut as EntiteDeclaree
     if (e.fields.length > CHAMPS_MAX) {
       refus.push({ quoi: nom, motif: `${String(e.fields.length)} champs, au-delà de ${String(CHAMPS_MAX)}` })
+      continue
+    }
+    // ── UN CHAMP AUTOMATIQUE INCOHÉRENT SE DIT, AVEC QUOI CORRIGER (2026-11-28).
+    //    Le motif repart au modèle tel quel (relance-declaration).
+    const autoFaux = e.fields.map((f) => autoLu(f)).find((x) => x !== null && !x.ok)
+    if (autoFaux !== undefined && autoFaux !== null && !autoFaux.ok) {
+      refus.push({ quoi: nom, motif: autoFaux.motif })
       continue
     }
     if (NOMS_REFUSES.includes(e.name)) {

@@ -58,7 +58,7 @@
  * sera posé dans `fournisseur.ts`, ce calcul deviendra une estimation serrée
  * et l'affichage passera de « au plus » à « environ ».
  */
-import { REGLE_CE_QUE_VOIT_LE_VISITEUR, REGLE_ECRITURES, REGLE_LECTURE_PAR_CLE } from './entites-declarees'
+import { REGLE_CE_QUE_VOIT_LE_VISITEUR, REGLE_CHAMPS_AUTOMATIQUES, REGLE_ECRITURES, REGLE_LECTURE_PAR_CLE } from './entites-declarees'
 
 export const JETONS_PAR_OCTET = 0.3
 
@@ -228,6 +228,10 @@ export const CONSIGNE_RETOUCHE = [
   'UNE PAGE DE SUIVI PAR NUMÉRO : redéclare la table avec SON id et',
   '"lectureParCle" — jamais "lecturePublique", qui laisserait lister.',
   ...REGLE_LECTURE_PAR_CLE,
+  '',
+  'UN NUMÉRO, UNE DATE DE CRÉATION OU UN COMPTEUR QUE LA BASE DOIT REMPLIR :',
+  'redéclare le champ avec SON id, son type et "required" tels quels, plus "auto".',
+  ...REGLE_CHAMPS_AUTOMATIQUES,
   'Un nom de table vague (« chose », « element ») est refusé : nomme ce',
   'qu’elle conserve.',
   '',

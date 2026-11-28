@@ -49,8 +49,10 @@
  * sans base est STRUCTUREL — couverture, ordre, absence de porte ouverte —
  * et c'est ce que le cliquet tient. L'exécution attend D4.
  */
-import type { EntiteDonnees } from './schema-donnees.ts'
+import type { ChampDonnees, EntiteDonnees } from './schema-donnees.ts'
 import { nomTable } from './schema-donnees.ts'
+import { champsConserves } from './schema-donnees.ts'
+import { cleDejaAutomatique, lignesChampsAutomatiques } from './champs-automatiques.ts'
 
 /**
  * LE RÔLE QUI A LE DROIT D'ENTRER.
@@ -255,13 +257,15 @@ export function lectureParCleEmise(e: EntiteDonnees): LectureParCleEmise {
 /** Le nom de la fonction de lecture par clé d'une table — exporté : la consigne et le juge le citent. */
 export const fonctionParCle = (table: string): string => `${table}_par_cle`
 
-function lignesLectureParCle(t: string, lpc: LectureParCleEmise): string[] {
+function lignesLectureParCle(t: string, lpc: LectureParCleEmise, champs: readonly ChampDonnees[] = []): string[] {
   if (!lpc.ok) return [`-- LECTURE PAR CLÉ NON OUVERTE : ${lpc.motif.replace(/[\r\n]/gu, ' ')}.`]
   const f = fonctionParCle(t)
   const cols = lpc.colonnes.map((c) => `x.${c}`).join(', ')
   return [
     `-- LECTURE PAR CLÉ : un visiteur lit UNE ligne avec « ${lpc.cle} », jamais la liste.`,
-    `alter table ${t} alter column ${lpc.cle} set default ${TIRAGE_CLE};`,
+    // Une clé déclarée identifiant automatique a SON défaut (préfixe compris) :
+    // le tirage nu ne passe pas par-dessus.
+    ...(cleDejaAutomatique(champs, lpc.cle) ? [] : [`alter table ${t} alter column ${lpc.cle} set default ${TIRAGE_CLE};`]),
     `drop policy if exists ${t}_par_cle on ${t};`,
     `create policy ${t}_par_cle on ${t} for select to ${ROLE_PUBLIC}`,
     `  using (${lpc.cle} = nullif(current_setting('deribfy.cle', true), ''));`,
@@ -465,7 +469,10 @@ export function emettrePolitiquesSql(
       ...(litPublique(e) ? lignesLecturePublique(t, lecturePubliqueEmise(e)) : []),
       // ── LA LECTURE PAR CLÉ, SEULEMENT SI LA TABLE LA DÉCLARE (É1). Absente,
       //    le fichier est identique à l'octet près à ce qu'il était.
-      ...(e.lectureParCle !== undefined ? lignesLectureParCle(t, lectureParCleEmise(e)) : []),
+      ...(e.lectureParCle !== undefined ? lignesLectureParCle(t, lectureParCleEmise(e), champsConserves(e)) : []),
+      // ── LES CHAMPS AUTOMATIQUES (2026-11-28). Absents, rien n'est émis :
+      //    le fichier est identique à l'octet près à ce qu'il était.
+      ...lignesChampsAutomatiques(t, champsConserves(e), ROLE_PORTE),
       '',
     )
   }

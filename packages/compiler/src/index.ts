@@ -40,6 +40,19 @@ export {
   ROLES_REFUSES,
   SANS_POLITIQUE,
 } from "./politiques-donnees.ts";
+// 2026-11-28 : les champs que la BASE remplit (identifiant à préfixe, date, compteur).
+export {
+  autoLu,
+  defautAuto,
+  sequenceAuto,
+  GENRES_AUTO,
+  PREFIXE_AUTO,
+  TIRAGE_AUTO_8,
+  DATE_AUTO,
+  DATETIME_AUTO,
+  type AutoLu,
+  type GenreAuto,
+} from "./champs-automatiques.ts";
 export {
   planifierComposition,
   validerPlan,

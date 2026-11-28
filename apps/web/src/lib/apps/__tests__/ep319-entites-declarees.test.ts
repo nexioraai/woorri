@@ -472,7 +472,8 @@ describe('EP-319 · les données déclarées', () => {
     // ── 15 100 → 15 400 le 2026-11-18 : ⑬, 2026-11-18 : REGLE_ECRITURES dans le bloc COMMUN — lire `error`, l'écran ne change qu'après succès, retirer se confirme, chaque geste se dit (atita supprimait sans confirmer et sans lire l'erreur, mesuré en production). Mesuré : 15 317.
     // ── 15 400 → 16 000 le 2026-11-23 : CE QUE VOIT LE VISITEUR (REGLE_CE_QUE_VOIT_LE_VISITEUR) — `champsPublics`, `lignesPubliques`, jamais « * », pas de `.filter` pour cacher ; la base ne donnait au visiteur que la table ENTIÈRE (atitta : plaque et client ; place de marché : produits masqués). Contenu énuméré par lecture-publique-bornee ⑨. Mesuré : 15 936.
     // ── 16 000 → 16 700 le 2026-11-27 : LA LECTURE PAR CLÉ (É1, REGLE_LECTURE_PAR_CLE) — même raison qu'EP-360 ④. Mesuré : 16 624.
-    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(16700)
+    // ── 16 700 → 17 100 le 2026-11-28 : LES CHAMPS AUTOMATIQUES (REGLE_CHAMPS_AUTOMATIQUES) — la consigne promettait « la base TIRE la clé » sans que le SQL la tire ; numéro, date de création, compteur sont désormais posés par la base (champs-automatiques du compilateur). Contenu gardé par champs-automatiques.test. Mesuré : 17 030.
+    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(17100)
 
     // ── ET LE BANDEAU N'EST PLUS DEMANDÉ À L'ŒUVRE (2026-11-05).
     //
@@ -549,7 +550,8 @@ describe('EP-319 · les données déclarées', () => {
       // ── 21 200 → 21 500 le 2026-11-18 : ⑬, REGLE_ECRITURES dans le bloc commun. Mesurée PAR CE CLIQUET : 21 389.
       // ── 21 500 → 22 100 le 2026-11-23 : ce que voit le visiteur (⑥bis). Mesurée PAR CE CLIQUET : 22 008.
       // ── 22 100 → 22 800 le 2026-11-27 : la lecture par clé (É1, même raison qu'EP-360 ④). Mesurée PAR CE CLIQUET : 22 696.
-    ).toBeLessThan(22800)
+      // ── 22 800 → 23 200 le 2026-11-28 : les champs automatiques (même raison que la borne du bloc de base ci-dessus). Mesurée PAR CE CLIQUET : 23 102.
+    ).toBeLessThan(23200)
 
     // ── ③ ET LA PORTE DES DONNÉES RESTE UNE PORTE ÉTROITE.
     //

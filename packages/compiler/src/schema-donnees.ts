@@ -43,6 +43,10 @@ export interface ChampDonnees {
   /** Posé quand la valeur ne doit jamais toucher la base. */
   readonly sensitive?: boolean
   readonly unique?: boolean
+  /** UN CHAMP QUE LA BASE REMPLIT (2026-11-28) — champs-automatiques.ts. */
+  readonly auto?: unknown
+  /** Le nom déclaré, quand il est là : il sert aux motifs. */
+  readonly name?: string
 }
 
 /** Une entité, réduite de même. */

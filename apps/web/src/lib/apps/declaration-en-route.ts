@@ -316,6 +316,10 @@ function fusionnerUne(
         pourquoi: 'une unicité posée après coup échouerait sur les lignes déjà écrites',
       })
     }
+    // ── UN CHAMP DEVENU AUTOMATIQUE (2026-11-28) : c'est le constructeur qui
+    //    écrit l'ajout sans ce champ, donc lui qui sait que la base le remplit.
+    //    Sans cette ligne, `return f` jetait la déclaration en silence.
+    if (k.auto !== undefined) return { ...f, auto: k.auto }
     return f
   })
   // ── ET LES CHAMPS QUE LE CAHIER N'AVAIT PAS VUS SONT AJOUTÉS.
