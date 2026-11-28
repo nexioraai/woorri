@@ -537,6 +537,23 @@ export async function boucleEcriture(o: {
         ]
         refusEnRoute = [...refusEnRoute, ...refusDuTour]
       }
+      // ── UN FICHIER SANS JSON TROUVABLE SE DIT AUSSI (2026-11-28).
+      //
+      // Il ne déclarait rien et ne le disait à personne : le modèle croyait
+      // sa table posée. L'erreur exacte du parseur part par le même canal.
+      if (dec.illisible !== null) {
+        const r = { quoi: FICHIER_DECLARATION, motif: `aucun JSON lisible (${dec.illisible})` }
+        refusDuTour = [...refusDuTour, r]
+        refusEnRoute = [...refusEnRoute, r]
+      } else if (
+        dec.valeurLue !== undefined &&
+        !Array.isArray(dec.valeurLue) &&
+        !Array.isArray((dec.valeurLue as { entites?: unknown } | null)?.entites)
+      ) {
+        const r = { quoi: FICHIER_DECLARATION, motif: 'ce n’est pas une liste de tables [ { "id", "name", "fields" } ]' }
+        refusDuTour = [...refusDuTour, r]
+        refusEnRoute = [...refusEnRoute, r]
+      }
       if (carteBrute.size !== dec.fichiers.size) {
         lus = lus.filter((f) => f.chemin !== FICHIER_DECLARATION)
       }

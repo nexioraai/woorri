@@ -1,0 +1,9 @@
+
+[{"id":"ent_colis","name":"colis","lectureParCle":{"cle":"numero_suivi","champs":["numero_suivi","statut","ville_destination"]},"fields":[{"id":"fld_numero_suivi","name":"numero_suivi","type":"text","unique":true,"required":true}]}]
+
+Ce que j'ai ajouté, en clair :
+- **Le numéro est attribué par la base à l'ajout** (`unique`, jamais saisi à la main, jamais réutilisé) ; en aperçu sans base, il est tiré au hasard et vérifié contre les numéros déjà présents.
+- **Il est affiché dans la liste des colis** (colonne monospace + bouton « Copier »), et une carte met en avant le numéro qui vient d'être créé.
+- **La page publique ne montre que ce que le visiteur a le droit de voir** : numéro, statut, ville de destination — ni prix, ni expéditeur, ni destinataire ; elle interroge uniquement le suivi par clé (`colis_par_cle`), jamais la table entière.
+- **Le suivi progresse visuellement** : préparation → transit → livré, ou un avertissement « retourné à l'expéditeur ».
+- **Recherche** par numéro, nom ou ville dans l'espace de gestion.

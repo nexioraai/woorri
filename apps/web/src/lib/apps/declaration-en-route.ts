@@ -44,6 +44,89 @@ export type DeclarationEnRoute = {
   readonly refus: readonly RefusEntite[]
   /** Les fichiers de l\u2019application, la déclaration RETIRÉE. */
   readonly fichiers: ReadonlyMap<string, string>
+  /**
+   * L'ERREUR EXACTE quand le fichier est là mais qu'aucun JSON n'y est
+   * trouvable ; `null` sinon (absent, ou lu). Elle part au modèle (2026-11-28).
+   */
+  readonly illisible: string | null
+  /** La valeur JSON retenue, telle quelle — pour dire l'erreur exacte du contrat. */
+  readonly valeurLue: unknown
+}
+
+/**
+ * TROUVE LE JSON DANS CE QUE LE MODÈLE A ÉCRIT (2026-11-28).
+ *
+ * ── LE DÉFAUT MESURÉ : la retouche de 18:06 sur « Suivi de colis ».
+ *
+ * Le modèle a rendu un JSON VALIDE, puis 803 signes de prose dans la même
+ * section (« Ce que j'ai ajouté, en clair : … »). `JSON.parse` sur la section
+ * entière échouait (`Unexpected non-whitespace character after JSON`), et la
+ * déclaration était jetée : c'est le lecteur qui avait tort, pas le modèle.
+ *
+ * On essaie, dans l'ordre : la section entière ; le contenu des balises
+ * ```json ; puis chaque `[` ou `{` jusqu'à sa fermeture équilibrée (les
+ * chaînes comprises). Le premier tableau valide gagne, à défaut le premier
+ * objet `{ entites }`, à défaut le premier JSON valide. On ne rejette que si
+ * AUCUN JSON n'est trouvable — et on rend alors l'erreur exacte du parseur.
+ */
+export function extraireJson(
+  brut: string,
+): { readonly ok: true; readonly valeur: unknown } | { readonly ok: false; readonly erreur: string } {
+  const entier = brut.trim()
+  let erreur = ''
+  try {
+    return { ok: true, valeur: JSON.parse(entier) }
+  } catch (e) {
+    erreur = e instanceof Error ? e.message : String(e)
+  }
+  const candidats: string[] = []
+  for (const m of entier.matchAll(/```[a-zA-Z]*[ \t]*\n([\s\S]*?)```/gu)) candidats.push(m[1]!.trim())
+  for (let i = 0; i < entier.length && candidats.length < 50; i += 1) {
+    const c = entier[i]
+    if (c !== '[' && c !== '{') continue
+    const fin = fermeture(entier, i)
+    if (fin !== -1) candidats.push(entier.slice(i, fin + 1))
+  }
+  const valides: unknown[] = []
+  for (const c of candidats) {
+    try {
+      valides.push(JSON.parse(c))
+    } catch {
+      // un candidat illisible n'arrête pas la recherche
+    }
+  }
+  // Le premier, dans l'ordre du texte, qui A LA FORME d'une déclaration : une
+  // liste d'objets, ou `{ entites: [...] }`. Un « [1] » de la prose est un
+  // JSON valide, mais ce n'est pas une déclaration.
+  const forme = valides.find(
+    (v) =>
+      (Array.isArray(v) && v.every((x) => typeof x === 'object' && x !== null && !Array.isArray(x))) ||
+      Array.isArray((v as { entites?: unknown } | null)?.entites),
+  )
+  if (forme !== undefined) return { ok: true, valeur: forme }
+  if (valides.length > 0) return { ok: true, valeur: valides[0] }
+  return { ok: false, erreur }
+}
+
+/** L'indice du crochet qui ferme celui de `debut`, chaînes JSON comprises ; -1 sinon. */
+function fermeture(s: string, debut: number): number {
+  const pile: string[] = []
+  let dansChaine = false
+  for (let i = debut; i < s.length; i += 1) {
+    const c = s[i]
+    if (dansChaine) {
+      if (c === '\\') i += 1
+      else if (c === '"') dansChaine = false
+      continue
+    }
+    if (c === '"') dansChaine = true
+    else if (c === '[' || c === '{') pile.push(c === '[' ? ']' : '}')
+    else if (c === ']' || c === '}') {
+      if (pile.pop() !== c) return -1
+      if (pile.length === 0) return i
+    }
+  }
+  return -1
 }
 
 /**
@@ -59,7 +142,7 @@ export function lireDeclarationEnRoute(
   valider: (e: unknown) => boolean,
 ): DeclarationEnRoute {
   const brut = fichiers.get(FICHIER_DECLARATION)
-  if (brut === undefined) return { entites: [], refus: [], fichiers }
+  if (brut === undefined) return { entites: [], refus: [], fichiers, illisible: null, valeurLue: undefined }
 
   // ── ON FILTRE, ON NE RETIRE PAS.
   //
@@ -69,19 +152,54 @@ export function lireDeclarationEnRoute(
   // affaiblirait une garde de données réelles. Un filtre dit la même chose.
   const restants = new Map([...fichiers].filter(([n]) => n !== FICHIER_DECLARATION))
 
-  let valeur: unknown
-  try {
-    valeur = JSON.parse(brut)
-  } catch {
-    return { entites: [], refus: [], fichiers: restants }
+  const extrait = extraireJson(brut)
+  if (!extrait.ok) {
+    return { entites: [], refus: [], fichiers: restants, illisible: extrait.erreur, valeurLue: undefined }
   }
+  const valeur = extrait.valeur
   // Le modèle peut rendre le tableau nu ou l\u2019envelopper : on accepte les
   // deux plutôt que de perdre une déclaration juste sur une accolade.
   const tableau = Array.isArray(valeur)
     ? valeur
     : ((valeur as { entites?: unknown } | null)?.entites ?? null)
   const lu = lireEntites(tableau, valider)
-  return { entites: lu.entites, refus: lu.refus, fichiers: restants }
+  return { entites: lu.entites, refus: lu.refus, fichiers: restants, illisible: null, valeurLue: valeur }
+}
+
+/**
+ * CE QUI NE VA PAS DANS LA DÉCLARATION, DIT EXACTEMENT — ou `null` (2026-11-28).
+ *
+ * Trois cas : aucun JSON trouvable (l'erreur du parseur) ; un JSON qui n'est
+ * pas une liste de tables ; des tables refusées par le contrat (chaque erreur
+ * de zod, chemin compris — « forme refusée » ne dit pas quoi corriger).
+ * C'est ce texte qui part au modèle pour qu'il corrige.
+ */
+export function problemeDeclaration(
+  dec: DeclarationEnRoute,
+  analyser: (e: unknown) => { readonly success: boolean; readonly error?: { readonly issues: readonly { readonly path: readonly PropertyKey[]; readonly message: string }[] } },
+): string | null {
+  if (dec.illisible !== null) return `DONNEES.json ne contient aucun JSON lisible : ${dec.illisible}`
+  if (dec.valeurLue === undefined) return null
+  const tableau = Array.isArray(dec.valeurLue)
+    ? dec.valeurLue
+    : (dec.valeurLue as { entites?: unknown } | null)?.entites
+  if (!Array.isArray(tableau)) {
+    return 'DONNEES.json doit être une liste de tables : [ { "id": "ent_<nom>", "name": "<nom>", "fields": [ … ] } ]'
+  }
+  if (dec.refus.length === 0) return null
+  const lignes = dec.refus.map((r) => {
+    const brut = tableau.find((t) => {
+      const x = t as { name?: unknown; id?: unknown } | null
+      return x?.name === r.quoi || (typeof x?.id === 'string' && x.id.replace(/^ent_/u, '') === r.quoi)
+    })
+    const a = brut === undefined ? null : analyser(brut)
+    const detail =
+      a !== null && !a.success && a.error !== undefined
+        ? a.error.issues.map((i) => `${i.path.map(String).join('.') || '(racine)'} : ${i.message}`).join(' ; ')
+        : r.motif
+    return `- table « ${r.quoi} » : ${detail}`
+  })
+  return `DONNEES.json a été refusé par le contrat de données :\n${lignes.join('\n')}`
 }
 
 /** Ce qu'une fusion a refusé de prendre. Jamais tu — c'est tout l'objet. */

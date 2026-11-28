@@ -97,7 +97,10 @@ describe('A · la déclaration d’une retouche', () => {
 
   it('⑥ cliquet : la route le calcule et le rend, l’atelier l’affiche', () => {
     const route = readFileSync(path.join(__dirname, '../../../app/api/generateur/retoucher/route.ts'), 'utf8')
-    expect(route).toMatch(motifTexte('illisible, refus: declaration.refus, pertes: fusion.pertes,'))
+    // 2026-11-28 : l'illisible et le refus du contrat ne passent plus par la phrase —
+    // ils relancent le modèle puis échouent (relance-declaration.ts). Restent les pertes.
+    expect(route).toMatch(motifTexte('const correction = await corrigerDeclaration({'))
+    expect(route).toMatch(motifTexte('illisible: false, refus: declaration.refus, pertes: fusion.pertes,'))
     expect(route).toMatch(motifTexte('...(declarationRejetee === null ? {} : { declarationRejetee })'))
     // 2026-11-23 : la phrase vit dans le module partagé avec la boîte noire ; l'écran l'emploie.
     const atelier = readFileSync(path.join(__dirname, '../../../app/atelier/[id]/page.tsx'), 'utf8')

@@ -47,6 +47,18 @@ function phraseEcart(e: EcartMigration): string | null {
  * Rend `null` quand rien ne touche aux données : poser une question
  * dont la réponse est toujours « oui » apprend à répondre sans lire.
  */
+/**
+ * FAUT-IL L'ACCORD AVANT DE MIGRER ? (2026-11-28)
+ *
+ * Décision du propriétaire : AJOUTER des données (une table, une colonne)
+ * est permis sans accord. Ce qui détruit n'arrive jamais ici — le plan
+ * s'arrête avant (`peutAvancer`). Reste ce qui change la porte des
+ * visiteurs sans compte : ouvrir une liste à tous, ou la refermer.
+ */
+export function demandeAccordAvantMigration(plan: PlanMigration): boolean {
+  return plan.ecarts.some((e) => e.genre === 'publicite-changee')
+}
+
 export function phraseAvantMigration(
   plan: PlanMigration,
   avant: Instantane,

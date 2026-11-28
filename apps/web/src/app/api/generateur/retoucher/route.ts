@@ -29,12 +29,13 @@ import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { declarationDe } from '@/lib/apps/declaration-depuis-schema'
 import { projectAirSchema } from '@deribfy/air-schema'
 import {
-  FICHIER_DECLARATION,
   fusionnerEntites,
   lireDeclarationEnRoute,
+  problemeDeclaration,
 } from '@/lib/apps/declaration-en-route'
+import { corrigerDeclaration, PHRASE_ECHEC_DECLARATION } from '@/lib/apps/relance-declaration'
 import { comparerDeclarations, phraseArret } from '@/lib/apps/migration-oeuvre'
-import { PHRASE_COMPTAGE_IMPOSSIBLE, phraseApresMigration, phraseAvantMigration } from '@/lib/apps/phrase-migration'
+import { demandeAccordAvantMigration, PHRASE_COMPTAGE_IMPOSSIBLE, phraseApresMigration, phraseAvantMigration } from '@/lib/apps/phrase-migration'
 import { emettreMigrationSql } from '@/lib/apps/migration-sql'
 import { appliquerMigration } from '@/lib/apps/connexion-migrateur'
 import { emettrePolitiquesSql, emettreSchemaSql } from '@deribfy/compiler'
@@ -119,6 +120,12 @@ export const runtime = 'nodejs'
 // de ~45 Ko : trois refus sur six chez pharma. 65 536 jetons à ~230 jetons/s
 // (flash) demandent jusqu'à ~280 s pour l'appel seul, plus les juges.
 export const maxDuration = 900
+
+/**
+ * Au-delà, on ne lance plus de relance sur DONNEES.json : il faut encore
+ * assembler, juger et écrire avant `maxDuration` (2026-11-28).
+ */
+const RELANCE_PLUS_TARD_MS = 600_000
 
 /** La sortie autorisée : c'est elle qui borne le plafond annoncé à l'écran. */
 // Hérité de la génération (`CONFIGS.deepseek.maxJetons`). Flash en accepte
@@ -559,6 +566,7 @@ async function fermerBoiteRetouche(suivi: SuiviRetouche, reponse: Response): Pro
 }
 
 async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> {
+  const debutRoute = Date.now()
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
   const proprietaire = garde.userId
@@ -649,12 +657,13 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
   suivi.boite.definirCompte(proprietaire)
   suivi.exempte = sansQuota(garde.email)
   suivi.boite.noter('demande', 'La demande de modification, mot pour mot', { demande, application: id })
+  // Hors du `try` : la relance sur DONNEES.json reprend la même consigne.
+  const systeme = `${CONSIGNE_RETOUCHE}\n\n${blocDeclaration(declarationDe(docAvant))}`
+  const message = `${corpus}\n\n=== DEMANDE ===\n${demande}`
   try {
     // ── EN FLUX (point 2). Le SDK refuse un appel non streamé dès que
     // `max_tokens` autorise plus de dix minutes de réponse — la même raison
     // que la génération (`fournisseur.ts`).
-    const systeme = `${CONSIGNE_RETOUCHE}\n\n${blocDeclaration(declarationDe(docAvant))}`
-    const message = `${corpus}\n\n=== DEMANDE ===\n${demande}`
     suivi.boite.noter('consigne', 'La consigne envoyée au modèle', {
       modele: MODELE_LEGER, maxJetons: SORTIE_MAX_RETOUCHE, deploiement: deploiementQuiSert(process.env),
       empreinteConsigne: empreinte(systeme), consigneSysteme: systeme, message,
@@ -762,10 +771,71 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
   // Le périmètre est ouvert : une modification peut avoir besoin d'une
   // donnée de plus. Elle la DÉCLARE, dans la même grammaire que la
   // génération — `DONNEES.json`, retiré des fichiers livrés.
-  const declaration = lireDeclarationEnRoute(
-    apres,
-    (e: unknown) => projectAirSchema.shape.entities.element.safeParse(e).success,
-  )
+  //
+  // ── ET SI ELLE EST REFUSÉE, ELLE REPART AU MODÈLE (2026-11-28).
+  //
+  // Illisible ou refusée par le contrat : l'erreur exacte lui est renvoyée,
+  // deux fois au plus. Après : échec, rien d'écrit, rien de décompté. Avant,
+  // elle était jetée et l'écran disait « Modifié » (retouche de 18:06).
+  const analyser = (e: unknown) => projectAirSchema.shape.entities.element.safeParse(e)
+  const conversation: { role: 'user' | 'assistant'; content: string }[] = [
+    { role: 'user', content: message },
+    { role: 'assistant', content: texte },
+  ]
+  const relancer = async (consigne: string): Promise<string | null> => {
+    // Le temps de la route est borné (maxDuration) : on ne lance pas un essai
+    // qu'on ne verrait pas finir.
+    if (Date.now() - debutRoute > RELANCE_PLUS_TARD_MS) return null
+    conversation.push({ role: 'user', content: consigne })
+    try {
+      const t0 = Date.now()
+      const r = await clientIA().messages.stream({
+        model: MODELE_LEGER,
+        max_tokens: SORTIE_MAX_RETOUCHE,
+        system: systeme,
+        messages: conversation,
+      }).finalMessage()
+      const t = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
+      suivi.boite.noter('reponse_brute', 'La réponse du modèle à la relance sur DONNEES.json', {
+        consigne, texte: t, arret: r.stop_reason, usage: r.usage, ms: Date.now() - t0,
+      })
+      const usage = r.usage as { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number | null }
+      const cache = usage.cache_read_input_tokens ?? 0
+      suivi.jetonsEntree += usage.input_tokens
+      suivi.jetonsCache += cache
+      suivi.jetonsSortie += usage.output_tokens
+      coutUsd += coutAppel(
+        { entree: usage.input_tokens, entreeCache: cache, sortie: usage.output_tokens },
+        tarifDe(tarifsDuModele(config, MODELE_LEGER), new Date()),
+      )
+      suivi.coutUsd = coutUsd
+      conversation.push({ role: 'assistant', content: t })
+      return r.stop_reason === 'max_tokens' ? null : t
+    } catch (erreur) {
+      console.error('[retouche] relance DONNEES.json', erreur)
+      conversation.pop()
+      return null
+    }
+  }
+  const correction = await corrigerDeclaration({
+    fichiers: apres,
+    lire: (f) => lireDeclarationEnRoute(f, (e: unknown) => analyser(e).success),
+    probleme: (d) => problemeDeclaration(d, analyser),
+    relancer,
+  })
+  if (!correction.ok) {
+    console.warn('[retouche] déclaration refusée après relances', correction.relances, correction.probleme)
+    return NextResponse.json(
+      {
+        error: PHRASE_ECHEC_DECLARATION,
+        declarationRefusee: correction.probleme,
+        relances: correction.relances,
+        coutUsd,
+      },
+      { status: 409 },
+    )
+  }
+  const declaration = correction.declaration
   // ── LA COULEUR NE PASSE PAS PAR LE CODE (surcharge de thème, 2026-11-18).
   //
   // `APPARENCE.json` est retiré des fichiers livrés, validé (format, et
@@ -792,17 +862,13 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
       : { entites: entitesAvant, pertes: [] }
   // ── CE QUE LA DÉCLARATION N'A PAS OBTENU SE DIT (défaut A).
   //
-  // Refus du contrat, pertes de la fusion, fichier illisible : aucun des
-  // trois n'était lu ici. Ils ne bloquent pas à eux seuls — le juge des
-  // colonnes refuse la version si le code écrit ce qui manque — mais ils
-  // partent à l'écran dans tous les cas.
-  const brutDeclaration = apres.get(FICHIER_DECLARATION)
-  let illisible = false
-  if (brutDeclaration !== undefined) {
-    try { JSON.parse(brutDeclaration) } catch { illisible = true }
-  }
+  // Refus du contrat et fichier illisible ont été traités plus haut (relance,
+  // puis échec) : il n'en reste aucun ici. Les PERTES de la fusion (le cahier
+  // l'emporte sur un champ qu'il a décrit) ne bloquent pas à elles seules —
+  // le juge des colonnes refuse la version si le code écrit ce qui manque —
+  // mais elles partent à l'écran.
   const declarationRejetee = phraseDeclarationRejetee({
-    illisible, refus: declaration.refus, pertes: fusion.pertes,
+    illisible: false, refus: declaration.refus, pertes: fusion.pertes,
   })
   if (declarationRejetee !== null) console.warn('[retouche] déclaration rejetée', declarationRejetee)
   const plan = comparerDeclarations(entitesAvant, fusion.entites)
@@ -930,7 +996,14 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     }
     const phrase =
       instantaneAvant === null ? null : phraseAvantMigration(plan, instantaneAvant)
-    if (phrase !== null && !confirme) {
+    // ── UN AJOUT NE SE DEMANDE PLUS, IL SE FAIT ET SE DIT (2026-11-28).
+    //
+    // Décision du propriétaire : une modification qui AJOUTE des données
+    // (table, colonne) est permise. Les gestes qui détruisent restent arrêtés
+    // plus haut (`plan.peutAvancer`). Seul un changement de ce que voient les
+    // visiteurs sans compte demande encore l'accord. Ce qui est arrivé aux
+    // données se dit après, avec les nombres comptés (`phraseApresMigration`).
+    if (phrase !== null && !confirme && demandeAccordAvantMigration(plan)) {
       // ── L'ÉTAT CALCULÉ SE RANGE, IL NE SE JETTE PAS.
       //
       // Le modèle a déjà travaillé et déjà été payé. Perdre son travail
