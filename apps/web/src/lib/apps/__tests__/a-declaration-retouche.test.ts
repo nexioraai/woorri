@@ -39,6 +39,9 @@ const gabarits = (): unknown[][] =>
   CONSIGNE_RETOUCHE.split('\n')
     .map((l) => l.trim())
     .filter((l) => l.startsWith('[{'))
+    // Le gabarit de PARTIES.json n'est pas une déclaration de table : il a son
+    // propre lecteur (parties-demande.test).
+    .filter((l) => !l.startsWith('[{"partie"'))
     .map((l) => JSON.parse(l) as unknown[])
 
 const fichiersAvec = (declaration: string) =>

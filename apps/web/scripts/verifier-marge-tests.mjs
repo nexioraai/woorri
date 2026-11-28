@@ -96,6 +96,18 @@ const CONNUS = [
     raison: 'ATTENTE de 3 s, armée par le test : c’est le fait qu’il mesure.',
   },
   {
+    motif: /parties-retouche\.test\.ts/u,
+    plafond: 5000,
+    raison:
+      'LE VRAI JUGE DES FACES, PAS UN BOUCHON (2026-11-28). Chaque cas monte la ' +
+      'vraie pièce de 18:06 sans session : trois montages par jugement, chacun ' +
+      'attend 1 200 ms de quiétude réseau, avant ET après la réparation. Le ' +
+      'temps vient surtout de cette attente ; le lancement de Node et de ' +
+      'happy-dom, lui, ralentit sur machine lente — d’où le délai explicite de ' +
+      '20 s posé dans le test. Remplacer le juge par un bouchon ne prouverait ' +
+      'plus que le défaut réel est vu.',
+  },
+  {
     motif: /checkout\/__tests__\/characterization/u,
     plafond: 2800,
     raison: 'ATTENTE de ~2,2 s par cas (délais d’idempotence simulés).',

@@ -58,6 +58,7 @@
  * sera posé dans `fournisseur.ts`, ce calcul deviendra une estimation serrée
  * et l'affichage passera de « au plus » à « environ ».
  */
+import { REGLE_PARTIES } from './parties-demande'
 import { REGLE_CE_QUE_VOIT_LE_VISITEUR, REGLE_CHAMPS_AUTOMATIQUES, REGLE_ECRITURES, REGLE_LECTURE_PAR_CLE } from './entites-declarees'
 
 export const JETONS_PAR_OCTET = 0.3
@@ -264,6 +265,8 @@ export const CONSIGNE_RETOUCHE = [
   'rend un est refusée. Pour changer l’allure d’un composant fourni, passe-lui',
   'd’autres réglages depuis l’écran qui l’emploie ; pour la couleur,',
   '`APPARENCE.json`. Cherche l’endroit JUSTE dans les fichiers de l’appli.',
+  '',
+  ...REGLE_PARTIES,
   '',
   'Réponds dans la langue de la demande.',
 ].join('\n')

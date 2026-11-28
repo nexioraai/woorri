@@ -42,7 +42,7 @@ const appel = () => POST(new Request('https://x/api/generateur/retoucher?id=g1',
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ demande: 'mets les boutons en vert' }),
 }))
 
-beforeEach(() => { etat.texte = '=== index.tsx ===\nexport const a = 2\n'; etat.erreurBoite = false; etat.boites = [] })
+beforeEach(() => { etat.texte = '=== index.tsx ===\nexport const a = 2\n=== PARTIES.json ===\n[{"partie":"la demande","faite":true}]\n'; etat.erreurBoite = false; etat.boites = [] })
 
 describe('la boîte noire d’une modification', () => {
   it('toutes les étapes, dans l’ordre ; la consigne exacte et la réponse brute, mot pour mot', async () => {
@@ -51,7 +51,8 @@ describe('la boîte noire d’une modification', () => {
     const b = etat.boites[0] as { nature: string; generation_id: string; etapes: { type: string; donnees: Record<string, unknown> }[] }
     expect(b.nature).toBe('retouche')
     expect(b.generation_id).toBe('g1')
-    expect(b.etapes.map((e) => e.type)).toEqual(['demande', 'consigne', 'reponse_brute', 'decisions', 'mesures', 'controles', 'livraison'])
+    // La première « decisions » : les parties de la demande (2026-11-28).
+    expect(b.etapes.map((e) => e.type)).toEqual(['demande', 'consigne', 'reponse_brute', 'decisions', 'decisions', 'mesures', 'controles', 'livraison'])
     expect(b.etapes[0]?.donnees.demande).toBe('mets les boutons en vert')
     const consigne = b.etapes[1]?.donnees as { consigneSysteme: string; message: string; empreinteConsigne: string }
     expect(consigne.consigneSysteme.length).toBeGreaterThan(200)

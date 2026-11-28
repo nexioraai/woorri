@@ -32,6 +32,7 @@ import {
 import { jugerGestion, reprocheGestion } from './juge-gestion'
 import { fermerCeQuiFuit, jugerLecturePublique, reprocheLecturePublique, type DefautLecturePublique } from './juge-lecture-publique'
 import { jugerFaces, reprocheFaces, type VerdictFaces } from './juge-faces'
+import { FICHIER_PARTIES, lireParties, REGLE_PARTIES, type Partie } from './parties-demande'
 import { jugerVivacite, type DefautVivacite } from './juge-vivacite'
 import { FICHIER_PERIMETRE, jugerCouverture, type RapportCouverture } from './juge-couverture'
 import {
@@ -161,7 +162,9 @@ ${REGLE_6_SANS_BASE}
 11. TU DÉCLARES CE QUE TU NE LIVRES PAS. Un fichier \`PERIMETRE.md\` liste ce
    que le cahier demande et que cette version ne couvre pas, un motif d'une
    ligne par entrée. Le silence est interdit : une exigence absente de
-   l'application ET de ce fichier te sera renvoyée.`
+   l'application ET de ce fichier te sera renvoyée.
+
+12. ${REGLE_PARTIES.join('\n   ')}`
 
 export type Tour = {
   readonly rang: number
@@ -223,6 +226,13 @@ export type Resultat =
       readonly entites: readonly EntiteDeclaree[]
       /** Ce que la déclaration en route a refusé — jamais tu. */
       readonly refusEntites: readonly RefusEntite[]
+      /**
+       * LES PARTIES DE LA DEMANDE (2026-11-28), déclarées par le modèle au
+       * dernier tour qui en a rendu une liste lisible — `null` : aucune.
+       */
+      readonly parties: readonly Partie[] | null
+      /** Ce que les juges de Deribfy laissent mesuré NON fait à la livraison. */
+      readonly constats: readonly Partie[]
       /**
        * CE QU'UN VISITEUR AURAIT REÇU SANS LE VOIR, au dernier tour
        * (2026-11-23), et ce qui a été FERMÉ à la livraison pour que ça ne
@@ -499,6 +509,7 @@ export async function boucleEcriture(o: {
     { role: 'user', content: texteDeConfiguration(o.configuration ?? {}) + o.demande },
   ]
 
+  let partiesDeclarees: readonly Partie[] | null = null
   for (let rang = 1; rang <= toursMax; rang += 1) {
     const debut = Date.now()
     const reponse = await o.appeler(messages)
@@ -508,6 +519,10 @@ export async function boucleEcriture(o: {
     if (reponse.jetonsEntree !== undefined) entrees.push(reponse.jetonsEntree)
     dernierTexte = texte
     let lus = lireFichiers(texte)
+    // ── LES PARTIES DE LA DEMANDE NE PARTENT PAS DANS L'APPLICATION.
+    const luesParties = lireParties(lus.find((f) => f.chemin === FICHIER_PARTIES)?.contenu)
+    if (luesParties.ok) partiesDeclarees = luesParties.parties
+    lus = lus.filter((f) => f.chemin !== FICHIER_PARTIES)
     // Les refus de déclaration de CE tour — ils partent au modèle (D2).
     let refusDuTour: readonly RefusEntite[] = []
 
@@ -878,7 +893,18 @@ export async function boucleEcriture(o: {
           // ── LA FUITE NE PART PAS AVEC LE DERNIER TOUR : ce qui reste en
           // défaut se FERME (jamais ne s'ouvre) — voir `fermerCeQuiFuit`.
           const ferme = fermerCeQuiFuit(entitesConnues, lecturePublique)
+          const constats: Partie[] =
+            faces !== null && faces.aTourne && faces.defauts.length > 0
+              ? [{
+                  partie: 'La page publique ne lit, sans compte, que ce qu’elle montre',
+                  faite: false,
+                  pourquoi: `elle lit encore ${faces.defauts.map((d) => `« ${d.table} »`).join(', ')} sans connexion`,
+                  source: 'deribfy',
+                }]
+              : []
           return {
+            parties: partiesDeclarees,
+            constats,
             ok: true,
             code: v.code,
             fichiers: carte,

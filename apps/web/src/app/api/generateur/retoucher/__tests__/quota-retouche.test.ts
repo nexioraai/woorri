@@ -114,7 +114,7 @@ describe('étape ② · la retouche réserve avant de payer', () => {
 
   it('④ une retouche livrée : décomptée, la réponse dit combien il en reste', async () => {
     etat.stop = 'end_turn'
-    etat.texte = '=== index.tsx ===\nexport const a = 42'
+    etat.texte = '=== index.tsx ===\nexport const a = 42\n=== PARTIES.json ===\n[{"partie":"la demande","faite":true}]\n'
     const r = await appel()
     const d = (await r.json()) as { ok?: boolean; modificationsRestantes?: number }
     expect(d.ok).toBe(true)
@@ -125,7 +125,7 @@ describe('étape ② · la retouche réserve avant de payer', () => {
   it('⑤ un compte exempté : le compteur n’est jamais touché', async () => {
     etat.email = 'issayamiyoussouf@gmail.com'
     etat.stop = 'end_turn'
-    etat.texte = '=== index.tsx ===\nexport const a = 42'
+    etat.texte = '=== index.tsx ===\nexport const a = 42\n=== PARTIES.json ===\n[{"partie":"la demande","faite":true}]\n'
     await appel()
     expect(reserver).not.toHaveBeenCalled()
     expect(liberer).not.toHaveBeenCalled()

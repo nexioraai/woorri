@@ -11,6 +11,7 @@
  * même calcul (`suffixeCompteur`).
  */
 import { phraseApresRetouche, type EtatCompteur } from './compteur-phrases'
+import { phraseParties, type Partie } from './parties-demande'
 
 /** Ce que l'écran lit de la réponse d'une modification. */
 export type CorpsRetouche = {
@@ -27,6 +28,10 @@ export type CorpsRetouche = {
   readonly declarationRejetee?: string
   readonly couleur?: string
   readonly modificationsRestantes?: number
+  /** Les parties de la demande (`null` : la liste n'a pas pu s'établir). */
+  readonly parties?: readonly Partie[] | null
+  /** Ce que les contrôles de Deribfy ont mesuré non fait. */
+  readonly constats?: readonly Partie[]
 }
 
 export type MessageRetouche =
@@ -61,6 +66,21 @@ export function messageDeRetouche(d: CorpsRetouche, httpOk: boolean, paye: strin
   // phrase, entre parenthèses ; le compteur est une phrase à lui.
   const cout = /^ \([^)]*\)/u.exec(paye)?.[0] ?? ''
   const compteur = paye.slice(cout.length)
+  // ── TOUTES LES PARTIES DE LA DEMANDE, faites ou non (2026-11-28). Plus
+  // jamais un message qui ne montre qu'une partie : « Ajouté : numero_suivi »
+  // taisait la page publique, qui ne marchait pas.
+  if (d.parties !== undefined) {
+    return {
+      genre: 'avis',
+      texte:
+        phraseParties(d.parties, d.constats ?? []) +
+        (typeof d.migration === 'string' ? `\n${d.migration}` : '') +
+        (cout === '' ? '' : `\n${cout.trim()}`) +
+        (compteur === '' ? '' : `\n${compteur.trim()}`) +
+        nonMesure +
+        (d.declarationRejetee === undefined ? '' : ` ${d.declarationRejetee}`),
+    }
+  }
   return {
     genre: 'avis',
     texte:

@@ -92,6 +92,10 @@ import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { fichiersSysteme } from '@/lib/apps/bibliotheque-ui'
 import { lireFichiers } from '@/lib/apps/ecriture-directe'
+import { jugerFaces, reprocheFaces, type VerdictFaces } from '@/lib/apps/juge-faces'
+import {
+  FICHIER_PARTIES, faiteEnEntier, lireParties, messageRelanceParties, phraseParties, type Partie,
+} from '@/lib/apps/parties-demande'
 import { jugerJetons } from '@/lib/apps/juge-jetons'
 import { jugerVivacite } from '@/lib/apps/juge-vivacite'
 import { jugerCouverture } from '@/lib/apps/juge-couverture'
@@ -126,6 +130,9 @@ export const maxDuration = 900
  * assembler, juger et écrire avant `maxDuration` (2026-11-28).
  */
 const RELANCE_PLUS_TARD_MS = 600_000
+
+/** Les essais de réparation de la face publique (échelle du mandat : 3 essais en tout). */
+const ESSAIS_FACES_MAX = 2
 
 /** La sortie autorisée : c'est elle qui borne le plafond annoncé à l'écran. */
 // Hérité de la génération (`CONFIGS.deepseek.maxJetons`). Flash en accepte
@@ -336,6 +343,11 @@ async function appliquerEnAttente(
       rang,
       // AUCUN CENTIME : le travail était déjà payé.
       coutUsd: 0,
+      // LE MÊME MESSAGE QUE LA LIVRAISON DIRECTE : toutes les parties.
+      ...(etat.parties === undefined ? {} : {
+        parties: etat.parties, constats: etat.constats ?? [],
+        faiteEnEntier: faiteEnEntier(etat.parties, etat.constats ?? []),
+      }),
       ...(avant !== null && apres !== null
         ? { migration: phraseApresMigration(plan, avant, apres) }
         : {}),
@@ -425,6 +437,10 @@ type SuiviRetouche = {
   livre: { fichiers: ReadonlyMap<string, string>; entites: readonly EntiteDeclaree[]; politiques: string } | null
   /** La demande d'origine de l'appli : l'analyse la relit contre l'appli modifiée. */
   demandeOrigine: string | null
+  /** Une partie de la demande n'est pas faite (ou on ne sait pas) : livrée, jamais décomptée. */
+  partielle: boolean
+  /** Le message des parties, pour l'alerte du fondateur. */
+  phraseParties: string | null
 }
 
 async function postSansReserve(req: Request) {
@@ -432,15 +448,33 @@ async function postSansReserve(req: Request) {
     appele: false, debut: new Date(), generationId: '', demande: '',
     jetonsEntree: 0, jetonsCache: 0, jetonsSortie: 0, coutUsd: 0, tronquee: false, issue: null, reservee: null,
     boite: new BoiteNoire({ nature: 'retouche', compte: null }),
-    exempte: false, controles: null, livre: null, demandeOrigine: null,
+    exempte: false, controles: null, livre: null, demandeOrigine: null, partielle: false, phraseParties: null,
   }
   const reponse = await retoucher(req, suivi)
+  await alerterSiPartielle(suivi, reponse)
   if (suivi.appele) await consignerRetouche(suivi, reponse)
   const finale = await solderReservation(suivi, reponse)
   // LA BOÎTE SE FERME SUR LA RÉPONSE FINALE (2026-11-23) : celle qui porte le
   // compteur, donc le message exactement tel que l'écran le compose.
   if (suivi.appele) await fermerBoiteRetouche(suivi, finale)
   return finale
+}
+
+/**
+ * LIVRÉE EN PARTIE : LE FONDATEUR LE SAIT (mandat, 2026-11-28).
+ *
+ * Seulement quand une version est partie (livrée ou mise de côté) : un refus
+ * a déjà son propre chemin. Ne lève jamais.
+ */
+async function alerterSiPartielle(suivi: SuiviRetouche, reponse: Response): Promise<void> {
+  if (!suivi.partielle) return
+  const corps = (await reponse.clone().json().catch(() => ({}))) as { ok?: unknown; aConfirmer?: unknown }
+  if (corps.ok !== true && corps.aConfirmer !== true) return
+  await alerter({
+    sujet: 'oeuvre', sujetId: suivi.generationId, motif: 'livraison partielle : modification non faite en entier',
+    etape: 'validation', detail: `${suivi.demande.slice(0, 600)}\n\n${suivi.phraseParties ?? ''}`,
+    coutUsd: Number(suivi.coutUsd.toFixed(4)),
+  }).catch(() => undefined)
 }
 
 /**
@@ -456,13 +490,21 @@ async function solderReservation(suivi: SuiviRetouche, reponse: Response): Promi
   if (suivi.reservee === null) return reponse
   const corps = (await reponse.clone().json().catch(() => ({}))) as Record<string, unknown>
   const issue = issueDe(suivi, corps)
-  if (!ISSUES_DECOMPTEES.has(issue)) {
+  // Livrée en partie : servie, mais pas décomptée (mandat du fondateur).
+  if (!ISSUES_DECOMPTEES.has(issue) || suivi.partielle) {
     const l = await libererModification(suivi.reservee.app, suivi.reservee.proprietaire)
     if (!l.ok) {
       await alerter({
         sujet: 'oeuvre', sujetId: suivi.reservee.app, motif: 'quota : modification refusée NON libérée',
         etape: 'ecriture', detail: l.detail ?? '', coutUsd: Number(suivi.coutUsd.toFixed(4)),
       }).catch(() => undefined)
+    }
+    // Livrée en partie et libérée : le compteur dit ce qui reste VRAIMENT.
+    if (suivi.partielle && l.ok && ISSUES_DECOMPTEES.has(issue)) {
+      return NextResponse.json(
+        { ...corps, modificationsRestantes: suivi.reservee.restantes + 1 },
+        { status: reponse.status, headers: reponse.headers },
+      )
     }
     return reponse
   }
@@ -733,7 +775,10 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     return NextResponse.json({ horsPerimetre: true, raison: refus, coutUsd }, { status: 409 })
   }
 
-  const rendus = lireFichiers(texte)
+  // ── LES PARTIES DE LA DEMANDE NE SONT PAS UN FICHIER DE L'APPLICATION.
+  const tousRendus = lireFichiers(texte)
+  let partiesRendues: string | undefined = tousRendus.find((f) => f.chemin === FICHIER_PARTIES)?.contenu
+  const rendus = tousRendus.filter((f) => f.chemin !== FICHIER_PARTIES)
   if (rendus.length === 0) {
     return NextResponse.json(
       { error: 'Le modèle n’a rendu aucun fichier. Votre application n’a pas changé.', coutUsd },
@@ -782,7 +827,12 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     { role: 'user', content: message },
     { role: 'assistant', content: texte },
   ]
-  const relancer = async (consigne: string): Promise<string | null> => {
+  // ── `relanceModele`, PAS `relancer` : EP-281 reconnaît `relancer(` comme
+  // l'émission AIR du travailleur (8,46 $). Celle-ci rappelle le modèle
+  // léger de la retouche, sur la conversation déjà ouverte. Constat consigné
+  // le 2026-11-28 : la retouche dépense sans consulter l'interrupteur, et ce
+  // cliquet ne l'a jamais vue (son appel principal ne correspond à aucun motif).
+  const relanceModele = async (consigne: string): Promise<string | null> => {
     // Le temps de la route est borné (maxDuration) : on ne lance pas un essai
     // qu'on ne verrait pas finir.
     if (Date.now() - debutRoute > RELANCE_PLUS_TARD_MS) return null
@@ -796,7 +846,7 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
         messages: conversation,
       }).finalMessage()
       const t = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
-      suivi.boite.noter('reponse_brute', 'La réponse du modèle à la relance sur DONNEES.json', {
+      suivi.boite.noter('reponse_brute', 'La réponse du modèle à une relance (déclaration, parties ou face publique)', {
         consigne, texte: t, arret: r.stop_reason, usage: r.usage, ms: Date.now() - t0,
       })
       const usage = r.usage as { input_tokens: number; output_tokens: number; cache_read_input_tokens?: number | null }
@@ -821,7 +871,7 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     fichiers: apres,
     lire: (f) => lireDeclarationEnRoute(f, (e: unknown) => analyser(e).success),
     probleme: (d) => problemeDeclaration(d, analyser),
-    relancer,
+    relancer: relanceModele,
   })
   if (!correction.ok) {
     console.warn('[retouche] déclaration refusée après relances', correction.relances, correction.probleme)
@@ -836,6 +886,22 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     )
   }
   const declaration = correction.declaration
+  // ── LA LISTE DES PARTIES, RELANCÉE UNE FOIS SI ELLE MANQUE (2026-11-28).
+  //
+  // Sans elle on ne sait pas ce qui est fait : la modification se livre, mais
+  // ne se dit pas « faite » et ne se décompte pas (parties-demande.ts).
+  let luesParties = lireParties(partiesRendues)
+  if (!luesParties.ok) {
+    const t = await relanceModele(messageRelanceParties(luesParties.probleme))
+    if (t !== null) {
+      partiesRendues = lireFichiers(t).find((f) => f.chemin === FICHIER_PARTIES)?.contenu ?? t
+      luesParties = lireParties(partiesRendues)
+    }
+  }
+  let parties: readonly Partie[] | null = luesParties.ok ? luesParties.parties : null
+  suivi.boite.noter('decisions', 'Les parties de la demande, déclarées par le modèle', {
+    parties, probleme: luesParties.ok ? null : luesParties.probleme,
+  })
   // ── LA COULEUR NE PASSE PAS PAR LE CODE (surcharge de thème, 2026-11-18).
   //
   // `APPARENCE.json` est retiré des fichiers livrés, validé (format, et
@@ -849,7 +915,7 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
     )
   }
   const apparenceApres: Apparence | null = lueApparence.apparence ?? apparenceDuDocument(docAvant)
-  const fichiersLivres = lueApparence.fichiers
+  let fichiersLivres = lueApparence.fichiers
   const entitesAvant = declarationDe(docAvant)
   // ── UNE SEULE FUSION, ET SES PERTES VOYAGENT.
   //
@@ -886,7 +952,7 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
 
   // ── L'ASSEMBLAGE EST LE PREMIER JUGE : du code qui ne compile pas ne
   // mérite pas qu'on fasse tourner les autres.
-  const bundle = await assembler(fichiersLivres)
+  let bundle = await assembler(fichiersLivres)
   if (!bundle.ok) {
     return NextResponse.json(
       {
@@ -897,6 +963,63 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
       { status: 409 },
     )
   }
+
+  // ── LA FACE PUBLIQUE, MONTÉE SANS SESSION, AUSSI APRÈS UNE RETOUCHE (2026-11-28).
+  //
+  // Mesuré sur « Suivi de colis » v3 : la page publique lisait `colis` en
+  // entier au chargement, sans compte (401 en console). Le juge des faces ne
+  // tournait qu'à la génération. Ici il ne REFUSE pas : chaque défaut repart
+  // au modèle (deux essais au plus) ; ce qui reste se dit « non fait ».
+  const touches = new Set(rendus.map((f) => f.chemin))
+  const constats: Partie[] = []
+  if (fusion.entites.length > 0) {
+    let faces: VerdictFaces = await jugerFaces(bundle.code, fusion.entites)
+    const initial = faces.defauts
+    let essais = 0
+    while (faces.aTourne && faces.defauts.length > 0 && essais < ESSAIS_FACES_MAX) {
+      essais += 1
+      const reproche = reprocheFaces({ ...faces, silencesIndiscernables: false, liensGestion: 0 })
+      if (reproche === null) break
+      const t = await relanceModele(
+        `${reproche}\n\nCorrige-le. Rends SEULEMENT les fichiers que tu modifies, chacun en ENTIER, ` +
+          `et ${FICHIER_PARTIES} à jour.`,
+      )
+      if (t === null) break
+      const lus = lireFichiers(t)
+      const nouvellesParties = lireParties(lus.find((f) => f.chemin === FICHIER_PARTIES)?.contenu)
+      const code = lus.filter(
+        (f) => !f.chemin.startsWith('systeme/') && f.chemin !== FICHIER_PARTIES &&
+          f.chemin !== 'DONNEES.json' && f.chemin !== 'APPARENCE.json',
+      )
+      if (code.length === 0) continue
+      const essai = new Map(fichiersLivres)
+      for (const f of code) essai.set(f.chemin, f.contenu)
+      const b = await assembler(essai)
+      if (!b.ok) continue
+      const v = await jugerFaces(b.code, fusion.entites)
+      if (!v.aTourne || v.defauts.length >= faces.defauts.length) continue
+      fichiersLivres = essai
+      bundle = b
+      faces = v
+      for (const f of code) touches.add(f.chemin)
+      if (nouvellesParties.ok) parties = nouvellesParties.parties
+    }
+    suivi.boite.noter('controles', 'La face publique montée sans session, et ses réparations', {
+      aTourne: faces.aTourne, motif: faces.motif, defautsInitiaux: initial, defautsRestants: faces.defauts, essais,
+    })
+    if (faces.aTourne && faces.defauts.length > 0) {
+      constats.push({
+        partie: 'La page publique ne lit, sans compte, que ce qu’elle montre',
+        faite: false,
+        pourquoi: `elle lit encore ${faces.defauts.map((d) => `« ${d.table} »`).join(', ')} en entier sans connexion`,
+        source: 'deribfy',
+      })
+    }
+  }
+  // ── UNE DEMANDE QUI N'EST PAS FAITE EN ENTIER NE SE FACTURE PAS (mandat).
+  // Le drapeau se pose ICI : la version mise en attente le porte aussi.
+  suivi.partielle = !faiteEnEntier(parties, constats)
+  suivi.phraseParties = phraseParties(parties, constats)
 
   // ── LES SIX JUGES, SUR L'AVANT ET SUR L'APRÈS.
   //
@@ -1013,7 +1136,10 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
       const enAttente: VersionDocument = {
         forme: 'document',
         enAttente: true,
-        fichiers: Object.fromEntries(declaration.fichiers),
+        // LES FICHIERS LIVRÉS, réparations comprises (2026-11-28) : la forme
+        // `declaration.fichiers` perdait ce que la face publique avait corrigé.
+        fichiers: Object.fromEntries(fichiersLivres),
+        parties, constats,
         nom: typeof lu.data.nom === 'string' ? lu.data.nom : null,
         coutUsd: Number(coutUsd.toFixed(4)),
         schema: emettreSchemaSql([...fusion.entites]),
@@ -1200,7 +1326,9 @@ async function retoucher(req: Request, suivi: SuiviRetouche): Promise<Response> 
   return NextResponse.json(
     { ok: true,
       // CE QUI EST ARRIVÉ AUX DONNÉES, AVEC LES NOMBRES COMPTÉS.
-      ...(apresMigration === null ? {} : { migration: apresMigration }), rang, fichiers: rendus.map((f) => f.chemin), coutUsd: Number(coutUsd.toFixed(4)),
+      ...(apresMigration === null ? {} : { migration: apresMigration }), rang, fichiers: [...touches], coutUsd: Number(coutUsd.toFixed(4)),
+      // TOUTES LES PARTIES DE LA DEMANDE, faites ou non (2026-11-28).
+      parties, constats, faiteEnEntier: faiteEnEntier(parties, constats),
       // ── UNE DIMENSION NON MESURÉE N'EST PAS UNE DIMENSION SAINE.
       //
       // `comparerJuges` ne pouvait pas comparer la couverture : elle valait

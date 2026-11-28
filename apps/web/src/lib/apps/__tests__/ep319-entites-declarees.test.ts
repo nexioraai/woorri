@@ -277,7 +277,8 @@ describe('EP-319 · les données déclarées', () => {
     // ── 10 100 → 10 400 le 2026-11-16 : D13/D14/D15 — GrilleTableau est une grille
     // de cartes, ChoixApparence se pose tel quel (Atelier b010d704). Mesuré : 10 216.
     // ── 10 400 → 10 700 le 2026-11-18 : ⑬, 2026-11-18 : REGLE_ECRITURES dans le bloc COMMUN — lire `error`, l'écran ne change qu'après succès, retirer se confirme, chaque geste se dit (atita supprimait sans confirmer et sans lire l'erreur, mesuré en production). Mesuré : 10 621.
-    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(10700)
+    // ── 10 700 → 11 350 le 2026-11-28 : LES PARTIES DE LA DEMANDE (règle 12, REGLE_PARTIES) — « Ajouté : numero_suivi » taisait la page publique ; le message de fin liste désormais chaque partie, faite ou non (parties-demande.ts, décision du fondateur). Mesuré : 11 272.
+    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(11350)
   })
 
   it('⑥ter LA DÉROGATION DE PORTABILITÉ EST BORNÉE À `blocBase`', () => {
@@ -473,7 +474,8 @@ describe('EP-319 · les données déclarées', () => {
     // ── 15 400 → 16 000 le 2026-11-23 : CE QUE VOIT LE VISITEUR (REGLE_CE_QUE_VOIT_LE_VISITEUR) — `champsPublics`, `lignesPubliques`, jamais « * », pas de `.filter` pour cacher ; la base ne donnait au visiteur que la table ENTIÈRE (atitta : plaque et client ; place de marché : produits masqués). Contenu énuméré par lecture-publique-bornee ⑨. Mesuré : 15 936.
     // ── 16 000 → 16 700 le 2026-11-27 : LA LECTURE PAR CLÉ (É1, REGLE_LECTURE_PAR_CLE) — même raison qu'EP-360 ④. Mesuré : 16 624.
     // ── 16 700 → 17 100 le 2026-11-28 : LES CHAMPS AUTOMATIQUES (REGLE_CHAMPS_AUTOMATIQUES) — la consigne promettait « la base TIRE la clé » sans que le SQL la tire ; numéro, date de création, compteur sont désormais posés par la base (champs-automatiques du compilateur). Contenu gardé par champs-automatiques.test. Mesuré : 17 030.
-    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(17100)
+    // ── 17 100 → 17 750 le 2026-11-28 : LES PARTIES DE LA DEMANDE (voir ⑥). Mesuré : 17 681.
+    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(17750)
 
     // ── ET LE BANDEAU N'EST PLUS DEMANDÉ À L'ŒUVRE (2026-11-05).
     //
@@ -551,7 +553,8 @@ describe('EP-319 · les données déclarées', () => {
       // ── 21 500 → 22 100 le 2026-11-23 : ce que voit le visiteur (⑥bis). Mesurée PAR CE CLIQUET : 22 008.
       // ── 22 100 → 22 800 le 2026-11-27 : la lecture par clé (É1, même raison qu'EP-360 ④). Mesurée PAR CE CLIQUET : 22 696.
       // ── 22 800 → 23 200 le 2026-11-28 : les champs automatiques (même raison que la borne du bloc de base ci-dessus). Mesurée PAR CE CLIQUET : 23 102.
-    ).toBeLessThan(23200)
+      // ── 23 200 → 23 850 le 2026-11-28 : les parties de la demande (règle 12, voir ⑥). Mesurée PAR CE CLIQUET : 23 753.
+    ).toBeLessThan(23850)
 
     // ── ③ ET LA PORTE DES DONNÉES RESTE UNE PORTE ÉTROITE.
     //

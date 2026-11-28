@@ -15,6 +15,7 @@
  * ni au moteur — prouve par un harnais qui compte les appels. Meme deploye,
  * l'etage 4 ne PEUT pas depenser tant que le proprietaire n'arme pas.
  */
+import type { Partie } from './parties-demande'
 import { createHash } from 'node:crypto'
 import type { creerTravailleur, RapportTranche } from './travailleur'
 import { diagnosticsDepuisLigne, RAISON_ARRET_PROPRIETAIRE, TABLE_VERSIONS } from './journal'
@@ -162,12 +163,29 @@ export function traduireRaison(brute: string | undefined): string {
 /** La surface de lecture dont l'ecran a besoin — restreinte au proprietaire,
  *  et DEGRAISSEE : ni cout, ni diagnostics bruts (un devtools ouvert ne voit
  *  que ceci). Le detail complet vit dans la route admin, pour l'operateur. */
+/** Les parties rangées dans le document livré — absentes sur une œuvre d'avant. */
+function partiesDuDocument(document: unknown): Pick<EtatGeneration, 'parties'> {
+  if (typeof document !== 'object' || document === null || !('parties' in document)) return {}
+  const d = document as { parties?: unknown; constats?: unknown }
+  return {
+    parties: {
+      parties: Array.isArray(d.parties) ? (d.parties as Partie[]) : null,
+      constats: Array.isArray(d.constats) ? (d.constats as Partie[]) : [],
+    },
+  }
+}
+
 export type EtatGeneration = {
   readonly id: string
   readonly statut: 'en_attente' | 'en_cours' | 'livree' | 'refusee'
   readonly etape: string | null
   readonly nom: string | null
   readonly aDocument: boolean
+  /**
+   * LES PARTIES DE LA DEMANDE ET CE QUI EN EST FAIT (2026-11-28), lues dans le
+   * document livré. `undefined` : une œuvre d'avant cette règle.
+   */
+  readonly parties?: { readonly parties: readonly Partie[] | null; readonly constats: readonly Partie[] }
   /** Traduite — jamais la raison brute du moteur ni du fournisseur. */
   readonly raison: string | null
   /** LE TRIPTYQUE HONNETE (arbitrage 2026-10-10) — des TEMPS et des COMPTES,
@@ -371,6 +389,7 @@ export async function etatGeneration({
         : String(l.etape),
     nom: l.nom === null || l.nom === undefined ? null : String(l.nom),
     aDocument: l.document !== null && l.document !== undefined,
+    ...partiesDuDocument(l.document),
     raison: statut === 'refusee' ? traduireRaison(diagnostics[0]) : null,
     questions,
     notreFaute,

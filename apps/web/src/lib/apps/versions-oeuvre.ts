@@ -44,6 +44,8 @@
  */
 
 /** Ce qu'une version du moteur direct porte : de quoi REVENIR, rien de plus. */
+import type { Partie } from './parties-demande'
+
 export type VersionDocument = {
   readonly forme: 'document'
   /**
@@ -72,6 +74,13 @@ export type VersionDocument = {
    * déclaration d'aujourd'hui à un schéma d'hier.
    */
   readonly entites?: readonly { readonly id: string; readonly name: string }[]
+  /**
+   * LES PARTIES DE LA DEMANDE ET LES CONSTATS DE DERIBFY (2026-11-28) — une
+   * version mise en attente les garde : l'accord affiche le même message,
+   * toutes les parties, que la livraison directe.
+   */
+  readonly parties?: readonly Partie[] | null
+  readonly constats?: readonly Partie[]
   readonly fichiers: Record<string, string>
   readonly nom: string | null
   /** Ce que CETTE version a coûté. Sert à annoncer un prix avant de dépenser. */

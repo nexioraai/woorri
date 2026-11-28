@@ -67,7 +67,7 @@ import { TITRE_SANS_NOM } from '@/lib/apps/nom-produit';
 import { echangesDe, heureCourte, type VersionLue } from '@/lib/apps/fil-atelier';
 import { phraseVersion } from '@/lib/apps/versions-oeuvre';
 import { boutonOuvert, libelleBouton, raisonFermeture, voitLesCouts } from '@/lib/apps/compteur-phrases';
-import { messageDeRetouche, suffixeCompteur } from '@/lib/apps/message-de-retouche';
+import { messageDeRetouche, suffixeCompteur, type CorpsRetouche } from '@/lib/apps/message-de-retouche';
 import { PayerMobileMoney } from '@/components/atelier/PayerMobileMoney';
 import { EpreuveVisiteur } from '@/components/atelier/EpreuveVisiteur';
 import type { EtatCompteur } from '@/lib/apps/compteur-phrases';
@@ -409,6 +409,7 @@ export default function AtelierPage() {
       );
       const d = (await res.json().catch(() => ({}))) as {
         ok?: boolean; migration?: string; error?: string; motif?: string;
+        parties?: CorpsRetouche['parties']; constats?: CorpsRetouche['constats'];
       };
       if (!res.ok || d.ok !== true) {
         setAvis(null);
@@ -416,7 +417,8 @@ export default function AtelierPage() {
         return;
       }
       setTexte('');
-      setAvis(d.migration ?? 'Modification appliquée.');
+      // LE MÊME MESSAGE QUE LA LIVRAISON DIRECTE : toutes les parties (2026-11-28).
+      setAvis(d.parties === undefined ? (d.migration ?? 'Modification appliquée.') : messageDeRetouche(d, true, '').texte);
       await Promise.all([chargerVersions(), chargerApercu()]);
       setOnglet('application');
     } catch {
@@ -511,6 +513,7 @@ export default function AtelierPage() {
         aConfirmer?: boolean; message?: string; fichiers?: string[]; coutUsd?: number; rang?: number;
         migration?: string | boolean; couvertureNonMesuree?: boolean; declarationRejetee?: string; couleur?: string;
         modificationsRestantes?: number;
+        parties?: CorpsRetouche['parties']; constats?: CorpsRetouche['constats'];
       };
       // CE QUI A ÉTÉ DÉPENSÉ SE DIT, MÊME QUAND ÇA RATE. Un refus gratuit et
       // un refus payé ne sont pas la même nouvelle.
@@ -943,7 +946,7 @@ export default function AtelierPage() {
               défile. Un champ qui part avec le fil oblige à remonter pour
               écrire — et c'est exactement ce qu'un atelier doit éviter. */}
           <div className="shrink-0 rounded-2xl border border-brand-blue/35 bg-brand-blue/[0.12] p-2.5">
-            {avis !== null && <p className="mb-2 text-[11px] text-emerald-400">{avis}</p>}
+            {avis !== null && <p className="mb-2 whitespace-pre-line text-[11px] text-emerald-400">{avis}</p>}
             {erreur !== null && <p className="mb-2 text-[11px] text-red-400">{erreur}</p>}
             {/* ── LE REFUS N'EST PLUS LA FIN DU CHEMIN.
                  Il dit ce qui marche, et le fait faire en un geste : la

@@ -111,7 +111,12 @@ describe('É1 · le cliquet de la famille « un champ qui ne traverse pas son co
     expect(enseignees.has('lectureParCle'), 'la consigne n’enseigne plus lectureParCle : le cliquet ne voit plus rien').toBe(true)
     expect(enseignees.has('lecturePublique')).toBe(true)
     // Clés d'AUTRES fichiers que DONNEES.json, nommées une à une avec leur fichier.
-    const AUTRES_FICHIERS: Record<string, string> = { couleur: 'APPARENCE.json (retouche.ts)' }
+    const AUTRES_FICHIERS: Record<string, string> = {
+      couleur: 'APPARENCE.json (retouche.ts)',
+      partie: 'PARTIES.json (parties-demande.ts)',
+      faite: 'PARTIES.json (parties-demande.ts)',
+      pourquoi: 'PARTIES.json (parties-demande.ts)',
+    }
     const refusees = [...enseignees].filter((k) => !accepte.has(k) && !(k in AUTRES_FICHIERS))
     expect(refusees, 'clés enseignées au modèle mais REFUSÉES par le contrat : la table entière serait perdue').toEqual([])
   })

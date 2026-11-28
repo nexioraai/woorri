@@ -61,6 +61,7 @@ import { jugerExecution } from '@/lib/apps/juge-execution'
 import { reserverLesCoutsAuFondateur, retirerCouts } from '@/lib/apps/couts-visibles'
 import { BoiteNoire, empreinte } from '@/lib/apps/boite-noire'
 import { analyserDemande } from '@/lib/apps/analyse-demande'
+import { faiteEnEntier, phraseParties } from '@/lib/apps/parties-demande'
 
 export const runtime = 'nodejs'
 // ── QUINZE MINUTES, ET C'EST UNE CONSÉQUENCE DU PLAFOND, PAS UN CONFORT.
@@ -932,6 +933,10 @@ async function postSansReserve(req: Request) {
     tirages: resultat.tours.length,
     diagnostics: resultat.ok
       ? [
+          // ── CE QUI N'EST PAS FAIT DE LA DEMANDE, EN TÊTE (2026-11-28).
+          ...(faiteEnEntier(resultat.parties, resultat.constats)
+            ? []
+            : [`Demande faite en partie : ${phraseParties(resultat.parties, resultat.constats, null).replace(/\n/gu, ' · ')}`]),
           ...(resultat.execution !== null &&
           resultat.execution.indisponible === undefined &&
           (resultat.execution.ecransDecouverts ?? 0) > (resultat.execution.ecransVisites ?? 0)
@@ -1043,6 +1048,10 @@ async function postSansReserve(req: Request) {
     document: resultat.ok
       ? {
           fichiers: Object.fromEntries(resultat.fichiers),
+          // TOUTES LES PARTIES DE LA DEMANDE, faites ou non (2026-11-28) :
+          // l'écran de livraison les liste, une par une.
+          parties: resultat.parties,
+          constats: resultat.constats,
           schema: schemaDeLOeuvre,
           politiques: politiquesDeLOeuvre,
           // ── LA DÉCLARATION VOYAGE AVEC L'ŒUVRE (M4 a, 2026-11-04).
@@ -1219,6 +1228,8 @@ async function postSansReserve(req: Request) {
     const version: VersionDocument = {
       forme: 'document',
       fichiers: Object.fromEntries(resultat.fichiers),
+      parties: resultat.parties,
+      constats: resultat.constats,
       nom,
       coutUsd: Number(coutUsd.toFixed(4)),
       schema: schemaDeLOeuvre,

@@ -58,6 +58,12 @@ vi.mock('@/lib/supabase-admin', async () => {
   }
 })
 vi.mock('@/lib/alertes', () => ({ alerter: () => Promise.resolve(null) }))
+// La face publique a son propre test de route (parties-retouche.test) : ici on
+// juge la DÉCLARATION, pas la lecture au montage que le code de 18:06 porte.
+vi.mock('@/lib/apps/juge-faces', async (orig) => ({
+  ...(await orig<typeof import('@/lib/apps/juge-faces')>()),
+  jugerFaces: async () => ({ aTourne: true, motif: null, defauts: [], silencesIndiscernables: false, montages: [] }),
+}))
 vi.mock('@/lib/apps/juge-execution', async () => {
   const { jugeMuet } = await import('@/lib/apps/__tests__/juge-muet')
   return { jugerExecution: jugeMuet }
@@ -84,7 +90,8 @@ const { messageDeRetouche } = await import('@/lib/apps/message-de-retouche')
 
 // LA RÉPONSE BRUTE RÉELLE de 18:06 : le code (index.tsx) puis DONNEES.json (JSON + prose).
 const PIECE = JSON.parse(gunzipSync(readFileSync(join(__dirname, '../../../../../lib/apps/__tests__/fixtures/retouche-0178c047-1806.json.gz'))).toString('utf8')) as { reponse: string }
-const REPONSE_1806 = PIECE.reponse
+const PARTIES = '\n=== PARTIES.json ===\n[{"partie":"un numéro de suivi par colis","faite":true}]\n'
+const REPONSE_1806 = PIECE.reponse + PARTIES
 const CODE = REPONSE_1806.slice(0, REPONSE_1806.indexOf('=== DONNEES.json ==='))
 const BON = '[{"id":"ent_colis","name":"colis","lectureParCle":{"cle":"numero_suivi","champs":["numero_suivi","statut"]},"fields":[{"id":"fld_numero_suivi","name":"numero_suivi","type":"text","unique":true,"required":true}]}]'
 
@@ -122,7 +129,7 @@ describe('la retouche lit sa déclaration de données, la relance, ou échoue ho
   })
 
   it('② un JSON cassé relance le modèle avec l’erreur exacte, et le corrigé est livré', async () => {
-    etat.reponses = [`${CODE}=== DONNEES.json ===\n[{"id": "ent_colis", cassé\n`, `=== DONNEES.json ===\n${BON}\n`]
+    etat.reponses = [`${CODE}${PARTIES}=== DONNEES.json ===\n[{"id": "ent_colis", cassé\n`, `=== DONNEES.json ===\n${BON}\n`]
     const r = await appel()
     const d = (await r.json()) as { ok?: boolean }
     expect(d.ok).toBe(true)
@@ -137,7 +144,7 @@ describe('la retouche lit sa déclaration de données, la relance, ou échoue ho
   })
 
   it('② bis un refus du contrat relance avec le chemin exact de zod', async () => {
-    etat.reponses = [`${CODE}=== DONNEES.json ===\n[{"id":"ent_colis","name":"colis","inventee":1,"fields":[{"id":"fld_numero_suivi","name":"numero_suivi","type":"text"}]}]\n`, `=== DONNEES.json ===\n${BON}\n`]
+    etat.reponses = [`${CODE}${PARTIES}=== DONNEES.json ===\n[{"id":"ent_colis","name":"colis","inventee":1,"fields":[{"id":"fld_numero_suivi","name":"numero_suivi","type":"text"}]}]\n`, `=== DONNEES.json ===\n${BON}\n`]
     const d = (await (await appel()).json()) as { ok?: boolean }
     expect(d.ok).toBe(true)
     expect(etat.appels[1]!.messages[2]!.content).toMatch(motifTexte('refusé par le contrat'))

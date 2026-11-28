@@ -122,7 +122,7 @@ describe('point 2 · la retouche laisse sa ligne', () => {
 
   it('② livrée : livree, liée au rang de sa version', async () => {
     etat.stop = 'end_turn'
-    etat.texte = '=== index.tsx ===\nexport const a = 42'
+    etat.texte = '=== index.tsx ===\nexport const a = 42\n=== PARTIES.json ===\n[{"partie":"la demande","faite":true}]\n'
     const r = await appel()
     const d = (await r.json()) as { ok?: boolean; rang?: number; error?: string }
     expect(d.ok, String(d.error)).toBe(true)
@@ -157,7 +157,7 @@ describe('point 2 · la retouche laisse sa ligne', () => {
   it('⑤ une trace perdue ne fait pas échouer la retouche, et elle se dit', async () => {
     etat.tentativeEnErreur = true
     etat.stop = 'end_turn'
-    etat.texte = '=== index.tsx ===\nexport const a = 42'
+    etat.texte = '=== index.tsx ===\nexport const a = 42\n=== PARTIES.json ===\n[{"partie":"la demande","faite":true}]\n'
     const r = await appel()
     expect(((await r.json()) as { ok?: boolean }).ok).toBe(true)
     expect(alertes).toHaveLength(1)

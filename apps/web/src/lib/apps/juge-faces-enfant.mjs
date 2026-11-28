@@ -118,6 +118,17 @@ const repondre = async (entree, init) => {
     return json(200, { data: { session: null, user: null }, session: null, user: null })
   }
 
+  // ── UNE LECTURE PAR CLÉ N'EST PAS LA LECTURE D'UNE TABLE (2026-11-28).
+  //
+  // `base.rpc('colis_par_cle', …)` passe par `/rest/v1/rpc/<fonction>` : la
+  // forme générale le comptait comme la table « rpc ». C'est le chemin que la
+  // consigne EXIGE pour une page de suivi — il rend une ligne ou null.
+  const rpc = /\/rest\/v1\/rpc\/([A-Za-z0-9_]+)/u.exec(url)
+  if (rpc !== null) {
+    vues.push(`${methode} rpc:${rpc[1]}`)
+    return json(200, null)
+  }
+
   if (rest !== null) {
     const table = rest[1]
     vues.push(`${methode} ${table}`)
@@ -203,7 +214,7 @@ writeFileSync(
     monte,
     erreurs,
     // Les tables interrogées, dédoublonnées : c'est la base de J1.
-    tables: [...new Set(vues.filter((v) => !/ (auth|inconnu)$/u.test(v)).map((v) => v.split(' ')[1]))],
+    tables: [...new Set(vues.filter((v) => !/ (auth|inconnu|rpc:[A-Za-z0-9_]+)$/u.test(v)).map((v) => v.split(' ')[1]))],
     requetes: [...new Set(vues)].slice(0, 30),
     texte: texte.slice(0, 1200),
     // POINT 1 (2026-11-18) : combien de liens vers l'espace de gestion la face
@@ -212,7 +223,7 @@ writeFileSync(
     liensGestion: racine ? racine.querySelectorAll('a[href$="#gestion"]').length : 0,
     // QUELLES tables l'écran public montre réellement — une par une.
     tablesMontrees: [...new Set(vues.map((v) => v.split(' ')[1]))]
-      .filter((t) => t !== undefined && t !== 'auth' && t !== 'inconnu')
+      .filter((t) => t !== undefined && t !== 'auth' && t !== 'inconnu' && !t.startsWith('rpc:'))
       .filter((t) => texte.includes(marqueDe(t))),
   }),
 )

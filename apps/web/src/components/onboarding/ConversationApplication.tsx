@@ -41,6 +41,7 @@ import {
 import { ouvrirAtelier } from '@/components/atelier/ouvrirAtelier'
 import { resumeDuJournal } from '@/lib/apps/journal-tirages';
 import type { EtatGeneration } from '@/lib/apps/service-generations';
+import { phraseParties } from '@/lib/apps/parties-demande';
 import type { EtatMagasin } from '@/lib/apps/exigences-magasin';
 // DEPUIS LE MODULE PUR, JAMAIS DEPUIS LE JUGE : le juge lance un processus
 // enfant (`node:child_process`) et ne peut pas entrer dans ce paquet.
@@ -1565,6 +1566,13 @@ export default function ConversationApplication({
           )}
           {marcheDuSuivi(etatGen).livree && (
             <div className="mt-3">
+              {/* ── TOUTES LES PARTIES DE LA DEMANDE, faites ou non (2026-11-28).
+                  Plus jamais une livraison qui ne dit qu'une partie. */}
+              {etatGen?.parties !== undefined && (
+                <p className="mb-3 whitespace-pre-line text-sm text-slate-200">
+                  {phraseParties(etatGen.parties.parties, etatGen.parties.constats, null)}
+                </p>
+              )}
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="button"

@@ -67,7 +67,7 @@ export type DefautFace = {
    * mesurable : sans elle le modèle choisit au hasard, et une fois sur deux
    * il ouvre la mauvaise table.
    */
-  readonly forme: 'affichee' | 'chargee-non-montree'
+  readonly forme: 'affichee' | 'chargee-non-montree' | 'par-cle'
 }
 
 export type VerdictFaces = {
@@ -109,7 +109,22 @@ export function reprocheFaces(v: VerdictFaces): string | null {
   if (v.defauts.length > 0) {
     const affichees = v.defauts.filter((d) => d.forme === 'affichee')
     const cachees = v.defauts.filter((d) => d.forme === 'chargee-non-montree')
+    const parCle = v.defauts.filter((d) => d.forme === 'par-cle')
     const lignes: string[] = []
+    // ── UNE TABLE LUE PAR CLÉ : LE REMÈDE N'EST NI L'UN NI L'AUTRE (2026-11-28).
+    //
+    // Mesuré sur « Suivi de colis » v3 : la page lisait `colis` en entier au
+    // montage, sans session (401 en console), en plus de sa recherche par
+    // numéro. « Déclare-la publique » ouvrirait tous les colis à tout le monde.
+    for (const d of parCle) {
+      lignes.push(
+        `- « ${d.table} » est lue EN ENTIER au montage, sans connexion — et c'est une table ` +
+          `lue par clé. Sa face publique ne la lit QUE par ` +
+          `base.rpc('${d.table}_par_cle', { p_cle: saisie }), au moment où le visiteur cherche. ` +
+          `La liste entière (base.from('${d.table}')) se charge seulement une fois la session ` +
+          `obtenue, dans l'espace de gestion. Ne la déclare PAS publique.`,
+      )
+    }
     for (const d of affichees) {
       lignes.push(
         `- « ${d.table} » est LUE ET AFFICHÉE par ta face publique, sans connexion. ` +
@@ -233,6 +248,9 @@ export async function jugerFaces(
 
     // ── J1 : CE QUI EST INTERROGÉ SANS SESSION DOIT ÊTRE PUBLIC.
     const publiques = new Set(entites.filter(lecturePubliqueDe).map((e) => nomTable(e)))
+    const luesParCle = new Set(
+      entites.filter((e) => e.lectureParCle !== undefined).map((e) => nomTable(e)),
+    )
     const interrogees = new Set<string>([...refus.tables, ...vide.tables, ...temoin.tables])
     const defauts: DefautFace[] = []
     for (const table of [...interrogees].sort()) {
@@ -243,7 +261,9 @@ export async function jugerFaces(
         // publique. Chargée sans être montrée → il faut la charger plus tard.
         // La distinction se fait TABLE PAR TABLE : une marque globale faisait
         // dire « membre est affichée » parce qu'`annonce` l'était.
-        forme: temoin.tablesMontrees.includes(table) ? 'affichee' : 'chargee-non-montree',
+        forme: luesParCle.has(table)
+          ? 'par-cle'
+          : temoin.tablesMontrees.includes(table) ? 'affichee' : 'chargee-non-montree',
       })
     }
 
